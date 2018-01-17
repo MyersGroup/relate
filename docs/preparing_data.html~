@@ -63,6 +63,9 @@
             <a href="#FileFormat">Input file formats</a>
           </li>
           <li>
+            <a href="#ConvertToFileFormat">Convert to haps/sample file format</a>
+          </li> 
+          <li>
             <a href="#Prepare">Preparing input files</a>
           </li> 
         </ul>
@@ -174,7 +177,7 @@
           <div class="row">
             <div class="col-md-10 col-md-offset-1">
 
-              <a class="anchor" name="ConvertFileFormat"></a>
+              <a class="anchor" name="ConvertToFileFormat"></a>
               <h3>Convert to haps/sample file format</h3>
               <hr/>
 
