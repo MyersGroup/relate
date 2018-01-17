@@ -1,0 +1,3 @@
+add_executable(RelateFileFormats RelateFileFormats.cpp)
+target_link_libraries(RelateFileFormats relateStatic)
+

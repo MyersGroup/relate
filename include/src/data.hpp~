@@ -1,0 +1,162 @@
+#ifndef DATA_HPP
+#define DATA_HPP
+
+#include "collapsed_matrix.hpp"
+
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <fstream>
+#include <list>
+#include <vector>
+#include <bitset>
+#include <map>
+#include <limits>
+#include <tgmath.h>
+#include <string>
+
+#include <cassert>
+
+//struct recording all the data needed for building anc
+struct Data{
+
+  std::string name;
+  int N, L; //number of sequences, number of SNPs
+  int Ne; //effective population size
+  double mu; //mutation rate
+  double theta, ntheta; //mutation probability for painting. set to 0.025
+
+  CollapsedMatrix<char> sequence; //sequence matrix, containing 0 and 1
+  std::vector<int> pos;    //vector specifying location of each SNP along the genome
+  std::vector<double> r;   //vector of recombination distances from one SNP to the next
+  std::vector<double> rpos; //vector of cumulative recombination distances
+
+  ///////////
+
+  Data(){}
+  //Constructor, which only assigns values to N, L, Ne, mu
+  Data(int N, int L, int Ne = 3e4, double mu = 1.25e-8);
+
+  //Constructor, which reads files in binary format for fast io
+  Data(const char* filename_sequence, const char* filename_pos, const char* filename_rec, const char* filename_rpos, int Ne = 3e4, double mu = 1.25e-8);
+  //Constructor, which reads pos, and param files in bin format
+  Data(const char* filename_pos, const char* filename_param, int Ne = 3e4, double mu = 1.25e-8);
+ 
+  ///////////
+
+  void MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist);
+  //void MakeChunks2(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist);
+
+  ///////////
+
+  void WriteSequenceAsBin(const char* filename);
+  void ReadSequenceFromBin(const char* filename);
+
+  //to read/write vectors from a file into v
+  template<typename T> void WriteVectorAsBin(std::vector<T>& v, const char* filename){
+      FILE* pf = fopen(filename, "wb");
+
+      assert(pf != NULL);
+      unsigned int size = v.size();
+      fwrite(&size, sizeof(unsigned int), 1, pf);
+      fwrite(&v[0], sizeof(T), size, pf);
+
+      fclose(pf);
+    }
+  template<typename T> void ReadVectorFromBin(std::vector<T>& v, const char* filename){
+      FILE* pf = fopen(filename, "rb");
+
+      assert(pf != NULL);
+      unsigned int size;
+      fread(&size, sizeof(unsigned int), 1, pf);
+      v.resize(size);
+      fread(&v[0], sizeof(T), size, pf);
+
+      fclose(pf);
+  }
+
+};
+
+struct Element{
+  int pos;
+  double rate;
+};
+
+class haps{
+
+  //class to read/write bed.
+  //define with file pointer or filename and never use it to write and read.
+
+  private:
+
+    int N, L;
+    FILE* fp;
+
+  public:
+
+    int chr;
+    char rsid[30];
+    char ancestral, alternative;
+
+    haps(const char* filename_haps, const char* filename_sample){
+
+      fp = fopen(filename_sample, "r");
+      assert(fp);
+      N = 0;
+      while(!feof(fp)){
+        if(fgetc(fp) == '\n'){
+          N++;
+        }
+      }
+      N -= 2;
+      N *= 2;
+      fclose(fp);
+
+      fp = fopen(filename_haps, "r");
+      assert(fp);
+      L = 0;
+      while(!feof(fp)){
+        if(fgetc(fp) == '\n'){
+          L++;
+        }
+      }
+      fclose(fp);
+
+
+      fp = fopen(filename_haps, "r");
+      assert(fp);
+
+    }
+
+    void ReadSNP(std::vector<char>& sequence, int& bp); //gets hap info for SNP
+    void DumpSNP(std::vector<char>& sequence, int bp, FILE* fp_out); //dumps hap info for SNP
+    void CloseFile(){fclose(fp);};
+
+    int GetN(){return(N);}
+    int GetL(){return(L);}
+
+};
+
+class map{
+
+  private:
+
+    FILE* fp;
+    char buffer[30];
+
+  public:
+ 
+    std::vector<int> bp;
+    std::vector<double> gen_pos;
+    map(const char* filename);
+
+};
+
+struct fasta{
+
+  std::string seq;
+  void Read(const std::string filename);
+
+};
+
+#endif //DATA_HPP

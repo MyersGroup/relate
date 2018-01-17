@@ -1,0 +1,14 @@
+#!/bin/bash
+
+./bin/RelateExtract --mode RemoveTreesWithFewMutations --threshold 400 --anc relate_pre.anc --mut relate_pre.mut -o relate
+
+for i in {1..5}
+do
+  ./bin/RelateMutationRate --mode Avg -i relate -o relate
+  ./bin/RelateCoalescentRate --mode EstimatePopulationSize -i relate -o relate
+  ./bin/RelateCoalescentRate --mode ReEstimateBranchLengths --coal relate.coal --mrate relate_avg.rate --dist relate.dist -m 1.25e-8 -i relate -o relate
+done
+
+./bin/RelateMutationRate --mode Avg -i relate -o relate
+./bin/RelateCoalescentRate --mode EstimatePopulationSize -i relate -o relate
+./bin/RelateCoalescentRate --mode FinalizePopulationSize -i relate -o relate_bypop --poplabels ../data/sim.sample

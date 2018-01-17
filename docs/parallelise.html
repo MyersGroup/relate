@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Relate Documentation</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <!-- Scrollbar Custom CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
+    <link rel="stylesheet" href="documentation.css"> 
+  </head>
+
+
+  <body>
+
+    <nav id="myNavbar" class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbarCollapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html">Relate</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="getting_started.html">Getting Started</a></li>
+            <li><a href="preparing_data.html">Input data</a></li>
+            <li><a href="modules.html">Add-on modules</a></li>
+            <li class="active"><a href="parallelise.html">Parallelise Relate</a></li>
+          </ul>
+        </div>
+      </div>
+
+    </nav>
+
+
+    <div class="wrapper">
+
+      <!-- Sidebar Holder -->
+      <nav id="sidebar">
+
+        <div class="sidebar-header">
+          <h3>Overview</h3>
+        </div>
+
+        <ul class="list-unstyled components">
+          <li>
+            <a href="#RelateParallel">Parallelise Relate</a>
+          </li>
+          <li>
+            <a href="#RelateModes">Stages of Relate</a>
+          </li>
+        </ul>
+
+      </nav>
+
+      <!-- Page Content Holder -->
+      <div id="content">
+
+
+
+
+        <div class="container-fluid">
+
+          <!-- row -->
+          <div class="row">
+            <a class="anchor" name="RelateParallel"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <h3>Parallelise Relate</h3>
+              <hr/>
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+           <a class="anchor" name="RelateParallel"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>Parallelised Relate</h4></div>
+                <div class="panel-body">  
+
+                  <p> 
+                  We provide a bash script that parallelises <b>Relate</b> on multiple cores. The script can be found under <b>script/RelateParallel/RelateParallel.sh</b>. The script takes the same arguments (and same optional arguments) as Relate, and two additional arguments:
+                  <ul>
+                    <li>Argument --path specifies the path to Relate.</li>
+                    <li>Argument --threads specifies the maximum number of cores that Relate is allowed to use.</li>
+                  </ul>
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/script/RelateParallel/RelateParallel.sh\
+                  --path "PATH_TO_RELATE" \
+                  --haps data/example.haps \
+                  --sample data/example.sample \
+                  --map data/genetic_map.txt \
+                  -o example \
+                  --threads 8 </code></pre>
+                  Output: example.anc, example.mut<br/><br/>
+           
+                  Note that the script only parallelizes <b>Relate</b> if the input data set is sufficiently large. Otherwise, it is more efficient to run <b>Relate</b> on a single core, and <b>Relate</b> will automatically do so.
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+            <a class="anchor" name="RelateModes"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <h3>Stages of Relate</h3>
+              <hr/>
+            </div>
+          </div>
+
+            <div class="col-md-10 col-md-offset-1">
+
+              We implemented the algorithm such that it can be parallelised in multiple ways and, importantly, we can parallelise by submitting independent jobs on a computing cluster.<br/>
+              To parallelise <b>Relate</b>, do not use mode All. Instead we have to execute each of the 7 stages in sequence: <br/>
+
+              <ol>
+                <li>MakeChunks: Divides the chromosome into chunks. To each chunk, we apply stages 2-6.</li>
+                <li>Paint: Applies the chromosome painting algorithm and stores distance matrices as temporary files.</li>
+                <li>BuildTopology: Uses distance matrices calculated in the previous stage and estimates tree topologies.</li>
+                <li>FinaEquivalentBranches: Looks for equivalent branches in adjacent trees.</li>
+                <li>InferBranchLengths: Estimates branch lengths for the trees.</li>
+                <li>CombineSections: Combines files for the chunk.</li>
+                <li>Finalize: Combines all chunks and generates the output.</li>
+              </ol>
+
+              Let us define the following parameters:
+              <ul>
+                <li>output [string]: Filename of output without file extension.</li>
+                <li>mu [dbl]: mutation rate.</li>
+                <li>Ne [dbl]: effective population size of haplotypes. (NOT of individuals! To get the population size of haplotypes, multiply the effective population size of individuals by 2.)</li>
+              </ul>
+
+            </div>
+
+            <a class="anchor" name="MakeChunks"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>1. Make chunks</h4></div>
+                <div class="panel-body">  
+
+                  <p> 
+                  <ul>
+                    <li>Argument --haps, --sample, and --map take the filenames of the input data.</li>
+                    <li>Optional argument --dist takes the filename of a .dist file. A .dist file specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="preparing_data.html#FilterHapsUsingMask">here</a>).</li>
+                    <li>Optional argument --memory option specifies the approximate memory allowance (in GB) used for storing the distance matrices in memory. <b>Relate</b> will exceed this amount, as it also stores trees and other information in memory; however the option allows to approximately control memory usage. Default is 5GB. <b>Relate</b> can become more efficient (in runtime and hard disk usage) with more memory, particularly for large sample sizes. </li>
+                  </ul>
+
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/bin/Relate \
+                  --mode "MakeChunks" \
+                  --haps data/example.haps \
+                  --sample data/example.sample \
+                  --map data/genetic_map.txt  </code></pre>
+                  Output: temporary files<br/>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="for_loop1"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>For loop</h4></div>
+                <div class="panel-body">  
+
+                  First, obtain the number of chunks created in the previous step. In bash, this can be done as follows
+                  <p> 
+                  <pre><code>num_chunks=$(ls parameters_* | wc -l)</code></pre>
+                  </p>
+                  
+                  <p>
+                  Then, apply steps 2 - 6 to each chunk
+                  <pre><code> for chunk_index in `seq 0 $(($num_chunks - 1))`;
+                  do
+                    #stages 2-6
+                  done</code></pre>
+                  </p>
+
+                  <p>
+                  <b>This for loop can be parallelised.</b>
+                  </p>
+
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="Paint"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>2. Paint</h4></div>
+                <div class="panel-body">  
+
+                  <p> 
+                  <ul>
+                    <li>Argument --chunk_index specifies the index [int] of a chunk.</li>
+                  </ul>
+
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/bin/Relate \
+                  --mode Paint \
+                  --chunk_index ${chunk_index} </code></pre>
+                  Output: temporary files<br/>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="BuildTopology"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>3. Build Topology</h4></div>
+                <div class="panel-body">  
+
+                  <p> 
+                  <ul>
+                    <li>Argument --chunk_index specifies the index [int] of a chunk.</li>
+                    <li>Optional arguments --first_section, --last_section specify the first and last section within the chunk, for which to infer tree topologies. With these options, we can parallelise this mode (see below).</li>
+                    <li>Argument -o specifies the output filename without file extension.</li>
+                  </ul>
+
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/bin/Relate \
+                  --mode BuildTopology \
+                  --chunk_index ${chunk_index} \
+                  -o ${output} </code></pre>
+                  Output: temporary files<br/><br/>
+
+                  <p>
+                  <b>Optional:</b><br/>
+                  You can code another parallelisable for loop here. To do this, you need to specify options first_section and last_section. First obtain the number of sections for this chunk. In bash, this can be done as follows
+                  <p> 
+                  <pre><code>num_sections=$(ls chunk_${chunk_index}/paint/*bin | wc -l)</code></pre>
+                  </p>
+                  
+                  You can now code a for loop,
+                  <pre><code> for section in `seq 0 $(($num_sections - 1))`;
+                  do
+                    PATH_TO_RELATE/bin/Relate \
+                        --mode BuildTopology \
+                        --first_section $section \
+                        --last_section $section \
+                        --chunk_index ${chunk_index} \
+                        -o ${output} 
+                  done</code></pre>
+                  Here --first_section and --last_section are both set to $section, such that only trees in one section will be inferred at a time. You can also specify more than one section here.
+                  </p>
+
+
+                  <p>
+                  <b>This for loop can be parallelised.</b>
+                  </p>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="FindEquivalentBranches"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>4. Find equivalent branches in adjacent trees and propagate mutations</h4></div>
+                <div class="panel-body">  
+
+                  <p> 
+                  <ul>
+                    <li>Argument --chunk_index specifies the index [int] of a chunk.</li>
+                    <li>Argument -o specifies the output filename without file extension.</li>
+                  </ul>
+
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/bin/Relate \
+                  --mode "FindEquivalentBranches" \
+                  --chunk_index ${chunk_index} \
+                  -o ${output} </code></pre>
+                  Output: temporary files<br/>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="InferBranchLengths"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>5. Estimate branch lengths</h4></div>
+                <div class="panel-body">  
+
+                  <p> 
+                  <ul>
+                    <li>Argument -m specifies the mutation rate [dbl]</li>
+                    <li>Argument -N specifies the effective population size [dbl]</li>
+                    <li>Argument --chunk_index specifies the index ([integer]) of a chunk.</li>
+                    <li>Optional arguments --first_section, --last_section specify the first and last section within the chunk, for which to infer branch lengths. With these options, we can parallelise this mode (similar to <a href="#BuildTopology">stage 3</a> of the algorithm).</li>
+                    <li>Argument -o specifies the output filename without file extension.</li>
+                  </ul>
+
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/bin/Relate \
+                  --mode "InferBranchLengths" \
+                  -m $mu \
+                  -N $Ne \
+                  --chunk_index ${chunk_index} \
+                  -o ${output} </code></pre>
+                  Output: temporary files<br/><br/>
+
+                  <b>Optional:</b><br/>
+                  Similarly to <a href="#BuildTopology">stage 3</a>, you can code a for loop,
+                  <pre><code> for section in `seq 0 $(($num_sections - 1))`;
+                  do
+                    PATH_TO_RELATE/bin/Relate \
+                        --mode "InferBranchLengths" \
+                        -m $mu \
+                        -N $Ne \
+                        --first_section $section \
+                        --last_section $section \
+                        --chunk_index ${chunk_index} \
+                        -o ${output} 
+                  done</code></pre>
+                  Here --first_section and --last_section are both set to $section, such that only trees in one section will be inferred at a time. You can also specify more than one section here.
+                  </p>
+
+                  <p>
+                  <b>This for loop can be parallelised.</b>
+                  </p>
+
+
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="CombineArgs"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>6. Combine files</h4></div>
+                <div class="panel-body">  
+
+                  <p> 
+                  <ul>
+                    <li>Argument -N specifies the effective population size [dbl]</li>
+                    <li>Argument --chunk_index specifies the index [int] of a chunk.</li>
+                    <li>Argument -o specifies the output filename without file extension.</li>
+
+                  </ul>
+
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/bin/Relate \
+                  --mode "CombineSections" \
+                  -N $Ne \
+                  --chunk_index ${chunk_index} \
+                  -o ${output} </code></pre>
+                  Output: temporary files<br/>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="Finalize"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>7. Finalize output</h4></div>
+                <div class="panel-body">  
+
+                  <p> 
+                  <ul>
+                    <li>Argument -o specifies the output filename without file extension.</li>
+                  </ul>
+
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/bin/Relate \
+                  --mode "Finalize" \
+                  -o ${output} </code></pre>
+                  Output: ${output}.anc, ${output}.mut<br/>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="Finalize"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <p>
+              <h5>File formats</h5>
+              </p> 
+              <div class="table-responsive">
+                <table class="table">
+                  <tbody>
+                    <tr>
+                      <a class="anchor" name=".coal"></a> 
+                      <td>.anc</td>
+                      <td>
+
+                        <pre><code></pre></code>
+                      </td>
+                    </tr>
+                    <tr>
+                      <a class="anchor" name=".coal"></a> 
+                      <td>.mut</td>
+                      <td>
+
+                        <pre><code></pre></code>
+                      </td>
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+
+
+        </div>
+
+      </div>
+
+
+  </body>
+</html>     

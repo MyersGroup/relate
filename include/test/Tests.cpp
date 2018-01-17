@@ -1,0 +1,5 @@
+#include "test_log.cpp"
+#include "test_painting.cpp"
+#include "test_treebuilder.cpp"
+#include "test_ancbuilder.cpp"
+#include "test_applications.cpp"

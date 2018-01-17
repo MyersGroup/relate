@@ -1,0 +1,8 @@
+add_executable(RelateCoalescentRate coalescent_rate/RelateCoalescentRate.cpp)
+target_link_libraries(RelateCoalescentRate relateStatic)
+
+add_executable(RelateSelection selection/RelateSelection.cpp)
+target_link_libraries(RelateSelection relateStatic)
+
+add_executable(RelateMutationRate mutation_rate/RelateMutationRate.cpp)
+target_link_libraries(RelateMutationRate relateStatic)
