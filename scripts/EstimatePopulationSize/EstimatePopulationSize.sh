@@ -9,17 +9,17 @@ if [ $# -le 0 ]
 then
   echo ""
   echo "Not enough arguments supplied. Execute as"
-  echo "./EstimatePopulationSize.sh"
+  echo "PATH_TO_RELATE/scripts/EstimatePopulationSize.sh"
   echo ""
-  echo "--path:      Path to Relate." 
   echo "-i,--input:  Filename of .anc and .mut files without file extension." 
   echo "-o, --output:"
   echo "-m,--mu:     Mutation rate, e.g., 1.25e-8."
   echo "--poplabels: Filename of .poplabels file."
-  echo "--threshold: Used to delete trees with less than specified number of mutations. Use 0 to use all trees."
-  echo "--num_bins:  "
-  echo "--first_chr: "
-  echo "--last_chr:  "
+  echo "--threshold: Optional: Used to delete trees with less than specified number of mutations. Use 0 to use all trees."
+  echo "--num_bins:  Optional: Number of bins between 1,000ybp and 10,000,000 ybp. Default is 30."
+  echo "--first_chr: Optional: Index of fist chr"
+  echo "--last_chr:  Optional: Index of last chr"
+  echo "--seed:      Optional: Random seed for branch lengths estimation"
   echo ""
   exit 1;
 fi
@@ -27,6 +27,9 @@ fi
 #chr
 #num_bins
 #threads
+
+PATH_TO_RELATE=$0
+PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/EstimatePopulationSize/EstimatePopulationSize.sh '{print $1}')
 
 ######################################################################################################
 
@@ -38,11 +41,6 @@ do
   key="$1"
 
   case $key in
-    --path)
-      PATH_TO_RELATE="$2"
-      shift # past argument
-      shift # past value
-      ;;
     -i|--input)
       filename="$2"
       shift # past argument
@@ -83,6 +81,11 @@ do
       shift # past argument
       shift # past value
       ;;
+    --seed)
+      seed="$2"
+      shift # past argument
+      shift # past value
+      ;;
 
     *)    # unknown option
       POSITIONAL+=("$1") # save it in an array for later
@@ -115,6 +118,10 @@ fi
 if [ ! -z "${last_chr-}" ];
 then
   echo "last_chr  = $last_chr"
+fi
+if [ ! -z "${seed-}" ];
+then
+  echo "seed      = $seed"
 fi
 echo "********************************"
 
@@ -168,14 +175,27 @@ then
 
     fi
 
-    ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-      --mode ReEstimateBranchLengths \
-      --coal ${output}.coal \
-      --mrate ${output}_avg.rate \
-      --dist ${output}.dist \
-      -m 1.25e-8 \
-      -i ${output} \
-      -o ${output}
+    if [ -z "${seed-}" ];
+    then
+      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+        --mode ReEstimateBranchLengths \
+        --coal ${output}.coal \
+        --mrate ${output}_avg.rate \
+        --dist ${output}.dist \
+        -m 1.25e-8 \
+        -i ${output} \
+        -o ${output}
+    else
+      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+        --mode ReEstimateBranchLengths \
+        --coal ${output}.coal \
+        --mrate ${output}_avg.rate \
+        --dist ${output}.dist \
+        --seed $seed \
+        -m 1.25e-8 \
+        -i ${output} \
+        -o ${output}
+    fi
 
   done
 
@@ -284,14 +304,27 @@ else
 
     for chr in `seq ${first_chr} 1 ${last_chr}`
     do
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode ReEstimateBranchLengths \
-        --coal ${output}.coal \
-        --mrate ${output}_avg.rate \
-        --dist ${output}_chr${chr}.dist \
-        -m 1.25e-8 \
-        -i ${output}_chr${chr} \
-        -o ${output}_chr${chr}
+      if [ -z "${seed-}" ];
+      then
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode ReEstimateBranchLengths \
+          --coal ${output}.coal \
+          --mrate ${output}_avg.rate \
+          --dist ${output}.dist \
+          -m 1.25e-8 \
+          -i ${output} \
+          -o ${output}
+      else
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode ReEstimateBranchLengths \
+          --coal ${output}.coal \
+          --mrate ${output}_avg.rate \
+          --dist ${output}.dist \
+          --seed $seed \
+          -m 1.25e-8 \
+          -i ${output} \
+          -o ${output}
+      fi
     done
 
   done
@@ -357,7 +390,7 @@ else
 fi
 
 #plot results
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="${PATH_TO_RELATE}/scripts/EstimatePopulationSize/"
 Rscript ${DIR}/plot_population_size.R ${output}
 
 

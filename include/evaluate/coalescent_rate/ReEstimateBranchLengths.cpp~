@@ -94,7 +94,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     }
     is_dist.close();
   }else{
-    std::vector<double>::iterator it_pos = data.pos.begin();
+    std::vector<int>::iterator it_pos = data.pos.begin();
     for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
       *it_pos = (*it_mut).dist;
       it_pos++;

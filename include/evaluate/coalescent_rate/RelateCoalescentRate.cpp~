@@ -108,14 +108,14 @@ int main(int argc, char* argv[]){
       exit(0);
     }  
 
-    ReEstimateBranchLengths(options);
+    ReEstimateBranchLengths(options, seed);
 
   }else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "EstimatePopulationSize, ReEstimateBranchLengths, CoalescentRateForSection, SummarizeCoalescentRateForChr, SummarizeCoalescentRateForGenome, FinalizePopulationSize." << std::endl;
+    std::cout << "EstimatePopulationSize, ReEstimateBranchLengths, CoalescentRateForSection, SummarizeCoalescentRateForGenome, FinalizePopulationSize." << std::endl;
   
   }
 

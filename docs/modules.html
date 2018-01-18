@@ -120,12 +120,13 @@
                     <li>Optional argument --num_bins specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </li>
                     <li>Optional arguments --first_chr, --last_chr allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
                       Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</li>
+                    <li>Optional argument --seed specifies a seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</li>
                   </ul>
                   <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
-              --path PATH_TO_RELATE \
               -i example \
               -m 1.25e-8 \
               --poplabels data/example.poplabels \
+              --seed 1 \
               -o example_popsize</code></pre>
                   <h4>Output</h4>
                   <div class="table-responsive">
@@ -272,6 +273,8 @@
                       <li>Argument --mrate is used to specify the file containing the average mutation rate. Generated using <a href="modules.html#AvgMutationRate">this function</a></li>
                       <li>Argument --coal is used to specify the file containing coalescent rates. Generated using <a href="modules.html#CoalescenceRate">this function</a> (do not specify option --poplabels for this)</li>
                       <li>Optional argument --dist is used to specify distances between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>.
+                        <li>Optional argument --seed specifies a seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</li>
+
 
                     </ul>
 

@@ -35,6 +35,8 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   int seed;
   if(!options.count("seed")){
     seed = std::time(0) + getpid();
+  }else{
+    seed = options["seed"].as<int>();
   }
 
   int Ne = 3e4;

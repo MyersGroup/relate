@@ -1,3 +1,9 @@
+
+#check if packages are installed
+list.of.packages <- c("ggplot2", "grid", "gridExtra")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
 library(ggplot2)
 library(grid)
 library(gridExtra)
