@@ -18,7 +18,6 @@ then
   echo "Not enough arguments supplied. Execute as"
   echo "./RelateParallel"
   echo ""
-  echo "--path:   Path to Relate."  
   echo "--haps:   Filename of haps file (Output file format of Shapeit)."
   echo "--sample: Filename of sample file (Output file format of Shapeit)."
   echo "--map:    Genetic map."
@@ -29,9 +28,12 @@ then
   echo "--annot:  Optional. Filename of file containing additional annotation of snps. Can be generated using RelateFileFormats."
   echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB." 
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
+  echo "--threads:Optional. Number of threads used."
   exit 1;
 fi
 
+PATH_TO_RELATE=$0
+PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/RelateParallel/RelateParallel.sh '{print $1}')
 
 ######################################################################################################
 
@@ -45,11 +47,6 @@ do
   key="$1"
 
   case $key in
-    --path)
-      PATH_TO_RELATE="$2"
-      shift # past argument
-      shift # past value
-      ;;
     --haps)
       haps="$2"
       shift # past argument

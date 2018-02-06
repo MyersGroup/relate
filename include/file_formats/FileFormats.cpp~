@@ -50,6 +50,15 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
   std::ifstream is_legend(options["input"].as<std::string>() + ".legend");
   FILE* fp_haps   = fopen((options["haps"].as<std::string>()).c_str(), "w");
 
+  if(is_hap.fail()){
+    std::cerr << "Error while opening file " << options["input"].as<std::string>() + ".hap" << "." << std::endl;
+    exit(1);
+  } 
+  if(is_legend.fail()){
+    std::cerr << "Error while opening file " << options["input"].as<std::string>() + ".legend" << "." << std::endl;
+    exit(1);
+  } 
+
   int bp1, bp2, bp3;
   char rsid1[40], rsid2[40], rsid3[40];
   char type1[40], type2[40], type3[40];
@@ -335,7 +344,6 @@ ConvertFromVcf(cxxopts::Options& options){
     c++;
   }
   os_sample.close();
-  std::cerr << N_prev << " " << N << std::endl;
   assert(N == N_prev);
 
 
@@ -381,6 +389,11 @@ RemoveNonBiallelicSNPs(cxxopts::Options& options){
 
   std::ifstream is_haps(options["haps"].as<std::string>());
   std::ofstream os_haps(options["haps"].as<std::string>() + ".unique");
+
+  if(is_haps.fail()){
+    std::cerr << "Error while opening file " << options["input"].as<std::string>() << "." << std::endl;
+    exit(1);
+  } 
 
   int chr;
   char rsid[40];
@@ -477,6 +490,10 @@ RemoveSamples(cxxopts::Options& options){
   std::string line;
   std::vector<std::string> id_remove;
   std::ifstream is_rem(options["input"].as<std::string>());
+  if(is_rem.fail()){
+    std::cerr << "Error while opening file " << options["input"].as<std::string>() << "." << std::endl;
+    exit(1);
+  } 
   while(getline(is_rem, line)){
     id_remove.push_back(line);
   }
@@ -485,6 +502,11 @@ RemoveSamples(cxxopts::Options& options){
   std::ifstream is(options["sample"].as<std::string>());
   std::ofstream os(options["output"].as<std::string>() + ".sample");
   std::vector<int> remaining_haps(data.N - 2*id_remove.size());
+
+  if(is.fail()){
+    std::cerr << "Error while opening file " << options["sample"].as<std::string>() << "." << std::endl;
+    exit(1);
+  } 
 
   os << "ID_1\tID_2\tmissing\n";
   os << "0\t0\t0\n";
@@ -529,11 +551,15 @@ RemoveSamples(cxxopts::Options& options){
     num_carriers = 0;
     for(int k = 0; k < remaining_haps.size(); k++){
       sequence_new[k] = sequence[remaining_haps[k]];
-      num_carriers   += sequence_new[k];
+      if(sequence_new[k] == '1'){
+        num_carriers++;
+      }
     }
-    if(num_carriers > 0){
+    if(num_carriers > 0 && num_carriers < remaining_haps.size()){
       m_hap.DumpSNP(sequence_new, bp, fp);
       L_new++;
+    }else{
+      std::cerr << num_carriers << std::endl;
     }
 
   }

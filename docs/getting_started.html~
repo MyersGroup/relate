@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Relate Documentation</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <!-- Scrollbar Custom CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
+    <link rel="stylesheet" href="documentation.css"> 
+
+  </head>
+
+  <body>
+
+    <nav id="myNavbar" class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbarCollapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html">Relate</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="getting_started.html">Getting Started</a></li>
+            <li><a href="preparing_data.html">Input data</a></li>
+            <li><a href="modules.html">Add-on modules</a></li>
+            <li><a href="parallelise.html">Parallelise Relate</a></li>
+          </ul>
+        </div>
+      </div>
+
+    </nav>
+
+    <!-- CONTENT -->
+
+
+    <div class="wrapper">
+
+      <!-- Sidebar Holder -->
+      <nav id="sidebar">
+
+        <div class="sidebar-header">
+          <h3>Overview</h3>
+        </div>
+
+        <ul class="list-unstyled components">
+          <li>
+            <a href="#Requirements">Requirements</a>
+          </li>
+          <li>
+            <a href="#Installation">Installation</a>
+          </li>
+          <li>
+            <a href="#PreparingData">Preparing the data</a>
+          </li>
+          <li>
+            <a href="#GettingStarted">Getting started</a>
+          </li>
+          <li>
+            <a href="#Output">Output and analysis</a>
+          </li>
+
+        </ul>
+
+      </nav>
+
+      <!-- Page Content Holder -->
+      <div id="content">
+
+
+
+        <div class="container-fluid">
+          <div class="col-md-10 col-md-offset-1">
+
+            <a class="anchor" name="Requirements"></a>
+            <h2> Requirements </h2>
+            <b>Relate</b> requires C++11 and cmake version 3.1.<br/>
+
+            If you do not have cmake, you can download pre-compiled binaries and source files of cmake <a href="https://cmake.org/download/">here</a>.
+
+            <a class="anchor" name="Installation"></a>
+            <h2> Installation </h2>
+
+            <p> Download <b>Relate</b> from <a href="https://github.com/leospeidel/relate">this git repository</a> to a local directory.<br/>
+            Then compile the code: </p>
+            <pre><code>cd PATH_TO_RELATE/</b> 
+mkdir build</b>
+cd build
+cmake ..
+make</code></pre>
+            <p> After compiling the source code, you should find the binaries in <b>bin/</b>.<br/> 
+
+            <a class="anchor" name="PreparingData"></a>
+            <h2>Preparing the data</h2>
+
+            <p> For details please refer to <a href="preparing_data.html#ConvertFromVcf">here</a>.</p>
+
+            <p><b>Relate</b> uses the haps/sample file format (output file format of <a href="https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html">SHAPEIT2</a>) as input. 
+            <ul>
+              <li>You can convert from <b>vcf</b> to <b>haps/sample</b> using <a href="preparing_data.html#ConvertFromVcf">this function</a> and from <b>hap/legend/sample</b> to <b>haps/sample</b> using <a href="preparing_data.html#ConvertFromHapLegendSample">this function</a>.</li>
+              <li>Please make sure that, for every SNP, the ancestral allele is denoted by 0 and the alternative allele is denoted by 1. We provide a tool for doing this <a href="preparing_data.html#FlipHapsUsingAncestor">here</a>.</li> 
+              <li>Please also make sure that every SNP is biallelic. A tool for removing non-biallelic SNPs can be found <a href="preparing_data.html#RemoveNonBiallelicSNPs">here</a>.</li>
+              <li>Optional: We provide a tool for filtering SNPs (and adjusting distances between SNPs) using a genomic mask <a href="preparing_data.html#FilterHapsUsingMask">here</a>.</li>
+            </ul>
+            </p>
+            <p>You can find a toy data set in the subdirectory <a href="https://github.com/leospeidel/relate"><b>example/</b></a>. </p>
+
+
+            <a class="anchor" name="GettingStarted"></a>
+            <h2>Getting Started</h2>
+
+            <div class="alert alert-warning">
+              <strong>Warning!</strong><br/>
+              <b>Relate</b> creates temporary files and directories.<br/>
+              DO NOT RUN MORE THAN ONE INSTANCE OF <b>RELATE</b> IN THE SAME DIRECTORY.<br/>
+              (You can run <b>Relate</b> in different subdirectories.)
+            </div>
+ 
+            <p>If you are not using the example data set, create a new working directory. Then, create a subdirectory called <b>data/</b>.</p>
+            <div class="col-xs-offset-0.5 col1">
+              <pre><code>mkdir example
+cd example
+mkdir data</code></pre>
+            </div>
+
+            <p>In the subdirectory <b>data/</b>, place the following three files
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <tbody>
+                  <tr>
+                    <td>haps</td>
+                    <td>A file containing haplotype information (<a href="preparing_data.html#haps">more info</a>)</td>
+                  </tr>
+                  <tr>
+                    <td>sample</td>
+                    <td>A file containing information about individuals in the data set (<a href="preparing_data.html#sample">more info</a>)</td>
+                  </tr>
+                  <tr>
+                    <td>map</td>
+                    <td>A file containing recombination rates and distances (<a href="preparing_data.html#map">more info</a>)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            </p>
+
+            <p>
+            Now change back to the parent directory <b>example/</b> and execute
+            <pre><code> PATH_TO_RELATE/bin/Relate \
+      --mode All \
+      -m 1.25e-8 \
+      -N 30000 \
+      --haps data/example.haps \
+      --sample data/example.sample \
+      --map data/genetic_map.txt \
+      --seed 1 \
+      -o example</code></pre>
+            Output files are <b>example.anc</b> and <b>example.mut</b>. </p>
+
+            <p>
+            We are specifying the following arguments:
+            <div class="table-responsive">
+
+              <table class="table table-hover"  style="width 100%">
+
+                <colgroup>
+                  <col span="1" style="width: 10%;">
+                  <col span="1" style="width: 90%;">
+                </colgroup>
+
+
+                <tbody>
+                  <tr>
+                    <td>mode</td>
+                    <td>Mode in which to run <b>Relate</b>. Mode "All" will execute all stages of the algorithm and other modes can be used to execute individual stages (see <a href="documentation.html">here</a>). This is useful, for instance, when parallelizing <b>Relate</b>.</td>
+                  </tr>
+                  <tr>
+                    <td>m</td>
+                    <td>mutation rate per base per generation.</td>
+                  </tr>
+                  <tr>
+                    <td>N</td>
+                    <td>Effective population size of haplotypes. (NOT of individuals! To get the population size of haplotypes, multiply the effective population size of individuals by 2)</td>
+                  </tr>
+                  <tr>
+                    <td>haps</td>
+                    <td>Filename of haps file.</td>
+                  </tr>
+                  <tr>
+                    <td>sample</td>
+                    <td>Filename of sample file.</td>
+                  </tr>
+                  <tr>
+                    <td>map</td>
+                    <td>Filename of genetic map.</td>
+                  </tr>
+                  <tr>
+                    <td>seed</td>
+                    <td>Optional: Seed for random number generator used for branch lengths estimation.</td>
+                  </tr>
+                  <tr>
+                    <td>o</td>
+                    <td>Filename of output files without file extension.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div> 
+            <b>Relate</b> has a few more optional arguments. 
+            <ul>
+              <li>With the --dist option, we can specify distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="preparing_data.html#FilterHapsUsingMask">here</a>).</li> 
+              <li>With the --annot option, we can add columns to the .mut file. This can also be done after running <b>Relate</b> (a tool for generating a .annot file and/or appends columns to the .mut file can be found <a href="preparing_data.html#GenerateSNPAnnotations">here</a>).</li>
+              <li>With the --memory option, we can specify the approximate memory allowance (in GB) used for storing the distance matrices in memory. <b>Relate</b> will exceed this amount, as it also stores trees and other information in memory; however the option allows to approximately control memory usage. Default is 5GB. <b>Relate</b> can become more efficient (in runtime and hard disk usage) with more memory, particularly for large sample sizes.</li> 
+              <li>Arguments --chunk_index, --first_section, --last_section are only relevant when executing <b>Relate</b> in a mode other that <b>All</b>. This is needed for parallelising <b>Relate</b> (<a href="parallelise.html">more info</a>).</li>
+              <li>Programme options can also be viewed by executing
+                <pre><code> PATH_TO_RELATE/bin/Relate</code></pre></li>
+            </ul>
+            <br/>
+            </p>
+
+            <a class="anchor" name="Output"></a>
+            <h2>Output and analysis</h2>
+
+            <p><b>Relate</b> outputs two files.</p>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <tbody>
+                  <tr>
+                    <td>.anc </td>
+                    <td>This file contains the trees. The first line shows the number of haplotypes. The second line shows the number of trees. <br/>
+                      Then, each line represents one tree. 
+                      <ul>
+
+                        <li> Every line starts with an integer specifying at which SNP the tree begins. </li>
+                        <li> Then, the i'th space separated entry shows the parent of the i'th internal node. In brackets we specify the branch length, the number of mutations on this branch, the SNP at which the branch appears, and the SNP at which the branch disappears.</li>
+                      </ul></td>
+                  </tr>
+                  <tr>
+                    <td>.mut </td> 
+                    <td>This file contains detailed information about each SNP. The header describes each column.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h4> Using the output </h4>
+            
+              <p>We provide a number of add-on modules to analyse the genealogy (look <a href="modules.html">here</a> for details).</p>
+
+              <ul>
+                <li><b>Estimate population size</b>: You can find a bash script under <b>scripts/EstimatePopulationSize/EstimatePopulationSize.sh</b>. To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="preparing_data.html#poplabels">here</a> for file format). Details about the functions used in the script can be found <a href="modules.html#CoalescenceRate">here</a>) </li>
+                <li><b>Estimate mutation rates</b>: You can estimate mutation rates using <a href="modules.html#MutationRate">this module</a>. </li>
+                <li><b>Calculate p-values for selection evidence</b>: You can calculate a pvalue for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. </li>
+                <li><b>Extract trees of interest</b>: You can extract trees in .newick format, or get genealogies for subpopulations using <a href="modules.html#Extract">this module</a>. </li>
+              </ul>
+
+            </div>
+
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+  </body>
+</html>                            
