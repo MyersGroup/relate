@@ -253,70 +253,6 @@ ConvertFromVcf(cxxopts::Options& options){
     getline(is_vcf,line);
   }
 
-  int N_prev = -1;
-  int N = 0;
-
-  std::vector<char> sequence;
-  do{
-
-    sscanf(line.c_str(), "%d %d %s %c %c", &chr, &bp, rsid, &ancestral, &alternative);
-    int c = 0;
-    for(int k = 0; k < 9; k++){
-      while(line[c] != '\t' && line[c] != ' '){
-        c++;
-      }
-      c++;
-    }
-    fprintf(fp_haps, "%d %s %d %c %c", chr, rsid, bp, ancestral, alternative);
-
-    N = 0;
-    while(c < line.size()-2){
-      if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '0'){
-        N++;
-        fprintf(fp_haps, " %c %c", line[c], line[c+2]);
-        c += 2;
-      }else if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '1'){
-        N++;
-        fprintf(fp_haps, " %c %c", line[c], line[c+2]);
-        c += 2;
-      }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '0'){
-        N++;
-        fprintf(fp_haps, " %c %c", line[c], line[c+2]);
-        c += 2;
-      }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '1'){
-        N++;
-        fprintf(fp_haps, " %c %c", line[c], line[c+2]);
-        c += 2;
-      }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '0'){
-        N++;
-        fprintf(fp_haps, " %c %c", line[c], line[c+2]);
-        c += 2;
-      }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '1'){
-        N++;
-        fprintf(fp_haps, " %c %c", line[c], line[c+2]);
-        c += 2;
-      }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '0'){
-        N++;
-        fprintf(fp_haps, " %c %c", line[c], line[c+2]);
-        c += 2;
-      }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '1'){
-        N++;
-        fprintf(fp_haps, " %c %c", line[c], line[c+2]);
-        c += 2;
-      }
-
-      c++;
-    }
-    fprintf(fp_haps, "\n");
-
-    if(N_prev == -1) N_prev = N;
-    if(N_prev != -1){
-      assert(N == N_prev);
-    }
-
-  }while(getline(is_vcf, line));
-  fclose(fp_haps);
-  is_vcf.close();
 
   //create sample file (not dependent on input)
   std::ofstream os_sample(options["sample"].as<std::string>());
@@ -333,7 +269,7 @@ ConvertFromVcf(cxxopts::Options& options){
   os_sample << "0\t0\t0\n";
 
   char id[40];
-  N = 0;
+  int N = 0;
   while(c < line_id.size()){
     N++;
     sscanf(&(line_id.c_str())[c], "%s", id);
@@ -344,8 +280,95 @@ ConvertFromVcf(cxxopts::Options& options){
     c++;
   }
   os_sample.close();
-  assert(N == N_prev);
 
+  //create haps file
+  int N_prev = N;
+
+  std::vector<char> sequence;
+  do{
+
+    sscanf(line.c_str(), "%d %d %s %c %c", &chr, &bp, rsid, &ancestral, &alternative);
+    int c = 0;
+    for(int k = 0; k < 9; k++){
+      while(line[c] != '\t' && line[c] != ' '){
+        c++;
+      }
+      c++;
+    }
+
+    std::vector<char> seq(2*N_prev);
+    N = 0;
+    int freq = 0;
+    while(c < line.size()-2){
+      if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '0'){
+        if(N >= N_prev) break;
+        seq[2*N] = line[c];
+        seq[2*N+1] = line[c+2];
+        N++;
+        c += 2;
+      }else if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '1'){
+        if(N >= N_prev) break;
+        seq[2*N] = line[c];
+        seq[2*N+1] = line[c+2];
+        N++;
+        freq++;
+        c += 2;
+      }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '0'){
+        if(N >= N_prev) break;
+        seq[2*N] = line[c];
+        seq[2*N+1] = line[c+2];
+        N++;
+        freq++;
+        c += 2;
+      }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '1'){
+        if(N >= N_prev) break;
+        seq[2*N] = line[c];
+        seq[2*N+1] = line[c+2];
+        N++;
+        freq += 2;
+        c += 2;
+      }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '0'){
+        if(N >= N_prev) break;
+        seq[2*N] = line[c];
+        seq[2*N+1] = line[c+2];
+        N++;
+        c += 2;
+      }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '1'){
+        if(N >= N_prev) break;
+        seq[2*N] = line[c];
+        seq[2*N+1] = line[c+2];
+        N++;
+        freq++;
+        c += 2;
+      }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '0'){
+        if(N >= N_prev) break;
+        seq[2*N] = line[c];
+        seq[2*N+1] = line[c+2];
+        N++;
+        freq++;
+        c += 2;
+      }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '1'){
+        if(N >= N_prev) break;
+        seq[2*N] = line[c];
+        seq[2*N+1] = line[c+2];
+        N++;
+        freq += 2;
+        c += 2;
+      }
+      c++;
+    }
+
+    if(N == N_prev && freq > 0){
+      fprintf(fp_haps, "%d %s %d %c %c", chr, rsid, bp, ancestral, alternative);
+      for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
+        fprintf(fp_haps, " %c", *it_seq);
+      }
+      fprintf(fp_haps, "\n");
+    }
+
+  }while(getline(is_vcf, line));
+  fclose(fp_haps);
+  is_vcf.close();
 
   std::cerr << "Output written to " << options["haps"].as<std::string>() << " and " << options["sample"].as<std::string>() << "." << std::endl;
 
@@ -558,8 +581,6 @@ RemoveSamples(cxxopts::Options& options){
     if(num_carriers > 0 && num_carriers < remaining_haps.size()){
       m_hap.DumpSNP(sequence_new, bp, fp);
       L_new++;
-    }else{
-      std::cerr << num_carriers << std::endl;
     }
 
   }

@@ -8,6 +8,7 @@
 #include "cxxopts.hpp"
 #include "data.hpp"
 #include "anc.hpp"
+#include "branch_length_estimator.hpp"
 #include "anc_builder.hpp"
 
 int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_section, int last_section){
@@ -15,7 +16,7 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
   bool help = false;
   if(!options.count("effectiveN") || !options.count("mutation_rate") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: effectiveN, mutation_rate, first_section, last_section, output." << std::endl;
+    std::cout << "Needed: effectiveN, mutation_rate, first_section, last_section, output. Optional: coal." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -47,7 +48,53 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Inferring branch lengths of AncesTrees in sections " << first_section << "-" << last_section << "..." << std::endl;
-  
+ 
+  bool is_coal = false;
+  if(options.count("coal")){
+
+    is_coal = true;
+    // read epochs and population size 
+    std::ifstream is(options["coal"].as<std::string>()); 
+    std::vector<double> epoch, coalescent_rate;
+    getline(is, line);
+    getline(is, line);
+    std::istringstream is_epoch(line);
+    while(is_epoch){
+      is_epoch >> tmp;
+      epoch.push_back(tmp/data.Ne);
+    }
+    getline(is, line);
+    is.close();
+
+    std::istringstream is_pop_size(line);
+    is_pop_size >> tmp >> tmp;
+    while(is_pop_size){
+      is_pop_size >> tmp;
+      //tmp = 1.0/data.Ne; 
+      if(tmp == 0.0 && coalescent_rate.size() > 0){
+        if(*std::prev(coalescent_rate.end(),1) > 0.0){
+          coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
+        }
+        //coalescent_rate.push_back(1);
+      }else{
+        coalescent_rate.push_back(tmp * data.Ne);
+      }
+    }
+
+    for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
+      if(coalescent_rate[i-1] == 0){
+        if(coalescent_rate[i] > 0.0){
+          coalescent_rate[i-1] = coalescent_rate[i];
+        }else{
+          coalescent_rate[i-1] = 1.0;
+        }
+      } 
+    } 
+
+  }
+
+
+
   //////////////////////////////////
   //Parse Data
   if(first_section >= num_windows) return 1;
@@ -69,10 +116,17 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
 
     //Infer branch lengths
     InferBranchLengths bl(data);
-    for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
-      //bl.EM(data,(*it_seq).tree, true); //this is estimating times
-      bl.MCMC(data, (*it_seq).tree, seed); //this is estimating times
-      //bl.GradientEM(data, (*it_seq).tree);
+    //EstimateBranchLengths bl2(data);
+
+    if(is_coal){
+      for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
+        bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
+      }
+    }else{
+      for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
+        bl.MCMC(data, (*it_seq).tree, seed); //this is estimating times
+        //bl2.MCMC(data, (*it_seq).tree, seed); //this is estimating times
+      }
     }
 
     //Dump to file

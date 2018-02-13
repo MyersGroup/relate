@@ -109,6 +109,7 @@ make</code></pre>
 
             <p><b>Relate</b> uses the haps/sample file format (output file format of <a href="https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html">SHAPEIT2</a>) as input. 
             <ul>
+              <li>Please separate your data by chromosome.</li>
               <li>You can convert from <b>vcf</b> to <b>haps/sample</b> using <a href="preparing_data.html#ConvertFromVcf">this function</a> and from <b>hap/legend/sample</b> to <b>haps/sample</b> using <a href="preparing_data.html#ConvertFromHapLegendSample">this function</a>.</li>
               <li>Please make sure that, for every SNP, the ancestral allele is denoted by 0 and the alternative allele is denoted by 1. We provide a tool for doing this <a href="preparing_data.html#FlipHapsUsingAncestor">here</a>.</li> 
               <li>Please also make sure that every SNP is biallelic. A tool for removing non-biallelic SNPs can be found <a href="preparing_data.html#RemoveNonBiallelicSNPs">here</a>.</li>
@@ -221,6 +222,7 @@ mkdir data</code></pre>
             <ul>
               <li>With the --dist option, we can specify distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="preparing_data.html#FilterHapsUsingMask">here</a>).</li> 
               <li>With the --annot option, we can add columns to the .mut file. This can also be done after running <b>Relate</b> (a tool for generating a .annot file and/or appends columns to the .mut file can be found <a href="preparing_data.html#GenerateSNPAnnotations">here</a>).</li>
+              <li>With the --coal option, we can specify variable coalescence rates through time in form of a .coal file. See <a href="modules.html#.coal"> here </a> for file format. Specifying this option will overwrite the --effectiveN option.</li>
               <li>With the --memory option, we can specify the approximate memory allowance (in GB) used for storing the distance matrices in memory. <b>Relate</b> will exceed this amount, as it also stores trees and other information in memory; however the option allows to approximately control memory usage. Default is 5GB. <b>Relate</b> can become more efficient (in runtime and hard disk usage) with more memory, particularly for large sample sizes.</li> 
               <li>Arguments --chunk_index, --first_section, --last_section are only relevant when executing <b>Relate</b> in a mode other that <b>All</b>. This is needed for parallelising <b>Relate</b> (<a href="parallelise.html">more info</a>).</li>
               <li>Programme options can also be viewed by executing

@@ -1,1 +1,0 @@
-/bin/c++  -O3  -rdynamic CMakeFiles/RelateExtract.dir/RelateExtract.cpp.o  -o ../../../bin/RelateExtract ../../../bin/librelateStatic.a 

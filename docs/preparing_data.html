@@ -202,7 +202,7 @@
                     <li>Use argument --chr to specify a chromosome index [int] (used as the first column in the haps file).</li>
                   </ul>
 
-                  <pre><code> PATH_TO_RELATE/bin/RelateFileFormat \
+                  <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode ConvertFromHapLegendSample \
                  --haps example.haps \
                  --sample example.sample \
@@ -231,7 +231,7 @@
                     <li>Argument -i is used to specify the input filename (without file extension).</li>
                   </ul>
 
-                  <pre><code> PATH_TO_RELATE/bin/RelateFileFormat \
+                  <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode ConvertFromVcf \
                  --haps example.haps \
                  --sample example.sample \
@@ -263,7 +263,7 @@
               <div class="panel-body">  
 
                 Removes SNPs that are not biallelic in the data set.
-                <pre><code> PATH_TO_RELATE/bin/RelateFileFormat \
+                <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode RemoveNonBiallelicSNPs \
                  --haps example.haps \
                  --sample example.sample \
@@ -287,7 +287,7 @@
               <div class="panel-body">  
 
                 Write ids of individuals as specified in the .sample file into remove_ids.txt (one id per line). These indivduals will be removed from the data set.
-                <pre><code> PATH_TO_RELATE/bin/RelateFileFormat \
+                <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode RemoveSamples \
                  --haps example.haps \
                  --sample example.sample \
@@ -312,7 +312,7 @@
               <div class="panel-body">  
 
                 The ancestral genome should be saved as a fasta file and aligned to the data set. The code is insensitive to case in the fasta file and deletes SNPs at which neither allele matches the ancestral allele.
-                <pre><code> PATH_TO_RELATE/bin/RelateFileFormat \
+                <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode FlipHapsUsingAncestor \
                  --haps example.haps \
                  --sample example.sample \
@@ -337,7 +337,7 @@
               <div class="panel-body">  
 
                 The genomic mask should be saved as a fasta file and aligned to the data set. Denote the passing state by P. The code deletes all SNPs that are not passing. It also outputs a .dist file that contains the distances between SNPs, adjusted for regions that are not passing in the mask.
-                <pre><code> PATH_TO_RELATE/bin/RelateFileFormat \
+                <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode FilterHapsUsingMask\
                  --haps example.haps \
                  --sample example.sample \
@@ -363,7 +363,7 @@
               <div class="panel-body">  
 
                 This code uses the ancestral genome and population labels of samples to append additional information to the output of <b>Relate</b>. Fileformat for population labels is described <a href="preparing_data.html#poplabels">here</a>. The ancestral genome should be saved in fasta file format and aligned to the data set. Argument --ancestor is optional. If argument --mut is specified, output is directly appended to the .mut file.</br>
-                        <pre><code> PATH_TO_RELATE/bin/RelateFileFormat \
+                        <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode GenerateSNPAnnotations \
                  --haps example.haps \
                  --sample example.sample \

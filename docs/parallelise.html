@@ -92,11 +92,11 @@
                 <div class="panel-body">  
 
                   <p> 
-                  We provide a bash script that parallelises <b>Relate</b> on multiple cores. The script can be found under <b>script/RelateParallel/RelateParallel.sh</b>. The script takes the same arguments (and same optional arguments) as Relate, and two additional arguments:
+                  We provide a bash script that parallelises <b>Relate</b> on multiple cores. The script can be found under <b>script/RelateParallel/RelateParallel.sh</b>. The script takes the same arguments (and same optional arguments) as Relate, and one additional argument:
                   <ul>
-                    <li>Argument --path specifies the path to Relate.</li>
                     <li>Argument --threads specifies the maximum number of cores that Relate is allowed to use.</li>
                   </ul>
+                  Do not move the script - we are extracting the path to the binaries from the location of the script!
                   </p> 
                   <pre><code> PATH_TO_RELATE/script/RelateParallel/RelateParallel.sh\
                   --path "PATH_TO_RELATE" \
@@ -364,7 +364,7 @@
                         --chunk_index ${chunk_index} \
                         -o ${output} 
                   done</code></pre>
-                  Here --first_section and --last_section are both set to $section, such that only trees in one section will be inferred at a time. You can also specify more than one section here.
+                  Here --first_section and --last_section are both set to $section, such that only trees in one section will be inferred at a time. You can also specify more than one section here. Optionally, you can specify the --coal option, with which we specify coalescence rates through time in form of a .coal file. See <a href="modules.html#.coal"> here </a> for file format. Specifying this option will overwrite the --effectiveN option.
                   </p>
 
                   <p>

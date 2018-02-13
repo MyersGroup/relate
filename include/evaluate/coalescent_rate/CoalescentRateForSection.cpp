@@ -100,7 +100,7 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
     exit(0);
   }  
 
-  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Calculating coalescent rate..." << std::endl;
 
 
@@ -183,9 +183,7 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   //In each tree, find the coalescent time. Then update count_per_epoche and coalescent_time_in_epoche. 
 
   float factor = 0.0;
-  const float denominator = 1e9; 
   CorrTrees::iterator it_anc = anc.seq.begin();
-  int tree_index = 0, snp = 0;
   for(; it_anc != std::prev(anc.seq.end(),1); it_anc++){
 
     std::vector<int> leaves;

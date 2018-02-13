@@ -16,9 +16,9 @@ int FinalizePopulationSize(cxxopts::Options& options){
   //Program options
 
   bool help = false;
-  if(!options.count("input") || !options.count("output")){
+  if(!options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output." << std::endl;
+    std::cout << "Needed: output." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -40,7 +40,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
   int num_epochs;
   std::vector<float> epoch;
 
-  FILE* fp = fopen((options["input"].as<std::string>() + ".bin").c_str(),"rb");
+  FILE* fp = fopen((options["output"].as<std::string>() + ".bin").c_str(),"rb");
   assert(fp != NULL);
 
   fread(&num_epochs, sizeof(int), 1, fp);
@@ -131,9 +131,9 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   //Program options
 
   bool help = false;
-  if(!options.count("poplabels") || !options.count("input") || !options.count("output")){
+  if(!options.count("poplabels") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: poplabels, input, output." << std::endl;
+    std::cout << "Needed: poplabels, output." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -156,7 +156,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   int num_epochs;
   std::vector<float> epoch;
 
-  FILE* fp = fopen((options["input"].as<std::string>() + ".bin").c_str(),"rb");
+  FILE* fp = fopen((options["output"].as<std::string>() + ".bin").c_str(),"rb");
   assert(fp != NULL);
 
   fread(&num_epochs, sizeof(int), 1, fp);
@@ -263,9 +263,9 @@ int FinalizePopulationSizeByHaplotype(cxxopts::Options& options){
   //Program options
 
   bool help = false;
-  if(!options.count("input") || !options.count("output")){
+  if(!options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output." << std::endl;
+    std::cout << "Needed: output." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -286,7 +286,7 @@ int FinalizePopulationSizeByHaplotype(cxxopts::Options& options){
   int num_epochs;
   std::vector<float> epoch;
 
-  FILE* fp = fopen((options["input"].as<std::string>() + ".bin").c_str(),"rb");
+  FILE* fp = fopen((options["output"].as<std::string>() + ".bin").c_str(),"rb");
   assert(fp != NULL);
 
   fread(&num_epochs, sizeof(int), 1, fp);

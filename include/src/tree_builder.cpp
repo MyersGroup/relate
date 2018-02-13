@@ -865,6 +865,20 @@ InferBranchLengths::RandomSwitchOrder(Tree& tree, int k, std::uniform_real_distr
 void
 InferBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif){
 
+  //Idea:
+  //
+  //For node_k = sorted_indices[k], look up order of parent and children
+  //Then, choose a node with order between children and parent uniformly at random.
+  //Check whether chosen node has order of children < k and order of parent > k
+  //If so, this is a valid transition - calculate likelihood ratio and accept transition with this probability
+  //Otherwise, reject transition immediately
+  //
+  //Notice that the transition probabilities are symmetric: 
+  //Distribution d_swap(child_order+1, parent_order-1); does not change after a transition.
+  //
+  //TODO: With tips that have nonzero coalescent time, we need to reject any transition proposed with these tips.
+  
+
   //This update is constant time.
   accept = true;
   int node_k, node_swap_k;
@@ -1053,7 +1067,7 @@ InferBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_re
   assert(num_lineages >= 2);
 
   k_choose_2 = num_lineages * (num_lineages-1.0)/2.0;
-  tau_old   = coordinates[sorted_indices[k]] - coordinates[sorted_indices[k-1]];
+  tau_old    = coordinates[sorted_indices[k]] - coordinates[sorted_indices[k-1]];
 
   log_likelihood_ratio = 0.0; 
   if(tau_old > 0.0){
@@ -1100,7 +1114,6 @@ InferBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_re
         log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
         log_likelihood_ratio += n.num_events * fast_log(tb_new/tb);
       }
-
     }
     if(order[(*tree.nodes[*it_sorted_indices].child_right).label] < k){
       count_number_of_spanning_branches++;
@@ -1147,219 +1160,6 @@ InferBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_re
       child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
       tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
     }
-  }
-  count_proposal++;
-
-}
-
-void
-InferBranchLengths::ChangeTimeWhilekAncestorsLocal(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif){
-
-  //This step is O(N)
-  num_lineages = 2*N-k;
-  assert(num_lineages <= N);
-  assert(num_lineages >= 2);
-
-  k_choose_2 = num_lineages * (num_lineages-1.0)/2.0;
-  int node_k = sorted_indices[k];
-  bool is_root = (tree.nodes[node_k].parent == NULL);
-
-
-  tau_old    = coordinates[node_k] - coordinates[sorted_indices[k-1]];
-  if(!(tau_old >= 0.0)){ 
-    std::cerr << k << " " << num_lineages << " " << node_k <<  " " << tau_old << std::endl;
-    std::cerr << coordinates[node_k] << " " << coordinates[sorted_indices[k-1]] << std::endl;
-  }
-  assert(tau_old >= 0.0);
-  double tau_max;
-  if(is_root){
-    tau_max = -1;
-  }else{
-    tau_max = coordinates[sorted_indices[k+1]] - coordinates[sorted_indices[k-1]];
-  }
-
-  //choose a random tau_new, given tau_old and calculate log_likelihood_ration from transition probabilities 
-  log_likelihood_ratio = 0.0; 
-  if(is_root){
-
-    if(tau_old > 0.0){
-      //choose tau_new according to Gamma(alpha, alpha/tau_old)
-      tau_new   = -fast_log(dist_unif(rng)) * tau_old;
-      delta_tau = tau_new - tau_old;
-      //calculate ratio of proposals
-      log_likelihood_ratio = fast_log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);
-      assert(tau_new > 0.0);
-    }else{
-      //choose tau_new according to Gamma(alpha, alpha/tau_old) 
-      tau_new   = -fast_log(dist_unif(rng))/k_choose_2;
-      delta_tau = tau_new - tau_old;
-      //calculate ratio of proposals
-      log_likelihood_ratio = fast_log(1.0/(tau_new*k_choose_2)) + tau_new*k_choose_2;
-      assert(tau_new > 0.0);
-    }
-
-  }else{
-
-    if(tau_max == 0.0){
-      log_likelihood_ratio = -std::numeric_limits<float>::infinity();
-    }else{
-      double x_new = dist_unif(rng);
-      tau_new      = x_new * tau_max;
-      delta_tau    = tau_new - tau_old;
-      //std::cerr << x_new << " " << tau_new << std::endl;
-      if(tau_old > 0.0){
-        log_likelihood_ratio = fast_log(tau_old/tau_new);
-      }else{
-        log_likelihood_ratio = std::numeric_limits<float>::infinity();
-      }
-
-      assert(tau_max > 0.0);
-      assert(tau_new > 0.0);
-      assert(tau_new < tau_max);
-    }
-
-    if(false){
-      if(tau_old > 0.0){ 
-        double x_old = tau_max/tau_old - 1.0;
-        double x_new = -fast_log(dist_unif(rng)) * x_old;
-        tau_new  = tau_max/(1.0 + x_new);
-        delta_tau = tau_new - tau_old;
-        //calculate ratio of proposals
-        log_likelihood_ratio = fast_log(x_old/x_new) + (x_new/x_old - x_old/x_new);
-        assert(tau_new > 0.0);
-        assert(tau_new < tau_max);
-      }else{
-        //assume uniform proposal to escape tau = 0
-        double x_new = -fast_log(dist_unif(rng));
-        tau_new  = tau_max/(1.0 + x_new);
-        delta_tau = tau_new - tau_old;
-        //calculate ratio of proposals
-        log_likelihood_ratio = std::numeric_limits<float>::infinity();
-        assert(tau_new > 0.0);
-        assert(tau_new < tau_max);
-      }
-    }
-
-  }
-
-  //std::cerr << tau_old << " " << tau_new << " " << tau_max << " " << log_likelihood_ratio << std::endl;
-
-  ////////////////////////
-
-  if( log_likelihood_ratio != std::numeric_limits<float>::infinity() && log_likelihood_ratio != -std::numeric_limits<float>::infinity() ){ 
-
-    //coalescent prior
-    if(is_root){
-      log_likelihood_ratio -= k_choose_2 * delta_tau;
-    }else{
-      log_likelihood_ratio -= 2.0/num_lineages * k_choose_2 * delta_tau;
-    }
-
-    //branch length of node k and children change
-    child_left_label  = (*tree.nodes[node_k].child_left).label;
-    child_right_label = (*tree.nodes[node_k].child_right).label;
-    child_left_num_events  = tree.nodes[child_left_label].num_events;
-    child_right_num_events = tree.nodes[child_right_label].num_events;
-
-    tb_child_left      = tree.nodes[child_left_label].branch_length;
-    tb_child_left_new  = tb_child_left + delta_tau;
-    tb_child_right     = tree.nodes[child_right_label].branch_length;
-    tb_child_right_new = tb_child_right + delta_tau;
-
-    if(!is_root){
-
-      n_num_events       = tree.nodes[node_k].num_events;
-      tb                 = tree.nodes[node_k].branch_length;
-      tb_new             = tb - delta_tau;
-
-      if(tb == 0.0){
-        log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-      }else if(tb_new <= 0.0){
-        log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-      }else{
-
-        if(tb_child_left == 0.0){
-          log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-        }else if(tb_child_left_new <= 0.0){
-          log_likelihood_ratio  = -std::numeric_limits<float>::infinity(); 
-        }else{
-
-          if(tb_child_right == 0.0){
-            log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-          }else if(tb_child_right_new <= 0.0){
-            log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-          }else{
-
-            log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-            log_likelihood_ratio += n_num_events * log(tb_new/tb);
-            log_likelihood_ratio += child_right_num_events * log(tb_child_right_new/tb_child_right); 
-            log_likelihood_ratio += child_left_num_events * log(tb_child_left_new/tb_child_left); 
-
-          }
-        }
-
-      }
-
-    }else{
-
-      //updating root is special case
-      if(tb_child_left == 0.0){
-        log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-      }else if(tb_child_left_new <= 0.0){
-        log_likelihood_ratio  = -std::numeric_limits<float>::infinity(); 
-      }else{
-
-        if(tb_child_right == 0.0){
-          log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-        }else if(tb_child_right_new <= 0.0){
-          log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-        }else{
-
-          log_likelihood_ratio += (- mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-          log_likelihood_ratio += child_right_num_events * log(tb_child_right_new/tb_child_right); 
-          log_likelihood_ratio += child_left_num_events * log(tb_child_left_new/tb_child_left); 
-
-        }
-      }
-
-    }
-    assert(!std::isnan(log_likelihood_ratio));
-
-  }
-
-  //std::cerr << tau_old << " " << tau_new << " " << tau_max << " " << log_likelihood_ratio << std::endl;
-
-
-  //decide whether to accept proposal or not.
-  accept = true;
-  if(log_likelihood_ratio < 0.0){
-    //accept with probability exp(log_p)
-    if(dist_unif(rng) > exp(log_likelihood_ratio)){
-      accept = false;
-    }
-  }
-
-  //update coordinates and sorted_indices
-  if(accept){
-    count_accept++;
-    //calculate new branch lengths
-    coordinates[node_k] += delta_tau; 
-    if(!is_root){
-      if(coordinates[node_k] > coordinates[sorted_indices[k+1]]){
-        coordinates[node_k] = coordinates[sorted_indices[k+1]];
-      }
-    }
-    if(coordinates[node_k] < coordinates[sorted_indices[k-1]]){
-      coordinates[node_k] = coordinates[sorted_indices[k-1]];
-    }
-    if(!is_root){
-      int parent_label                               = (*tree.nodes[node_k].parent).label;
-      tree.nodes[node_k].branch_length               = coordinates[parent_label] - coordinates[node_k];
-    }
-    child_left_label                                 = (*tree.nodes[node_k].child_left).label;
-    tree.nodes[child_left_label].branch_length       = coordinates[node_k] - coordinates[child_left_label];
-    child_right_label                                = (*tree.nodes[node_k].child_right).label;
-    tree.nodes[child_right_label].branch_length      = coordinates[node_k] - coordinates[child_right_label]; 
   }
   count_proposal++;
 
@@ -1418,62 +1218,39 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
   double tmp_tau, delta_tmp_tau;
   ep            = ep_begin;
   tmp_tau       = tau_new;
-  if(ep < epoche.size() - 1){
-    delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k-1]];
-    assert(delta_tmp_tau >= 0.0);
-    if(delta_tmp_tau <= tmp_tau){
-      if(coal_rate[ep] > 0.0){
-        log_likelihood_ratio   -= k_choose_2*coal_rate[ep] * delta_tmp_tau; 
-      }
-      tmp_tau                -= delta_tmp_tau;
-      ep++;
-      delta_tmp_tau           = epoche[ep+1] - epoche[ep];
-      while(tmp_tau > delta_tmp_tau && ep < epoche.size() - 1){
-        if(coal_rate[ep] > 0.0){
-          log_likelihood_ratio -= k_choose_2*coal_rate[ep] * delta_tmp_tau; 
-        }
-        tmp_tau              -= delta_tmp_tau;
-        ep++;
-        delta_tmp_tau         = epoche[ep+1] - epoche[ep];
-      }
-      assert(tmp_tau >= 0.0);
-      if(coal_rate[ep] == 0){
-        log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-      }else{
-        log_likelihood_ratio -= k_choose_2*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
-      }
-    }else{
-      if(coal_rate[ep] == 0){
-        log_likelihood_ratio = -std::numeric_limits<float>::infinity();
-      }else{
-        log_likelihood_ratio -= k_choose_2*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
-      }
-    }
-  }else{
-    if(coal_rate[ep] == 0){
-      log_likelihood_ratio = -std::numeric_limits<float>::infinity();
-    }else{
-      log_likelihood_ratio -= k_choose_2*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
-    }
-  }
 
-  if(log_likelihood_ratio != -std::numeric_limits<float>::infinity()){
-
-    ep            = ep_begin;
-    tmp_tau       = tau_old;
+  int k_tmp = k;
+  int num_lineages_tmp = num_lineages;
+  float k_choose_2_tmp = k_choose_2;
+  // For k_tmp == k, I am actually changing the time while num_lineages ancestors remain.
+  // For k_tmp > k, I need to check whether these were pushed to older epochs by the update, and adjust coalescent times.
+  while(k_tmp < 2*N-1){
     if(ep < epoche.size() - 1){
-      delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k-1]];
+
+      if(k_tmp > k){
+        tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
+        delta_tmp_tau = epoche[ep+1] - (coordinates[sorted_indices[k_tmp-1]] + delta_tau);
+        //update k_choose_2
+        k_choose_2_tmp *= (num_lineages_tmp - 2.0)/num_lineages_tmp;
+        num_lineages_tmp--;
+        assert(num_lineages_tmp > 1);
+      }else{
+        delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k_tmp-1]];
+      }
+
       assert(delta_tmp_tau >= 0.0);
+      //if epoche[ep+1] begins before the current interval (while num_lineages_tmp remain) ends, enter if statement
       if(delta_tmp_tau <= tmp_tau){
+        //add up rate parameters for this interval
         if(coal_rate[ep] > 0.0){
-          log_likelihood_ratio  += k_choose_2*coal_rate[ep] * delta_tmp_tau; 
+          log_likelihood_ratio   -= k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
         }
         tmp_tau                -= delta_tmp_tau;
         ep++;
         delta_tmp_tau           = epoche[ep+1] - epoche[ep];
         while(tmp_tau > delta_tmp_tau && ep < epoche.size() - 1){
           if(coal_rate[ep] > 0.0){
-            log_likelihood_ratio += k_choose_2*coal_rate[ep] * delta_tmp_tau; 
+            log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
           }
           tmp_tau              -= delta_tmp_tau;
           ep++;
@@ -1481,23 +1258,100 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
         }
         assert(tmp_tau >= 0.0);
         if(coal_rate[ep] == 0){
-          log_likelihood_ratio = std::numeric_limits<float>::infinity();
+          log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
         }else{
-          log_likelihood_ratio += k_choose_2*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+          log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
         }
+      }else{
+        if(coal_rate[ep] == 0){
+          log_likelihood_ratio = -std::numeric_limits<float>::infinity();
+        }else{
+          log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+        }
+        k_tmp++;
+        //If coordinates[sorted_indices[k_tmp-1]] + delta_tau is in the same epoch as coordinates[sorted_indices[k_tmp-1]],
+        //I don't have to update this epoch (and any older epoch)
+        //Therefore break;
+        break;
+      }
+
+    }else{
+      if(coal_rate[ep] == 0){
+        log_likelihood_ratio = -std::numeric_limits<float>::infinity();
+      }else{
+        log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+      }
+      k_tmp++;
+      //If I am already at the last epoch, other intervals cannot be pushed to older epochs, so I can break
+      break;
+    }
+
+    k_tmp++;
+  }
+
+  if(log_likelihood_ratio != -std::numeric_limits<float>::infinity()){
+
+    ep            = ep_begin;
+    tmp_tau       = tau_old;
+
+    int k_max = k_tmp;
+    k_tmp = k;
+    k_choose_2_tmp = k_choose_2;
+    num_lineages_tmp = num_lineages;
+    while(k_tmp < k_max){
+
+      if(ep < epoche.size() - 1){
+
+        if(k_tmp > k){
+          tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
+          delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k_tmp-1]];
+          //update k_choose_2
+          k_choose_2_tmp *= (num_lineages_tmp - 2.0)/num_lineages_tmp;
+          num_lineages_tmp--;
+        }else{
+          delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k_tmp-1]];
+        }
+
+        assert(delta_tmp_tau >= 0.0);
+        if(delta_tmp_tau <= tmp_tau){
+          if(coal_rate[ep] > 0.0){
+            log_likelihood_ratio  += k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
+          }
+          tmp_tau                -= delta_tmp_tau;
+          ep++;
+          delta_tmp_tau           = epoche[ep+1] - epoche[ep];
+          while(tmp_tau > delta_tmp_tau && ep < epoche.size() - 1){
+            if(coal_rate[ep] > 0.0){
+              log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
+            }
+            tmp_tau              -= delta_tmp_tau;
+            ep++;
+            delta_tmp_tau         = epoche[ep+1] - epoche[ep];
+          }
+          assert(tmp_tau >= 0.0);
+          if(coal_rate[ep] == 0){
+            log_likelihood_ratio = std::numeric_limits<float>::infinity();
+          }else{
+            log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+          }
+
+        }else{
+          if(coal_rate[ep] == 0){
+            log_likelihood_ratio = std::numeric_limits<float>::infinity();
+          }else{
+            log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+          }
+        }
+
       }else{
         if(coal_rate[ep] == 0){
           log_likelihood_ratio = std::numeric_limits<float>::infinity();
         }else{
-          log_likelihood_ratio += k_choose_2*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+          log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
         }
       }
-    }else{
-      if(coal_rate[ep] == 0){
-        log_likelihood_ratio = std::numeric_limits<float>::infinity();
-      }else{
-        log_likelihood_ratio += k_choose_2*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
-      }
+
+      k_tmp++;
     }
 
     if(log_likelihood_ratio != std::numeric_limits<float>::infinity()){
@@ -1601,186 +1455,14 @@ InferBranchLengths::GetCoordinates(Node& n, std::vector<double>& coords){
 }
 
 void
-InferBranchLengths::MCMC2(const Data& data, Tree& tree, const int seed){
-
-  count_accept = 0;
-  count_proposal = 0;
-
-
-  float uniform_rng;
-  rng.seed(seed);
-  std::uniform_real_distribution<double> dist_unif(0,1);
-  std::uniform_int_distribution<int> dist_k(N,N_total-1);
-  std::uniform_int_distribution<int> dist_switch(N,N_total-2);
-
-  convergence_threshold = 10.0/Ne; //approximately x generations
-
-  int delta = std::max(data.N/10.0, 100.0);
-  root = N_total - 1;
-  logFactorial(N); //precalculates log(k!) for k = 0,...,N
-
-  InitializeMCMC(data, tree); //Initialize using coalescent prior
-
-  for(int j = 0; j < (int) data.N * data.N; j++){
-    RandomSwitchOrder(tree, dist_switch(rng), dist_unif);
-  }   
-  InitializeBranchLengths(tree);
-  //double start_time = time(NULL); 
-
-  EM(data, tree);
-  //GradientEM(data, tree);
-
-  //set min tau 
-  double min_tau = 1.0/Ne, tau_new, tau;
-  double push = 0.0, k_choose_2;
-  int node_i, num_lineages;
-  for(int i = N; i < N_total; i++){
-    num_lineages = 2*N-i;
-    k_choose_2   = num_lineages * (num_lineages-1.0)/2.0;
-
-    node_i = sorted_indices[i];
-    tau    = push + coordinates[node_i] - coordinates[sorted_indices[i-1]];
-    assert(tau >= 0.0);
-
-    if(tau < min_tau){
-
-      do{
-        tau_new   = -fast_log(dist_unif(rng))/k_choose_2;
-        assert(tau_new >= 0.0);
-      }while( coordinates[node_i] + push + tau_new - tau < coordinates[sorted_indices[i-1]] );
-      push     += tau_new - tau;
-
-    }
-    coordinates[node_i] += push;
-
-    if(coordinates[node_i] < coordinates[sorted_indices[i-1]]) std::cerr << coordinates[node_i] << " " << coordinates[sorted_indices[i-1]] << std::endl;
-    assert(coordinates[node_i] >= coordinates[sorted_indices[i-1]]);
-    (*tree.nodes[node_i].child_left).branch_length  = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_left).label];
-    (*tree.nodes[node_i].child_right).branch_length = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_right).label];
-  }
-
-  //transient
-  count = 0;
-  float old_likelihood = -std::numeric_limits<float>::infinity(), diff_likelihood;
-
-  do{
-
-    //Either switch order of coalescent event or extent time while k ancestors 
-    uniform_rng = dist_unif(rng);
-    if(uniform_rng < 0.5){
-      SwitchOrder(tree, dist_switch(rng), dist_unif);
-    }else{ 
-      ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
-      //ChangeTimeWhilekAncestorsLocal(tree, dist_k(rng), dist_unif);
-    }
-
-    if(count % 100 == 0){
-      diff_likelihood  = old_likelihood;
-      old_likelihood   = LikelihoodGivenTimes(tree);
-      diff_likelihood -= old_likelihood;
-      diff_likelihood  = std::fabs(diff_likelihood);
-    }
-
-    count++;
-  }while(diff_likelihood > 0.1 || count < 100*delta);
-
-  //std::cerr << count << " " << diff_likelihood << std::endl;
-
-  avg_prev.resize(N_total);
-  std::fill(avg_prev.begin(), avg_prev.end(), 0.0);
-  avg   = coordinates;
-  last_coordinates = coordinates;
-  last_update.resize(N_total);
-  std::fill(last_update.begin(), last_update.end(), 1);
-  count = 1;
-
-  int num_iterations = 0;
-  std::vector<int> count_proposals(N_total-N, 0);
-  do{ 
-
-    do{
-
-      count++;
-
-      //Either switch order of coalescent event or extent time while k ancestors 
-      uniform_rng = dist_unif(rng);
-      if(uniform_rng < 0.8){
-        SwitchOrder(tree, dist_switch(rng), dist_unif);
-        UpdateAvg(tree);
-      }else{ 
-        int k_candidate = dist_k(rng);
-        count_proposals[k_candidate-N]++;
-        ChangeTimeWhilekAncestors(tree, k_candidate, dist_unif);
-        //ChangeTimeWhilekAncestorsLocal(tree, k_candidate, dist_unif);
-        count++;
-        UpdateAvg(tree);
-      }
-
-    }while(count % delta != 0 );
-
-    num_iterations++;
-
-    //update all nodes in avg 
-    it_avg = std::next(avg.begin(), N);
-    it_coords = std::next(coordinates.begin(), N);
-    it_last_update = std::next(last_update.begin(), N);
-    it_last_coords = std::next(last_coordinates.begin(), N);
-    //update avg
-    for(int ell = N; ell < N_total; ell++){
-      *it_avg  += ((count - *it_last_update) * (*it_last_coords - *it_avg))/count;
-      *it_last_update = count;
-      *it_last_coords = *it_coords;
-      it_avg++;
-      it_coords++;
-      it_last_update++;
-      it_last_coords++;
-    }
-
-    //calculate max diff to previous avg coalescent times
-    max_diff = 0.0;
-    int ell = N;
-    it_avg_prev = std::next(avg_prev.begin(),N);
-    is_avg_increasing = true;
-    for(it_avg = std::next(avg.begin(),N); it_avg != avg.end(); it_avg++){
-      if(std::fabs(*it_avg - *it_avg_prev) > max_diff) max_diff = std::fabs(*it_avg - *it_avg_prev);
-      if(ell < root){
-        if(*it_avg > avg[(*tree.nodes[ell].parent).label]) is_avg_increasing = false;
-      }
-      *it_avg_prev = *it_avg;
-      it_avg_prev++;
-      ell++;
-    }
-
-    //assert(is_avg_increasing);
-    for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-      if(*it_count < 20) is_avg_increasing = false;
-    }
-
-  }while(max_diff > convergence_threshold || is_avg_increasing == false || num_iterations < 10);
-
-  //std::cerr << count << " " << num_iterations << " " << max_diff << " " << avg[root] * Ne << " " << count_accept/((float) count_proposal) << std::endl;
-
-  for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-    (*it_n).branch_length = ((double) Ne) * (avg_prev[(*(*it_n).parent).label] - avg_prev[(*it_n).label]);
-  }
-
-  /*
-     for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-     (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
-     }
-     */
-
-}  
-
-void
 InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
 
   count_accept = 0;
   count_proposal = 0;
-  //int delta = std::max(data.N/10.0, 100.0);
   int delta = std::max(data.N/10.0, 10.0);
   convergence_threshold = 10.0/Ne; //approximately x generations
 
+  //Random number generators
   float uniform_rng;
   rng.seed(seed);
   std::uniform_real_distribution<double> dist_unif(0,1);
@@ -1790,16 +1472,21 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
   root = N_total - 1;
   logFactorial(N); //precalculates log(k!) for k = 0,...,N
 
-  InitializeMCMC(data, tree); //Initialize using coalescent prior
+  ////////// Initialize MCMC ///////////
 
+  //Initialize MCMC using coalescent prior
+  InitializeMCMC(data, tree); 
+
+  //Randomly switch around order of coalescences
   for(int j = 0; j < (int) data.N * data.N; j++){
     RandomSwitchOrder(tree, dist_switch(rng), dist_unif);
   }   
-  InitializeBranchLengths(tree);
 
+  //Apply EM algorithm to calculate MLE of branch lengths given order of coalescences
+  InitializeBranchLengths(tree);
   EM(data, tree);
 
-  //set min tau 
+  //EM may set some branch lengths to 0. To get a better starting point, we set the minimum branch length to min_tau
   double min_tau = 1.0/Ne, tau_new, tau;
   double push = 0.0, k_choose_2;
   int node_i, num_lineages;
@@ -1827,6 +1514,8 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
     (*tree.nodes[node_i].child_left).branch_length  = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_left).label];
     (*tree.nodes[node_i].child_right).branch_length = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_right).label];
   }
+
+  /////////////// Start MCMC ///////////////
 
   //transient
   count = 0;
@@ -1838,12 +1527,13 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
       SwitchOrder(tree, dist_switch(rng), dist_unif);
     }else{ 
       ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
-      //ChangeTimeWhilekAncestorsLocal(tree, dist_k(rng), dist_unif);
     }
 
   }
 
-  //std::cerr << count << " " << diff_likelihood << std::endl;
+  //Now start estimating branch lenghts. We store the average of coalescent ages in avg calculate branch lengths from here.
+  //UpdateAvg is used to update avg.
+  //Coalescent ages of the tree are stored in coordinates (this is updated in SwitchOrder and ChangeTimeWhilekAncestors)
 
   avg              = coordinates;
   last_coordinates = coordinates;
@@ -1870,7 +1560,6 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
         int k_candidate = dist_k(rng);
         count_proposals[k_candidate-N]++;
         ChangeTimeWhilekAncestors(tree, k_candidate, dist_unif);
-        //ChangeTimeWhilekAncestorsLocal(tree, k_candidate, dist_unif);
         count++;
         UpdateAvg(tree);
       }
@@ -1878,6 +1567,10 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
     }while(count % delta != 0 );
 
     num_iterations++;
+
+    //MCMC is allowed to terminate if is_count_threshold == true and is_avg_increasing == true.
+    //At first, both are set to false, and is_count_threshold will be set to true first (once conditions are met)
+    //then is_avg_increasing will be set to true eventually.
 
     if(!is_count_threshold){
       //assert(is_avg_increasing);
@@ -1907,8 +1600,7 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
         it_last_update++;
         it_last_coords++;
       }
-
-      //calculate max diff to previous avg coalescent times
+      //check if coalescent ages are non-decreasing in avg
       int ell = N;
       is_avg_increasing = true;
       for(it_avg = std::next(avg.begin(),N); it_avg != avg.end(); it_avg++){
@@ -1921,6 +1613,8 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
 
   }
 
+  //////////// Caluclate branch lengths from avg ////////////
+
   //don't need to update avg again because I am guaranteed to finish with having updated all nodes
   for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
     (*it_n).branch_length = ((double) Ne) * (avg[(*(*it_n).parent).label] - avg[(*it_n).label]);
@@ -1931,202 +1625,6 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
      (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
      }
      */
-
-}  
-
-
-void
-InferBranchLengths::MCMCVariablePopulationSize2(const Data& data, Tree& tree, const std::vector<double>& epoche, std::vector<double>& coal_rate, const int seed){
-
-  count_accept = 0;
-  count_proposal = 0;
-
-  float uniform_rng;
-  rng.seed(seed);
-  std::uniform_real_distribution<double> dist_unif(0,1);
-  std::uniform_int_distribution<int> dist_k(N,N_total-1);
-  std::uniform_int_distribution<int> dist_switch(N,N_total-2);
-
-  convergence_threshold = 100.0/Ne; //approximately x generations
-
-  int delta = std::max(data.N/10.0, 100.0);
-  //int delta = 10;
-  root = N_total - 1;
-  logFactorial(N); //precalculates log(k!) for k = 0,...,N
-
-  InitializeMCMC(data, tree); //Initialize using coalescent prior 
-
-  for(std::vector<Node>::iterator it_node = tree.nodes.begin(); it_node != tree.nodes.end(); it_node++){
-    (*it_node).branch_length /= data.Ne;
-  }
-
-  coordinates.resize(N_total);
-  GetCoordinates(tree.nodes[root], coordinates);
-  //avg   = coordinates;
-
-  std::size_t m1(0);
-  std::generate(std::begin(sorted_indices) + N, std::end(sorted_indices), [&]{ return m1++; });
-  std::sort(std::begin(sorted_indices) + N, std::end(sorted_indices), [&](int i1, int i2) { return coordinates[i1 + N] < coordinates[i2 + N]; } );
-  for(int i = 0; i < N; i++){
-    sorted_indices[i]  = i;
-  }
-  for(int i = N; i < N_total; i++){
-    sorted_indices[i] += N;
-  }
-
-  //obtain order of coalescent events
-  std::fill(order.begin(), order.end(), 0);
-  std::size_t m2(0);
-  std::generate(std::begin(order) + N, std::end(order), [&]{ return m2++; });
-  std::sort(std::begin(order) + N, std::end(order), [&](int i1, int i2) { return sorted_indices[i1 + N] < sorted_indices[i2 + N]; } );
-
-  for(int i = 0; i < N; i++){
-    order[i]  = i;
-  }
-  for(int i = N; i < N_total; i++){
-    order[i] += N;
-  }
-
-  //This is for when branch lengths are zero, because then the above does not guarantee parents to be above children
-  bool is_topology_violated = true;
-  while(is_topology_violated){
-    is_topology_violated = false;
-    for(int i = N; i < N_total; i++){
-      int node_k = sorted_indices[i];
-      if( order[(*tree.nodes[node_k].child_left).label] > order[node_k] ){
-        int tmp_order = order[node_k];
-        order[node_k] = order[(*tree.nodes[node_k].child_left).label];
-        order[(*tree.nodes[node_k].child_left).label] = tmp_order;
-        sorted_indices[order[node_k]] = node_k;
-        sorted_indices[tmp_order] = (*tree.nodes[node_k].child_left).label;
-        is_topology_violated = true;
-      }
-      if( order[(*tree.nodes[node_k].child_right).label] > order[node_k] ){
-        int tmp_order = order[node_k];
-        order[node_k] = order[(*tree.nodes[node_k].child_right).label];
-        order[(*tree.nodes[node_k].child_right).label] = tmp_order;
-        sorted_indices[order[node_k]] = node_k;
-        sorted_indices[tmp_order] = (*tree.nodes[node_k].child_right).label;
-        is_topology_violated = true;
-      }
-    }
-  }
-
-  //std::cerr << "Number of branches with no mutations: branches_with_no_mutations " << branches_with_no_mutations.size() << std::endl;
-
-  ////////////////// Transient /////////////////
-
-  count = 0;
-  float old_likelihood = -std::numeric_limits<float>::infinity(), diff_likelihood;
-
-  do{
-
-    //Either switch order of coalescent event or extent time while k ancestors 
-    uniform_rng = dist_unif(rng);
-    if(uniform_rng < 0.8){
-      SwitchOrder(tree, dist_switch(rng), dist_unif);
-    }else{
-      ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoche, coal_rate, dist_unif);
-    }
-
-    if(count % delta == 0){
-      diff_likelihood  = old_likelihood;
-      old_likelihood   = LikelihoodGivenTimes(tree);
-      diff_likelihood -= old_likelihood;
-      diff_likelihood  = std::fabs(diff_likelihood);
-    }
-
-    count++;
-
-  }while(diff_likelihood > 0.1 || count < 10*delta);
-
-  //std::cerr << count << " " << LikelihoodGivenTimes(tree) << " " << diff_likelihood << std::endl;
-  //std::cerr << count_coal_rate << " " << max_diff_coal_rate << " " << count_accept << " " << count_proposal << " " << count_accept/((double) count_proposal) << std::endl;
-
-  avg_prev.resize(N_total);
-  std::fill(avg_prev.begin(), avg_prev.end(), 0.0);
-  avg = avg_prev;
-  last_coordinates = coordinates;
-  last_update.resize(N_total);
-  std::fill(last_update.begin(), last_update.end(), 1);
-  count = 1;
-
-  int num_iterations = 0;
-  std::vector<int> count_proposals(N_total-N, 0);
-  do{ 
-
-    do{
-
-      //Either switch order of coalescent event or extent time while k ancestors 
-      uniform_rng = dist_unif(rng);
-      if(uniform_rng < 0.9){
-        count++;
-        SwitchOrder(tree, dist_switch(rng), dist_unif);
-        UpdateAvg(tree);
-      }else{ 
-        int k_candidate = dist_k(rng);
-        count_proposals[k_candidate-N]++;
-        //ChangeTimeWhilekAncestors(tree, k_candidate, dist_unif);
-        ChangeTimeWhilekAncestorsVP(tree, k_candidate, epoche, coal_rate, dist_unif);
-        count++;
-        UpdateAvg(tree);
-      } 
-
-    }while(count % delta != 0 );
-
-    num_iterations++;
-
-    //update all nodes in avg 
-    it_avg = std::next(avg.begin(), N);
-    it_coords = std::next(coordinates.begin(), N);
-    it_last_update = std::next(last_update.begin(), N);
-    it_last_coords = std::next(last_coordinates.begin(), N);
-    //update avg
-    for(int ell = N; ell < N_total; ell++){
-      *it_avg        += ((count - *it_last_update) * (*it_last_coords - *it_avg))/count;
-      *it_last_update = count;
-      *it_last_coords = *it_coords;
-      it_avg++;
-      it_coords++;
-      it_last_update++;
-      it_last_coords++;
-    }
-
-    //calculate max diff to previous avg coalescent times
-    max_diff = 0.0;
-    int ell = N;
-    it_avg_prev = std::next(avg_prev.begin(),N);
-    is_avg_increasing = true;
-    for(it_avg = std::next(avg.begin(),N); it_avg != avg.end(); it_avg++){
-      if(std::fabs(*it_avg - *it_avg_prev) > max_diff) max_diff = std::fabs(*it_avg - *it_avg_prev);
-      if(ell < root){
-        if(*it_avg > avg[(*tree.nodes[ell].parent).label]){
-          is_avg_increasing = false;
-        }
-      }
-      *it_avg_prev = *it_avg;
-      it_avg_prev++;
-      ell++;
-    }
-
-    //assert(is_avg_increasing);
-    for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-      if(*it_count < 10) is_avg_increasing = false;
-    }
-
-  }while(max_diff > convergence_threshold || is_avg_increasing == false || num_iterations < 10); 
-
-  for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-    (*it_n).branch_length = ((double) Ne) * (avg_prev[(*(*it_n).parent).label] - avg_prev[(*it_n).label]);
-  }
-
-
-  /*
-     for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-     (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
-     }
-     */
-
 
 }  
 
@@ -2299,7 +1797,7 @@ InferBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, con
     }
 
   }
- 
+
   for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
     (*it_n).branch_length = ((double) Ne) * (avg[(*(*it_n).parent).label] - avg[(*it_n).label]);
   }

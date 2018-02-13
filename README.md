@@ -9,8 +9,6 @@ Leo Speidel, Simon Myers <br/> Department of Statistics, University of Oxford, O
 
 **Relate** requires C++11 and cmake version 3.1.
 
-If you do not have cmake, you can download pre-compiled binaries and source files of cmake <a href="https://cmake.org/download/">here</a>.
-
 ## Installation
 
 Download **Relate** from this git repository to a local directory.

@@ -40,7 +40,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
   int num_epochs;
   std::vector<float> epoch;
 
-  FILE* fp = fopen((options["input"].as<std::string>() + ".bin").c_str(),"rb");
+  FILE* fp = fopen((options["output"].as<std::string>() + ".bin").c_str(),"rb");
   assert(fp != NULL);
 
   fread(&num_epochs, sizeof(int), 1, fp);
@@ -105,10 +105,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
 
   for(int e = 0; e < num_epochs; e++){
     if(coal[e] != 0.0) coal[e] = 0.5/coal[e]; 
-    std::cerr << coal[e] << std::endl;
   }
-
-  std::cerr << coal.size() << std::endl;
 
   plot p(60,10);
   p.draw(epoch, coal);
@@ -159,7 +156,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   int num_epochs;
   std::vector<float> epoch;
 
-  FILE* fp = fopen((options["input"].as<std::string>() + ".bin").c_str(),"rb");
+  FILE* fp = fopen((options["output"].as<std::string>() + ".bin").c_str(),"rb");
   assert(fp != NULL);
 
   fread(&num_epochs, sizeof(int), 1, fp);
@@ -289,7 +286,7 @@ int FinalizePopulationSizeByHaplotype(cxxopts::Options& options){
   int num_epochs;
   std::vector<float> epoch;
 
-  FILE* fp = fopen((options["input"].as<std::string>() + ".bin").c_str(),"rb");
+  FILE* fp = fopen((options["output"].as<std::string>() + ".bin").c_str(),"rb");
   assert(fp != NULL);
 
   fread(&num_epochs, sizeof(int), 1, fp);

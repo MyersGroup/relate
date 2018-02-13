@@ -102,9 +102,11 @@ class InferBranchLengths{
 
     Node n;
     int child_left_label, child_right_label;
+    
     double tb, tb_new, tb_child_left, tb_child_left_new, tb_child_right, tb_child_right_new;
     float n_num_events, child_left_num_events, child_right_num_events;
-    double delta_tau, tau_old, tau_new;
+
+    double delta_tau, tau_old, tau_new; //time while k ancestors
     int num_lineages;
     double k_choose_2;
 
@@ -139,7 +141,6 @@ class InferBranchLengths{
 
     void ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
     void ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoche, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif);
-    void ChangeTimeWhilekAncestorsLocal(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
 
     void SwitchOrder(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
     void RandomSwitchOrder(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);

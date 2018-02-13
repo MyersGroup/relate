@@ -9,6 +9,7 @@
 #include "cxxopts.hpp"
 #include "data.hpp"
 #include "anc.hpp"
+#include "branch_length_estimator.hpp"
 #include "anc_builder.hpp"
 
 void ShowProgress(int progress){
@@ -175,6 +176,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
 
   //Infer branch lengths
   InferBranchLengths bl(data);
+  //EstimateBranchLengths bl2(data);
 
   int num_trees = anc.seq.size();
   int progress_interval = (int)(num_trees/100.0) + 1;
@@ -191,6 +193,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     //  (*it_node).num_events = 0.0;
     //}
     bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
+    //bl2.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
   }
   ShowProgress(100);
   std::cerr << std::endl;

@@ -26,7 +26,8 @@ then
   echo "-o,--output: Filename of output without file extension."
   echo "--dist:   Optional but recommended. Distance in BP between SNPs. Can be generated using RelateFileFormats. If unspecified, distances in haps are used."
   echo "--annot:  Optional. Filename of file containing additional annotation of snps. Can be generated using RelateFileFormats."
-  echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB." 
+  echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB."
+  echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
   echo "--threads:Optional. Number of threads used."
   exit 1;
@@ -102,6 +103,11 @@ do
       shift # past argument
       shift # past value
       ;;
+    --coal)
+      coal="$2"
+      shift # past argument
+      shift # past value
+      ;;
     *)    # unknown option
       POSITIONAL+=("$1") # save it in an array for later
       shift # past argument
@@ -124,6 +130,10 @@ fi
 if [ ! -z "${annot-}" ];
 then
 echo "annot  = $annot"
+fi
+if [ ! -z "${coal-}" ];
+then
+echo "coal   = $coal"
 fi
 if [ ! -z "${memory-}" ];
 then
@@ -191,14 +201,25 @@ RelateForChunk (){
       jobcnt=(`jobs -p`)
       if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
 
-        ${PATH_TO_RELATE}/bin/Relate \
-          --mode InferBranchLengths \
-          -m $mu \
-          -N $Ne \
-          --chunk_index ${chunk_index} \
-          --first_section $1 \
-          --last_section $1 \
-          -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+        if [ ! -z "${seed-}" ]; then
+          ${PATH_TO_RELATE}/bin/Relate \
+            --mode InferBranchLengths \
+            -m $mu \
+            --coal $coal \
+            --chunk_index ${chunk_index} \
+            --first_section $1 \
+            --last_section $1 \
+            -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+        else
+          ${PATH_TO_RELATE}/bin/Relate \
+            --mode InferBranchLengths \
+            -m $mu \
+            -N $Ne \
+            --chunk_index ${chunk_index} \
+            --first_section $1 \
+            --last_section $1 \
+            -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+        fi
 
         shift
       fi

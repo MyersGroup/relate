@@ -29,6 +29,7 @@ int main(int argc, char* argv[]){
     ("chunk_index", "Optional. Index of chunk. (Use when running parts of the algorithm on an individual chunk.)", cxxopts::value<int>())
     ("first_section", "Optional. Index of first section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("last_section", "Optional. Index of last section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
+    ("coal", "Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN.", cxxopts::value<std::string>()) 
     ("seed", "Optional. Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
 
   options.parse(argc, argv);

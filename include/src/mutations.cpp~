@@ -166,10 +166,10 @@ Mutations::Read(std::ifstream& is, int start_index, int end_index){
     while(line[i] != ';') i++;
     i++;
     //skip dist_to_next_snp
-    /*
+    
     while(line[i] != ';') i++;
     i++;
-    */
+    
     //rs-id
     while(line[i] != ';') i++;
     i++;
@@ -208,7 +208,7 @@ Mutations::Read(std::ifstream& is, int start_index, int end_index){
     info[snp].pos = std::stoi(inread);
 
     //dist_to_next_snp
-    /*
+    
     inread.clear();
     while(line[i] != ';'){
       inread += line[i];
@@ -216,8 +216,7 @@ Mutations::Read(std::ifstream& is, int start_index, int end_index){
     }
     i++;
     info[snp].dist = std::stoi(inread);
-    */
-
+    
     //rs-id
     inread.clear();
     while(line[i] != ';'){
@@ -261,7 +260,8 @@ Mutations::Read(std::ifstream& is, int start_index, int end_index){
     while(line[i] != ';'){
       inread += line[i];
       i++;
-    } 
+    }
+    std::cerr << inread << std::endl; 
     info[snp].age_begin = std::stof(inread);
     inread.clear();
     i++;
@@ -270,6 +270,7 @@ Mutations::Read(std::ifstream& is, int start_index, int end_index){
       inread += line[i];
       i++;
     } 
+    std::cerr << inread << std::endl;
     info[snp].age_end = std::stof(inread);
     inread.clear();
     i++;

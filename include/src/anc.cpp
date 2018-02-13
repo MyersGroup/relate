@@ -467,6 +467,7 @@ Tree::TraverseTreeToGetCoordinates(Node& n, std::vector<float>& coordinates){
 
 void 
 Tree::GetCoordinates(std::vector<float>& coordinates){
+  coordinates.resize(nodes.size());
   TraverseTreeToGetCoordinates(nodes[nodes.size() - 1], coordinates);
 }
 

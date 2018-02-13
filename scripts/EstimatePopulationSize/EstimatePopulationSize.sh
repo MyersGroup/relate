@@ -218,7 +218,7 @@ then
     ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
       --mode FinalizePopulationSize \
       -i ${output} \
-      -o ${output}_bypop \
+      -o ${output} \
       --poplabels ${filename_poplabels}
 
   else
@@ -239,7 +239,7 @@ then
     ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
       --mode FinalizePopulationSize \
       -i ${output} \
-      -o ${output}_bypop \
+      -o ${output} \
       --num_bins ${num_bins} \
       --poplabels ${filename_poplabels}
 
@@ -354,7 +354,7 @@ else
       --first_chr $first_chr \
       --last_chr $last_chr \
       -i ${output} \
-      -o ${output}_bypop \
+      -o ${output} \
       --poplabels ${filename_poplabels}
 
   else
@@ -379,7 +379,7 @@ else
     ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
       --mode FinalizePopulationSize \
       -i ${output} \
-      -o ${output}_bypop \
+      -o ${output} \
       --first_chr $first_chr \
       --last_chr $last_chr \
       --num_bins ${num_bins} \
