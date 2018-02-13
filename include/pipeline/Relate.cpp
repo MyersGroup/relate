@@ -160,10 +160,12 @@ int main(int argc, char* argv[]){
   
   }else if(!mode.compare("All")){
     
+    bool popsize = false;
+    if(!options.count("effectiveN") && !options.count("coal")) popsize = true;
     bool help = false;
-    if(!options.count("haps") || !options.count("sample") ||  !options.count("map") || !options.count("mutation_rate") || !options.count("effectiveN") || !options.count("output")){
+    if(!options.count("haps") || !options.count("sample") ||  !options.count("map") || popsize || !options.count("mutation_rate") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
-      std::cout << "Needed: haps, sample, map, mutation_rate, effectiveN, output. Optional: seed, annot, dist, max_memory, chunk_index." << std::endl;
+      std::cout << "Needed: haps, sample, map, mutation_rate, effectiveN, output. Optional: seed, annot, dist, coal, max_memory, chunk_index." << std::endl;
       help = true;
     }
     if(options.count("help") || help){

@@ -120,28 +120,33 @@ echo "Parameters passed to Relate:"
 echo "haps   = $haps"
 echo "sample = $sample"
 echo "map    = $map"
-echo "Ne     = $Ne"
+if [ -z "${coal-}" ];
+then
+  echo "Ne     = $Ne"
+else
+  Ne=30000
+fi
 echo "mu     = $mu"
 echo "output = $output"
 if [ ! -z "${dist-}" ];
 then
-echo "dist   = $dist"
+  echo "dist   = $dist"
 fi
 if [ ! -z "${annot-}" ];
 then
-echo "annot  = $annot"
+  echo "annot  = $annot"
 fi
 if [ ! -z "${coal-}" ];
 then
-echo "coal   = $coal"
+  echo "coal   = $coal"
 fi
 if [ ! -z "${memory-}" ];
 then
-echo "memory = $memory"
+  echo "memory = $memory"
 fi
 if [ ! -z "${seed-}" ];
 then
-echo "seed   = $seed"
+  echo "seed   = $seed"
 fi
 echo "Number of threads used: $maxjobs" 
 echo "********************************"
@@ -201,7 +206,7 @@ RelateForChunk (){
       jobcnt=(`jobs -p`)
       if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
 
-        if [ ! -z "${seed-}" ]; then
+        if [ ! -z "${coal-}" ]; then
           ${PATH_TO_RELATE}/bin/Relate \
             --mode InferBranchLengths \
             -m $mu \

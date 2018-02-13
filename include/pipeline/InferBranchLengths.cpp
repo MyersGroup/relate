@@ -13,8 +13,10 @@
 
 int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_section, int last_section){
 
+  bool popsize = false;
+  if(!options.count("effectiveN") && !options.count("coal")) popsize = true;
   bool help = false;
-  if(!options.count("effectiveN") || !options.count("mutation_rate") || !options.count("output")){
+  if(popsize || !options.count("mutation_rate") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
     std::cout << "Needed: effectiveN, mutation_rate, first_section, last_section, output. Optional: coal." << std::endl;
     help = true;
@@ -41,7 +43,8 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
   fclose(fp);
   num_windows--;
 
-  int Ne = (int) options["effectiveN"].as<float>();
+  int Ne = 30000;
+  if(options.count("effectiveN")) Ne = (int) options["effectiveN"].as<float>();
   double mutation_rate = options["mutation_rate"].as<float>();
   Data data(("chunk_" + std::to_string(chunk_index) + ".bp").c_str(), ("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), Ne, mutation_rate); //struct data is defined in data.hpp 
   const std::string dirname = "chunk_" + std::to_string(chunk_index) + "/";
@@ -50,12 +53,14 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
   std::cerr << "Inferring branch lengths of AncesTrees in sections " << first_section << "-" << last_section << "..." << std::endl;
  
   bool is_coal = false;
+  std::vector<double> epoch, coalescent_rate;
   if(options.count("coal")){
 
+    std::string line;
+    double tmp;
     is_coal = true;
     // read epochs and population size 
     std::ifstream is(options["coal"].as<std::string>()); 
-    std::vector<double> epoch, coalescent_rate;
     getline(is, line);
     getline(is, line);
     std::istringstream is_epoch(line);
@@ -120,7 +125,7 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
 
     if(is_coal){
       for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
-        bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
+        bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
       }
     }else{
       for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){

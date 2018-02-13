@@ -525,7 +525,7 @@ EstimateBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform
 }
 
 void
-EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoche, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif){
+EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif){
 
   //Idea:
   //Currently, I am choosing a time while k ancestors and propose a change with transition probabilities ~ Exp(tau_old)
@@ -562,23 +562,23 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
 
     //coalescent prior  
     int ep_begin = 0;
-    while(coordinates[sorted_indices[k-1]] >= epoche[ep_begin]){
+    while(coordinates[sorted_indices[k-1]] >= epoch[ep_begin]){
       ep_begin++;
-      if(ep_begin == (int)epoche.size()) break;
+      if(ep_begin == (int)epoch.size()) break;
     }
     ep_begin--;
     assert(ep_begin > -1);
-    assert(coordinates[sorted_indices[k-1]] >= epoche[ep_begin]);
-    if( coordinates[sorted_indices[k-1]] >= epoche[ep_begin+1]  ){
-      assert(ep_begin == (int) epoche.size() - 1);
+    assert(coordinates[sorted_indices[k-1]] >= epoch[ep_begin]);
+    if( coordinates[sorted_indices[k-1]] >= epoch[ep_begin+1]  ){
+      assert(ep_begin == (int) epoch.size() - 1);
     }
     //-k_choose_2 * tau_old + k_choose_2 + tau_new
     int ep;
     double tmp_tau, delta_tmp_tau;
     ep            = ep_begin;
     tmp_tau       = tau_new;
-    if(ep < epoche.size() - 1){
-      delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k-1]];
+    if(ep < epoch.size() - 1){
+      delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k-1]];
       assert(delta_tmp_tau >= 0.0);
       if(delta_tmp_tau <= tmp_tau){
         if(coal_rate[ep] > 0.0){
@@ -586,14 +586,14 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
         }
         tmp_tau                -= delta_tmp_tau;
         ep++;
-        delta_tmp_tau           = epoche[ep+1] - epoche[ep];
-        while(tmp_tau > delta_tmp_tau && ep < epoche.size() - 1){
+        delta_tmp_tau           = epoch[ep+1] - epoch[ep];
+        while(tmp_tau > delta_tmp_tau && ep < epoch.size() - 1){
           if(coal_rate[ep] > 0.0){
             log_likelihood_ratio -= k_choose_2*coal_rate[ep] * delta_tmp_tau; 
           }
           tmp_tau              -= delta_tmp_tau;
           ep++;
-          delta_tmp_tau         = epoche[ep+1] - epoche[ep];
+          delta_tmp_tau         = epoch[ep+1] - epoch[ep];
         }
         assert(tmp_tau >= 0.0);
         if(coal_rate[ep] == 0){
@@ -620,8 +620,8 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
 
       ep            = ep_begin;
       tmp_tau       = tau_old;
-      if(ep < epoche.size() - 1){
-        delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k-1]];
+      if(ep < epoch.size() - 1){
+        delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k-1]];
         assert(delta_tmp_tau >= 0.0);
         if(delta_tmp_tau <= tmp_tau){
           if(coal_rate[ep] > 0.0){
@@ -629,14 +629,14 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
           }
           tmp_tau                -= delta_tmp_tau;
           ep++;
-          delta_tmp_tau           = epoche[ep+1] - epoche[ep];
-          while(tmp_tau > delta_tmp_tau && ep < epoche.size() - 1){
+          delta_tmp_tau           = epoch[ep+1] - epoch[ep];
+          while(tmp_tau > delta_tmp_tau && ep < epoch.size() - 1){
             if(coal_rate[ep] > 0.0){
               log_likelihood_ratio += k_choose_2*coal_rate[ep] * delta_tmp_tau; 
             }
             tmp_tau              -= delta_tmp_tau;
             ep++;
-            delta_tmp_tau         = epoche[ep+1] - epoche[ep];
+            delta_tmp_tau         = epoch[ep+1] - epoch[ep];
           }
           assert(tmp_tau >= 0.0);
           if(coal_rate[ep] == 0){
@@ -696,15 +696,15 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
 
     //coalescent prior  
     int ep_begin = 0;
-    while(coordinates[sorted_indices[k-1]] >= epoche[ep_begin]){
+    while(coordinates[sorted_indices[k-1]] >= epoch[ep_begin]){
       ep_begin++;
-      if(ep_begin == (int)epoche.size()) break;
+      if(ep_begin == (int)epoch.size()) break;
     }
     ep_begin--;
     assert(ep_begin > -1);
-    assert(coordinates[sorted_indices[k-1]] >= epoche[ep_begin]);
-    if( coordinates[sorted_indices[k-1]] >= epoche[ep_begin+1]  ){
-      assert(ep_begin == (int) epoche.size() - 1);
+    assert(coordinates[sorted_indices[k-1]] >= epoch[ep_begin]);
+    if( coordinates[sorted_indices[k-1]] >= epoch[ep_begin+1]  ){
+      assert(ep_begin == (int) epoch.size() - 1);
     }
 
 
@@ -719,17 +719,17 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
     int num_lineages_tmp = num_lineages;
     float k_choose_2_tmp = k_choose_2;
     while(k_tmp < k_max){
-      if(ep < epoche.size() - 1){
+      if(ep < epoch.size() - 1){
 
         if(k_tmp > k){
           tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]] - delta_tau;
-          delta_tmp_tau = epoche[ep+1] - (coordinates[sorted_indices[k_tmp-1]] + delta_tau);
+          delta_tmp_tau = epoch[ep+1] - (coordinates[sorted_indices[k_tmp-1]] + delta_tau);
           //update k_choose_2
           k_choose_2_tmp *= (num_lineages_tmp - 2.0)/num_lineages_tmp;
           num_lineages_tmp--;
           assert(num_lineages_tmp > 1);
         }else{
-          delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k_tmp-1]];
+          delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k_tmp-1]];
         }
 
         assert(delta_tmp_tau >= 0.0);
@@ -739,14 +739,14 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
           }
           tmp_tau                -= delta_tmp_tau;
           ep++;
-          delta_tmp_tau           = epoche[ep+1] - epoche[ep];
-          while(tmp_tau > delta_tmp_tau && ep < epoche.size() - 1){
+          delta_tmp_tau           = epoch[ep+1] - epoch[ep];
+          while(tmp_tau > delta_tmp_tau && ep < epoch.size() - 1){
             if(coal_rate[ep] > 0.0){
               log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
             }
             tmp_tau              -= delta_tmp_tau;
             ep++;
-            delta_tmp_tau         = epoche[ep+1] - epoche[ep];
+            delta_tmp_tau         = epoch[ep+1] - epoch[ep];
           }
           assert(tmp_tau >= 0.0);
           if(coal_rate[ep] == 0){
@@ -783,16 +783,16 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
       num_lineages_tmp = num_lineages;
       while(k_tmp < k_max){
 
-        if(ep < epoche.size() - 1){
+        if(ep < epoch.size() - 1){
 
           if(k_tmp > k){
             tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
-            delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k_tmp-1]];
+            delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k_tmp-1]];
             //update k_choose_2
             k_choose_2_tmp *= (num_lineages_tmp - 2.0)/num_lineages_tmp;
             num_lineages_tmp--;
           }else{
-            delta_tmp_tau = epoche[ep+1] - coordinates[sorted_indices[k_tmp-1]];
+            delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k_tmp-1]];
           }
 
           assert(delta_tmp_tau >= 0.0);
@@ -802,14 +802,14 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
             }
             tmp_tau                -= delta_tmp_tau;
             ep++;
-            delta_tmp_tau           = epoche[ep+1] - epoche[ep];
-            while(tmp_tau > delta_tmp_tau && ep < epoche.size() - 1){
+            delta_tmp_tau           = epoch[ep+1] - epoch[ep];
+            while(tmp_tau > delta_tmp_tau && ep < epoch.size() - 1){
               if(coal_rate[ep] > 0.0){
                 log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
               }
               tmp_tau              -= delta_tmp_tau;
               ep++;
-              delta_tmp_tau         = epoche[ep+1] - epoche[ep];
+              delta_tmp_tau         = epoch[ep+1] - epoch[ep];
             }
             assert(tmp_tau >= 0.0);
             if(coal_rate[ep] == 0){
@@ -1085,7 +1085,7 @@ EstimateBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
 }  
 
 void
-EstimateBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, const std::vector<double>& epoche, std::vector<double>& coal_rate, const int seed){
+EstimateBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed){
 
   count_accept = 0;
   count_proposal = 0;
@@ -1172,7 +1172,7 @@ EstimateBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, 
     if(uniform_rng < 0.8){
       SwitchOrder(tree, dist_switch(rng), dist_unif);
     }else{ 
-      ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoche, coal_rate, dist_unif);
+      ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
     }
 
   }
@@ -1201,7 +1201,7 @@ EstimateBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, 
       }else{ 
         int k_candidate = dist_k(rng);
         count_proposals[k_candidate-N]++;
-        ChangeTimeWhilekAncestorsVP(tree, k_candidate, epoche, coal_rate, dist_unif);
+        ChangeTimeWhilekAncestorsVP(tree, k_candidate, epoch, coal_rate, dist_unif);
         count++;
         UpdateAvg(tree);
       }

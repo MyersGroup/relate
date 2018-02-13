@@ -15,10 +15,12 @@
 
 int CombineSections(cxxopts::Options& options, int chunk_index = 0){
 
+  bool popsize = false;
+  if(!options.count("effectiveN") && !options.count("coal")) popsize = true;
   bool help = false;
-  if(!options.count("effectiveN") || !options.count("output")){
+  if(popsize || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: effectiveN, output." << std::endl;
+    std::cout << "Needed: effectiveN, output. Optional: coal." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -39,7 +41,8 @@ int CombineSections(cxxopts::Options& options, int chunk_index = 0){
   fclose(fp);
   num_windows--;
 
-  int Ne = (int) options["effectiveN"].as<float>();
+  int Ne = 30000;
+  if(options.count("effectiveN")) Ne = (int) options["effectiveN"].as<float>();
 
   //////////////////////////////////
   //Parse Data

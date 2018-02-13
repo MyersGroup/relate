@@ -96,7 +96,7 @@ class InferBranchLengths{
     int root;
     bool is_avg_increasing;
     float max_diff = 0.0, diff; //diff of coordinates
-    int count, count_accept, count_proposal; //count number of iterations
+    int count; //count number of iterations
     bool accept; //use to check if proposal in MCMC is accepted.
     float log_likelihood_ratio; //store log of ratio of likelihoods
 
@@ -140,7 +140,7 @@ class InferBranchLengths{
     void logFactorial(int max);
 
     void ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
-    void ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoche, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif);
+    void ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif);
 
     void SwitchOrder(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
     void RandomSwitchOrder(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
@@ -151,8 +151,12 @@ class InferBranchLengths{
 
     //this is a post-processing step
     void GetCoordinates(Node& n, std::vector<double>& coords);
+    //constant population size MCMC
     void MCMC(const Data& data, Tree& tree, const int seed = std::time(0) + getpid());
-    void MCMCVariablePopulationSize(const Data& data, Tree& tree, const std::vector<double>& epoche, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
+    //variable population size MCMC
+    void MCMCVariablePopulationSize(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
+    //variable population size MCMC, for Relate (i.e. correct initialization etc)
+    void MCMCVariablePopulationSizeForRelate(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
     void EM(const Data& data, Tree& tree, bool called_as_main = false);
 
 };

@@ -125,6 +125,12 @@ then
 fi
 echo "********************************"
 
+if [ $filename == $output ];
+then
+  echo "Please use different names for input and output."
+  exit 1;
+fi
+
 
 ######################################################################################################
 
