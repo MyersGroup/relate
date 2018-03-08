@@ -16,7 +16,7 @@ GetTreeOfInterest(cxxopts::Options& options){
   //Program options
   
   bool help = false;
-  if(!options.count("anc") || !options.count("snp_of_interest")){
+  if(!options.count("anc") || !options.count("mut") || !options.count("snp_of_interest")){
     std::cout << "Not enough arguments supplied." << std::endl;
     std::cout << "Needed: anc, snp_of_interest." << std::endl;
     help = true;
@@ -28,9 +28,10 @@ GetTreeOfInterest(cxxopts::Options& options){
   }  
   
   int snp_of_interest = options["snp_of_interest"].as<int>();
+  int index_of_snp_of_interest;
 
   std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Get tree at SNP " << snp_of_interest << "..." << std::endl;
+  std::cerr << "Get tree at BP " << snp_of_interest << "..." << std::endl;
 
 
   //////////////////////////////////
@@ -42,9 +43,18 @@ GetTreeOfInterest(cxxopts::Options& options){
   is_N.close();
 
   int i; 
-  std::string line, line2, read;
+  std::string line, read;
 
   //////////////////////////////////////////// Read Tree ///////////////////////////////////
+
+  Mutations mut;
+  mut.Read(options["mut"].as<std::string>());
+  index_of_snp_of_interest = 0;
+  for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
+    if((*it_mut).pos == snp_of_interest) break;
+    index_of_snp_of_interest++;
+  }
+  int tree_index_of_interest = mut.info[index_of_snp_of_interest].tree;
 
   std::ifstream is_anc(options["anc"].as<std::string>());
   if(is_anc.fail()){
@@ -57,20 +67,13 @@ GetTreeOfInterest(cxxopts::Options& options){
 
   MarginalTree mtr;
 
-  getline(is_anc, line2);
+  int count_trees = 0;
   while(getline(is_anc,line)){
-  
-    i = 0;
-    read.clear();
-    while(line[i] != ':'){
-      read += line[i];
-      i++;
-    }
-    i++;
-
-    if(std::stoi(read) > snp_of_interest){
-      //tree is in line2
-      mtr.Read(line2, N);
+ 
+    if(count_trees == tree_index_of_interest){
+      
+      //tree is in line
+      mtr.Read(line, N);
 
       for(int k = 0; k < (int) mtr.tree.nodes.size(); k++){
         mtr.tree.nodes[k].branch_length *= 28.0;
@@ -93,7 +96,7 @@ GetTreeOfInterest(cxxopts::Options& options){
 
     }
   
-    line2 = line;
+    count_trees++;
   
   }
 

@@ -391,7 +391,7 @@ namespace cxxopts
          const std::string& anc
         )
         : OptionParseException(
-            u8"AncesTreeument ‘" + anc + u8"’ failed to parse"
+            u8"Argument ‘" + anc + u8"’ failed to parse"
             )
     {
     }

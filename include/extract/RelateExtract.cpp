@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
     ("anc", "Filename of file containing trees.", cxxopts::value<std::string>())
     ("mut", "Filename of file containing mut.", cxxopts::value<std::string>())
     ("pop_of_interest", "Population label. If not specified, use all haplotypes.", cxxopts::value<std::string>())
-    ("snp_of_interest", "SNP index of interest.", cxxopts::value<int>())
+    ("snp_of_interest", "BP of SNP of interest.", cxxopts::value<int>())
     ("threshold", "Threshold used in RemoveTreesWithFewMutations.", cxxopts::value<int>())
     ("o,output", "Filename of output (excl file extension).", cxxopts::value<std::string>());
 

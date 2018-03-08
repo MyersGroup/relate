@@ -165,7 +165,11 @@ class AncesTreeBuilder{
 
     int IsSNPMapping(Tree& tree, Leaves& sequences_carrying_mutations, int snp){
       float min_value;
-      return MapMutation(tree, sequences_carrying_mutations, snp, min_value);
+      if(MapMutation(tree, sequences_carrying_mutations, snp, min_value) > 2){
+        return 2;
+      }else{
+        return 1;
+      }
     }
 
 };

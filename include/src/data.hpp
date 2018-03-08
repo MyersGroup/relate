@@ -14,8 +14,29 @@
 #include <limits>
 #include <tgmath.h>
 #include <string>
+#include <stdlib.h>
+#include <string.h>
 
 #include <cassert>
+
+class gzip{
+
+  private:
+
+    bool is_gzipped = false;
+    bool is_open    = false;
+
+  public:
+
+   gzip(){};
+
+   //function that takes in a file pointer, filename and opens the file
+   FILE* open(const char* filename, const char* mode);
+   
+   //function that takes in a file pointer and closes the file.
+   void close(FILE* fp);
+
+};
 
 //struct recording all the data needed for building anc
 struct Data{
@@ -91,6 +112,8 @@ class haps{
 
     int N, L;
     FILE* fp;
+    gzip g; 
+    char* line;
 
   public:
 
@@ -98,9 +121,10 @@ class haps{
     char rsid[30];
     char ancestral, alternative;
 
-    haps(const char* filename_haps, const char* filename_sample){
+    haps(const char* filename_haps, const char* filename_sample){ 
 
-      fp = fopen(filename_sample, "r");
+      //fp = fopen(filename_sample, "r");
+      fp = g.open(filename_sample, "r");
       assert(fp);
       N = 0;
       while(!feof(fp)){
@@ -110,9 +134,10 @@ class haps{
       }
       N -= 2;
       N *= 2;
-      fclose(fp);
+      g.close(fp);
 
-      fp = fopen(filename_haps, "r");
+      //fp = fopen(filename_haps, "r");
+      fp = g.open(filename_haps, "r");
       assert(fp);
       L = 0;
       while(!feof(fp)){
@@ -120,17 +145,18 @@ class haps{
           L++;
         }
       }
-      fclose(fp);
+      g.close(fp);
 
-
-      fp = fopen(filename_haps, "r");
+      //fp = fopen(filename_haps, "r");
+      fp = g.open(filename_haps, "r");
       assert(fp);
+      line = (char*) malloc(2*N+10);
 
     }
 
     void ReadSNP(std::vector<char>& sequence, int& bp); //gets hap info for SNP
     void DumpSNP(std::vector<char>& sequence, int bp, FILE* fp_out); //dumps hap info for SNP
-    void CloseFile(){fclose(fp);};
+    void CloseFile(){g.close(fp);};
 
     int GetN(){return(N);}
     int GetL(){return(L);}

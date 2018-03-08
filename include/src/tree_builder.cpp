@@ -877,7 +877,7 @@ InferBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distributio
   //Distribution d_swap(child_order+1, parent_order-1); does not change after a transition.
   //
   //TODO: With tips that have nonzero coalescent time, we need to reject any transition proposed with these tips.
-  
+
 
   //This update is constant time.
   accept = true;
@@ -1222,6 +1222,8 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
   int k_tmp = k;
   int num_lineages_tmp = num_lineages;
   float k_choose_2_tmp = k_choose_2;
+  bool foo = false;
+  int end_ep = -1;
   // For k_tmp == k, I am actually changing the time while num_lineages ancestors remain.
   // For k_tmp > k, I need to check whether these were pushed to older epochs by the update, and adjust coalescent times.
   while(k_tmp < 2*N-1){
@@ -1241,11 +1243,13 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
       assert(delta_tmp_tau >= 0.0);
       //if epoch[ep+1] begins before the current interval (while num_lineages_tmp remain) ends, enter if statement
       if(delta_tmp_tau <= tmp_tau){
+
         //add up rate parameters for this interval
         if(coal_rate[ep] > 0.0){
           log_likelihood_ratio   -= k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
         }
         tmp_tau                -= delta_tmp_tau;
+
         ep++;
         delta_tmp_tau           = epoch[ep+1] - epoch[ep];
         while(tmp_tau > delta_tmp_tau && ep < epoch.size() - 1){
@@ -1253,6 +1257,7 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
             log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
           }
           tmp_tau              -= delta_tmp_tau;
+
           ep++;
           delta_tmp_tau         = epoch[ep+1] - epoch[ep];
         }
@@ -1268,11 +1273,6 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
         }else{
           log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
         }
-        k_tmp++;
-        //If coordinates[sorted_indices[k_tmp-1]] + delta_tau is in the same epoch as coordinates[sorted_indices[k_tmp-1]],
-        //I don't have to update this epoch (and any older epoch)
-        //Therefore break;
-        break;
       }
 
     }else{
@@ -1285,8 +1285,8 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
       //If I am already at the last epoch, other intervals cannot be pushed to older epochs, so I can break
       break;
     }
-
     k_tmp++;
+
   }
 
   if(log_likelihood_ratio != -std::numeric_limits<float>::infinity()){
@@ -1422,14 +1422,16 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
     //calculate new branch lengths
     it_sorted_indices = std::next(sorted_indices.begin(), k);
     update_node1 = k;
-    for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-      coordinates[*it_sorted_indices]                 += delta_tau;
-      assert(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)]);
-      child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
-      tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
-      child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
-      tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
-    }
+
+      for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
+        coordinates[*it_sorted_indices]                 += delta_tau;
+        assert(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)]);
+        child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
+        tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
+        child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
+        tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
+      }
+
   }
   //count_proposal++;
 

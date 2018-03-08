@@ -358,7 +358,7 @@ ConvertFromVcf(cxxopts::Options& options){
       c++;
     }
 
-    if(N == N_prev && freq > 0){
+    if(N == N_prev){
       fprintf(fp_haps, "%d %s %d %c %c", chr, rsid, bp, ancestral, alternative);
       for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
         fprintf(fp_haps, " %c", *it_seq);
@@ -444,7 +444,7 @@ RemoveNonBiallelicSNPs(cxxopts::Options& options){
     }
 
     if(bp2 < bp1){
-      std::cerr << "An error occurred while reading line " << snp << std::endl;
+      std::cerr << "An error occurred while reading line " << snp << ". Input file might not be sorted by bp." << std::endl;
       exit(1);
     }
 
@@ -816,7 +816,36 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
 
       if(ancestral_allele == ancestral){
 
-        os << line << "\n";
+        it_line = line.begin();
+        //chr
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //rsid
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //bp
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //ancestral
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //alternative
+        while(*it_line != ' ') it_line++;
+        it_line++;
+
+        bool is_snp = false;
+        for(; it_line != line.end(); it_line++){
+          if(*it_line == '1'){
+            is_snp = true;
+            break;
+          }
+        }
+
+        if(is_snp){
+          os << line << "\n";
+        }else{
+          removed_snps++;
+        }
 
       }else if(ancestral_allele == alternative){
 
@@ -840,15 +869,21 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
         while(*it_line != ' ') it_line++;
         it_line++;
 
+        bool is_snp = false;
         for(; it_line != line.end(); it_line++){
           if(*it_line == '0'){
             *it_line = '1';
+            is_snp = true;
           }else if(*it_line == '1'){
             *it_line = '0';
           }
         }
 
-        os << line << "\n";
+        if(is_snp){
+          os << line << "\n";
+        }else{
+          removed_snps++;
+        }
 
       }else{
         removed_snps++;

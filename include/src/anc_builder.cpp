@@ -258,7 +258,7 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   }
 
   mutations.info[section_startpos].tree = 0;
-  if(MapMutation((*it_seq).tree, sequences_carrying_mutation, section_startpos, min_value) > 1){
+  if(MapMutation((*it_seq).tree, sequences_carrying_mutation, section_startpos, min_value) > 2){
     ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, section_startpos, true);
   } 
 
@@ -281,7 +281,8 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
 
     mutations.info[snp].tree = num_tree-1;
     //if mutation does not fall on current tree, I need to build new tree
-    if(MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value) > 1){ 
+    if(MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value) > 1){
+
       anc.seq.emplace_back();
       it_seq++;
       d.GetMatrix(snp); //calculates distance matrix d at snp 
@@ -294,10 +295,10 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
         //mutation not mapping to a unique branch and new tree is worse than old tree
         it_seq--;
         anc.seq.pop_back();
-        ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, snp, true);
+        if(is_mapping > 2) ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, snp, true); //otherwise, it was flipped and is already mapped to branch
 
       }else{
-        if(is_mapping > 1){
+        if(is_mapping > 2){
           ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, snp, true);
         }
 
@@ -707,24 +708,27 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
 
     min_value = report.min;
     if( report.min <= thr ){
-      mutations.info[snp].branch.push_back(report.best_branch); 
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_branch; 
+      mutations.info[snp].flipped = false;
       tree.nodes[report.best_branch].num_events += 1.0;
       assert(mutations.info[snp].branch.size() == 1);
       return 1;
     }
-    return 2;
+    return 3;
 
   }else{
 
     min_value = report.flipped_min;
     if( report.flipped_min <= thr ){
-      mutations.info[snp].branch.push_back(report.best_flipped_branch);
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_flipped_branch;
       mutations.info[snp].flipped = true;
       tree.nodes[report.best_flipped_branch].num_events += 1.0;
       assert(mutations.info[snp].branch.size() == 1);
-      return 1;
+      return 2;
     }
-    return 2;
+    return 3;
 
   }
 
@@ -1137,7 +1141,7 @@ AncesTreeBuilder::BranchAssociation(Tree& ref_tree, Tree& tree, std::vector<int>
 
   for(int i = N; i < N_total-1; i++){ 
 
-    if(cor.Pearson(tr_leaves[i], rtr_leaves[i]) >= 0.999 && cor.Pearson(tr_leaves[(*tree.nodes[i].parent).label], rtr_leaves[(*ref_tree.nodes[i].parent).label]) >= 0.999){     
+    if(cor.Pearson(tr_leaves[i], rtr_leaves[i]) >= 0.9999 && cor.Pearson(tr_leaves[(*tree.nodes[i].parent).label], rtr_leaves[(*ref_tree.nodes[i].parent).label]) >= 0.9999){     
       //branches i and i are equivalent
       equivalent_branches[i] = i;
       equivalent_branches_ref[i] = i;
@@ -1146,7 +1150,7 @@ AncesTreeBuilder::BranchAssociation(Tree& ref_tree, Tree& tree, std::vector<int>
     if(equivalent_branches[i] == -1){
       int num_leaves = tr_leaves[i].num_leaves;
       for(std::vector<int>::iterator it = std::next(sorted_branches.begin(),index_sorted_branches[num_leaves-1]); it != std::next(sorted_branches.begin(), index_sorted_branches[num_leaves]); it++ ){
-        if(cor.Pearson(tr_leaves[i], rtr_leaves[*it]) >= 0.999 && cor.Pearson(tr_leaves[(*tree.nodes[i].parent).label], rtr_leaves[(*ref_tree.nodes[*it].parent).label]) >= 0.999){     
+        if(cor.Pearson(tr_leaves[i], rtr_leaves[*it]) >= 0.9999 && cor.Pearson(tr_leaves[(*tree.nodes[i].parent).label], rtr_leaves[(*ref_tree.nodes[*it].parent).label]) >= 0.9999){     
           //branches i and *it are equivalent
           equivalent_branches[i]       = *it;
           equivalent_branches_ref[*it] = i;
