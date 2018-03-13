@@ -97,9 +97,9 @@ int main(int argc, char* argv[]){
     //The Final Finalize should be a FinalizeByGroup 
    
     bool help = false;
-    if(!options.count("mutation_rate") || !options.count("mrate") || !options.count("coal") || !options.count("dist") || !options.count("input") || !options.count("output")){
+    if(!options.count("mutation_rate") || !options.count("mrate") || !options.count("coal") || !options.count("input") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
-      std::cout << "Needed: mutation_rate, mrate, coal, dist, input, output. Optional: seed." << std::endl;
+      std::cout << "Needed: mutation_rate, mrate, coal, input, output. Optional: dist, seed." << std::endl;
       help = true;
     }
     if(options.count("help") || help){

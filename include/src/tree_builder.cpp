@@ -1230,6 +1230,8 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
     if(ep < epoch.size() - 1){
 
       if(k_tmp > k){
+        //assert(coordinates[sorted_indices[k_tmp-1]] + delta_tau >= epoch[ep]);
+        //assert(coordinates[sorted_indices[k_tmp-1]] + delta_tau < epoch[ep + 1]);
         tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
         delta_tmp_tau = epoch[ep+1] - (coordinates[sorted_indices[k_tmp-1]] + delta_tau);
         //update k_choose_2
@@ -1237,9 +1239,11 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
         num_lineages_tmp--;
         assert(num_lineages_tmp > 1);
       }else{
+        assert(coordinates[sorted_indices[k_tmp-1]] >= epoch[ep]);
         delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k_tmp-1]];
       }
 
+      //assert(tmp_tau >= 0.0);
       assert(delta_tmp_tau >= 0.0);
       //if epoch[ep+1] begins before the current interval (while num_lineages_tmp remain) ends, enter if statement
       if(delta_tmp_tau <= tmp_tau){
@@ -1267,23 +1271,30 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
         }else{
           log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
         }
+
       }else{
         if(coal_rate[ep] == 0){
           log_likelihood_ratio = -std::numeric_limits<float>::infinity();
         }else{
           log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
         }
+        //k_tmp++;
+        //break;
       }
 
     }else{
+
       if(coal_rate[ep] == 0){
         log_likelihood_ratio = -std::numeric_limits<float>::infinity();
       }else{
+        if(k_tmp > k){
+          tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
+        }
         log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
       }
-      k_tmp++;
+      //k_tmp++;
       //If I am already at the last epoch, other intervals cannot be pushed to older epochs, so I can break
-      break;
+      //break;
     }
     k_tmp++;
 
@@ -1295,6 +1306,7 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
     tmp_tau       = tau_old;
 
     int k_max = k_tmp;
+    //int k_max = 2*N-1;
     k_tmp = k;
     k_choose_2_tmp = k_choose_2;
     num_lineages_tmp = num_lineages;
@@ -1303,12 +1315,15 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
       if(ep < epoch.size() - 1){
 
         if(k_tmp > k){
+          //assert(coordinates[sorted_indices[k_tmp-1]] >= epoch[ep]);
+          //assert(coordinates[sorted_indices[k_tmp-1]] < epoch[ep + 1]);
           tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
           delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k_tmp-1]];
           //update k_choose_2
           k_choose_2_tmp *= (num_lineages_tmp - 2.0)/num_lineages_tmp;
           num_lineages_tmp--;
         }else{
+          //assert(coordinates[sorted_indices[k_tmp-1]] >= epoch[ep]);
           delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k_tmp-1]];
         }
 
@@ -1347,12 +1362,17 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
         if(coal_rate[ep] == 0){
           log_likelihood_ratio = std::numeric_limits<float>::infinity();
         }else{
+          if(k_tmp > k){
+            tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
+          }
           log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
         }
       }
 
       k_tmp++;
     }
+
+    //if(k == 101) std::cerr << k << " " << ep_begin << " " << coordinates[sorted_indices[k - 1]] * 30000 * 28 << " " << coal_rate[ep_begin] << " " << delta_tau << " " << log_likelihood_ratio << std::endl;
 
     if(log_likelihood_ratio != std::numeric_limits<float>::infinity()){
       //assert(order[node_k] == k);
@@ -1406,6 +1426,8 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
       //assert(count_number_of_spanning_branches == num_lineages);
     }
   }
+
+  //if(k == 101) std::cerr << log_likelihood_ratio << std::endl;
 
   //decide whether to accept proposal or not.
   accept = true;

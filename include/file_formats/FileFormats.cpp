@@ -782,7 +782,7 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
 
   fasta ancestor;
   ancestor.Read(options["ancestor"].as<std::string>());
-  haps m_hap(options["haps"].as<std::string>().c_str(), options["haps"].as<std::string>().c_str());
+  haps m_hap(options["haps"].as<std::string>().c_str(), options["sample"].as<std::string>().c_str());
   m_hap.CloseFile();
   Data data(m_hap.GetN(), m_hap.GetL());
 
@@ -944,7 +944,7 @@ GenerateSNPAnnotations(cxxopts::Options& options){
   fasta ancestor;
   if(is_ancestor) ancestor.Read(options["ancestor"].as<std::string>());
 
-  haps m_hap(options["haps"].as<std::string>().c_str(), options["haps"].as<std::string>().c_str());
+  haps m_hap(options["haps"].as<std::string>().c_str(), options["sample"].as<std::string>().c_str());
   Data data(m_hap.GetN(), m_hap.GetL());
 
   Mutations mut;

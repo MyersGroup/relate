@@ -204,7 +204,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   
   CorrTrees::iterator it_anc = anc.seq.begin();
   std::vector<float> coordinates(2*data.N-1);
-  int num_tree = 0;
+  int num_tree = mut.info[0].tree;
   int root = 2*data.N-2;
 
   (*it_anc).tree.GetCoordinates(coordinates);
