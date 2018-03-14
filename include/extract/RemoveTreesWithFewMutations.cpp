@@ -82,23 +82,33 @@ RemoveTreesWithFewMutations(cxxopts::Options& options){
     exit(0);
   }  
 
-
+    
   int N, num_trees;
 
-  std::ifstream is_N(options["anc"].as<std::string>());
+  igzstream is_N(options["anc"].as<std::string>());
+  if(is_N.fail()) is_N.open(options["anc"].as<std::string>() + ".gz");
+  if(is_N.fail()){
+    std::cerr << "Error opening .anc file" << std::endl;
+    exit(1);
+  }
   is_N.ignore(256, ' ');
   is_N >> N;
   is_N.close();
 
   int L = 0;
-  std::ifstream is_L(options["mut"].as<std::string>());
+  igzstream is_L(options["mut"].as<std::string>());
+  if(is_L.fail()) is_L.open(options["mut"].as<std::string>() + ".gz");
+  if(is_L.fail()){
+    std::cerr << "Error opening .mut file" << std::endl;
+    exit(1);
+  }
   std::string unused;
   std::getline(is_L, unused); 
   while ( std::getline(is_L, unused) ){
     ++L;
   }
   is_L.close();
-
+ 
   Data data(N,L);
 
   AncesTree anc;

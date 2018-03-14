@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "gzstream.h"
 #include "collapsed_matrix.hpp"
 #include "data.hpp"
 #include "sample.hpp"
@@ -40,22 +41,30 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
   }
   std::string line_hap, line_legend;
 
+
+  ogzstream os_test("test.txt");
+  std::string test;
+  os_test << "Hello\n";
+  os_test.close();
+
   //parse hap and legend
   //combine hap and legend to haps
 
   //legend
   //assume 4 columns with optional 5th column
 
-  std::ifstream is_hap(options["input"].as<std::string>() + ".hap");
-  std::ifstream is_legend(options["input"].as<std::string>() + ".legend");
+  igzstream is_hap(options["input"].as<std::string>() + ".hap");
+  if(is_hap.fail()) is_hap.open(options["input"].as<std::string>() + ".hap.gz");
+  igzstream is_legend(options["input"].as<std::string>() + ".legend");
+  if(is_legend.fail()) is_legend.open(options["input"].as<std::string>() + ".legend.gz");
   FILE* fp_haps   = fopen((options["haps"].as<std::string>()).c_str(), "w");
 
   if(is_hap.fail()){
-    std::cerr << "Error while opening file " << options["input"].as<std::string>() + ".hap" << "." << std::endl;
+    std::cerr << "Error while opening file " << options["input"].as<std::string>() + ".hap(.gz)" << "." << std::endl;
     exit(1);
   } 
   if(is_legend.fail()){
-    std::cerr << "Error while opening file " << options["input"].as<std::string>() + ".legend" << "." << std::endl;
+    std::cerr << "Error while opening file " << options["input"].as<std::string>() + ".legend(.gz)" << "." << std::endl;
     exit(1);
   } 
 
@@ -170,7 +179,12 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
   is_legend.close();
 
   //create sample file (not dependent on input)
-  std::ifstream is_sample(options["input"].as<std::string>() + ".sample");
+  igzstream is_sample(options["input"].as<std::string>() + ".sample");
+  if(is_sample.fail()) is_sample.open(options["input"].as<std::string>() + ".sample.gz");
+  if(is_sample.fail()){
+    std::cerr << "Error while opening file " << options["input"].as<std::string>() + ".sample(.gz)" << "." << std::endl;
+    exit(1);
+  } 
   std::ofstream os_sample(options["sample"].as<std::string>());
 
   os_sample << "ID_1\tID_2\tmissing\n";
@@ -232,9 +246,10 @@ ConvertFromVcf(cxxopts::Options& options){
 
   //parse vcf 
 
-  std::ifstream is_vcf(options["input"].as<std::string>() + ".vcf");
+  igzstream is_vcf(options["input"].as<std::string>() + ".vcf");
+  if(is_vcf.fail()) is_vcf.open(options["input"].as<std::string>() + ".vcf.gz");
   if(is_vcf.fail()){
-    std::cerr << "Error opening file " << options["input"].as<std::string>() + ".vcf" << std::endl;
+    std::cerr << "Error opening file " << options["input"].as<std::string>() + ".vcf(.gz)" << std::endl;
     exit(1);
   }
   FILE* fp_haps = fopen((options["haps"].as<std::string>()).c_str(), "w");
@@ -410,7 +425,7 @@ RemoveNonBiallelicSNPs(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Removing non-biallelic SNPs.." << std::endl;
 
-  std::ifstream is_haps(options["haps"].as<std::string>());
+  igzstream is_haps(options["haps"].as<std::string>());
   std::ofstream os_haps(options["haps"].as<std::string>() + ".unique");
 
   if(is_haps.fail()){
@@ -512,7 +527,7 @@ RemoveSamples(cxxopts::Options& options){
   char id[40];
   std::string line;
   std::vector<std::string> id_remove;
-  std::ifstream is_rem(options["input"].as<std::string>());
+  igzstream is_rem(options["input"].as<std::string>());
   if(is_rem.fail()){
     std::cerr << "Error while opening file " << options["input"].as<std::string>() << "." << std::endl;
     exit(1);
@@ -522,7 +537,7 @@ RemoveSamples(cxxopts::Options& options){
   }
   is_rem.close();
 
-  std::ifstream is(options["sample"].as<std::string>());
+  igzstream is(options["sample"].as<std::string>());
   std::ofstream os(options["output"].as<std::string>() + ".sample");
   std::vector<int> remaining_haps(data.N - 2*id_remove.size());
 
@@ -640,7 +655,7 @@ FilterHapsUsingMask(cxxopts::Options& options){
   std::vector<int> pos(m_hap.GetL(), 0), dist(m_hap.GetL(), 0);
   Data data(m_hap.GetN(), m_hap.GetL());
 
-  std::ifstream is(options["haps"].as<std::string>());
+  igzstream is(options["haps"].as<std::string>());
   if(is.fail()){
     std::cerr << "Error opening file." << std::endl;
     exit(1);
@@ -786,7 +801,7 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
   m_hap.CloseFile();
   Data data(m_hap.GetN(), m_hap.GetL());
 
-  std::ifstream is(options["haps"].as<std::string>().c_str());
+  igzstream is(options["haps"].as<std::string>().c_str());
   if(is.fail()){
     std::cerr << "Error opening file." << std::endl;
     exit(1);

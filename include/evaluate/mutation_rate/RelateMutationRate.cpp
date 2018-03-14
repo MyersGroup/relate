@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "gzstream.h"
 #include "collapsed_matrix.hpp"
 #include "sample.hpp"
 #include "anc.hpp"
@@ -39,7 +40,7 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
 
   count_bases_by_type.resize(mutations.info.size(),dict_mutation_pattern.size());
 
-  std::ifstream is;
+  igzstream is;
   std::string line;
 
   int i = 0;
@@ -581,13 +582,17 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   //////////// PARSE DATA ///////////
 
   int N;
-  std::ifstream is_N(options["input"].as<std::string>() + ".anc");
+  igzstream is_N(options["input"].as<std::string>() + ".anc");
+  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
+  if(is_N.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl;
   is_N.ignore(256, ' ');
   is_N >> N;
   is_N.close();
 
   int L = 0;
-  std::ifstream is_L(options["input"].as<std::string>() + ".mut");
+  igzstream is_L(options["input"].as<std::string>() + ".mut");
+  if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
+  if(is_L.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
   std::string unused;
   std::getline(is_L, unused); 
   while ( std::getline(is_L, unused) ){
@@ -623,7 +628,7 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
     is_L.close();
 
     pos.resize(L_allsnps);
-    std::ifstream is_dist(options["dist"].as<std::string>());
+    igzstream is_dist(options["dist"].as<std::string>());
     if(is_dist.fail()){
       std::cerr << "Error while opening file." << std::endl;
       exit(1);
@@ -734,14 +739,16 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   int root = N_total-1;
   int i = 0;
 
-  std::ifstream is_anc;
+  igzstream is_anc;
   if(chr == -1){
     is_anc.open(options["input"].as<std::string>() + ".anc");
+    if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + ".anc.gz");
   }else{
     is_anc.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc");
+    if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc.gz");
   }
   if(is_anc.fail()){
-    std::cerr << "Error while opening file." << std::endl;
+    std::cerr << "Error while opening .anc file." << std::endl;
     exit(1);
   }
 
@@ -899,14 +906,17 @@ void BranchLengthVsMutations(cxxopts::Options& options){
 
   //parse data
   int N;
-  std::ifstream is_N(options["input"].as<std::string>() + ".anc");
+  igzstream is_N(options["input"].as<std::string>() + ".anc");
+  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
+  if(is_N.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl;
   is_N.ignore(256, ' ');
   is_N >> N;
   is_N.close();
 
-  //make this more efficient
   int L = 0;
-  std::ifstream is_L(options["pos"].as<std::string>());
+  igzstream is_L(options["input"].as<std::string>() + ".mut");
+  if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
+  if(is_L.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
   std::string unused;
   std::getline(is_L, unused); 
   while ( std::getline(is_L, unused) ){
@@ -964,9 +974,10 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   int snp_of_next_tree, snp;
 
 
-  std::ifstream is_anc(options["input"].as<std::string>() + ".anc");
+  igzstream is_anc(options["input"].as<std::string>() + ".anc");
+  if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + ".anc.gz");
   if(is_anc.fail()){
-    std::cerr << "Error while opening file." << std::endl;
+    std::cerr << "Error while opening .anc file." << std::endl;
     exit(1);
   }
 

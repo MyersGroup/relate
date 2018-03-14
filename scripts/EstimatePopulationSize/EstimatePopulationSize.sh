@@ -17,6 +17,7 @@ then
   echo "--poplabels: Filename of .poplabels file."
   echo "--threshold: Optional: Used to delete trees with less than specified number of mutations. Use 0 to use all trees."
   echo "--num_bins:  Optional: Number of bins between 1,000ybp and 10,000,000 ybp. Default is 30."
+  echo "--num_iter:  Optional: Number of iterations of the algorithm. Default: 5."
   echo "--first_chr: Optional: Index of fist chr"
   echo "--last_chr:  Optional: Index of last chr"
   echo "--seed:      Optional: Random seed for branch lengths estimation"
@@ -71,6 +72,11 @@ do
       shift # past argument
       shift # past value
       ;;
+    --num_iter)
+      num_iter="$2"
+      shift # past argument
+      shift # past value
+      ;;
     --first_chr)
       first_chr="$2"
       shift # past argument
@@ -96,8 +102,20 @@ done
 
 if [ -z "${threshold-}" ];
 then
-  threshold=($(head -1 example.anc))
+
+  if [ ! -f $filename.anc ]
+  then
+    threshold=($(zcat $filename.anc.gz | head -1))
+  else
+    threshold=($(head -1 $filename.anc))
+  fi
   threshold=${threshold[1]}
+
+fi
+
+if [ -z "${num_iter-}" ];
+then
+  num_iter=5
 fi
 
 echo "********************************"
@@ -147,7 +165,7 @@ then
 
 
   #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
-  for i in {1..5}
+  for i in {1..${num_iter}}
   do
 
     if [ -z "${num_bins-}" ];
@@ -188,7 +206,7 @@ then
         --coal ${output}.coal \
         --mrate ${output}_avg.rate \
         --dist ${output}.dist \
-        -m 1.25e-8 \
+        -m ${mu} \
         -i ${output} \
         -o ${output}
     else
@@ -198,7 +216,7 @@ then
         --mrate ${output}_avg.rate \
         --dist ${output}.dist \
         --seed $seed \
-        -m 1.25e-8 \
+        -m ${mu} \
         -i ${output} \
         -o ${output}
     fi
@@ -266,7 +284,7 @@ else
   done
 
   #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
-  for i in {1..5}
+  for i in {1..${num_iter}}
   do
 
     if [ -z "${num_bins-}" ];
@@ -317,7 +335,7 @@ else
           --coal ${output}.coal \
           --mrate ${output}_avg.rate \
           --dist ${output}.dist \
-          -m 1.25e-8 \
+          -m ${mu} \
           -i ${output} \
           -o ${output}
       else
@@ -327,7 +345,7 @@ else
           --mrate ${output}_avg.rate \
           --dist ${output}.dist \
           --seed $seed \
-          -m 1.25e-8 \
+          -m ${mu} \
           -i ${output} \
           -o ${output}
       fi

@@ -2,6 +2,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "gzstream.h"
 #include "anc.hpp"
 #include "anc_builder.hpp"
 #include "tree_comparer.hpp"
@@ -37,7 +38,7 @@ GetTreeOfInterest(cxxopts::Options& options){
   //////////////////////////////////
   //Parse Data
   int N;
-  std::ifstream is_N(options["anc"].as<std::string>());
+  igzstream is_N(options["anc"].as<std::string>());
   is_N.ignore(256, ' ');
   is_N >> N;
   is_N.close();
@@ -56,7 +57,7 @@ GetTreeOfInterest(cxxopts::Options& options){
   }
   int tree_index_of_interest = mut.info[index_of_snp_of_interest].tree;
 
-  std::ifstream is_anc(options["anc"].as<std::string>());
+  igzstream is_anc(options["anc"].as<std::string>());
   if(is_anc.fail()){
     std::cerr << "Error while reading anc." << std::endl;
     exit(1);

@@ -1,0 +1,4 @@
+project (gzstream)
+
+add_library(gzstreamStatic STATIC gzstream)
+add_library(gzstreamShared SHARED gzstream)

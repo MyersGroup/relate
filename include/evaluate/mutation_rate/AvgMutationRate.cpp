@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "gzstream.h"
 #include "collapsed_matrix.hpp"
 #include "plot.hpp"
 #include "sample.hpp"
@@ -83,11 +84,15 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
 
   //parse data
   int N;
-  std::ifstream is_N;
+  igzstream is_N;
   if(chr == -1){
     is_N.open(options["input"].as<std::string>() + ".anc");
+    if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
+    if(is_N.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl; 
   }else{
     is_N.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc");
+    if(is_N.fail()) is_N.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc.gz");
+    if(is_N.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() + "_chr" + std::to_string(chr) << ".anc(.gz)" << std::endl;
   }
   is_N.ignore(256, ' ');
   is_N >> N;
@@ -95,11 +100,15 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
 
   //make this more efficient
   int L = 0;
-  std::ifstream is_L;
+  igzstream is_L;
   if(chr == -1){
     is_L.open(options["input"].as<std::string>() + ".mut");
+    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
+    if(is_L.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
   }else{
     is_L.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut.gz");
+    if(is_L.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() + "_chr" + std::to_string(chr) << ".mut(.gz)" << std::endl;
   } 
   std::string unused;
   std::getline(is_L, unused); 
@@ -141,9 +150,10 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
 
     pos.resize(L_allsnps);
     dist.resize(L_allsnps);
-    std::ifstream is_dist(filename_dist);
+    igzstream is_dist(filename_dist);
+    if(is_dist.fail()) is_dist.open(filename_dist + ".gz");
     if(is_dist.fail()){
-      std::cerr << "Error while opening file." << std::endl;
+      std::cerr << "Error while opening " << filename_dist << std::endl;
       exit(1);
     }
     getline(is_dist, line); 
@@ -238,14 +248,16 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
   double total_num_mutations = 0;
   double total_branch_length = 0.0;
 
-  std::ifstream is_anc;
+  igzstream is_anc;
   if(chr == -1){
     is_anc.open(options["input"].as<std::string>() + ".anc");
+    if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + ".anc.gz");
   }else{
     is_anc.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc");
+    if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc.gz");
   }
   if(is_anc.fail()){
-    std::cerr << "Error while opening file." << std::endl;
+    std::cerr << "Error while opening .anc file." << std::endl;
     exit(1);
   }
 

@@ -6,6 +6,7 @@
 #include <sys/resource.h>
 #include <string>
 
+#include "gzstream.h"
 #include "cxxopts.hpp"
 #include "data.hpp"
 #include "anc.hpp"
@@ -47,9 +48,10 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
 
   //parse data
   int N;
-  std::ifstream is_N(options["input"].as<std::string>() + ".anc");
+  igzstream is_N(options["input"].as<std::string>() + ".anc");
+  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
   if(is_N.fail()){
-    std::cerr << "Error while opening file." << std::endl;
+    std::cerr << "Error while opening .anc file." << std::endl;
     exit(1);
   } 
   is_N.ignore(256, ' ');
@@ -58,18 +60,23 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
 
   //make this more efficient
   int L = 0;
-  std::ifstream is_L;
+  igzstream is_L;
   
   if(options.count("dist")){
     is_L.open(options["dist"].as<std::string>());
+    if(is_L.fail()){
+      std::cerr << "Error while opening .dist file." << std::endl;
+      exit(1);
+    } 
   }else{
-     is_L.open(options["input"].as<std::string>() + ".mut");
+    is_L.open(options["input"].as<std::string>() + ".mut");
+    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".gz");
+    if(is_L.fail()){
+      std::cerr << "Error while opening .mut file." << std::endl;
+      exit(1);
+    } 
   }
   
-  if(is_L.fail()){
-    std::cerr << "Error while opening file." << std::endl;
-    exit(1);
-  } 
   while(std::getline(is_L, line)){
     ++L;
   }
@@ -84,9 +91,9 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   data.pos.resize(L);
 
   if(options.count("dist")){
-    std::ifstream is_dist(options["dist"].as<std::string>());
+    igzstream is_dist(options["dist"].as<std::string>());
     if(is_dist.fail()){
-      std::cerr << "Error while opening file." << std::endl;
+      std::cerr << "Error while opening " << options["dist"].as<std::string>() << std::endl;
       exit(1);
     }
     getline(is_dist, line); 
@@ -109,7 +116,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
 
   
   // read epochs and population size 
-  std::ifstream is(options["coal"].as<std::string>()); 
+  igzstream is(options["coal"].as<std::string>()); 
   std::vector<double> epoch, coalescent_rate;
   getline(is, line);
   getline(is, line);

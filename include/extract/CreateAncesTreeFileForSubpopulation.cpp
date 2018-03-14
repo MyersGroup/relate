@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "gzstream.h"
 #include "collapsed_matrix.hpp"
 #include "anc.hpp"
 #include "cxxopts.hpp"
@@ -33,7 +34,7 @@ MakeAncesTreeFile(cxxopts::Options& options, std::vector<AncesTree>& v_anc, Muta
 
   int N, num_trees;
 
-  std::ifstream is_N(options["anc"].as<std::string>());
+  igzstream is_N(options["anc"].as<std::string>());
   if(is_N.fail()){
     std::cerr << "Error while opening file." << std::endl;
     exit(1);
@@ -45,7 +46,7 @@ MakeAncesTreeFile(cxxopts::Options& options, std::vector<AncesTree>& v_anc, Muta
   is_N.close();
 
   int L = 0;
-  std::ifstream is_L(options["mut"].as<std::string>());
+  igzstream is_L(options["mut"].as<std::string>());
   if(is_L.fail()){
     std::cerr << "Error while opening file." << std::endl;
     exit(1);
@@ -99,7 +100,7 @@ MakeAncesTreeFile(cxxopts::Options& options, std::vector<AncesTree>& v_anc, Muta
   v_anc[0].seq.resize(num_trees);
 
   CorrTrees::iterator it_subseq = v_anc[0].seq.begin();
-  std::ifstream is(options["anc"].as<std::string>());
+  igzstream is(options["anc"].as<std::string>());
   if(is.fail()){
     std::cerr << "Error while opening file." << std::endl;
     exit(1);

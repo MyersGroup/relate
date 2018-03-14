@@ -22,15 +22,15 @@ check_file_existence (){
   fi
 }
 
-gunzip -c ../data/chr_${c}/chr${c}.haps.gz > ../data/chr_${c}/chr${c}.haps
-check_file_existence ../data/chr_${c}/chr${c}.haps
+#gunzip -c ../data/chr_${c}/chr${c}.haps.gz > ../data/chr_${c}/chr${c}.haps
+check_file_existence ../data/chr_${c}/chr${c}.haps.gz
 check_file_existence ../data/chr_${c}/chr${c}.sample
 check_file_existence ../data/chr_${c}/chr${c}.dist
 check_file_existence ../data/chr_${c}/genetic_map_chr${c}_combined_b37.txt
 
 ../bin/./Relate \
   --mode "MakeChunks" \
-  --haps ../data/chr_${c}/chr${c}.haps \
+  --haps ../data/chr_${c}/chr${c}.haps.gz \
   --sample ../data/chr_${c}/chr${c}.sample \
   --map ../data/chr_${c}/genetic_map_chr${c}_combined_b37.txt \
   --dist ../data/chr_${c}/chr${c}.dist \

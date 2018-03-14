@@ -9,7 +9,7 @@ int main(int argc, char* argv[]){
 
   //////////////////////////////////
   //Program options  
-  cxxopts::Options options("Relate");
+  cxxopts::Options options("RelateExtract");
   options.add_options()
     ("help", "Print help.")
     ("mode", "Choose which part of the algorithm to run.", cxxopts::value<std::string>())

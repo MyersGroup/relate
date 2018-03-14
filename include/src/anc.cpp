@@ -3,7 +3,7 @@
 //////////////////////////////////
 
 void
-Tree::GetMsPrime(std::ifstream& is, int num_nodes){
+Tree::GetMsPrime(igzstream& is, int num_nodes){
 
   nodes.resize(2*num_nodes-1);
 
@@ -651,7 +651,7 @@ MarginalTree::Read(const std::string& line, int N){
 ////////////////////////////////
 
 void 
-AncesTree::Read(std::ifstream& is){
+AncesTree::Read(igzstream& is){
 
   std::string line;
   seq.clear();
@@ -687,9 +687,10 @@ AncesTree::Read(const std::string& filename){
   double start_time = time(NULL);
   clock_t begin = clock();
 
-  std::ifstream is(filename);
+  igzstream is(filename);
+  if(is.fail()) is.open(filename + ".gz");
   if(is.fail()){ 
-    std::cerr << "Error while opening file " << filename << "." << std::endl;
+    std::cerr << "Error while opening file " << filename << "(.gz)." << std::endl;
     exit(1);
   }
 
@@ -924,7 +925,7 @@ AncesTree::DumpBin(const std::string& filename){
 void 
 AncesTree::ReadMsPrime(const std::string& filename_el){
 
-  std::ifstream is(filename_el);
+  igzstream is(filename_el);
 
   if(is.fail()){
     std::cerr << "Error while opening file " << filename_el << "." << std::endl;
@@ -963,7 +964,7 @@ AncesTree::ReadMsPrime(const std::string& filename_el){
 void
 AncesTree::ReadTreesimOldStyle(const std::string& filename, const Data& data){
 
-  std::ifstream is(filename);
+  igzstream is(filename);
   std::string line;
 
   N = std::numeric_limits<int>::max();
@@ -1039,7 +1040,7 @@ AncesTree::ReadArgweaverSMC(const std::string& filename){
   int N       = 0;
   int N_total = 0;
 
-  std::ifstream is(filename);
+  igzstream is(filename);
   std::string line;
 
   std::string sdummy, newick;
@@ -1238,7 +1239,7 @@ void
 AncesTree::ReadRent(const std::string& filename, float Ne){
 
 
-  std::ifstream is(filename);
+  igzstream is(filename);
   std::string line;
 
   std::string newick; 

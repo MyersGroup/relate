@@ -1,6 +1,7 @@
 #ifndef MUTATIONS_HPP
 #define MUTATIONS_HPP
 
+#include "gzstream.h"
 #include "data.hpp"
 #include "anc.hpp"
 
@@ -47,7 +48,7 @@ class Mutations{
 
     void GetAge(AncesTree& anc);
    
-    void Read(std::ifstream& is, int start_index, int end_index);
+    void Read(igzstream& is, int start_index, int end_index);
     void Read(const std::string& filename);
     void Read(const std::string& filename, int start_index, int end_index);
     void Dump(const std::string& filename);

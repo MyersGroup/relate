@@ -25,7 +25,7 @@ check_file_existence (){
 gunzip -c ../data/chr_${c}/chr${c}.haps.gz > ../data/chr_${c}/chr${c}.haps
 check_file_existence ../data/chr_${c}/chr${c}.haps
 check_file_existence ../data/chr_${c}/chr${c}.sample
-check_file_existence ../data/chr_${c}/chr${c}_filtered.dist
+check_file_existence ../data/chr_${c}/chr${c}.dist
 check_file_existence ../data/chr_${c}/genetic_map_chr${c}_combined_b37.txt
 
 ../bin/./Relate \

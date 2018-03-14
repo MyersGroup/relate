@@ -1,12 +1,15 @@
 #include <iostream>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <ctime>
+
+#include "gzstream.h"
 #include "anc.hpp"
 #include "anc_builder.hpp"
 #include "tree_comparer.hpp"
 #include "cxxopts.hpp"
 
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <ctime>
+
 
 
 float
@@ -108,14 +111,16 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   //read in anc file
 
   int N;
-  std::ifstream is_N;
+  igzstream is_N;
   if(chr == -1){
     is_N.open(options["input"].as<std::string>() + ".anc");
+    if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
   }else{
     is_N.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc");
+    if(is_N.fail()) is_N.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc.gz");
   }
   if(is_N.fail()){
-    std::cerr << "Error while opening file." << std::endl;
+    std::cerr << "Error while opening .anc file." << std::endl;
     exit(1);
   } 
   is_N.ignore(256, ' ');
@@ -123,18 +128,24 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   is_N.close();
 
   int L = 0;
-  std::ifstream is_L(options["input"].as<std::string>() + ".mut");
+  igzstream is_L;
   if(chr == -1){
     is_L.open(options["input"].as<std::string>() + ".mut");
+    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
   }else{
     is_L.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut.gz");
   }
+  if(is_L.fail()){
+    std::cerr << "Error while opening .mut file." << std::endl;
+    exit(1);
+  } 
+  
   std::string unused;
   std::getline(is_L, unused); 
   while ( std::getline(is_L, unused) ){
     ++L;
   }
-  L--;
   is_L.close();
   Data data(N,L);
   

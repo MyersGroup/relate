@@ -5,6 +5,7 @@
 // Class for Trees and AncesTrees
 ///////////////////////////
 
+#include "gzstream.h"
 #include "data.hpp"
 #include "sample.hpp"
 
@@ -99,7 +100,7 @@ class Tree{
       }
     };
  
-    void GetMsPrime(std::ifstream& is, int num_nodes);
+    void GetMsPrime(igzstream& is, int num_nodes);
     void ReadTree(const char* line, int N);
     void ReadTreeBin(FILE* pfile, int N);
     void WriteNewick(const std::string& filename_newick, const bool add = 0); //this is slow. For fast output use WriteOrientedTree
@@ -170,7 +171,7 @@ class AncesTree{
     CorrTrees seq; //starting position on the genome 
     int N, L;
 
-    void Read(std::ifstream& is);
+    void Read(igzstream& is);
     void Read(const std::string& filename); //read anc in long-format. 
     void ReadBin(FILE* pfile);
     void ReadBin(const std::string& filename); //read anc in long-format. 

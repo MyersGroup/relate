@@ -66,9 +66,10 @@ Mutations::ReadShortFormat(const std::vector<std::string>& filenames){
 
   for(int i = 0; i < (int)filenames.size(); i++){
 
-    std::ifstream is(filenames[i]);
+    igzstream is(filenames[i]);
+    if(is.fail()) is.open(filenames[i] + ".gz");
     if(is.fail()){
-      std::cerr << "Error while reading mutations." << std::endl;
+      std::cerr << "Error while reading " << filenames[i] << "(.gz)."  << std::endl;
       exit(1);
     }
 
@@ -138,7 +139,7 @@ Mutations::ReadShortFormat(const std::vector<std::string>& filenames){
 }
 
 void
-Mutations::Read(std::ifstream& is, int start_index, int end_index){
+Mutations::Read(igzstream& is, int start_index, int end_index){
 
   info.resize(L);
   std::string line;
@@ -328,9 +329,10 @@ void
 Mutations::Read(const std::string& filename){
 
   std::string line;
-  std::ifstream is(filename);
+  igzstream is(filename);
+  if(is.fail()) is.open(filename + ".gz");
   if(is.fail()){
-    std::cerr << "Error while reading mutations." << std::endl;
+    std::cerr << "Error while reading " << filename << "(.gz)." << std::endl;
     exit(1);
   }
   std::getline(is, header); 
@@ -343,6 +345,7 @@ Mutations::Read(const std::string& filename){
   is.close();
 
   is.open(filename);
+  if(is.fail()) is.open(filename + ".gz");
   std::getline(is, line);
   Read(is, 0, L);
 
@@ -352,9 +355,10 @@ void
 Mutations::Read(const std::string& filename, int start_index, int end_index){
 
   std::string line;
-  std::ifstream is(filename);
+  igzstream is(filename);
+  if(is.fail()) is.open(filename + ".gz");
   if(is.fail()){
-    std::cerr << "Error while reading mutations." << std::endl;
+    std::cerr << "Error while reading " << filename << "(.gz)." << std::endl;
     exit(1);
   }
 

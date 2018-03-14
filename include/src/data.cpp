@@ -642,7 +642,8 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
 
 
     char buffer[40];
-    FILE* fp_dist = fopen(filename_dist.c_str(), "r");
+    gzip g;
+    FILE* fp_dist = g.open(filename_dist.c_str(), "r");
     fscanf(fp_dist, "%s %s", buffer, buffer);
     int bp_dist, dist;
     snp = 0;
@@ -652,7 +653,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
       pos[snp] = dist;
       snp++;
     }
-    fclose(fp_dist);
+    g.close(fp_dist);
 
   }
 
@@ -866,7 +867,7 @@ map::map(const char* filename){
 void
 fasta::Read(const std::string filename){
 
-  std::ifstream is(filename);
+  igzstream is(filename);
   if(is.fail()){
     std::cerr << "Error while opening file " << filename << "." << std::endl;
     exit(1);
