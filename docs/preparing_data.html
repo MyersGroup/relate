@@ -210,7 +210,7 @@
                   Converts from the hap/legend/sample file format (used for reference panels in e.g., IMPUTE2, see <a href="http://www.shapeit.fr/pages/m02_formats/haplegsample.html">here</a>) to the haps/sample file format. The code deletes non-biallelic SNPs.
                   <ul>
                     <li>Arguments --haps and --sample are used to specify output filenames.</li>
-                    <li>Argument -i is used to specify the input filename (without file extension).</li>
+                    <li>Argument -i is used to specify the input filename (without file extension). The input file can be gzipped; we look for files with extensions hap,hap.gz/legend,legend.gz/sample,sample.gz, with preference given to the non-gzipped file.</li>
                     <li>Use argument --chr to specify a chromosome index [int] (used as the first column in the haps file).</li>
                   </ul>
 
@@ -240,7 +240,7 @@
                                    
                   <ul>
                     <li>Arguments --haps and --sample are used to specify output filenames.</li>
-                    <li>Argument -i is used to specify the input filename (without file extension).</li>
+                    <li>Argument -i is used to specify the input filename (without file extension). The input file can be gzipped; we look for files with extensions vcf,vcf.gz, with preference given to the non-gzipped file.</li>
                   </ul>
 
                   <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
@@ -267,8 +267,8 @@
             <a class="anchor" name="Prepare"></a>
             <h3>Preparing input files</h3>
             <hr/>
-            <p>The following code can be used to prepare the input data. We recommend to apply all steps (if applicable) in the listed order. 
-            </p>
+            <p>The following code can be used to prepare the input data. We recommend to apply all steps (if applicable) in the listed order. </p>
+            <p>All input files can be gzipped.</p>
 
             <div class="panel panel-info">
               <div class="panel-heading"> <h4>Remove non-biallelic SNPs</h4></div>
