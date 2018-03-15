@@ -5,6 +5,7 @@
 #include "InferBranchLengths.cpp"
 #include "CombineSections.cpp"
 #include "Finalize.cpp"
+#include "Clean.cpp"
 
 #include "cxxopts.hpp"
 #include <string>
@@ -20,11 +21,11 @@ int main(int argc, char* argv[]){
     ("haps", "Filename of haps file (Output file format of Shapeit).", cxxopts::value<std::string>())
     ("sample", "Filename of sample file (Output file format of Shapeit).", cxxopts::value<std::string>())
     ("map", "Genetic map.", cxxopts::value<std::string>())
-    ("dist", "Optional but recommended. Distance in BP between SNPs. Can be generated using RelateFileFormats. If unspecified, distances in haps are used.", cxxopts::value<std::string>())
-    ("annot", "Optional. Filename of file containing additional annotation of snps. Can be generated using RelateFileFormats.", cxxopts::value<std::string>())
     ("m,mutation_rate", "Mutation rate.", cxxopts::value<float>())
     ("N,effectiveN", "Effective population size.", cxxopts::value<float>())
     ("o,output", "Filename of output without file extension.", cxxopts::value<std::string>())
+    ("dist", "Optional but recommended. Distance in BP between SNPs. Can be generated using RelateFileFormats. If unspecified, distances in haps are used.", cxxopts::value<std::string>())
+    ("annot", "Optional. Filename of file containing additional annotation of snps. Can be generated using RelateFileFormats.", cxxopts::value<std::string>()) 
     ("memory", "Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB.", cxxopts::value<float>())
     ("chunk_index", "Optional. Index of chunk. (Use when running parts of the algorithm on an individual chunk.)", cxxopts::value<int>())
     ("first_section", "Optional. Index of first section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
@@ -158,6 +159,10 @@ int main(int argc, char* argv[]){
   
     Finalize(options);
   
+  }else if(!mode.compare("Clean")){
+  
+    Clean(options);
+  
   }else if(!mode.compare("All")){
     
     bool popsize = false;
@@ -267,7 +272,7 @@ int main(int argc, char* argv[]){
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "MakeChunks, Paint, BuildTopology, FindEquivalentBranches, InferBranchLengths, CombineSections, Finalize, All." << std::endl;
+    std::cout << "MakeChunks, Paint, BuildTopology, FindEquivalentBranches, InferBranchLengths, CombineSections, Finalize, Clean, All." << std::endl;
   
   }
 

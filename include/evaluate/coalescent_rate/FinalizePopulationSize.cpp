@@ -165,6 +165,8 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epochs);
   for(int e = 0; e < num_epochs; e++){
     coalescent_rate_data[e].ReadFromFile(fp);
+    assert(coalescent_rate_data[e].size() == N);
+    assert(coalescent_rate_data[e].subVectorSize(0) == N);
   }
   fclose(fp);
 

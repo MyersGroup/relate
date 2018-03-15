@@ -125,6 +125,7 @@ echo "poplabels = $filename_poplabels"
 echo "mu        = $mu"
 echo "threshold = $threshold"
 echo "output    = $output"
+echo "num_iter  = $num_iter"
 if [ ! -z "${num_bins-}" ];
 then
   echo "num_bins  = $num_bins"
@@ -165,7 +166,7 @@ then
 
 
   #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
-  for i in {1..${num_iter}}
+  for i in `seq 1 1 ${num_iter}`
   do
 
     if [ -z "${num_bins-}" ];
@@ -284,7 +285,7 @@ else
   done
 
   #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
-  for i in {1..${num_iter}}
+  for i in `seq 1 1 ${num_iter}`
   do
 
     if [ -z "${num_bins-}" ];
