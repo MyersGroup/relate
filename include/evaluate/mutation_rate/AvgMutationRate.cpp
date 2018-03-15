@@ -88,11 +88,17 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
   if(chr == -1){
     is_N.open(options["input"].as<std::string>() + ".anc");
     if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-    if(is_N.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl; 
+    if(is_N.fail()){
+      std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl; 
+      exit(1);
+    }
   }else{
     is_N.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc");
     if(is_N.fail()) is_N.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc.gz");
-    if(is_N.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() + "_chr" + std::to_string(chr) << ".anc(.gz)" << std::endl;
+    if(is_N.fail()){
+      std::cerr << "Error while opening " << options["input"].as<std::string>() + "_chr" + std::to_string(chr) << ".anc(.gz)" << std::endl;
+      exit(1);
+    }
   }
   is_N.ignore(256, ' ');
   is_N >> N;
@@ -104,11 +110,17 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
   if(chr == -1){
     is_L.open(options["input"].as<std::string>() + ".mut");
     if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
-    if(is_L.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
+    if(is_L.fail()){
+      std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
+      exit(1);
+    }
   }else{
     is_L.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
     if(is_L.fail()) is_L.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut.gz");
-    if(is_L.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() + "_chr" + std::to_string(chr) << ".mut(.gz)" << std::endl;
+    if(is_L.fail()){
+      std::cerr << "Error while opening " << options["input"].as<std::string>() + "_chr" + std::to_string(chr) << ".mut(.gz)" << std::endl;
+      exit(1);
+    }
   } 
   std::string unused;
   std::getline(is_L, unused); 

@@ -1054,6 +1054,7 @@ GenerateSNPAnnotations(cxxopts::Options& options){
 
   if(options.count("mut")){
 
+    mut.header += "upstream_allele;downstream_allele;";
     for(std::vector<std::string>::iterator it_groups = sample.groups.begin(); it_groups != sample.groups.end(); it_groups++){
       mut.header += *it_groups + ";";
     }

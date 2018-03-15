@@ -584,7 +584,10 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   int N;
   igzstream is_N(options["input"].as<std::string>() + ".anc");
   if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl;
+  if(is_N.fail()){
+    std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl;
+    exit(1);
+  }
   is_N.ignore(256, ' ');
   is_N >> N;
   is_N.close();
@@ -592,7 +595,10 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   int L = 0;
   igzstream is_L(options["input"].as<std::string>() + ".mut");
   if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
-  if(is_L.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
+  if(is_L.fail()){
+    std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
+    exit(1);
+  }
   std::string unused;
   std::getline(is_L, unused); 
   while ( std::getline(is_L, unused) ){
@@ -908,7 +914,10 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   int N;
   igzstream is_N(options["input"].as<std::string>() + ".anc");
   if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl;
+  if(is_N.fail()){
+    std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl;
+    exit(1);
+  }
   is_N.ignore(256, ' ');
   is_N >> N;
   is_N.close();
@@ -916,7 +925,10 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   int L = 0;
   igzstream is_L(options["input"].as<std::string>() + ".mut");
   if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
-  if(is_L.fail()) std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
+  if(is_L.fail()){
+    std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
+    exit(1);
+  }
   std::string unused;
   std::getline(is_L, unused); 
   while ( std::getline(is_L, unused) ){

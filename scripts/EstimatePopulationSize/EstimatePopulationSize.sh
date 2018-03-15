@@ -281,7 +281,7 @@ else
       --threshold $threshold \
       --anc ${filename}_chr${chr}.anc \
       --mut ${filename}_chr${chr}.mut \
-      -o ${output} 
+      -o ${output}_chr${chr} 
   done
 
   #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
