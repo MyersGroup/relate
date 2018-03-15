@@ -121,7 +121,7 @@ make</code></pre>
               <li>Please separate your data by chromosome.</li>
               <li>You can <b>convert</b> from <b>vcf</b> to <b>haps/sample</b> using <a href="preparing_data.html#ConvertFromVcf">this function</a> and from <b>hap/legend/sample</b> to <b>haps/sample</b> using <a href="preparing_data.html#ConvertFromHapLegendSample">this function</a>.</li>
               <li>Please make sure that, for every SNP, the <b>ancestral allele is denoted by 0</b> and the alternative allele is denoted by 1. We provide a tool for doing this <a href="preparing_data.html#FlipHapsUsingAncestor">here</a>.</li> 
-              <li>Please also make sure that every SNP is <b>biallelic</b>. A tool for removing non-biallelic SNPs can be found <a href="preparing_data.html#RemoveNonBiallelicSNPs">here</a>.</li>
+              <li>Please also make sure that every SNP is biallelic. A tool for removing non-biallelic SNPs can be found <a href="preparing_data.html#RemoveNonBiallelicSNPs">here</a>.</li>
               <li>Optional: We provide a tool for filtering SNPs (and adjusting distances between SNPs) using a genomic mask <a href="preparing_data.html#FilterHapsUsingMask">here</a>.</li>
             </ul>
                        

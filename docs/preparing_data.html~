@@ -288,29 +288,6 @@
 
         </div>
 
-        <!-- row -->
-        <div class="row">
-
-          <a class="anchor" name="FlipHapsUsingAncestor"></a> 
-          <div class="col-md-10 col-md-offset-1">
-            <div class="panel panel-info">
-              <div class="panel-heading"> <h4>Determine ancestral allele and flip if necessary</h4></div>
-              <div class="panel-body">  
-
-                The ancestral genome should be saved as a fasta file and aligned to the data set. The code is insensitive to case in the fasta file and deletes SNPs at which neither allele matches the ancestral allele.
-                <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
-                 --mode FlipHapsUsingAncestor \
-                 --haps example.haps \
-                 --sample example.sample \
-                 --ancestor ancestor.fa \
-                 -o example_ancestral </code></pre>
-                Output: example_ancestral.haps
-
-              </div>
-            </div>
-          </div>
-
-        </div>
 
         <!-- row -->
         <div class="row">
@@ -335,6 +312,32 @@
           </div>
 
         </div>
+
+
+        <!-- row -->
+        <div class="row">
+
+          <a class="anchor" name="FlipHapsUsingAncestor"></a> 
+          <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-info">
+              <div class="panel-heading"> <h4>Determine ancestral allele and flip if necessary</h4></div>
+              <div class="panel-body">  
+
+                The ancestral genome should be saved as a fasta file and aligned to the data set. The code is insensitive to case in the fasta file and deletes SNPs at which neither allele matches the ancestral allele.
+                <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                 --mode FlipHapsUsingAncestor \
+                 --haps example.haps \
+                 --sample example.sample \
+                 --ancestor ancestor.fa \
+                 -o example_ancestral </code></pre>
+                Output: example_ancestral.haps
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
 
         <!-- row -->
         <div class="row">

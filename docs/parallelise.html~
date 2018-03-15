@@ -455,7 +455,45 @@
             </div>
 
           </div>
-   
+
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="Finalize"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <p>
+              <h5>File formats</h5>
+              </p> 
+              <div class="table-responsive">
+                <table class="table">
+                  <tbody>
+                    <tr>
+                      <a class="anchor" name=".coal"></a> 
+                      <td>.anc</td>
+                      <td>
+
+                        <pre><code></pre></code>
+                      </td>
+                    </tr>
+                    <tr>
+                      <a class="anchor" name=".coal"></a> 
+                      <td>.mut</td>
+                      <td>
+
+                        <pre><code></pre></code>
+                      </td>
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+
+
         </div>
 
       </div>
