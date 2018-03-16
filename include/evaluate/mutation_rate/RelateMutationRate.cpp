@@ -267,12 +267,12 @@ void FinalizeAvg(cxxopts::Options& options){
   bool help = false;
   if( !options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output." << std::endl;
+    std::cout << "Needed: input, output. Optional: first_chr, last_chr." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
     std::cout << options.help({""}) << std::endl;
-    std::cout << "Estimate population size using coalescent rate." << std::endl;
+    std::cout << "Extract avg mutation rate from .bin file." << std::endl;
     exit(0);
   } 
 
@@ -359,12 +359,12 @@ void FinalizeMutationRate(cxxopts::Options& options){
   bool help = false;
   if( !options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output." << std::endl;
+    std::cout << "Needed: input, output. Optional: first_chr, last_chr." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
     std::cout << options.help({""}) << std::endl;
-    std::cout << "Estimate population size using coalescent rate." << std::endl;
+    std::cout << "Extract mutation rate of 96 categories from .bin file." << std::endl;
     exit(0);
   } 
 
@@ -461,7 +461,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
   }
   if(options.count("help") || help){
     std::cout << options.help({""}) << std::endl;
-    std::cout << "Reads .bin files and calculates summarizes them." << std::endl;
+    std::cout << "Reads .bin files and summarizes them into one .bin file." << std::endl;
     exit(0);
   }  
 
@@ -610,7 +610,7 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   int N_total = 2*data.N-1;
 
   std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Calculating mutation rate for 96 categories.." << std::endl;
+  std::cerr << "Calculating mutation rate for 96 categories " << options["input"].as<std::string>() << " ..." << std::endl;
 
   ////////// read mutations file ///////////
 
@@ -1118,7 +1118,7 @@ void FinalizeMutationCount(cxxopts::Options& options){
   bool help = false;
   if( !options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output." << std::endl;
+    std::cout << "Needed: input, output. Optional: first_chr, last_chr." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -1203,7 +1203,7 @@ int main(int argc, char* argv[]){
     ("first_chr", "Index of fist chr", cxxopts::value<int>())
     ("last_chr", "Index of last chr", cxxopts::value<int>())
     ("num_bins", "Number of bins.", cxxopts::value<int>())
-     ("dist", "Filename of file containing dist.", cxxopts::value<std::string>())
+    ("dist", "Filename of file containing dist.", cxxopts::value<std::string>())
     ("mask", "Filename of file containing mask", cxxopts::value<std::string>())
     ("ancestor", "Filename of file containing human ancestor genome.", cxxopts::value<std::string>())
     ("i,input", "Filename of .anc and .mut file without file extension", cxxopts::value<std::string>())
@@ -1257,13 +1257,36 @@ int main(int argc, char* argv[]){
 
   }else if(!mode.compare("Finalize")){
 
+    if(options.count("first_chr") && options.count("last_chr")){
+      if(options["first_chr"].as<int>() < 0 || options["last_chr"].as<int>() < 0){
+        std::cerr << "Do not use negative chr indices." << std::endl;
+        exit(1);
+      }
+      SummarizeWholeGenome(options);
+    }
     FinalizeMutationRate(options);
 
   }else if(!mode.compare("FinalizeMutationCount")){
 
+    if(options.count("first_chr") && options.count("last_chr")){
+      if(options["first_chr"].as<int>() < 0 || options["last_chr"].as<int>() < 0){
+        std::cerr << "Do not use negative chr indices." << std::endl;
+        exit(1);
+      }
+      SummarizeWholeGenome(options);
+    }
+
     FinalizeMutationCount(options);
 
   }else if(!mode.compare("FinalizeAvg")){
+
+    if(options.count("first_chr") && options.count("last_chr")){
+      if(options["first_chr"].as<int>() < 0 || options["last_chr"].as<int>() < 0){
+        std::cerr << "Do not use negative chr indices." << std::endl;
+        exit(1);
+      }
+      SummarizeWholeGenome(options);
+    }
 
     FinalizeAvg(options);
 

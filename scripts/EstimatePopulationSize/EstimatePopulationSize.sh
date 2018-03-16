@@ -15,11 +15,13 @@ then
   echo "-o, --output:"
   echo "-m,--mu:     Mutation rate, e.g., 1.25e-8."
   echo "--poplabels: Filename of .poplabels file."
-  echo "--threshold: Optional: Used to delete trees with less than specified number of mutations. Use 0 to use all trees."
+  echo "--pop_of_interest: Optional: Specify the populations for which you want to estimate the population size as a comma separated string. Default is all populations."
+  echo "--threshold: Optional: Used to delete trees with less than specified number of mutations. Use 0 to use all trees. Default: Number of haplotypes."
   echo "--num_bins:  Optional: Number of bins between 1,000ybp and 10,000,000 ybp. Default is 30."
   echo "--num_iter:  Optional: Number of iterations of the algorithm. Default: 5."
-  echo "--first_chr: Optional: Index of fist chr"
-  echo "--last_chr:  Optional: Index of last chr"
+  echo "--first_chr: Optional: Index of first chr. Assumes that input files are indexed by chr, e.g. example_chr1.anc, example_chr1.mut, etc. Specify -i example in this case. "
+  echo "--last_chr:  Optional: Index of last chr."
+  echo "--threads:   Optional. Number of threads used. We currently only parallelize by chromosome."
   echo "--seed:      Optional: Random seed for branch lengths estimation"
   echo ""
   exit 1;
@@ -35,6 +37,8 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/EstimatePopulationSize/
 ######################################################################################################
 
 ######################## Read arguments from command line ###########################
+
+maxjobs=1
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -52,6 +56,11 @@ do
       shift # past argument
       shift # past value
       ;;
+    --pop_of_interest)
+      pop_of_interest="$2"
+      shift # past argument
+      shift # past value
+      ;;
     -m|--mu)
       mu="$2"
       shift # past argument
@@ -59,6 +68,11 @@ do
       ;;
     --threshold)
       threshold="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --threads)
+      maxjobs="$2"
       shift # past argument
       shift # past value
       ;;
@@ -100,19 +114,6 @@ do
   esac
 done
 
-if [ -z "${threshold-}" ];
-then
-
-  if [ ! -f $filename.anc ]
-  then
-    threshold=($(zcat $filename.anc.gz | head -1))
-  else
-    threshold=($(head -1 $filename.anc))
-  fi
-  threshold=${threshold[1]}
-
-fi
-
 if [ -z "${num_iter-}" ];
 then
   num_iter=5
@@ -123,19 +124,23 @@ echo "Parameters passed to script:"
 echo "input     = $filename"
 echo "poplabels = $filename_poplabels"
 echo "mu        = $mu"
-echo "threshold = $threshold"
 echo "output    = $output"
 echo "num_iter  = $num_iter"
+if [ ! -z "${threshold-}" ];
+then
+  echo "threshold = $threshold"
+fi
+if [ ! -z "${pop_of_interest-}" ];
+then
+  echo "pop_of_interest  = $pop_of_interest"
+fi
 if [ ! -z "${num_bins-}" ];
 then
   echo "num_bins  = $num_bins"
 fi
-if [ ! -z "${first_chr-}" ];
+if [ ! -z "${first_chr-}" -a ! -z "${last_chr-}" ];
 then
   echo "first_chr = $first_chr"
-fi
-if [ ! -z "${last_chr-}" ];
-then
   echo "last_chr  = $last_chr"
 fi
 if [ ! -z "${seed-}" ];
@@ -155,6 +160,53 @@ fi
 
 if [ -z "${first_chr-}" -o -z "${last_chr-}" ];
 then
+
+  if [ ! -z "${pop_of_interest-}" ];
+  then
+    
+    labels=$(echo ${pop_of_interest} | tr -d ",")
+    #delete all trees that have fewer than $threshold mutations
+    ${PATH_TO_RELATE}/bin/RelateExtract \
+      --mode SubTreesForSubpopulation \
+      --poplabels ${filename_poplabels} \
+      --pop_of_interest ${pop_of_interest} \
+      --anc ${filename}.anc \
+      --mut ${filename}.mut \
+      -o ${filename}_${labels}
+
+    filename=${filename}_${labels}
+    filename_poplabels=${filename}.poplabels
+
+    if [ -z "${threshold-}" ];
+    then
+
+      if [ ! -f $filename.anc ]
+      then
+        threshold=($(zcat $filename.anc.gz | head -1))
+      else
+        threshold=($(head -1 $filename.anc))
+      fi
+      threshold=${threshold[1]}
+
+    fi
+
+  else
+
+    if [ -z "${threshold-}" ];
+    then
+
+      if [ ! -f $filename.anc ]
+      then
+        threshold=($(zcat $filename.anc.gz | head -1))
+      else
+        threshold=($(head -1 $filename.anc))
+      fi
+      threshold=${threshold[1]}
+
+    fi
+
+  fi
+
 
   #delete all trees that have fewer than $threshold mutations
   ${PATH_TO_RELATE}/bin/RelateExtract \
@@ -272,17 +324,146 @@ then
 
 else
 
-  #first_chr and last_chr are specified
-  for chr in `seq ${first_chr} 1 ${last_chr}`
-  do
-    #delete all trees that have fewer than $threshold mutations
-    ${PATH_TO_RELATE}/bin/RelateExtract \
-      --mode RemoveTreesWithFewMutations \
-      --threshold $threshold \
-      --anc ${filename}_chr${chr}.anc \
-      --mut ${filename}_chr${chr}.mut \
-      -o ${output}_chr${chr} 
-  done
+  if [ ! -z "${pop_of_interest-}" ];
+  then
+    
+    labels=$(echo ${pop_of_interest} | tr -d ",")
+
+    if [ "$maxjobs" -eq 1 ]
+    then
+
+      for chr in `seq ${first_chr} 1 ${last_chr}`
+      do
+
+        #delete all trees that have fewer than $threshold mutations
+        ${PATH_TO_RELATE}/bin/RelateExtract \
+          --mode SubTreesForSubpopulation \
+          --poplabels ${filename_poplabels} \
+          --pop_of_interest ${pop_of_interest} \
+          --anc ${filename}_chr${chr}.anc \
+          --mut ${filename}_chr${chr}.mut \
+          -o ${filename}_${labels}_chr${chr} 
+
+      done
+
+    else
+
+      ExtractSubTrees (){
+        chr=$1
+        #delete all trees that have fewer than $threshold mutations
+        ${PATH_TO_RELATE}/bin/RelateExtract \
+          --mode SubTreesForSubpopulation \
+          --poplabels ${filename_poplabels} \
+          --pop_of_interest ${pop_of_interest} \
+          --anc ${filename}_chr${chr}.anc \
+          --mut ${filename}_chr${chr}.mut \
+          -o ${filename}_${labels}_chr${chr} 2> chr${chr}.log  
+      }
+
+      parallelize_extract_subtrees () {
+        while [ $# -gt 0 ] ; do
+          jobcnt=(`jobs -p`)
+          if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
+            ExtractSubTrees $1 &
+            shift
+          fi
+        done
+        wait
+      }
+      parallelize_extract_subtrees `seq ${first_chr} 1 ${last_chr}`
+
+      for chr in `seq ${first_chr} 1 ${last_chr}`
+      do
+        cat chr${chr}.log  
+        rm chr${chr}.log  
+      done
+
+    fi
+
+    mv ${filename}_${labels}_chr${first_chr}.poplabels ${filename}_${labels}.poplabels
+    for chr in `seq $((${first_chr}+1)) 1 ${last_chr}`
+    do
+      rm ${filename}_${labels}_chr${chr}.poplabels 
+    done
+    filename=${filename}_${labels}
+    filename_poplabels=${filename}.poplabels
+
+    if [ -z "${threshold-}" ];
+    then
+
+      if [ ! -f ${filename}_chr${first_chr}.anc ]
+      then
+        threshold=($(zcat ${filename}_chr${first_chr}.anc.gz | head -1))
+      else
+        threshold=($(head -1 ${filename}_chr${first_chr}.anc))
+      fi
+      threshold=${threshold[1]}
+ 
+    fi
+
+  else
+
+    if [ -z "${threshold-}" ];
+    then
+
+      if [ ! -f ${filename}_chr${first_chr}.anc ]
+      then
+        threshold=($(zcat ${filename}_chr${first_chr}.anc.gz | head -1))
+      else
+        threshold=($(head -1 ${filename}_chr${first_chr}.anc))
+      fi
+      threshold=${threshold[1]}
+
+    fi
+
+  fi
+
+  if [ "$maxjobs" -eq 1 ]
+  then
+
+    for chr in `seq ${first_chr} 1 ${last_chr}`
+    do
+      #delete all trees that have fewer than $threshold mutations
+      ${PATH_TO_RELATE}/bin/RelateExtract \
+        --mode RemoveTreesWithFewMutations \
+        --threshold $threshold \
+        --anc ${filename}_chr${chr}.anc \
+        --mut ${filename}_chr${chr}.mut \
+        -o ${output}_chr${chr}
+    done
+
+  else
+
+    RemoveTreesWithFewMutations (){
+      chr=$1
+      #delete all trees that have fewer than $threshold mutations
+      ${PATH_TO_RELATE}/bin/RelateExtract \
+        --mode RemoveTreesWithFewMutations \
+        --threshold $threshold \
+        --anc ${filename}_chr${chr}.anc \
+        --mut ${filename}_chr${chr}.mut \
+        -o ${output}_chr${chr} 2> chr${chr}.log 
+    }
+
+    parallelize_remove_trees () {
+      while [ $# -gt 0 ] ; do
+        jobcnt=(`jobs -p`)
+        if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
+          RemoveTreesWithFewMutations $1 &
+          shift
+        fi
+      done
+      wait
+    }
+    parallelize_remove_trees `seq ${first_chr} 1 ${last_chr}`
+
+    for chr in `seq ${first_chr} 1 ${last_chr}`
+    do
+      cat chr${chr}.log  
+      rm chr${chr}.log  
+    done
+
+  fi
 
   #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
   for i in `seq 1 1 ${num_iter}`
@@ -327,30 +508,83 @@ else
 
     fi
 
-    for chr in `seq ${first_chr} 1 ${last_chr}`
-    do
-      if [ -z "${seed-}" ];
-      then
-        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode ReEstimateBranchLengths \
-          --coal ${output}.coal \
-          --mrate ${output}_avg.rate \
-          --dist ${output}.dist \
-          -m ${mu} \
-          -i ${output} \
-          -o ${output}
-      else
-        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode ReEstimateBranchLengths \
-          --coal ${output}.coal \
-          --mrate ${output}_avg.rate \
-          --dist ${output}.dist \
-          --seed $seed \
-          -m ${mu} \
-          -i ${output} \
-          -o ${output}
-      fi
-    done
+
+    if [ "$maxjobs" -eq 1 ]
+    then
+
+      for chr in `seq ${first_chr} 1 ${last_chr}`
+      do
+        if [ -z "${seed-}" ];
+        then
+          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+            --mode ReEstimateBranchLengths \
+            --coal ${output}.coal \
+            --mrate ${output}_avg.rate \
+            --dist ${output}_chr${chr}.dist \
+            -m ${mu} \
+            -i ${output}_chr${chr} \
+            -o ${output}_chr${chr} 
+        else
+          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+            --mode ReEstimateBranchLengths \
+            --coal ${output}.coal \
+            --mrate ${output}_avg.rate \
+            --dist ${output}_chr${chr}.dist \
+            --seed $seed \
+            -m ${mu} \
+            -i ${output}_chr${chr} \
+            -o ${output}_chr${chr} 
+        fi
+      done
+
+    else
+
+      ReEstimateBranchLengths (){
+     
+        chr=$1 
+        if [ -z "${seed-}" ];
+        then
+          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+            --mode ReEstimateBranchLengths \
+            --coal ${output}.coal \
+            --mrate ${output}_avg.rate \
+            --dist ${output}_chr${chr}.dist \
+            -m ${mu} \
+            -i ${output}_chr${chr} \
+            -o ${output}_chr${chr} 2> chr${chr}.log 
+        else
+          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+            --mode ReEstimateBranchLengths \
+            --coal ${output}.coal \
+            --mrate ${output}_avg.rate \
+            --dist ${output}_chr${chr}.dist \
+            --seed $seed \
+            -m ${mu} \
+            -i ${output}_chr${chr} \
+            -o ${output}_chr${chr} 2> chr${chr}.log 
+        fi
+      
+      }
+
+      parallelize_estimating_branchlengths () {
+        while [ $# -gt 0 ] ; do
+          jobcnt=(`jobs -p`)
+          if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
+            ReEstimateBranchLengths $1 &
+            shift
+          fi
+        done
+        wait
+      }
+      parallelize_estimating_branchlengths `seq ${first_chr} 1 ${last_chr}`
+
+      for chr in `seq ${first_chr} 1 ${last_chr}`
+      do
+        cat chr${chr}.log  
+        rm chr${chr}.log  
+      done
+
+    fi
 
   done
 

@@ -111,8 +111,8 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     }
   }
 
-  std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Reinferring branch lengths..." << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  std::cerr << "Reinferring branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
 
   
   // read epochs and population size 

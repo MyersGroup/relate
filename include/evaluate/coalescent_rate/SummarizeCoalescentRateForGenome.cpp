@@ -22,8 +22,8 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
     exit(0);
   }  
 
-  std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Summarizing over chromosomes.." << std::endl;  
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  std::cerr << "Summarizing over chromosomes..." << std::endl;  
 
   //calculate epoche times
   int start     = options["first_chr"].as<int>(); 

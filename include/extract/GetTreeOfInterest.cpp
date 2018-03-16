@@ -31,8 +31,8 @@ GetTreeOfInterest(cxxopts::Options& options){
   int snp_of_interest = options["snp_of_interest"].as<int>();
   int index_of_snp_of_interest;
 
-  std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Get tree at BP " << snp_of_interest << "..." << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  std::cerr << "Get tree from " << options["anc"].as<std::string>() << " at BP " << snp_of_interest << "..." << std::endl;
 
 
   //////////////////////////////////

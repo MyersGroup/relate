@@ -390,8 +390,13 @@ void AvgMutationRate(cxxopts::Options& options){
     exit(0);
   }  
 
-  std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Calculating average mutation rate..." << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  if(options.count("first_chr") && options.count("last_chr")){
+    std::cerr << "Calculating average mutation rate for " << options["input"].as<std::string>() << "_chr" << options["first_chr"].as<int>();
+    std::cerr << " - " << options["input"].as<std::string>() << "_chr" << options["last_chr"].as<int>() << " ..." << std::endl;
+  }else{
+    std::cerr << "Calculating average mutation rate for " << options["input"].as<std::string>() << " ..." << std::endl;
+  }
 
   ///////// EPOCHES /////////
 

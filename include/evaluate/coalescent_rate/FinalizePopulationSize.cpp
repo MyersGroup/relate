@@ -27,7 +27,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
     exit(0);
   } 
 
-  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Finalizing coalescent rate..." << std::endl;
 
   ////////// read labels of sequences //////////
@@ -119,7 +119,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
   getrusage(RUSAGE_SELF, &usage);
 
   std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6) << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
-  std::cerr << "------------------------------------------------------" << std::endl << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
   return 0;
 
@@ -142,7 +142,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
     exit(0);
   }  
 
-  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Finalizing coalescent rate..." << std::endl;
 
   ////////// read labels of sequences //////////
@@ -252,7 +252,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   getrusage(RUSAGE_SELF, &usage);
 
   std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6) << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
-  std::cerr << "------------------------------------------------------" << std::endl << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
   return 0;
 
@@ -276,7 +276,7 @@ int FinalizePopulationSizeByHaplotype(cxxopts::Options& options){
     exit(0);
   }  
 
-  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Finalizing coalescent rate..." << std::endl;
 
 

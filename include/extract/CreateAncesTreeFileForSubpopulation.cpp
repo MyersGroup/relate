@@ -61,8 +61,8 @@ MakeAncesTreeFile(cxxopts::Options& options, std::vector<AncesTree>& v_anc, Muta
   int i;
   std::string line, read;
 
-  std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Calculating anc file for subpopulation(s) ";
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  std::cerr << "Calculating anc file for " << options["anc"].as<std::string>() << " and subpopulation(s) ";
 
   Sample sample;
   sample.Read(options["poplabels"].as<std::string>());
@@ -251,7 +251,8 @@ CreateAncesTreeFileForSubpopulation(cxxopts::Options& options){
   Mutations mut;
   mut.Read(options["mut"].as<std::string>());
   if(mut.info[0].freq.size() == 0){
-    std::cerr << "Please first add population annotation to .mut using RelateFileFormat --mode GenerateSNPAnnotations" << std::endl;
+    std::cerr << "Please first add population annotation to .mut using RelateFileFormats --mode GenerateSNPAnnotations" << std::endl;
+    exit(1);
   }
   MakeAncesTreeFile(options, v_anc, mut, include_snp);
 
@@ -274,6 +275,24 @@ CreateAncesTreeFileForSubpopulation(cxxopts::Options& options){
   }else{
     label = sample.AssignPopOfInterest(options["pop_of_interest"].as<std::string>());
   }
+
+  std::string line;
+  char id[512], pop[512];
+  igzstream is_pops(options["poplabels"].as<std::string>());
+  std::ofstream os_pops(options["output"].as<std::string>() + ".poplabels");
+  getline(is_pops, line);
+  os_pops << line << "\n";
+  while(getline(is_pops, line)){
+    sscanf(line.c_str(), "%s %s", id, pop);
+    for(std::vector<int>::iterator it_goi = sample.group_of_interest.begin(); it_goi != sample.group_of_interest.end(); it_goi++){
+      if( strcmp(pop, sample.groups[*it_goi].c_str()) == 0 ){
+        os_pops << line << "\n"; 
+        break;   
+      }
+    }  
+  }
+  is_pops.close();
+  os_pops.close();
 
   Mutations mut_subset;
   mut_subset.info.resize(include_snp.size());

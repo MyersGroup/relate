@@ -104,8 +104,11 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   }  
 
   std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Calculating coalescent rate..." << std::endl;
-
+  if(chr == -1){
+    std::cerr << "Calculating coalescent rate for " << options["input"].as<std::string>() << " ..." << std::endl;
+  }else{
+    std::cerr << "Calculating coalescent rate for " << options["input"].as<std::string>() << "_chr" << chr << " ..." << std::endl;
+  }
 
   ////////////////////////
   //read in anc file

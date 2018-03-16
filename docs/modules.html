@@ -126,20 +126,23 @@ gtag('config', 'UA-115753061-1');
 
                   <h5>Input arguments</h5>
                   <ul>
-                    <li>Argument -i takes the filename of the .anc and .mut files, excluding the file extensions.</li> 
-                    <li>Argument --poplabels is used to specify the .poplabels file. The file format is described <a href="preparing_data.html#poplabels">here</a>.</li>
+                    <li>Argument -i specifies the filename of the .anc and .mut files, excluding the file extensions.</li> 
+                    <li>Argument -o specifies the output filename, excluding the file extensions.</li> 
                     <li>Argument -m is used to specify the mutation rate.</li>
-                    <li>Optional argument --threshold takes an integer which is the number of SNPs a tree needs to not be dropped. This option serves two purposes: First, it removes bad/uninformative trees. Second it speeds up the inference. As we increase this value, we remove more trees. Default: number of haplotypes.</li>
-                    <li>Optional argument --num_bins specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </li>
+                    <li>Argument --poplabels is used to specify the .poplabels file. The file format is described <a href="preparing_data.html#poplabels">here</a>. Default: a single population for all haplotypes.</li>
+                    <li>Optional argument --pop_of_interest specifies populations for which population size is estimated. The second column of the .poplabels file is used for population labels. You can specify multiple populations separated by commas, e.g. pop1,pop2</li>
                     <li>Optional arguments --first_chr, --last_chr allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
                       Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</li>
+                    <li>Optional argument --threads specifies the maximum number of cores used. Default is 1. Currently, we only parallelise by chromosome.</li>
+                    <li>Optional argument --num_bins specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </li>
+                    <li>Optional argument --num_iter specifies the number of iterations of the algorithm. Default is 5.</li>
+                    <li>Optional argument --threshold takes an integer which is the number of SNPs a tree needs to not be dropped. This option serves two purposes: First, it removes bad/uninformative trees. Second it speeds up the inference. As we increase this value, we remove more trees. Default: number of haplotypes.</li>
                     <li>Optional argument --seed specifies a seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</li>
                   </ul>
                   <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
               -i example \
               -m 1.25e-8 \
               --poplabels data/example.poplabels \
-              --seed 1 \
               -o example_popsize</code></pre>
                   <h4>Output</h4>
                   <div class="table-responsive">
@@ -178,6 +181,7 @@ gtag('config', 'UA-115753061-1');
                       </tbody>
                     </table>
                   </div>
+                  <p>If the --pop_of_interest option is specified, additional .anc, .mut, and .poplabels files are generated corresponding to these populations.</p>
 
                   <p>
                   <h4>File formats</h4>
@@ -364,7 +368,7 @@ gtag('config', 'UA-115753061-1');
                     <li>Optional argument --num_bins specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </li>
                     <li>Optional argument --dist is used to specify distances between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>. </li>
                     <li>Arguments --first_chr, --last_chr are currently not supported for mode WithContextForChromosome (because we need to specify separate mask, ancestor files for each chromosome.)<br/>
-                      You can however apply mode WithContextForChromosome to each chromosome individually. You can then use mode SummarizeForGenome to obtain a genome-wide estimate (see below). Filenames are assumed to be indexed by chromosome as before.<br/>
+                      You can however apply mode WithContextForChromosome to each chromosome individually. You can then use mode Finalize (see below) with options --first_chr and --last_chr to obtain a genome-wide estimate. Filenames are assumed to be indexed by chromosome as before.<br/>
                       Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.<br/>
 
                     </li>
@@ -375,16 +379,16 @@ gtag('config', 'UA-115753061-1');
                  --mode WithContextForChromosome \
                  --mask genomic_mask.fa \
                  --ancestor ancestor.fa \
-                 -i example \
-                 -o example </code></pre>
-                  Output: example.bin.<br/><br/>
+                 -i example_chr1 \
+                 -o example_chr1 </code></pre>
+                  Output: example_chr1.bin.<br/><br/>
 
                   Next, to extract the rates from example.bin, use
                   <pre><code> PATH_TO_RELATE/bin/RelateMutationRate \
                  --mode Finalize \
-                 -i example \
-                 -o example </code></pre>
-                  Output: example.rate.<br/><br/>
+                 -i example_chr1 \
+                 -o example_chr1 </code></pre>
+                  Output: example_chr1.rate.<br/><br/>
 
                   If you applied mode WithContextForChromosome to multiple chromosome, use the following to obtain a .bin file summarizing estimates genome-wide. Input filenames are assumed to be example_chr1.bin, example_chr2.bin, etc.
                   <pre><code> PATH_TO_RELATE/bin/RelateMutationRate \
@@ -393,7 +397,7 @@ gtag('config', 'UA-115753061-1');
                  --last_chr 22 \
                  -i example \
                  -o example </code></pre>
-                  Output: example.bin.<br/><br/>
+                  Output: example.bin, example.rate.<br/><br/>
 
                 </div>
               </div>

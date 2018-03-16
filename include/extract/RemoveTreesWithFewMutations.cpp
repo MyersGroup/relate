@@ -17,9 +17,6 @@ GetDistFromMut(cxxopts::Options& options){
   //////////////////////////////////
   //Program options
 
-  std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Extracting dist file from mut... " << std::endl;
-
   bool help = false;
   if(!options.count("mut") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
@@ -31,6 +28,9 @@ GetDistFromMut(cxxopts::Options& options){
     std::cout << "Extract dist file from mut." << std::endl;
     exit(0);
   }  
+
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  std::cerr << "Extracting dist file from " << options["mut"].as<std::string>() << " ... " << std::endl;
 
   Mutations mut;
   mut.Read(options["mut"].as<std::string>());
@@ -66,10 +66,7 @@ RemoveTreesWithFewMutations(cxxopts::Options& options){
 
   //////////////////////////////////
   //Program options
-
-  std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Removing trees with few mutations... " << std::endl;
-
+  
   bool help = false;
   if(!options.count("threshold") || !options.count("anc") || !options.count("mut") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
@@ -82,6 +79,8 @@ RemoveTreesWithFewMutations(cxxopts::Options& options){
     exit(0);
   }  
 
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  std::cerr << "Removing trees with few mutations from " << options["mut"].as<std::string>() << " ... " << std::endl;
     
   int N, num_trees;
 
