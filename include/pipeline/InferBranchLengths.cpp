@@ -128,10 +128,18 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
         bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
       }
     }else{
-      for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
+      int count = 0;
+      CorrTrees::iterator it_seq = anc.seq.begin();
+      for(; it_seq != anc.seq.end(); it_seq++){
+        if(count % 1000 == 0){
+          std::cerr << "[" << section << "/" << last_section << "] " << "[" << count << "/" << anc.seq.size() << "]\r";
+          std::cerr.flush(); 
+        }
+        count++;
         bl.MCMC(data, (*it_seq).tree, seed); //this is estimating times
         //bl2.MCMC(data, (*it_seq).tree, seed); //this is estimating times
       }
+      std::cerr << "[" << section << "/" << last_section << "] " << "[" << count << "/" << anc.seq.size() << "]\r";
     }
 
     //Dump to file

@@ -47,7 +47,7 @@
           <ul class="nav navbar-nav">
             <li><a href="index.html">Home</a></li>
             <li><a href="getting_started.html">Getting Started</a></li>
-            <li><a href="preparing_data.html">Input data</a></li>
+            <li><a href="input_data.html">Input data</a></li>
             <li><a href="modules.html">Add-on modules</a></li>
             <li class="active"><a href="parallelise.html">Parallelise Relate</a></li>
           </ul>
@@ -91,6 +91,11 @@
             <div class="col-md-10 col-md-offset-1">
               <h3>Parallelise Relate</h3>
               <hr/>
+
+              <p>                 
+              <b>Relate</b> has been coded such that it can be parallelized on hundreds of cores on large computing clusters (see <a href="parallelise.html#RelateModes">here</a>). For smaller datasets where it is sufficient to parallelise over only a few cores, we also provide a bash script that parallelises <b>Relate</b> without having to submit jobs (see <a href="parallelise.html#RelateParallel">here</a>).           
+              </p>
+
             </div>
           </div>
 
@@ -176,7 +181,7 @@
                   <p> 
                   <ul>
                     <li>Argument --haps, --sample, and --map take the filenames of the input data.</li>
-                    <li>Optional argument --dist takes the filename of a .dist file. A .dist file specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="preparing_data.html#FilterHapsUsingMask">here</a>).</li>
+                    <li>Optional argument --dist takes the filename of a .dist file. A .dist file specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="input_data.html#FilterHapsUsingMask">here</a>).</li>
                     <li>Optional argument --memory option specifies the approximate memory allowance (in GB) used for storing the distance matrices in memory. <b>Relate</b> will exceed this amount, as it also stores trees and other information in memory; however the option allows to approximately control memory usage. Default is 5GB. <b>Relate</b> can become more efficient (in runtime and hard disk usage) with more memory, particularly for large sample sizes. </li>
                   </ul>
 

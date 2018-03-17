@@ -16,7 +16,7 @@ if [ $# -le 0 ]
 then
   echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   echo "Not enough arguments supplied. Execute as"
-  echo "./RelateParallel"
+  echo "PATH_TO_RELATE/scripts/RelateParallel/RelateParallel.sh"
   echo ""
   echo "--haps:   Filename of haps file (Output file format of Shapeit)."
   echo "--sample: Filename of sample file (Output file format of Shapeit)."
@@ -120,11 +120,11 @@ echo "Parameters passed to Relate:"
 echo "haps   = $haps"
 echo "sample = $sample"
 echo "map    = $map"
-if [ -z "${coal-}" ];
+if [ ! -z "${coal-}" ];
 then
+  echo "coal   = $coal"
+else 
   echo "Ne     = $Ne"
-else
-  Ne=30000
 fi
 echo "mu     = $mu"
 echo "output = $output"
@@ -135,10 +135,6 @@ fi
 if [ ! -z "${annot-}" ];
 then
   echo "annot  = $annot"
-fi
-if [ ! -z "${coal-}" ];
-then
-  echo "coal   = $coal"
 fi
 if [ ! -z "${memory-}" ];
 then

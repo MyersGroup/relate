@@ -48,7 +48,7 @@ gtag('config', 'UA-115753061-1');
           <ul class="nav navbar-nav">
             <li><a href="index.html">Home</a></li>
             <li><a href="getting_started.html">Getting Started</a></li>
-            <li><a href="preparing_data.html">Input data</a></li>
+            <li><a href="input_data.html">Input data</a></li>
             <li class="active"><a href="modules.html">Add-on modules</a></li>
             <li><a href="parallelise.html">Parallelise Relate</a></li>
           </ul>
@@ -120,7 +120,7 @@ gtag('config', 'UA-115753061-1');
                     <li>re-estimates branch lengths using the estimated population sizes</li>
                     <li>estimates an average mutation rate.</li>
                   </ol>
-                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="preparing_data.html#poplabels">here</a>).<br/>
+                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a>).<br/>
                   You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small to obtain reliable estimates.
                   Do not move the script - we are extracting the path to the binaries from the location of the script!
 
@@ -129,7 +129,7 @@ gtag('config', 'UA-115753061-1');
                     <li>Argument -i specifies the filename of the .anc and .mut files, excluding the file extensions.</li> 
                     <li>Argument -o specifies the output filename, excluding the file extensions.</li> 
                     <li>Argument -m is used to specify the mutation rate.</li>
-                    <li>Argument --poplabels is used to specify the .poplabels file. The file format is described <a href="preparing_data.html#poplabels">here</a>. Default: a single population for all haplotypes.</li>
+                    <li>Argument --poplabels is used to specify the .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>. Default: a single population for all haplotypes.</li>
                     <li>Optional argument --pop_of_interest specifies populations for which population size is estimated. The second column of the .poplabels file is used for population labels. You can specify multiple populations separated by commas, e.g. pop1,pop2</li>
                     <li>Optional arguments --first_chr, --last_chr allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
                       Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</li>
@@ -253,7 +253,7 @@ gtag('config', 'UA-115753061-1');
                         <li>Optional argument --num_bins specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </li>
                         <li>Optional arguments --first_chr, --last_chr allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
                           Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</li>
-                        <li>Optional argument --poplabels is used to specify the .poplabels file. If set, the code calculates average coalescence rates between haplotypes in the same group and across different groups. The file format is described <a href="preparing_data.html#poplabels">here</a>.</li>
+                        <li>Optional argument --poplabels is used to specify the .poplabels file. If set, the code calculates average coalescence rates between haplotypes in the same group and across different groups. The file format is described <a href="input_data.html#poplabels">here</a>.</li>
                       </ul>
                       <pre><code> PATH_TO_RELATE/bin/RelateCoalescenceRate \
                  --mode EstimatePopulationSize\

@@ -14,7 +14,7 @@
 
 
 void
-MakeAncesTreeFile(cxxopts::Options& options, std::vector<AncesTree>& v_anc, Mutations& mut, std::vector<int>& include_snp){
+MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& include_snp){
 
   //////////////////////////////////
   //Program options
@@ -82,7 +82,7 @@ MakeAncesTreeFile(cxxopts::Options& options, std::vector<AncesTree>& v_anc, Muta
     std::cerr << "All" << std::endl;
   }
 
-  Data data(sample.group_of_interest_size, L);
+  Data data(sample.group_of_interest_size, 1);
   int N_total = 2*sample.group_of_interest_size-1;
   int root    = N_total - 1;
 
@@ -97,6 +97,7 @@ MakeAncesTreeFile(cxxopts::Options& options, std::vector<AncesTree>& v_anc, Muta
 
   MarginalTree mtr;
   Tree subtree;
+  std::vector<AncesTree> v_anc(1);
   v_anc[0].seq.resize(num_trees);
 
   CorrTrees::iterator it_subseq = v_anc[0].seq.begin();
@@ -226,6 +227,12 @@ MakeAncesTreeFile(cxxopts::Options& options, std::vector<AncesTree>& v_anc, Muta
   }
   fclose(pf); 
 
+  //Associate branches of adjacent trees
+  //Data data(((*v_anc[0].seq.begin()).tree.nodes.size() + 1)/2, 1);
+  //AncesTreeBuilder ancbuilder(data);
+  ancbuilder.AssociateTrees(v_anc, "./");
+  v_anc[0].Dump(options["output"].as<std::string>() + ".anc");
+
 }
 
 void
@@ -247,23 +254,23 @@ CreateAncesTreeFileForSubpopulation(cxxopts::Options& options){
   } 
 
   std::vector<int> include_snp;
-  std::vector<AncesTree> v_anc(1);
+  //std::vector<AncesTree> v_anc(1);
   Mutations mut;
   mut.Read(options["mut"].as<std::string>());
   if(mut.info[0].freq.size() == 0){
     std::cerr << "Please first add population annotation to .mut using RelateFileFormats --mode GenerateSNPAnnotations" << std::endl;
     exit(1);
   }
-  MakeAncesTreeFile(options, v_anc, mut, include_snp);
+  MakeAncesTreeFile(options, mut, include_snp);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   //Propagate mutations
 
   //Associate branches of adjacent trees
-  Data data(((*v_anc[0].seq.begin()).tree.nodes.size() + 1)/2, 1);
-  AncesTreeBuilder ancbuilder(data);
-  ancbuilder.AssociateTrees(v_anc, "./");
-  v_anc[0].Dump(options["output"].as<std::string>() + ".anc");
+  //Data data(((*v_anc[0].seq.begin()).tree.nodes.size() + 1)/2, 1);
+  //AncesTreeBuilder ancbuilder(data);
+  //ancbuilder.AssociateTrees(v_anc, "./");
+  //v_anc[0].Dump(options["output"].as<std::string>() + ".anc");
 
   //////////////////////// Extract Subtrees //////////////
 

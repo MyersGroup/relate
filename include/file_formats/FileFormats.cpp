@@ -411,9 +411,9 @@ RemoveNonBiallelicSNPs(cxxopts::Options& options){
   //Program options
 
   bool help = false;
-  if(!options.count("haps")){
+  if(!options.count("haps") | !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: haps." << std::endl;
+    std::cout << "Needed: haps, output." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -426,10 +426,10 @@ RemoveNonBiallelicSNPs(cxxopts::Options& options){
   std::cerr << "Removing non-biallelic SNPs.." << std::endl;
 
   igzstream is_haps(options["haps"].as<std::string>());
-  std::ofstream os_haps(options["haps"].as<std::string>() + ".unique");
+  std::ofstream os_haps(options["output"].as<std::string>() + ".haps");
 
   if(is_haps.fail()){
-    std::cerr << "Error while opening file " << options["input"].as<std::string>() << "." << std::endl;
+    std::cerr << "Error while opening file " << options["haps"].as<std::string>() << "." << std::endl;
     exit(1);
   } 
 
@@ -479,7 +479,7 @@ RemoveNonBiallelicSNPs(cxxopts::Options& options){
   os_haps.close();
 
   std::cerr << "Removed " << snp - snp_accepted << " non-biallelic SNPs." << std::endl;
-  std::cerr << "Output written to " << options["haps"].as<std::string>() + ".unique" << "." << std::endl;
+  std::cerr << "Output written to " << options["output"].as<std::string>() + ".haps" << "." << std::endl;
 
 
   /////////////////////////////////////////////
@@ -507,7 +507,7 @@ RemoveSamples(cxxopts::Options& options){
   bool help = false;
   if( !options.count("haps") || !options.count("sample") || !options.count("input") || !options.count("output") ){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: haps, sample, input, output." << std::endl;
+    std::cout << "Needed: haps, sample, input, output. Optional: poplabels" << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -525,7 +525,7 @@ RemoveSamples(cxxopts::Options& options){
 
   // first read input file containing ids of individuals to remove
   char id[40];
-  std::string line;
+  std::string line, line2;
   std::vector<std::string> id_remove;
   igzstream is_rem(options["input"].as<std::string>());
   if(is_rem.fail()){
@@ -544,6 +544,17 @@ RemoveSamples(cxxopts::Options& options){
   if(is.fail()){
     std::cerr << "Error while opening file " << options["sample"].as<std::string>() << "." << std::endl;
     exit(1);
+  }
+
+  igzstream is_pop;
+  std::ofstream os_pop;
+  bool poplabels = false;
+  if(options.count("poplabels")){
+    poplabels = true;
+    is_pop.open(options["poplabels"].as<std::string>());
+    os_pop.open(options["output"].as<std::string>() + ".poplabels");
+    getline(is_pop, line2);
+    os_pop << line2 << "\n";
   } 
 
   os << "ID_1\tID_2\tmissing\n";
@@ -554,6 +565,13 @@ RemoveSamples(cxxopts::Options& options){
   // then update .sample file. store indices of remaining haplotypes in remaining_haps
   int i = 0, j = 0;
   while(getline(is, line)){
+
+    if(poplabels){
+      if(!getline(is_pop, line2)){
+        std::cerr << "Error: poplabels file has fewer samples than the .sample file.\n";
+        exit(1);
+      }
+    }
 
     sscanf(line.c_str(), "%s", id);
 
@@ -567,6 +585,7 @@ RemoveSamples(cxxopts::Options& options){
 
     if(remove == false){
       os << line << "\n";
+      if(poplabels) os_pop << line2 << "\n";
       remaining_haps[i] = j;
       i++;
       remaining_haps[i] = j+1;
@@ -576,6 +595,14 @@ RemoveSamples(cxxopts::Options& options){
 
   }
   assert(i == remaining_haps.size());
+  if(poplabels){
+    if(getline(is_pop,line2)){
+      std::cerr << "Error: poplabels file has more samples than the .sample file.\n";
+      exit(1);
+    }
+    is_pop.close();
+    os_pop.close();
+  }
   is.close();
   os.close();
 

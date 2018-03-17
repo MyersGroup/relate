@@ -1584,7 +1584,6 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
         int k_candidate = dist_k(rng);
         count_proposals[k_candidate-N]++;
         ChangeTimeWhilekAncestors(tree, k_candidate, dist_unif);
-        count++;
         UpdateAvg(tree);
       }
 
@@ -1596,9 +1595,9 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
     //At first, both are set to false, and is_count_threshold will be set to true first (once conditions are met)
     //then is_avg_increasing will be set to true eventually.
 
+    is_avg_increasing = true;
     if(!is_count_threshold){
       //assert(is_avg_increasing);
-      is_avg_increasing = true;
       for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
         if(*it_count < 20){
           is_avg_increasing = false;
@@ -1626,10 +1625,12 @@ InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
       }
       //check if coalescent ages are non-decreasing in avg
       int ell = N;
-      is_avg_increasing = true;
       for(it_avg = std::next(avg.begin(),N); it_avg != avg.end(); it_avg++){
         if(ell < root){
-          if(*it_avg > avg[(*tree.nodes[ell].parent).label]) is_avg_increasing = false;
+          if(*it_avg > avg[(*tree.nodes[ell].parent).label]){
+            is_avg_increasing = false;
+            break;
+          }
         }
         ell++;
       }
@@ -1772,7 +1773,7 @@ InferBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, con
         int k_candidate = dist_k(rng);
         count_proposals[k_candidate-N]++;
         ChangeTimeWhilekAncestorsVP(tree, k_candidate, epoch, coal_rate, dist_unif);
-        count++;
+        //count++;
         UpdateAvg(tree);
       }
 
@@ -1780,9 +1781,9 @@ InferBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, con
 
     num_iterations++;
 
-    //assert(is_avg_increasing);
+   is_avg_increasing = true;
     if(!is_count_threshold){
-      is_avg_increasing = true;
+      //assert(is_avg_increasing);
       for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
         if(*it_count < 20){
           is_avg_increasing = false;
@@ -1808,17 +1809,19 @@ InferBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, con
         it_last_update++;
         it_last_coords++;
       }
-
-      //calculate max diff to previous avg coalescent times
+      //check if coalescent ages are non-decreasing in avg
       int ell = N;
-      is_avg_increasing = true;
       for(it_avg = std::next(avg.begin(),N); it_avg != avg.end(); it_avg++){
         if(ell < root){
-          if(*it_avg > avg[(*tree.nodes[ell].parent).label]) is_avg_increasing = false;
+          if(*it_avg > avg[(*tree.nodes[ell].parent).label]){
+            is_avg_increasing = false;
+            break;
+          }
         }
         ell++;
       }
     }
+
 
   }
 
@@ -1944,7 +1947,6 @@ InferBranchLengths::MCMCVariablePopulationSizeForRelate(const Data& data, Tree& 
         count_proposals[k_candidate-N]++;
         //ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
         ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
-        count++;
         UpdateAvg(tree);
       }
 
@@ -1956,9 +1958,9 @@ InferBranchLengths::MCMCVariablePopulationSizeForRelate(const Data& data, Tree& 
     //At first, both are set to false, and is_count_threshold will be set to true first (once conditions are met)
     //then is_avg_increasing will be set to true eventually.
 
+    is_avg_increasing = true;
     if(!is_count_threshold){
       //assert(is_avg_increasing);
-      is_avg_increasing = true;
       for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
         if(*it_count < 20){
           is_avg_increasing = false;
@@ -1986,14 +1988,17 @@ InferBranchLengths::MCMCVariablePopulationSizeForRelate(const Data& data, Tree& 
       }
       //check if coalescent ages are non-decreasing in avg
       int ell = N;
-      is_avg_increasing = true;
       for(it_avg = std::next(avg.begin(),N); it_avg != avg.end(); it_avg++){
         if(ell < root){
-          if(*it_avg > avg[(*tree.nodes[ell].parent).label]) is_avg_increasing = false;
+          if(*it_avg > avg[(*tree.nodes[ell].parent).label]){
+            is_avg_increasing = false;
+            break;
+          }
         }
         ell++;
       }
     }
+
 
   }
 
