@@ -256,35 +256,34 @@ gtag('config', 'UA-115753061-1');
             </div>
 
           </div>
-        </div>
 
-        <!-- row -->
-        <div class="row">
+          <!-- row -->
+          <div class="row">
 
-          <div class="col-md-10 col-md-offset-1">
+            <div class="col-md-10 col-md-offset-1">
 
-            <a class="anchor" name="Prepare"></a>
-            <h3>Preparing input files</h3>
-            <hr/>
-            <p>The following code can be used to prepare the input data. We recommend to apply all steps (if applicable) in the listed order. </p>
-            <p>All input files can be gzipped.</p>
+              <a class="anchor" name="Prepare"></a>
+              <h3>Preparing input files</h3>
+              <hr/>
+              <p>The following code can be used to prepare the input data. We recommend to apply all steps (if applicable) in the listed order. </p>
+              <p>All input files can be gzipped.</p>
 
 
-            <div class="panel panel-info">
-              <div class="panel-heading"> <h4>Prepate input files</h4></div>
-              <div class="panel-body">  
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>Prepate input files</h4></div>
+                <div class="panel-body">  
 
-                Prepares input files for <b>Relate</b>. The script will remove non-biallelic SNPs, flip haplotypes according to the ancestral genome such that the ancestral allele is always denoted by 0, remove samples if specified, filter SNPs and adjust distances between SNPs using a genomic mask if specified, and generate SNP annotations needed needed for some add-on modules.
-                <ul>
-                  <li>--haps: Filename of .haps file.</li>
-                  <li>--sample: Filename of .sample file</li>
-                  <li>--ancestor: Fasta file containing ancestral genome. This is case insensitive.</li>
-                  <li>-o,--output: Output filename without file extension.</li>
-                  <li>--mask: Optional: Fasta file of same length as the ancestral genome contining a genomic mask. Loci passing the mask are denoted by P, loci not passing the mask are denoted by N. This is case insensitive.</li>
-                  <li>--remove_ids: Optional: File containing ids of samples that will be removed from the haps/sample files. One id per line.</li>
-                  <li>--poplabels: Optional: File containing population labels of samples.</li>
-                </ul>
-                <pre><code> PATH_TO_RELATE/scripts/PrepareInputFiles.sh/PrepareInputFiles.sh \ \
+                  Prepares input files for <b>Relate</b>. The script will remove non-biallelic SNPs, flip haplotypes according to the ancestral genome such that the ancestral allele is always denoted by 0, remove samples if specified, filter SNPs and adjust distances between SNPs using a genomic mask if specified, and generate SNP annotations needed needed for some add-on modules.
+                  <ul>
+                    <li>--haps: Filename of .haps file.</li>
+                    <li>--sample: Filename of .sample file</li>
+                    <li>--ancestor: Fasta file containing ancestral genome. This is case insensitive.</li>
+                    <li>-o,--output: Output filename without file extension.</li>
+                    <li>--mask: Optional: Fasta file of same length as the ancestral genome contining a genomic mask. Loci passing the mask are denoted by P, loci not passing the mask are denoted by N. This is case insensitive.</li>
+                    <li>--remove_ids: Optional: File containing ids of samples that will be removed from the haps/sample files. One id per line.</li>
+                    <li>--poplabels: Optional: File containing population labels of samples.</li>
+                  </ul>
+                  <pre><code> PATH_TO_RELATE/scripts/PrepareInputFiles.sh/PrepareInputFiles.sh \ \
                  --haps example.haps \
                  --sample example.sample \
                  --ancestor ancestor.fa \
@@ -292,129 +291,125 @@ gtag('config', 'UA-115753061-1');
                  --remove_ids remove_ids.txt \
                  --poplabels example.poplabels
                  -o example_input </code></pre>
-                Output: example_input.haps, example_input.sample, example_input.dist (if --mask if specified), example_input.poplabels (if remove_ids and poplabels is specified), example_input.annot (if poplabels is specified).
+                  Output: example_input.haps, example_input.sample, example_input.dist (if --mask if specified), example_input.poplabels (if remove_ids and poplabels is specified), example_input.annot (if poplabels is specified).
 
+                </div>
               </div>
             </div>
+
           </div>
 
-        </div>
 
-      </div>
+          <!-- row -->
+          <div class="row">
 
-      <!-- row -->
-      <div class="row">
-
-        <a class="anchor" name="RemoveNonBiallelicSNPs"></a> 
-        <div class="col-md-10 col-md-offset-1">
+            <a class="anchor" name="RemoveNonBiallelicSNPs"></a> 
+            <div class="col-md-10 col-md-offset-1">
 
 
 
-          <div class="panel panel-info">
-            <div class="panel-heading"> <h4>Remove non-biallelic SNPs</h4></div>
-            <div class="panel-body">  
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>Remove non-biallelic SNPs</h4></div>
+                <div class="panel-body">  
 
-              Removes SNPs that are not biallelic in the data set.
-              <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                  Removes SNPs that are not biallelic in the data set.
+                  <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode RemoveNonBiallelicSNPs \
                  --haps example.haps \
                  -o example_biallelic </code></pre>
-              Output: example_biallelic.haps.
+                  Output: example_biallelic.haps.
 
+                </div>
+              </div>
             </div>
+
           </div>
+
         </div>
 
-      </div>
+        <!-- row -->
+        <div class="row">
 
-    </div>
+          <a class="anchor" name="FlipHapsUsingAncestor"></a> 
+          <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-info">
+              <div class="panel-heading"> <h4>Determine ancestral allele and flip if necessary</h4></div>
+              <div class="panel-body">  
 
-    <!-- row -->
-    <div class="row">
-
-      <a class="anchor" name="FlipHapsUsingAncestor"></a> 
-      <div class="col-md-10 col-md-offset-1">
-        <div class="panel panel-info">
-          <div class="panel-heading"> <h4>Determine ancestral allele and flip if necessary</h4></div>
-          <div class="panel-body">  
-
-            The ancestral genome should be saved as a fasta file and aligned to the data set. The code is insensitive to case in the fasta file and deletes SNPs at which neither allele matches the ancestral allele.
-            <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                The ancestral genome should be saved as a fasta file and aligned to the data set. The code is insensitive to case in the fasta file and deletes SNPs at which neither allele matches the ancestral allele.
+                <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode FlipHapsUsingAncestor \
                  --haps example.haps \
                  --sample example.sample \
                  --ancestor ancestor.fa \
                  -o example_ancestral </code></pre>
-            Output: example_ancestral.haps
+                Output: example_ancestral.haps
 
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    </div>
 
-    <!-- row -->
-    <div class="row">
+        <!-- row -->
+        <div class="row">
 
-      <a class="anchor" name="RemoveSamples"></a> 
-      <div class="col-md-10 col-md-offset-1">
-        <div class="panel panel-info">
-          <div class="panel-heading"> <h4>Remove samples from data set</h4></div>
-          <div class="panel-body">  
+          <a class="anchor" name="RemoveSamples"></a> 
+          <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-info">
+              <div class="panel-heading"> <h4>Remove samples from data set</h4></div>
+              <div class="panel-body">  
 
-            Write ids of individuals as specified in the .sample file into remove_ids.txt (one id per line). These indivduals will be removed from the data set. 
-            Argument --poplabels is optional. If specified, it will generate a new poplabels file for the subsetted samples.
-            <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                Write ids of individuals as specified in the .sample file into remove_ids.txt (one id per line). These indivduals will be removed from the data set. 
+                Argument --poplabels is optional. If specified, it will generate a new poplabels file for the subsetted samples.
+                <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode RemoveSamples \
                  --haps example.haps \
                  --sample example.sample \
                  --poplabels example.poplabels \
                  -i remove_ids.txt \
                  -o example_subset </code></pre>
-            Output: example_subset.haps, example_subset.sample, example_subset.poplabels (if --poplabels is specified).
+                Output: example_subset.haps, example_subset.sample, example_subset.poplabels (if --poplabels is specified).
 
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    </div>
 
-    <!-- row -->
-    <div class="row">
+        <!-- row -->
+        <div class="row">
 
-      <a class="anchor" name="FilterHapsUsingMask"></a> 
-      <div class="col-md-10 col-md-offset-1">
-        <div class="panel panel-info">
-          <div class="panel-heading"> <h4>Filter SNPs using a genomic mask</h4></div>
-          <div class="panel-body">  
+          <a class="anchor" name="FilterHapsUsingMask"></a> 
+          <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-info">
+              <div class="panel-heading"> <h4>Filter SNPs using a genomic mask</h4></div>
+              <div class="panel-body">  
 
-            The genomic mask should be saved as a fasta file and aligned to the data set. Denote the passing state by P. The code deletes all SNPs that are not passing. It also outputs a .dist file that contains the distances between SNPs, adjusted for regions that are not passing in the mask.
-            <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                The genomic mask should be saved as a fasta file and aligned to the data set. Denote the passing state by P. The code deletes all SNPs that are not passing. It also outputs a .dist file that contains the distances between SNPs, adjusted for regions that are not passing in the mask.
+                <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode FilterHapsUsingMask\
                  --haps example.haps \
                  --sample example.sample \
                  --mask genomic_mask.fa \
                  -o example_mask </code></pre>
-            Output: example_mask.haps, example_mask.dist.
+                Output: example_mask.haps, example_mask.dist.
 
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-    </div>
 
 
 
-    <!-- row -->
-    <div class="row">
+        <!-- row -->
+        <div class="row">
 
-      <a class="anchor" name="GenerateSNPAnnotations"></a> 
-      <div class="col-md-10 col-md-offset-1">
-        <div class="panel panel-info">
-          <div class="panel-heading"> <h4>Generate SNP annotations</h4></div>
-          <div class="panel-body">  
+          <a class="anchor" name="GenerateSNPAnnotations"></a> 
+          <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-info">
+              <div class="panel-heading"> <h4>Generate SNP annotations</h4></div>
+              <div class="panel-body">  
 
-            This code uses the ancestral genome and population labels of samples to append additional information to the output of <b>Relate</b>. Fileformat for population labels is described <a href="input_data.html#poplabels">here</a>. The ancestral genome should be saved in fasta file format and aligned to the data set. Argument --ancestor is optional. If argument --mut is specified, output is directly appended to the .mut file.</br>
+                This code uses the ancestral genome and population labels of samples to append additional information to the output of <b>Relate</b>. Fileformat for population labels is described <a href="input_data.html#poplabels">here</a>. The ancestral genome should be saved in fasta file format and aligned to the data set. Argument --ancestor is optional. If argument --mut is specified, output is directly appended to the .mut file.</br>
                         <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode GenerateSNPAnnotations \
                  --haps example.haps \
@@ -424,18 +419,14 @@ gtag('config', 'UA-115753061-1');
                  -o example </code></pre>
                         Output: example.annot. If --mut is specified, columns are appended to this file.
 
+              </div>
+            </div>
           </div>
         </div>
+
       </div>
-    </div>
-    </div>
 
     </div>
-
-    </div>
-
-    </div>
-
 
   </body>
 </html>     
