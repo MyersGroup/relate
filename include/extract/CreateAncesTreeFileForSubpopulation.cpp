@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "filesystem.hpp"
 #include "gzstream.h"
 #include "collapsed_matrix.hpp"
 #include "anc.hpp"
@@ -35,8 +36,9 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
   int N, num_trees;
 
   igzstream is_N(options["anc"].as<std::string>());
+  if(is_N.fail()) is_N.open(options["anc"].as<std::string>() + ".gz");
   if(is_N.fail()){
-    std::cerr << "Error while opening file." << std::endl;
+    std::cerr << "Error while opening file " << options["anc"].as<std::string>() << std::endl;
     exit(1);
   } 
   is_N.ignore(256, ' ');
@@ -47,8 +49,9 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
 
   int L = 0;
   igzstream is_L(options["mut"].as<std::string>());
+  if(is_L.fail()) is_L.open(options["mut"].as<std::string>() + ".gz");
   if(is_L.fail()){
-    std::cerr << "Error while opening file." << std::endl;
+    std::cerr << "Error while opening file " << options["mut"].as<std::string>() << std::endl;
     exit(1);
   } 
   std::string unused;
@@ -103,7 +106,10 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
   CorrTrees::iterator it_subseq = v_anc[0].seq.begin();
   igzstream is(options["anc"].as<std::string>());
   if(is.fail()){
-    std::cerr << "Error while opening file." << std::endl;
+    is.open(options["anc"].as<std::string>() + ".gz");
+  }
+  if(is.fail()){
+    std::cerr << "Error while opening file " << options["anc"].as<std::string>() << std::endl;
     exit(1);
   } 
   getline(is, line);
@@ -215,7 +221,13 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
     it_seq++;
     it_seq_prev++;
   }  //Write equivalent_branches to file
-  std::string output_filename = "equivalent_branches_0.bin";
+
+  filesys f;
+  
+  std::string dirname         = options["output"].as<std::string>() + "/";
+  f.MakeDir((dirname).c_str());
+
+  std::string output_filename = dirname + "equivalent_branches_0.bin";
   FILE* pf = fopen(output_filename.c_str(), "wb");
   assert(pf != NULL);
 
@@ -230,8 +242,11 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
   //Associate branches of adjacent trees
   //Data data(((*v_anc[0].seq.begin()).tree.nodes.size() + 1)/2, 1);
   //AncesTreeBuilder ancbuilder(data);
-  ancbuilder.AssociateTrees(v_anc, "./");
+  ancbuilder.AssociateTrees(v_anc, dirname);
   v_anc[0].Dump(options["output"].as<std::string>() + ".anc");
+ 
+  std::remove((dirname + "equivalent_branches_0.bin").c_str());
+  f.RmDir( dirname.c_str() ); 
 
 }
 

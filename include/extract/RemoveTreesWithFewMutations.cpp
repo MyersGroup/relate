@@ -157,6 +157,10 @@ RemoveTreesWithFewMutations(cxxopts::Options& options){
     num_tree_before++;
   }
 
+  if(anc.seq.size() == 0){
+    std::cerr << "Error: Threshold value is too large. Please try a lower value." << std::endl;
+    exit(1);
+  }
 
   // dump anc and mut
   anc.Dump(options["output"].as<std::string>() + ".anc");

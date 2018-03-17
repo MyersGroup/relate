@@ -7,7 +7,7 @@ Sample::Read(const std::string& filename){
   bool exists;
 
   //Read all possible labels
-  std::ifstream is(filename);
+  igzstream is(filename);
   getline(is, line);
   while(getline(is, line)){
 
