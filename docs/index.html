@@ -3,6 +3,16 @@
 
   <head>
 
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115753061-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'UA-115753061-1');
+    </script>
+
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -35,7 +45,7 @@
           <ul class="nav navbar-nav">
             <li class="active"><a href="index.html">Home</a></li>
             <li><a href="getting_started.html">Getting Started</a></li>
-            <li><a href="preparing_data.html">Input data</a></li>
+            <li><a href="input_data.html">Input data</a></li>
             <li><a href="modules.html">Add-on modules</a></li>
             <li><a href="parallelise.html">Parallelise Relate</a></li>
           </ul>
@@ -51,13 +61,6 @@
         <div class="page-header">
           <h1>Relate</h1>
           <h4>Software to estimate genome-wide genealogies with recombination for thousands of samples</h4>
-
-          <p>
-          <b>Citation:</b>
-          </p>
-          <p>
-          <b>Contact:</b> leo.speidel [at] outlook [dot] com
-          </p>
         </div> 
 
       </div>
@@ -75,21 +78,40 @@
               <div class="panel panel-info">
                 <div class="panel-body">  
                   <img src="figures/treeplot.jpg" >
-                  <p><b>Relate</b> estimates genome-wide genealogies in form of trees that adapt to changes in the local genealogy caused by recombination. It is scalable to thousands of samples.</p>
                 </div>
               </div>
 
             </div>
 
             <div class="col-md-4">
-              <h4>Updates: </h4>
-              <ul>
-                <li>...</li>
-              
-                <li>...</li>
-              </ul>
+              <div class="row">
+                <h4>Updates: </h4>
+                <ul>
+                  <li>...</li>
+
+                  <li>...</li>
+                </ul>
+              </div>
+
+              <div class="row">
+                <h4>Download </h4>
+
+              </div>
+
             </div>
 
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <p><b>Relate</b> estimates genome-wide genealogies in form of trees that adapt to changes in the local genealogy caused by recombination. It is scalable to thousands of samples. The method is described in the following paper. Please cite this paper if you use our software in your study.</p>   
+              <p>
+              <b>Citation:</b> Leo Speidel, Simon Myers. A method for estimating genome-wide genealogies for thousands of samples. 2018.</b>
+              </p>          
+              <p>
+              <b>Contact:</b> leo.speidel [at] outlook [dot] com
+              </p>
+            </div>          
           </div>
 
           <!-- 2nd row -->
@@ -103,7 +125,7 @@
 
             <div class="col-md-6">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="preparing_data.html">Preparing input files</a></h4></div>
+                <div class="panel-heading"> <h4><a href="input_data.html">Preparing input files</a></h4></div>
                 <div class="panel-body">  
                   The input file format of <b>Relate</b> is the haps/sample file format used as an output format of ShapeIt. We provide code to convert files from the hap/legend/sample and vcf file formats. <b>Relate</b> also comes with a tool that determines the ancestral allele using an ancestral genome and a tool that filters SNPs using a genomic mask.    
                 </div>
@@ -128,19 +150,19 @@
 
             <div class="col-md-6">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#CoalescenceRate">Estimating population sizes and separation histories</a></h4></div>
+                <div class="panel-heading"> <h4><a href="modules.html#TreeView">Plot tree of interest</a></h4></div>
                 <div class="panel-body">  
-                  <img src="figures/population_size.jpg">
-                  <b>Relate</b> can be used to estimate population sizes and separation histories between populations. The figure shows the separation history between FIN and GBR in the 1000GP data set. The inset shows the matrix of coalescent rates between pairs of haplotypes 10,000 years ago. Rows and columns are sorted by population labels of haplotypes, as indicated by the color on the left of each matrix. </div>
+                  <img src="figures/tree.jpg">
+                  <b>Relate</b> can be used to plot a marginal tree of interest. </div>
               </div>
             </div>
 
             <div class="col-md-6">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#MutationRate">Estimating mutation rates</a></h4></div>
+                <div class="panel-heading"> <h4><a href="modules.html#CoalescenceRate">Estimating population sizes and separation histories</a></h4></div>
                 <div class="panel-body">  
-                  <img src="figures/mutation_rate.jpg">
-                  <b>Relate</b> can be used to estimate mutation rates through time. The figure shows the C to T mutation rates for GBR, where mutation rates are categorised by neighbouring nucleotides in sequence. For instance, we find consistent with previous estimates, that CG to CT mutations have a mutation rate that is approximately 10 times larger than the mean mutation rate.</div>
+                  <img src="figures/population_size.jpg">
+                  <b>Relate</b> can be used to estimate population sizes and separation histories between populations. The figure shows the separation history between FIN and GBR in the 1000GP data set. The inset shows the matrix of coalescent rates between pairs of haplotypes 9,000 years ago. Rows and columns are sorted by population labels of haplotypes, as indicated by the color on the left of the matrix. </div>
               </div>
             </div>
 
@@ -148,6 +170,16 @@
 
           <!-- 5th row -->
           <div class="row">
+
+            <div class="col-md-6">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4><a href="modules.html#MutationRate">Estimating mutation rates</a></h4></div>
+                <div class="panel-body">  
+                  <img src="figures/mutation_rate.jpg">
+                  <b>Relate</b> can be used to estimate mutation rates through time. The figure shows TCC to TTC mutation rates for all 26 populations in the 1000GP data set. Trends shared between mutation categories are eliminated by dividing by the overall average mutation rate. For each population, the mutation rate is normalized such that its mean over time equals one. Consistent with previous estimates, we see an increase in the mutation rate of TCC to TTC mutations about 10,000 to 30,000 years ago in Europeans and Southern Asians.</div>
+              </div>
+            </div>
+
 
             <div class="col-md-6">
               <div class="panel panel-info">

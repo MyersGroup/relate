@@ -2,6 +2,17 @@
 <html lang="en">
   <head>
 
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115753061-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-115753061-1');
+    </script>
+
+
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -34,7 +45,7 @@
           <ul class="nav navbar-nav">
             <li><a href="index.html">Home</a></li>
             <li class="active"><a href="getting_started.html">Getting Started</a></li>
-            <li><a href="preparing_data.html">Input data</a></li>
+            <li><a href="input_data.html">Input data</a></li>
             <li><a href="modules.html">Add-on modules</a></li>
             <li><a href="parallelise.html">Parallelise Relate</a></li>
           </ul>
@@ -105,16 +116,17 @@ make</code></pre>
             <a class="anchor" name="PreparingData"></a>
             <h2>Preparing the data</h2>
 
-            <p> For details please refer to <a href="preparing_data.html#ConvertFromVcf">here</a>.</p>
-
             <p><b>Relate</b> uses the haps/sample file format (output file format of <a href="https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html">SHAPEIT2</a>) as input. 
             <ul>
               <li>Please separate your data by chromosome.</li>
-              <li>You can convert from <b>vcf</b> to <b>haps/sample</b> using <a href="preparing_data.html#ConvertFromVcf">this function</a> and from <b>hap/legend/sample</b> to <b>haps/sample</b> using <a href="preparing_data.html#ConvertFromHapLegendSample">this function</a>.</li>
-              <li>Please make sure that, for every SNP, the ancestral allele is denoted by 0 and the alternative allele is denoted by 1. We provide a tool for doing this <a href="preparing_data.html#FlipHapsUsingAncestor">here</a>.</li> 
-              <li>Please also make sure that every SNP is biallelic. A tool for removing non-biallelic SNPs can be found <a href="preparing_data.html#RemoveNonBiallelicSNPs">here</a>.</li>
-              <li>Optional: We provide a tool for filtering SNPs (and adjusting distances between SNPs) using a genomic mask <a href="preparing_data.html#FilterHapsUsingMask">here</a>.</li>
+              <li>You can <b>convert</b> from <b>vcf</b> to <b>haps/sample</b> using <a href="input_data.html#ConvertFromVcf">this function</a> and from <b>hap/legend/sample</b> to <b>haps/sample</b> using <a href="input_data.html#ConvertFromHapLegendSample">this function</a>.</li>
+              <li>Please make sure that, for every SNP, the <b>ancestral allele is denoted by 0</b> and the alternative allele is denoted by 1. We provide a tool for doing this <a href="input_data.html#FlipHapsUsingAncestor">here</a>.</li> 
+              <li>Please also make sure that every SNP is <b>biallelic</b>. A tool for removing non-biallelic SNPs can be found <a href="input_data.html#RemoveNonBiallelicSNPs">here</a>.</li>
+              <li>Optional: We provide a tool for filtering SNPs (and adjusting distances between SNPs) using a genomic mask <a href="input_data.html#FilterHapsUsingMask">here</a>.</li>
             </ul>
+                       
+            <p> For more details please refer to <a href="input_data.html#ConvertFromVcf">here</a>.</p>
+
             </p>
             <p>You can find a toy data set in the subdirectory <a href="https://github.com/leospeidel/relate"><b>example/</b></a>. </p>
 
@@ -142,15 +154,15 @@ mkdir data</code></pre>
                 <tbody>
                   <tr>
                     <td>haps</td>
-                    <td>A file containing haplotype information (<a href="preparing_data.html#haps">more info</a>)</td>
+                    <td>A file containing haplotype information (<a href="input_data.html#haps">more info</a>)</td>
                   </tr>
                   <tr>
                     <td>sample</td>
-                    <td>A file containing information about individuals in the data set (<a href="preparing_data.html#sample">more info</a>)</td>
+                    <td>A file containing information about individuals in the data set (<a href="input_data.html#sample">more info</a>)</td>
                   </tr>
                   <tr>
                     <td>map</td>
-                    <td>A file containing recombination rates and distances (<a href="preparing_data.html#map">more info</a>)</td>
+                    <td>A file containing recombination rates and distances (<a href="input_data.html#map">more info</a>)</td>
                   </tr>
                 </tbody>
               </table>
@@ -220,8 +232,8 @@ mkdir data</code></pre>
             </div> 
             <b>Relate</b> has a few more optional arguments. 
             <ul>
-              <li>With the --dist option, we can specify distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="preparing_data.html#FilterHapsUsingMask">here</a>).</li> 
-              <li>With the --annot option, we can add columns to the .mut file. This can also be done after running <b>Relate</b> (a tool for generating a .annot file and/or appends columns to the .mut file can be found <a href="preparing_data.html#GenerateSNPAnnotations">here</a>).</li>
+              <li>With the --dist option, we can specify distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="input_data.html#FilterHapsUsingMask">here</a>).</li> 
+              <li>With the --annot option, we can add columns to the .mut file. This can also be done after running <b>Relate</b> (a tool for generating a .annot file and/or appends columns to the .mut file can be found <a href="input_data.html#GenerateSNPAnnotations">here</a>). The additional columns are needed, for instance, when estimating population size.</li>
               <li>With the --coal option, we can specify variable coalescence rates through time in form of a .coal file. See <a href="modules.html#.coal"> here </a> for file format. Specifying this option will overwrite the --effectiveN option.</li>
               <li>With the --memory option, we can specify the approximate memory allowance (in GB) used for storing the distance matrices in memory. <b>Relate</b> will exceed this amount, as it also stores trees and other information in memory; however the option allows to approximately control memory usage. Default is 5GB. <b>Relate</b> can become more efficient (in runtime and hard disk usage) with more memory, particularly for large sample sizes.</li> 
               <li>Arguments --chunk_index, --first_section, --last_section are only relevant when executing <b>Relate</b> in a mode other that <b>All</b>. This is needed for parallelising <b>Relate</b> (<a href="parallelise.html">more info</a>).</li>
@@ -230,6 +242,14 @@ mkdir data</code></pre>
             </ul>
             <br/>
             </p>
+
+            <p>All input files can be gzipped.</p>
+            <p>If something goes wrong and <b>Relate</b> terminates with an error, it may leaves behind some temporary files and directories. You can clean-up the directory using
+            <pre><code> PATH_TO_RELATE/bin/Relate \
+      --mode Clean \
+      -o example</code></pre>
+            </p>
+
 
             <a class="anchor" name="Output"></a>
             <h2>Output and analysis</h2>
@@ -250,7 +270,32 @@ mkdir data</code></pre>
                   </tr>
                   <tr>
                     <td>.mut </td> 
-                    <td>This file contains detailed information about each SNP. The header describes each column.</td>
+                    <td>This file contains detailed information about each SNP. The header describes each column.<br>
+                        Without .annot file, the columns are<br>
+                          snp;pos_of_snp;dist;rs-id;tree_index;branch_indices;is_not_mapping;is_flipped;age_begin;age_end;ancestral_allele/alternative_allele;<br>
+                          <ol>
+                            <li>Number of SNP in .haps file (int)</li>
+                            <li>Position of SNP in bp (int)</li>
+                            <li>Distance to next SNP in bp (int). If --dist option was specified, this may be different to the actual distance to the next SNP.</li>
+                            <li>rd-id of SNP (string)</li>
+                            <li>Number of tree, starting from 0, in the .anc file (int)</li>
+                            <li>Number of branch on tree. If a mutation cannot be mapped to a unique branch, more than one branch indices are given (space separated ints)</li>
+                            <li>0 means SNP could be mapped to a unique branch, 1 means SNP could not be mapped to a unique branch(bool)</li>
+                            <li>0 means SNP is not flipped, 1 means SNP is flipped (bool)</li>
+                            <li>Age of lower end of branch in generations (dbl)</li>
+                            <li>Age of upper end of branch in generations (dbl)</li>
+                            <li>Ancestral and alternative alleles at this locus (string)</li>
+                          </ol>
+                        With .annot fil, the following columns are appended<br>
+                        upstream_allele;downstream_allele;pop1;pop2;...
+                          <ol start = "12">
+                            <li>Allele adjacent to the SNP in the 5' direction</li>
+                            <li>Allele adjacent to the SNP in the 3' direction</li>
+                            <li>Number of carriers of the derived allele in pop1</li>
+                            <li>Number of carriers of the derived allele in pop2</li>
+                          </ol>
+
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -260,12 +305,47 @@ mkdir data</code></pre>
             
               <p>We provide a number of add-on modules to analyse the genealogy (look <a href="modules.html">here</a> for details).</p>
 
-              <ul>
-                <li><b>Estimate population size</b>: You can find a bash script under <b>scripts/EstimatePopulationSize/EstimatePopulationSize.sh</b>. To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="preparing_data.html#poplabels">here</a> for file format). Details about the functions used in the script can be found <a href="modules.html#CoalescenceRate">here</a>) </li>
-                <li><b>Estimate mutation rates</b>: You can estimate mutation rates using <a href="modules.html#MutationRate">this module</a>. </li>
-                <li><b>Calculate p-values for selection evidence</b>: You can calculate a pvalue for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. </li>
-                <li><b>Extract trees of interest</b>: You can extract trees in .newick format, or get genealogies for subpopulations using <a href="modules.html#Extract">this module</a>. </li>
-              </ul>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#CoalescenceRate">Estimate population size</a></h4></div>
+                    <div class="panel-body">  
+                       <p>You can find a bash script under 
+                       <pre><code>scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre> 
+                       To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for file format). Details about the functions used in the script can be found <a href="modules.html#CoalescenceRate">here</a>)</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#MutationRate">Estimate mutation rates</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can estimate mutation rates through time using <a href="modules.html#MutationRate">this module</a>. This can be used to calculate average mutation rates, or mutation rates of triplets.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#Selection">Calculate p-values for selection evidence</a></h4></div>
+                    <div class="panel-body">  
+                       <p>You can calculate a pvalue for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. The pvalue quantifies whether derived allele has spread surprisingly quickly under the standard coalescent model.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#Extract">Extract trees of interest</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can extract trees in .newick format, or get genealogies for subpopulations using <a href="modules.html#Extract">this module</a>.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
             </div>
 
