@@ -21,6 +21,7 @@ then
   echo "--num_iter:   Optional: Number of iterations of the algorithm. Default: 5."
   echo "--first_chr:  Optional: Index of first chr. Assumes that input files are indexed by chr, e.g. example_chr1.anc, example_chr1.mut, etc. Specify -i example in this case. "
   echo "--last_chr:   Optional: Index of last chr."
+  echo "--coal:       Optional: Initial estimate of coalescent rate, treating all haplotypes as one population. Ignored if num_bins is specified."
   echo "--threads:    Optional. Number of threads used. We currently only parallelize by chromosome."
   echo "--seed:       Optional: Random seed for branch lengths estimation"
   echo ""
@@ -101,6 +102,11 @@ do
       shift # past argument
       shift # past value
       ;;
+    --coal)
+      coal="$2"
+      shift # past argument
+      shift # past value
+      ;;
     --seed)
       seed="$2"
       shift # past argument
@@ -126,6 +132,10 @@ echo "poplabels = $filename_poplabels"
 echo "mu        = $mu"
 echo "output    = $output"
 echo "num_iter  = $num_iter"
+if [ ! -z "${coal-}" ];
+then
+  echo "coal      = $coal"
+fi
 if [ ! -z "${threshold-}" ];
 then
   echo "threshold = $threshold"
@@ -230,10 +240,15 @@ then
         -i ${output} \
         -o ${output}
 
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode EstimatePopulationSize \
-        -i ${output} \
-        -o ${output}
+      if [ -z "${coal-}" ]
+      then
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode EstimatePopulationSize \
+          -i ${output} \
+          -o ${output}
+      else
+        cp $coal ${output}.coal
+      fi
 
     else
 
@@ -480,12 +495,17 @@ else
         -i ${output} \
         -o ${output}
 
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode EstimatePopulationSize \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
-        -i ${output} \
-        -o ${output}
+      if [ -z "${coal-}" ]
+      then
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode EstimatePopulationSize \
+          --first_chr $first_chr \
+          --last_chr $last_chr \
+          -i ${output} \
+          -o ${output}
+      else
+        cp $coal $output.coal
+      fi
 
     else
 

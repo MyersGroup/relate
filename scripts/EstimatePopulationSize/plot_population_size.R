@@ -11,6 +11,7 @@ library(gridExtra)
 argv <- commandArgs(trailingOnly = T)
 filename <- argv[1]
 #read in population size
+groups   <- as.matrix(read.table(paste(filename, ".coal", sep = ""), nrow = 1))
 t        <- 28*t(as.matrix(read.table(paste(filename, ".coal", sep = ""), skip = 1, nrow = 1)))
 pop_size <- data.frame(time = numeric(0), pop_size = numeric(0), groups = numeric(0))
 num_pops <- round(sqrt(dim(read.table(paste(filename, ".coal", sep = ""), skip = 2))[1]))
@@ -19,7 +20,7 @@ num_pops <- round(sqrt(dim(read.table(paste(filename, ".coal", sep = ""), skip =
 for(p1 in 1:num_pops){
   for(p2 in 1:p1){
     c        <- as.matrix(read.table(paste(filename, ".coal", sep = ""), skip = (p1-1) * 2 + p2 + 1, nrow = 1))[-c(1:2)]
-    str      <- rep(paste("pop",p1," - pop",p2, sep = ""),length(c))
+    str      <- rep(paste(groups[p1]," - ",groups[p2], sep = ""),length(c))
     pop_size <- rbind(pop_size, data.frame(time = t, pop_size = 0.5/c, groups = str))
   }
 }

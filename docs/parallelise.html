@@ -3,18 +3,6 @@
 
 
   <head>
-
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115753061-1"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'UA-115753061-1');
-    </script>
-
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -47,7 +35,7 @@
           <ul class="nav navbar-nav">
             <li><a href="index.html">Home</a></li>
             <li><a href="getting_started.html">Getting Started</a></li>
-            <li><a href="input_data.html">Input data</a></li>
+            <li><a href="preparing_data.html">Input data</a></li>
             <li><a href="modules.html">Add-on modules</a></li>
             <li class="active"><a href="parallelise.html">Parallelise Relate</a></li>
           </ul>
@@ -91,11 +79,6 @@
             <div class="col-md-10 col-md-offset-1">
               <h3>Parallelise Relate</h3>
               <hr/>
-
-              <p>                 
-              <b>Relate</b> has been coded such that it can be parallelized on hundreds of cores on large computing clusters (see <a href="parallelise.html#RelateModes">here</a>). For smaller datasets where it is sufficient to parallelise over only a few cores, we also provide a bash script that parallelises <b>Relate</b> without having to submit jobs (see <a href="parallelise.html#RelateParallel">here</a>).           
-              </p>
-
             </div>
           </div>
 
@@ -109,9 +92,7 @@
                 <div class="panel-body">  
 
                   <p> 
-                  We provide a bash script that parallelises <b>Relate</b> on multiple cores. The script can be found under 
-                  <pre><code>script/RelateParallel/RelateParallel.sh</code></pre>
-                  The script takes the <b>same arguments (and same optional arguments) as Relate</b>, and one additional argument:
+                  We provide a bash script that parallelises <b>Relate</b> on multiple cores. The script can be found under <b>script/RelateParallel/RelateParallel.sh</b>. The script takes the same arguments (and same optional arguments) as Relate, and one additional argument:
                   <ul>
                     <li>Argument --threads specifies the maximum number of cores that Relate is allowed to use.</li>
                   </ul>
@@ -144,20 +125,16 @@
             </div>
           </div>
 
-                    
-          <!-- row -->
-          <div class="row">
-
             <div class="col-md-10 col-md-offset-1">
 
-              We implemented the algorithm such that it can be parallelised in multiple ways and, importantly, we can parallelise by submitting hundreds of independent jobs on a computing cluster.<br/>
+              We implemented the algorithm such that it can be parallelised in multiple ways and, importantly, we can parallelise by submitting independent jobs on a computing cluster.<br/>
               To parallelise <b>Relate</b>, do not use mode All. Instead we have to execute each of the 7 stages in sequence: <br/>
 
               <ol>
                 <li>MakeChunks: Divides the chromosome into chunks. To each chunk, we apply stages 2-6.</li>
                 <li>Paint: Applies the chromosome painting algorithm and stores distance matrices as temporary files.</li>
                 <li>BuildTopology: Uses distance matrices calculated in the previous stage and estimates tree topologies.</li>
-                <li>FindEquivalentBranches: Looks for equivalent branches in adjacent trees.</li>
+                <li>FinaEquivalentBranches: Looks for equivalent branches in adjacent trees.</li>
                 <li>InferBranchLengths: Estimates branch lengths for the trees.</li>
                 <li>CombineSections: Combines files for the chunk.</li>
                 <li>Finalize: Combines all chunks and generates the output.</li>
@@ -181,7 +158,7 @@
                   <p> 
                   <ul>
                     <li>Argument --haps, --sample, and --map take the filenames of the input data.</li>
-                    <li>Optional argument --dist takes the filename of a .dist file. A .dist file specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="input_data.html#FilterHapsUsingMask">here</a>).</li>
+                    <li>Optional argument --dist takes the filename of a .dist file. A .dist file specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="preparing_data.html#FilterHapsUsingMask">here</a>).</li>
                     <li>Optional argument --memory option specifies the approximate memory allowance (in GB) used for storing the distance matrices in memory. <b>Relate</b> will exceed this amount, as it also stores trees and other information in memory; however the option allows to approximately control memory usage. Default is 5GB. <b>Relate</b> can become more efficient (in runtime and hard disk usage) with more memory, particularly for large sample sizes. </li>
                   </ul>
 
@@ -224,7 +201,7 @@
                   </p>
 
                   <p>
-                  <b>This for loop can be parallelised</b> without moving any files or changing directories.
+                  <b>This for loop can be parallelised.</b>
                   </p>
 
 
@@ -308,7 +285,7 @@
 
 
                   <p>
-                  <b>This for loop can be parallelised</b> without moving any files or changing directories.
+                  <b>This for loop can be parallelised.</b>
                   </p>
 
                 </div>
@@ -391,7 +368,7 @@
                   </p>
 
                   <p>
-                  <b>This for loop can be parallelised</b> without moving any files or changing directories.
+                  <b>This for loop can be parallelised.</b>
                   </p>
 
 
@@ -461,7 +438,45 @@
             </div>
 
           </div>
-   
+
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="Finalize"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <p>
+              <h5>File formats</h5>
+              </p> 
+              <div class="table-responsive">
+                <table class="table">
+                  <tbody>
+                    <tr>
+                      <a class="anchor" name=".coal"></a> 
+                      <td>.anc</td>
+                      <td>
+
+                        <pre><code></pre></code>
+                      </td>
+                    </tr>
+                    <tr>
+                      <a class="anchor" name=".coal"></a> 
+                      <td>.mut</td>
+                      <td>
+
+                        <pre><code></pre></code>
+                      </td>
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+
+
         </div>
 
       </div>
