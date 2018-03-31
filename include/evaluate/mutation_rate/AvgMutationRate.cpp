@@ -191,7 +191,11 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
 
 
   ///////// EPOCHES /////////
-
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
+  
   int num_epochs = 30;
   if(options.count("num_bins") > 0){
     num_epochs = options["num_bins"].as<int>();
@@ -199,10 +203,10 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
   num_epochs++;
   std::vector<float> epoch(num_epochs);
   epoch[0] = 0.0;
-  epoch[1] = 1e3/28.0;
+  epoch[1] = 1e3/years_per_gen;
   float log_10 = std::log(10);
   for(int e = 2; e < num_epochs-1; e++){
-    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/28.0; 
+    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
   }
   epoch[num_epochs-1] = 5e7;
 
@@ -381,7 +385,7 @@ void AvgMutationRate(cxxopts::Options& options){
   bool help = false;
   if(!options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output.  Optional: first_chr, last_chr, num_bins, dist." << std::endl;
+    std::cout << "Needed: input, output.  Optional: first_chr, last_chr, years_per_gen, num_bins, dist." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -399,6 +403,10 @@ void AvgMutationRate(cxxopts::Options& options){
   }
 
   ///////// EPOCHES /////////
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
 
   int num_epochs = 30;
   if(options.count("num_bins") > 0){
@@ -407,10 +415,10 @@ void AvgMutationRate(cxxopts::Options& options){
   num_epochs++;
   std::vector<float> epoch(num_epochs);
   epoch[0] = 0.0;
-  epoch[1] = 1e3/28.0;
+  epoch[1] = 1e3/years_per_gen;
   float log_10 = std::log(10);
   for(int e = 2; e < num_epochs-1; e++){
-    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/28.0; 
+    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
   }
   epoch[num_epochs-1] = 5e7;
 

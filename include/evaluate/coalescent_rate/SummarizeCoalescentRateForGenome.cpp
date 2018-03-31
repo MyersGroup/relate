@@ -25,7 +25,7 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Summarizing over chromosomes..." << std::endl;  
 
-  //calculate epoche times
+  //calculate epoch times
   int start     = options["first_chr"].as<int>(); 
   int end       = options["last_chr"].as<int>();
   std::vector<std::string> filenames;
@@ -39,14 +39,14 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
   FILE* fp = fopen(filenames[0].c_str(),"rb");
   assert(fp != NULL);
 
-  int num_epoches;
-  std::vector<float> epoches;
-  fread(&num_epoches, sizeof(int), 1, fp);
-  epoches.resize(num_epoches);
-  fread(&epoches[0], sizeof(float), num_epoches, fp);
+  int num_epochs;
+  std::vector<float> epochs;
+  fread(&num_epochs, sizeof(int), 1, fp);
+  epochs.resize(num_epochs);
+  fread(&epochs[0], sizeof(float), num_epochs, fp);
 
-  std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epoches);
-  for(int e = 0; e < num_epoches; e++){
+  std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epochs);
+  for(int e = 0; e < num_epochs; e++){
     coalescent_rate_data[e].ReadFromFile(fp); 
   }
   fclose(fp);
@@ -56,10 +56,10 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
   for(int i = 1; i < (int) filenames.size(); i++){
     fp = fopen(filenames[i].c_str(),"rb");
     assert(fp != NULL);
-    fread(&num_epoches, sizeof(int), 1, fp); 
-    fread(&epoches[0], sizeof(float), num_epoches, fp);
+    fread(&num_epochs, sizeof(int), 1, fp); 
+    fread(&epochs[0], sizeof(float), num_epochs, fp);
 
-    for(int e = 0; e < num_epoches; e++){    
+    for(int e = 0; e < num_epochs; e++){    
       coalescent_rate_data_section.ReadFromFile(fp);
       it_coalescent_rate_data     = coalescent_rate_data[e].vbegin();
       for(std::vector<float>::iterator it_coalescent_rate_data_section = coalescent_rate_data_section.vbegin(); it_coalescent_rate_data_section != coalescent_rate_data_section.vend();){
@@ -74,8 +74,8 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
   //output as bin
   fp = fopen((options["output"].as<std::string>() + ".bin").c_str(), "wb");  
 
-  fwrite(&num_epoches, sizeof(int), 1, fp);
-  fwrite(&epoches[0], sizeof(float), epoches.size(), fp);
+  fwrite(&num_epochs, sizeof(int), 1, fp);
+  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
   for(std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_data = coalescent_rate_data.begin(); it_coalescent_rate_data != coalescent_rate_data.end();){
     (*it_coalescent_rate_data).DumpToFile(fp);
     it_coalescent_rate_data++;

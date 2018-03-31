@@ -13,7 +13,7 @@
 
 
 float
-GetCoalescentRate(Node n, float factor, std::vector<float>& epoche, std::vector<CollapsedMatrix<float>>& coalescent_rate_data, std::vector<int>& leaves){
+GetCoalescentRate(Node n, float factor, std::vector<float>& epoch, std::vector<CollapsedMatrix<float>>& coalescent_rate_data, std::vector<int>& leaves){
 
   //go through tree and fill in the matrix
   if(n.child_left != NULL){
@@ -25,8 +25,8 @@ GetCoalescentRate(Node n, float factor, std::vector<float>& epoche, std::vector<
 
     int num_children_left, num_children_right;
 
-    float coalescent_time = GetCoalescentRate(child_left, factor, epoche, coalescent_rate_data, leaves_child_left) + child_left.branch_length;
-    GetCoalescentRate(child_right, factor, epoche, coalescent_rate_data, leaves_child_right);
+    float coalescent_time = GetCoalescentRate(child_left, factor, epoch, coalescent_rate_data, leaves_child_left) + child_left.branch_length;
+    GetCoalescentRate(child_right, factor, epoch, coalescent_rate_data, leaves_child_right);
    
     leaves.resize(leaves_child_left.size() + leaves_child_right.size());
     std::vector<int>::iterator it_leaves = leaves.begin();
@@ -46,27 +46,27 @@ GetCoalescentRate(Node n, float factor, std::vector<float>& epoche, std::vector<
         assert(*it_leaves_child_left != *it_leaves_child_right);
 
         if(*it_leaves_child_left < *it_leaves_child_right){
-          for(int e = 0; e < (int) epoche.size() - 1; e++){
-            if(coalescent_time < epoche[e+1]){
-              assert(coalescent_time >= epoche[e]);
+          for(int e = 0; e < (int) epoch.size() - 1; e++){
+            if(coalescent_time < epoch[e+1]){
+              assert(coalescent_time >= epoch[e]);
               coalescent_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor;
-              coalescent_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (coalescent_time - epoche[e]);
+              coalescent_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (coalescent_time - epoch[e]);
               break;
             }else{
-              assert(coalescent_time >= epoche[e+1]);
-              coalescent_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (epoche[e+1] - epoche[e]);
+              assert(coalescent_time >= epoch[e+1]);
+              coalescent_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (epoch[e+1] - epoch[e]);
             }
           }
         }else{
-          for(int e = 0; e < (int) epoche.size() - 1; e++){
-            if(coalescent_time < epoche[e+1]){
-              assert(coalescent_time >= epoche[e]);
+          for(int e = 0; e < (int) epoch.size() - 1; e++){
+            if(coalescent_time < epoch[e+1]){
+              assert(coalescent_time >= epoch[e]);
               coalescent_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor;
-              coalescent_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (coalescent_time - epoche[e]);
+              coalescent_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (coalescent_time - epoch[e]);
               break;
             }else{
-              assert(coalescent_time >= epoche[e+1]);
-              coalescent_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (epoche[e+1] - epoche[e]);
+              assert(coalescent_time >= epoch[e+1]);
+              coalescent_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (epoch[e+1] - epoch[e]);
             }
           } 
         }
@@ -164,37 +164,43 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
     mut.Read(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
   }
 
-  //calculate epoche times
-  int num_epoches = 30;
-  if(options.count("num_bins") > 0){
-    num_epoches = options["num_bins"].as<int>();
+  //calculate epoch times
+  
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
   }
-  num_epoches++;
-  std::vector<float> epoche(num_epoches);
-  std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epoches);
-  epoche[0] = 0.0;
+  
+  int num_epochs = 30;
+  if(options.count("num_bins") > 0){
+    num_epochs = options["num_bins"].as<int>();
+  }
+  num_epochs++;
+  std::vector<float> epoch(num_epochs);
+  std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epochs);
+  epoch[0] = 0.0;
   coalescent_rate_data[0].resize(data.N, data.N);
   std::fill(coalescent_rate_data[0].vbegin(), coalescent_rate_data[0].vend(), 0.0);
-  epoche[1] = 1e3/28.0;
+  epoch[1] = 1e3/years_per_gen;
   coalescent_rate_data[1].resize(data.N, data.N);
   std::fill(coalescent_rate_data[1].vbegin(), coalescent_rate_data[1].vend(), 0.0);
   
   float log_10 = std::log(10);
-  for(int e = 2; e < num_epoches-1; e++){
+  for(int e = 2; e < num_epochs-1; e++){
 
-    epoche[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epoches-3.0) ))/28.0;
+    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
     coalescent_rate_data[e].resize(data.N, data.N);
     std::fill(coalescent_rate_data[e].vbegin(), coalescent_rate_data[e].vend(), 0.0);
   
   }
-  epoche[num_epoches-1] = 5e7;
-  coalescent_rate_data[num_epoches-1].resize(data.N, data.N);
-  std::fill(coalescent_rate_data[num_epoches-1].vbegin(), coalescent_rate_data[num_epoches-1].vend(), 0.0);
+  epoch[num_epochs-1] = 5e7;
+  coalescent_rate_data[num_epochs-1].resize(data.N, data.N);
+  std::fill(coalescent_rate_data[num_epochs-1].vbegin(), coalescent_rate_data[num_epochs-1].vend(), 0.0);
   
 
   ////////////////////////////////
   //Pairwise coalescent rate
-  //In each tree, find the coalescent time. Then update count_per_epoche and coalescent_time_in_epoche. 
+  //In each tree, find the coalescent time. Then update count_per_epoch and coalescent_time_in_epoch. 
 
   float factor = 0.0;
   CorrTrees::iterator it_anc = anc.seq.begin();
@@ -202,7 +208,7 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
 
     std::vector<int> leaves;
     factor = 1.0;
-    GetCoalescentRate(*std::prev((*it_anc).tree.nodes.end(),1), factor, epoche, coalescent_rate_data, leaves);
+    GetCoalescentRate(*std::prev((*it_anc).tree.nodes.end(),1), factor, epoch, coalescent_rate_data, leaves);
     
   }
 
@@ -215,8 +221,8 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
     fp = fopen((options["output"].as<std::string>() + "_chr" + std::to_string(chr) + ".bin" ).c_str(), "wb");  
   }
 
-  fwrite(&num_epoches, sizeof(int), 1, fp);
-  fwrite(&epoche[0], sizeof(float), epoche.size(), fp);
+  fwrite(&num_epochs, sizeof(int), 1, fp);
+  fwrite(&epoch[0], sizeof(float), epoch.size(), fp);
   for(std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_data = coalescent_rate_data.begin(); it_coalescent_rate_data != coalescent_rate_data.end();){
     (*it_coalescent_rate_data).DumpToFile(fp);
     it_coalescent_rate_data++;

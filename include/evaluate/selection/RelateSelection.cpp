@@ -285,7 +285,7 @@ Frequency(cxxopts::Options& options){
   bool help = false;
   if(!options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output. Optional: first_snp, last_snp, quality." << std::endl;
+    std::cout << "Needed: input, output. Optional: years_per_gen, first_snp, last_snp, quality." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -347,20 +347,24 @@ Frequency(cxxopts::Options& options){
   }
 
   ///////// EPOCHES /////////
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
 
-  int num_epoches = 30;
+  int num_epochs = 30;
   if(options.count("num_bins") > 0){
-    num_epoches = options["num_bins"].as<int>();
+    num_epochs = options["num_bins"].as<int>();
   }
-  num_epoches++;
-  std::vector<float> epoche(num_epoches);
-  epoche[0] = 0.0;
-  epoche[1] = 1e3/28.0;
+  num_epochs++;
+  std::vector<float> epoch(num_epochs);
+  epoch[0] = 0.0;
+  epoch[1] = 1e3/years_per_gen;
   float log_10 = std::log(10);
-  for(int e = 2; e < num_epoches-1; e++){
-    epoche[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epoches-3.0) ))/28.0; 
+  for(int e = 2; e < num_epochs-1; e++){
+    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
   }
-  epoche[num_epoches-1] = 5e7;
+  epoch[num_epochs-1] = 5e7;
 
   //read mutations file
   Mutations mutations(data);
@@ -432,14 +436,14 @@ Frequency(cxxopts::Options& options){
   int count_tree = 0;
 
   os_freq << "pos rs_id ";
-  for(int ep = num_epoches-1; ep >= 0; ep--){
-    os_freq << std::to_string(epoche[ep]) << " ";
+  for(int ep = num_epochs-1; ep >= 0; ep--){
+    os_freq << std::to_string(epoch[ep]) << " ";
   }
   os_freq << "TreeFreq DataFreq\n";
 
   os_lin << "pos rs_id ";
-  for(int ep = num_epoches-1; ep >= 0; ep--){
-    os_lin << std::to_string(epoche[ep]) << " ";
+  for(int ep = num_epochs-1; ep >= 0; ep--){
+    os_lin << std::to_string(epoch[ep]) << " ";
   }
   os_lin << "k_when_mutation_has_freq2\n";
 
@@ -522,15 +526,15 @@ Frequency(cxxopts::Options& options){
           int num_carriers = 0, num_lineages = 1, k_when_mutation_appears = -1, k_when_mutation_has_freq2 = -1;
           int n_mut = root;
           int n_tree = root;
-          int ep = num_epoches-1; 
+          int ep = num_epochs-1; 
 
-          while(coordinates_tree[n_tree] < epoche[ep]){
+          while(coordinates_tree[n_tree] < epoch[ep]){
             os_freq << 0 << " ";
             os_lin  << 0 << " ";
             ep--;
           }
 
-          // coordinates_tree[n_tree] >= epoche[ep]
+          // coordinates_tree[n_tree] >= epoch[ep]
           do{
 
             assert(coordinates_tree[n_tree] >= coordinates_mutation[n_mut]);
@@ -589,7 +593,7 @@ Frequency(cxxopts::Options& options){
             }
 
             assert(coordinates_mutation[n_mut] <= coordinates_tree[n_tree]);
-            while(coordinates_tree[n_tree] < epoche[ep]){
+            while(coordinates_tree[n_tree] < epoch[ep]){
 
               float num_muts = 0.0;
               if(k_when_mutation_appears != -1){ 
@@ -599,10 +603,10 @@ Frequency(cxxopts::Options& options){
                   for(int k = 0; k <= num_carriers; k++){
                     int branch   = current_branches[k];
 
-                    assert(epoche[ep] >= coordinates_tree_unsrt[branch]);
+                    assert(epoch[ep] >= coordinates_tree_unsrt[branch]);
                     assert(coordinates_tree_unsrt[branch] <= coordinates_mutation[n_mut]);
-                    assert( coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - epoche[ep] <= (coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - coordinates_tree_unsrt[branch]));
-                    num_muts    += (coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - epoche[ep])/(coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - coordinates_tree_unsrt[branch]); 
+                    assert( coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - epoch[ep] <= (coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - coordinates_tree_unsrt[branch]));
+                    num_muts    += (coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - epoch[ep])/(coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - coordinates_tree_unsrt[branch]); 
 
                   }
 
@@ -900,6 +904,7 @@ int main(int argc, char* argv[]){
     ("last_snp", "Index of last SNP. Optional.", cxxopts::value<int>())
     ("quality", "Optional: Filename of file containing quality assessment of SNPs (obtained using mode quality).", cxxopts::value<std::string>())
     ("threshold", "Optional: Threshold for number of mutations that trees need for inclusion. Default = 0.", cxxopts::value<int>())
+    ("years_per_gen", "Optional: Years per generation (float). Default: 28.", cxxopts::value<float>())
     ("num_bins", "Optional: Number of bins.", cxxopts::value<int>())
     ("i,input", "Filename of .anc and .mut file without file extension", cxxopts::value<std::string>())
     ("o,output", "Output file", cxxopts::value<std::string>());

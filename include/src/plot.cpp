@@ -15,9 +15,10 @@ plot::draw(const std::vector<float>& x, const std::vector<double>& y){
 
   std::vector<double>::iterator it_y = y_plot.begin();
   std::vector<float>::iterator it_x = x_plot.begin();
+  float last_x = *std::prev(x_plot.end(),1);
   for(; it_y != y_plot.end(); ){
   
-    if(*it_y == 0 || *it_x > 1e7/28.0){
+    if(*it_y == 0 || *it_x == last_x){
       it_y = y_plot.erase(it_y);
       it_x = x_plot.erase(it_x);
     }else{
@@ -30,8 +31,8 @@ plot::draw(const std::vector<float>& x, const std::vector<double>& y){
 
   double y_max = y_plot[0];
   double y_min = y_plot[0];
-  double x_min = 28*x_plot[0];
-  double x_max = 28*x_plot[x_plot.size() - 1];
+  double x_min = x_plot[0];
+  double x_max = x_plot[x_plot.size() - 1];
   for(int k = 0; k < y_plot.size(); k++){
     if(y_max < y_plot[k]) y_max = y_plot[k];
     if(y_min > y_plot[k] && y_plot[k] != 0.0) y_min = y_plot[k];
@@ -84,7 +85,7 @@ plot::draw(const std::vector<float>& x, const std::vector<double>& y){
   for(int k = 0; k < max/2+3; k++){
     std::cout << " ";
   }
-  std::cout << "years ago" << std::endl;
+  std::cout << "generations ago" << std::endl;
 
 }
 

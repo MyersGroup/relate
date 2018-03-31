@@ -279,17 +279,6 @@ void FinalizeAvg(cxxopts::Options& options){
   std::cerr << "------------------------------------------------------" << std::endl;
   std::cerr << "Finalizing mutation rate..." << std::endl;
 
-
-  //epoch
-  /*
-  int num_epochs = 40;
-  std::vector<float> epoch(num_epochs);
-  epoch[0] = 0.0;
-  for(int e = 1; e < num_epochs; e++){
-    epoch[e] = std::exp(5.0*(e+9)/15.0);
-  }
-  */
-
   int num_epochs;
   std::vector<float> epoch;
 
@@ -370,17 +359,6 @@ void FinalizeMutationRate(cxxopts::Options& options){
 
   std::cerr << "------------------------------------------------------" << std::endl;
   std::cerr << "Finalizing mutation rate..." << std::endl;
-
-
-  //epoch
-  /*
-  int num_epochs = 40;
-  std::vector<float> epoch(num_epochs);
-  epoch[0] = 0.0;
-  for(int e = 1; e < num_epochs; e++){
-    epoch[e] = std::exp(5.0*(e+9)/15.0);
-  }
-  */
 
   int num_epochs;
   std::vector<float> epoch;
@@ -568,7 +546,7 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   bool help = false;
   if(!options.count("mask") || !options.count("ancestor") || !options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: mask, ancestor, input, output. Optional: num_bins, dist." << std::endl;
+    std::cout << "Needed: mask, ancestor, input, output. Optional: years_per_gen, num_bins, dist." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -659,6 +637,10 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   }
 
   ////////// EPOCHES ///////////
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
 
   int num_epochs = 30;
   if(options.count("num_bins") > 0){
@@ -667,10 +649,10 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   num_epochs++;
   std::vector<float> epoch(num_epochs);
   epoch[0] = 0.0;
-  epoch[1] = 1e3/28.0;
+  epoch[1] = 1e3/years_per_gen;
   float log_10 = std::log(10);
   for(int e = 2; e < num_epochs-1; e++){
-    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/28.0; 
+    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
   }
   epoch[num_epochs-1] = 5e7; 
 
@@ -899,7 +881,7 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   bool help = false;
   if(!options.count("pos") || !options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: pos, input, output. Optional: mut." << std::endl;
+    std::cout << "Needed: pos, input, output. Optional: years_per_gen, mut." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -940,6 +922,11 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   int N_total = 2*data.N-1;
 
   //epoch
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
+
   int num_epochs = 40;
   std::vector<float> epoch(num_epochs);
   epoch[0] = 0.0;
@@ -1037,7 +1024,7 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   }
 
   for(int ep = 0; ep < epoch.size() - 1; ep++){
-    os << mtr.pos << " " << (int) 28 * (epoch[ep] + epoch[ep+1])/2.0 << " " << data.mu * branch_lengths_in_epoch[ep] << " " << num_mutations_in_epoch[ep] << "\n"; 
+    os << mtr.pos << " " << (int) years_per_gen * (epoch[ep] + epoch[ep+1])/2.0 << " " << data.mu * branch_lengths_in_epoch[ep] << " " << num_mutations_in_epoch[ep] << "\n"; 
   }
 
   while(getline(is_anc, line)){
@@ -1085,7 +1072,7 @@ void BranchLengthVsMutations(cxxopts::Options& options){
     }
 
     for(int ep = 0; ep < epoch.size()-1; ep++){
-      os << mtr.pos << " " << (int) 28 * (epoch[ep] + epoch[ep+1])/2.0 << " " << data.mu * branch_lengths_in_epoch[ep] << " " << num_mutations_in_epoch[ep] << "\n"; 
+      os << mtr.pos << " " << (int) years_per_gen * (epoch[ep] + epoch[ep+1])/2.0 << " " << data.mu * branch_lengths_in_epoch[ep] << " " << num_mutations_in_epoch[ep] << "\n"; 
     }
 
   }
@@ -1202,6 +1189,7 @@ int main(int argc, char* argv[]){
     ("mode", "Choose which part of the algorithm to run.", cxxopts::value<std::string>())
     ("first_chr", "Index of fist chr", cxxopts::value<int>())
     ("last_chr", "Index of last chr", cxxopts::value<int>())
+    ("years_per_gen", "Years per generation (float). Default: 28.", cxxopts::value<float>())
     ("num_bins", "Number of bins.", cxxopts::value<int>())
     ("dist", "Filename of file containing dist.", cxxopts::value<std::string>())
     ("mask", "Filename of file containing mask", cxxopts::value<std::string>())
@@ -1219,7 +1207,7 @@ int main(int argc, char* argv[]){
     bool help = false;
     if( !options.count("input") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
-      std::cout << "Needed: mask, ancestor, input, output. Optional: first_chr, last_chr, num_bins, dist." << std::endl;
+      std::cout << "Needed: mask, ancestor, input, output. Optional: first_chr, last_chr, years_per_gen, num_bins, dist." << std::endl;
       help = true;
     }
     if(options.count("help") || help){
