@@ -7,7 +7,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115753061-1"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
+window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 
@@ -116,7 +116,7 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-body">  
 
                   <p>
-                  You can find a bash script under <pre><code>scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre>
+                  You can find a bash script under <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre>
                   This script simultaneously
                   <ol>
                     <li>estimates population sizes</li>
@@ -128,21 +128,43 @@ gtag('config', 'UA-115753061-1');
                   Do not move the script - we are extracting the path to the binaries from the location of the script!
 
                   <h5>Input arguments</h5>
-                  <ul>
-                    <li>Argument -i specifies the filename of the .anc and .mut files, excluding the file extensions.</li> 
-                    <li>Argument -o specifies the output filename, excluding the file extensions.</li> 
-                    <li>Argument -m is used to specify the mutation rate.</li>
-                    <li>Argument --poplabels is used to specify the .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>. Default: a single population for all haplotypes.</li>
-                    <li>Optional argument --pop_of_interest specifies populations for which population size is estimated. The second column of the .poplabels file is used for population labels. You can specify multiple populations separated by commas, e.g. pop1,pop2</li>
-                    <li>Optional arguments --first_chr, --last_chr allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
-                      Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</li>
-                    <li>Optional argument --threads specifies the maximum number of cores used. Default is 1. Currently, we only parallelise by chromosome.</li>
-                    <li>Optional argument --num_bins specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </li>
-                    <li>Optional argument --num_iter specifies the number of iterations of the algorithm. Default is 5.</li>
-                    <li>Optional argument --coal specifies the initial estimate of coalescence rates treating all haplotypes as one population. Ignored if num_bins is specified.</li>
-                    <li>Optional argument --threshold takes an integer which is the number of SNPs a tree needs to not be dropped. This option serves two purposes: First, it removes bad/uninformative trees. Second it speeds up the inference. As we increase this value, we remove more trees. Default: number of haplotypes.</li>
-                    <li>Optional argument --seed specifies a seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</li>
-                  </ul>
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of the .anc and .mut files, excluding the file extensions.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>Filename of output files without file extensions.</dd>
+                    <dt>-m,--mutation_rate</dt>
+                    <dd>Mutation rate per base per generation.</dd>                    
+                    <dt>--poplabels</dt>
+                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>. This file needs to always contain all samples.</dd>
+
+                  </dl>
+
+                  In addition, the following optional arguments can be specified:
+                  <dl class="dl-horizontal">
+                    <dt>--pop_of_interest</dt>
+                    <dd>Optional: Specifies populations for which population size is estimated. The second column of the .poplabels file is used for population labels. You can specify multiple populations separated by commas, e.g. pop1,pop2.</dd>
+                    <dt>--first_chr & --last_chr</dt>
+                    <dd>Optional: Allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
+                    Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
+                    <dt>--threads</dt>
+                    <dd>Optional: Maximum number of cores used. Default is 1. Currently, we only parallelise by chromosome.</dd>
+                    <dt>--num_bins</dt>
+                    <dd>Optional: Specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Optional: Years per generation. Default: 28.0</dd>
+                    <dt>--num_iter</dt>
+                    <dd>Optional: Number of iterations of the algorithm. Default is 5.</dd>
+                    <dt>--coal</dt>
+                    <dd>Optional: Initial estimate of coalescence rates treating all haplotypes as one population. Ignored if num_bins is specified. Default: Estimated from input files.</dd>
+                    <dt>--threshold</dt>
+                    <dd>Optional: Integer which is the number of SNPs a tree needs to not be dropped. This option serves two purposes: First, it removes bad/uninformative trees. Second it speeds up the inference. As we increase this value, we remove more trees. Default: number of haplotypes.</dd>
+                    <dt>--seed</dt>
+                    <dd>Optional: Seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</dd>
+
+                  </dl>
+
                   <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
               -i example \
               -m 1.25e-8 \
@@ -159,7 +181,16 @@ gtag('config', 'UA-115753061-1');
 
                         <tr>
                           <td>example_popsize.anc, example_popsize.mut</td>
-                          <td>Genealogy with updated branch lengths. If --threshold is set to a value larger than 0, these files will include only a part of the genealogy. Use <a href="#ReEstimateBranchLengths">RelateCoalescenceRate --mode ReEstimateBranchLengths</a> to reestimate branch lengths for the entire genealogy using the estimated coalescence rates.</td>
+                          <td>Genealogy with updated branch lengths. By default, --threshold is set to a value larger than 0, such that these files will include only a part of the genealogy. You can reestimate branch lengths for the entire genealogy using
+                            <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
+                -i example \
+                -m 1.25e-8 \
+                --poplabels data/example.poplabels \
+                --threshold 0 \
+                --coal example_popsize.coal \
+                --num_iter 1 \
+                -o example_whole_genome</code></pre>
+                          </td>
                         </tr>
                         <tr>
                           <td>example_popsize.dist</td>
@@ -167,11 +198,7 @@ gtag('config', 'UA-115753061-1');
                         </tr>
                         <tr>
                           <td>example_popsize.coal</td>
-                          <td>Contains coalescence rates averaged over all haplotypes (see below for file format).</td>
-                        </tr>
-                        <tr>
-                          <td>example_popsize_bypop.coal</td>
-                          <td>Contains coalescence rates for populations specified in the .poplabels file.</td>
+                          <td>Contains coalescence rates and cross-coalescence rates for populations specified in the .poplabels file.(see below for file format).</td>
                         </tr>
                         <tr>
                           <td>example_popsize.bin</td>
@@ -251,14 +278,25 @@ gtag('config', 'UA-115753061-1');
                     <div class="panel-heading"> <h4>Calculate coalescence rates through time</h4></div>
                     <div class="panel-body">  
 
-                      Calculates the average pairwise coalescence rate through time. 
-                      <ul>
-                        <li>Input files are the .anc and .mut files. Argument -i takes the filename excluding the file extensions.</li>
-                        <li>Optional argument --num_bins specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </li>
-                        <li>Optional arguments --first_chr, --last_chr allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
-                          Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</li>
-                        <li>Optional argument --poplabels is used to specify the .poplabels file. If set, the code calculates average coalescence rates between haplotypes in the same group and across different groups. The file format is described <a href="input_data.html#poplabels">here</a>.</li>
-                      </ul>
+                      Calculates the average pairwise coalescence rate through time.
+                      <dl class="dl-horizontal">
+                        <dt>-i,--input</dt>
+                        <dd>Filename of the .anc and .mut files, excluding the file extensions.</dd>
+                        <dt>-o,--output</dt>
+                        <dd>Filename of output files without file extensions.</dd>
+                        <dt>-m,--mutation_rate</dt>
+                        <dd>Mutation rate per base per generation.</dd>                    
+                        <dt>--poplabels</dt>
+                        <dd>Optional: Filename of a .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>.</dd>
+                        <dt>--first_chr & --last_chr</dt>
+                        <dd>Optional: Allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
+                        Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
+                        <dt>--num_bins</dt>
+                        <dd>Optional: Specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </dd>
+                        <dt>--years_per_gen</dt>
+                        <dd>Optional: Years per generation. Default: 28.0</dd>
+                      </dl>
+
                       <pre><code> PATH_TO_RELATE/bin/RelateCoalescenceRate \
                  --mode EstimatePopulationSize\
                  -i example \
@@ -273,7 +311,7 @@ gtag('config', 'UA-115753061-1');
                  --poplabels example.poplabels \
                  -i example \
                  -o example </code></pre>
-                      Here, --poplabels is optional.
+                      Here, --poplabels is optional. The .poplabels file needs to contain all samples.
                       <p>
                     </div>
                   </div>
@@ -291,14 +329,26 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-body">  
 
                   <p>Once the average mutation rate and coalescence rates have been calculated, we can re-estimate the branch lengths. 
-                  <ul>
-                    <li>Argument --mrate is used to specify the file containing the average mutation rate. Generated using <a href="modules.html#AvgMutationRate">this function</a></li>
-                    <li>Argument --coal is used to specify the file containing coalescent rates. Generated using <a href="modules.html#CoalescenceRate">this function</a> (do not specify option --poplabels for this)</li>
-                    <li>Optional argument --dist is used to specify distances between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>.
-                      <li>Optional argument --seed specifies a seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</li>
 
-
-                  </ul>
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file</dd>
+                    <dt>-o,--output</dt>
+                    <dd>Filename of output files without file extensions.</dd>
+                    <dt>-m,--mutation_rate</dt>
+                    <dd>Mutation rate per base per generation.</dd>                    
+                    <dt>--mrate</dt>
+                    <dd>Specifies the file containing the average mutation rate. Generated using <a href="modules.html#AvgMutationRate">this function</a>.</dd>
+                    <dt>--coal</dt>
+                    <dd>Specifies the file containing coalescent rates. Generated using <a href="modules.html#CoalescenceRate">this function</a> (do not specify option --poplabels for this).</dd>                    
+                    <dt>--dist</dt>
+                    <dd>Optional: Specifies distances between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>.
+                    </dd>
+                    <dt>--seed</dt>
+                    <dd>Optional: Specifies a seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</dd>
+                  </dl>
 
                   </p> 
                   <pre><code> PATH_TO_RELATE/bin/RelateCoalescenceRate \
@@ -342,13 +392,22 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-body">  
 
                   Calculates the average mutation rate. 
-                  <ul>
-                    <li>Input files are the .anc and .mut files. Argument -i takes the filename excluding the file extensions.</li>
-                    <li>Optional arguments --first_chr, --last_chr allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
-                      Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</li>
-                    <li>Optional argument --num_bins specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </li>
-                    <li>Optional argument --dist is used to specify .dist file. The .dist file stores distances in bp between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>. <b>If specified together with --first_chr, --last_chr, please specify the filename without file extension.</b>
-                  </ul>
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of the .anc and .mut files, excluding the file extensions.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>Filename of output files without file extensions.</dd>   
+                    <dt>--first_chr & --last_chr</dt>
+                    <dd>Optional: Allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
+                    Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
+                    <dt>--num_bins</dt>
+                    <dd>Optional: Specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Optional: Years per generation. Default: 28.0</dd>
+                    <dt>--dist</dt>
+                    <dd>Optional: Specifies .dist file. The .dist file stores distances in bp between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>. <b>If specified together with --first_chr, --last_chr, please specify the filename without file extension.</b></dd>
+                  </dl>
 
                   <pre><code> PATH_TO_RELATE/bin/RelateMutationRate \
                  --mode Avg\
@@ -364,20 +423,29 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-heading"> <h4>Calculate the mutation rates grouped by nucleotide in sequence</h4></div>
                 <div class="panel-body">  
 
-                  Calculates the mutation rate for 96 groups of mutations, where each group corresponds to a triplet mutation (e.g. TCC to TTC mutation). 
-                  <ul>
-                    <li>Input files are the .anc and .mut files. Argument -i takes the filename excluding the file extensions.</li>
-                    <li>With --ancestor, please specify a fasta file containing the ancestral genome.</li>
-                    <li>With --mask, please specify a genomic mask in which the passing state is denoted by P.</li>
-                    <li>Optional argument --num_bins specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </li>
-                    <li>Optional argument --dist is used to specify distances between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>. </li>
-                    <li>Arguments --first_chr, --last_chr are currently not supported for mode WithContextForChromosome (because we need to specify separate mask, ancestor files for each chromosome.)<br/>
-                      You can however apply mode WithContextForChromosome to each chromosome individually. You can then use mode Finalize (see below) with options --first_chr and --last_chr to obtain a genome-wide estimate. Filenames are assumed to be indexed by chromosome as before.<br/>
-                      Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.<br/>
+                  Calculates the mutation rate for 96 groups of mutations, where each group corresponds to a triplet mutation (e.g. TCC to TTC mutation).
 
-                    </li>
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of the .anc and .mut files, excluding the file extensions.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>Filename of output files without file extensions.</dd>            
+                    <dt>--ancestor</dt>
+                    <dd>Fasta file containing ancestral genome. This is case insensitive.</dd>
+                    <dt>--mask</dt>
+                    <dd>Optional: Fasta file of same length as the ancestral genome contining a genomic mask. Loci passing the mask are denoted by P, loci not passing the mask are denoted by N. This is case insensitive.</dd>
+                    <dt>--num_bins</dt>
+                    <dd>Optional: Specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Optional: Years per generation. Default: 28.0</dd>
+                    <dt>--dist</dt>
+                    <dd>Optional: Specifies .dist file. The .dist file stores distances in bp between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>. <b>If specified together with --first_chr, --last_chr, please specify the filename without file extension.</b></dd>
 
-                  </ul>
+                    <dt>--first_chr & --last_chr</dt>
+                    <dd>Currently not supported for mode WithContextForChromosome (because we need to specify separate mask, ancestor files for each chromosome.)<br/>
+                    You can however apply mode WithContextForChromosome to each chromosome individually. You can then use mode Finalize (see below) with options --first_chr and --last_chr to obtain a genome-wide estimate. Filenames are assumed to be indexed by chromosome as before.<br/>
+                    Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
+                  </dl>
 
                   <pre><code> PATH_TO_RELATE/bin/RelateMutationRate \
                  --mode WithContextForChromosome \
@@ -509,9 +577,26 @@ gtag('config', 'UA-115753061-1');
 
                   <p>Plots a tree of interest using R.<br> 
                   Requires libraries ggplot2, grid, gridExtra, data.table.
-                  <ul>
-                    <li> TODO </li>
-                  </ul> 
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--haps</dt>
+                    <dd>Filename of haps file.</dd>
+                    <dt>--sample</dt>
+                    <dd>Filename of sample file.</dd>
+                    <dt>--poplabels</dt>
+                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>. This file needs to always contain all samples.</dd>
+                    <dt>--bp_of_interest</dt>
+                    <dd>Integer specfifying the BP position of the SNP of interest</dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Years per generation. Default: 28.0</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
                   </p>
 
                   <pre><code> PATH_TO_RELATE/scripts/TreeView/TreeView.sh \
@@ -552,12 +637,21 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-heading"> <h4>Extract subtrees corresponding to a subpopulation</h4></div>
                 <div class="panel-body">  
 
-                  <p>Extracts subtrees such that all tips belong to the populations of interest.
-                  <ul>
-                    <li> File format for file specified with --poplabels can be found <a href="prepare_data.html#poplabels">here</a>. </li>
-                    <li> Argument --pop_of_interest is used to specify which population to extract. Multiple populations can be specified using comma separation, e.g., --pop_of_interest pop1,pop2.
-                  </ul> 
-                  </p>
+                  <p>Extracts subtrees such that all tips belong to the populations of interest.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--poplabels</dt>
+                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>. This file needs to always contain all samples.</dd>
+                    <dt>--pop_of_interest</dt>
+                    <dd>Specifies populations for which population size is estimated. The second column of the .poplabels file is used for population labels. You can specify multiple populations separated by commas, e.g. pop1,pop2.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
 
                   <pre><code> PATH_TO_RELATE/bin/RelateExtract\
                  --mode SubTreesForSubpopulation\
@@ -583,11 +677,18 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-heading"> <h4>Extract tree at a SNP of interest in newick format</h4></div>
                 <div class="panel-body">  
 
-                  <p>Extracts a tree at a SNP of interest in newick format.
-                  <ul>
-                    <li> Argument --snp_of_interest takes an integer which is the SNP index as specified in the first row of the .mut file.
-                  </ul> 
-                  </p>
+                  <p>Extracts a tree at a SNP of interest in newick format.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--snp_of_interest</dt>
+                    <dd>Integer specfifying the BP position of the SNP of interest</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
 
                   <pre><code> PATH_TO_RELATE/bin/RelateExtract\
                  --mode TreeAtSNPAsNewick \
@@ -614,11 +715,18 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-body">  
 
 
-                  <p>Removes trees and associated SNPs from the .anc/.mut files onto which less than a given number of SNPs are mapped.<br/>
-                  <ul>
-                    <li> Argument --threshold takes an integer which is the number of SNPs a tree needs to not be dropped. </li>
-                  </ul> 
-                  </p>
+                  <p>Removes trees and associated SNPs from the .anc/.mut files onto which less than a given number of SNPs are mapped.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--threshold</dt>
+                    <dd>Integer which is the number of SNPs a tree needs to not be dropped. This option serves two purposes: First, it removes bad/uninformative trees. Second it speeds up the inference. As we increase this value, we remove more trees. Default: number of haplotypes.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
 
                   <pre><code> PATH_TO_RELATE/bin/RelateExtract\
                  --mode RemoveTreesWithFewMutations \
@@ -646,6 +754,15 @@ gtag('config', 'UA-115753061-1');
 
                   <p>Extracts distances between SNPs from the .mut file (3rd and 4th column). The .dist file is needed in some applications, when the .anc/.mut files have been subsetted using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a> In these cases, the .dist file needs to be generated using the <b>not</b> subsetted .mut file.
                   </p>
+
+
+                  <dl class="dl-horizontal">
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
 
                   <pre><code> PATH_TO_RELATE/bin/RelateExtract\
                  --mode ExtractDistFromMut \

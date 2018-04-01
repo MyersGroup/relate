@@ -6,7 +6,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115753061-1"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
+window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 
@@ -60,7 +60,7 @@ gtag('config', 'UA-115753061-1');
 
         <div class="page-header">
           <h1>Relate</h1>
-          <h4>Software to estimate genome-wide genealogies with recombination for thousands of samples</h4>
+          <h4>Software to estimate genome-wide genealogies for thousands of samples</h4>
         </div> 
 
       </div>
@@ -96,6 +96,27 @@ gtag('config', 'UA-115753061-1');
               <div class="row">
                 <h4>Download </h4>
 
+                <form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
+                  <div class="form-group">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" id="terms" oninvalid="this.setCustomValidity('Required')" onchange="this.setCustomValidity('')" required>
+                        I agree with the <a href="">terms and conditions</a>
+                      </label>
+                      <div class="help-block with-errors"></div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <ul>
+
+                      <li><button type="submit" class="btn btn-link" formaction="download/relate_v1_linux.tar">Download Relate for Linux</button></li>
+                      <li><button type="submit" class="btn btn-link" formaction="download/relate_v1_mac.tar">Download Relate for Mac</button></li>
+                    </ul>
+                   
+                  </div>
+                </form>
+                <hr>
+
               </div>
 
             </div>
@@ -127,7 +148,7 @@ gtag('config', 'UA-115753061-1');
               <div class="panel panel-info">
                 <div class="panel-heading"> <h4><a href="input_data.html">Preparing input files</a></h4></div>
                 <div class="panel-body">  
-                  The input file format of <b>Relate</b> is the haps/sample file format used as an output format of ShapeIt. We provide code to convert files from the hap/legend/sample and vcf file formats. <b>Relate</b> also comes with a tool that determines the ancestral allele using an ancestral genome and a tool that filters SNPs using a genomic mask.    
+                  The input file format of <b>Relate</b> is the haps/sample file format used as an output format of ShapeIt. We provide code to convert files from the hap/legend/sample and vcf file formats. <b>Relate</b> also comes with tools that determines the ancestral allele using an ancestral genome and filter SNPs using a genomic mask.    
                 </div>
               </div>
             </div>
@@ -153,7 +174,7 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-heading"> <h4><a href="modules.html#TreeView">Plot tree of interest</a></h4></div>
                 <div class="panel-body">  
                   <img src="figures/tree.jpg">
-                  <b>Relate</b> can be used to plot a marginal tree of interest. </div>
+                  <b>Relate</b> can be used to plot a marginal tree of interest. This tree corresponds to the LCT region, where a mutation at SNP rs4988235 is believed to be responsible for Lactose tolerance in Europeans (here GBR). </div>
               </div>
             </div>
 
