@@ -7,11 +7,11 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115753061-1"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
 
-      gtag('config', 'UA-115753061-1');
+gtag('config', 'UA-115753061-1');
     </script>
 
 
@@ -102,7 +102,7 @@
           <!-- row -->
           <div class="row">
 
-           <a class="anchor" name="RelateParallel"></a> 
+            <a class="anchor" name="RelateParallel"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
                 <div class="panel-heading"> <h4>Parallelised Relate</h4></div>
@@ -113,11 +113,11 @@
                   <pre><code>PATH_TO_RELATE/script/RelateParallel/RelateParallel.sh</code></pre>
                   The script takes the <b>same arguments (and same optional arguments) as Relate</b>, and one additional argument:
 
-                 <dl class="dl-horizontal">                   
-                   <dt>--threads</dt>
-                   <dd>Maximum number of cores used. Default is 1. Note that the script only parallelizes <b>Relate</b> if the input data set is sufficiently large. Otherwise, it is more efficient to run <b>Relate</b> on a single core, and <b>Relate</b> will automatically do so. If you set --max_memory to a smaller value, <b>Relate</b> will parallelise over more cores.
-</dd>
-                 </dl>
+                  <dl class="dl-horizontal">                   
+                    <dt>--threads</dt>
+                    <dd>Maximum number of cores used. Default is 1. Note that the script only parallelizes <b>Relate</b> if the input data set is sufficiently large. Otherwise, it is more efficient to run <b>Relate</b> on a single core, and <b>Relate</b> will automatically do so. If you set --max_memory to a smaller value, <b>Relate</b> will parallelise over more cores.
+                    </dd>
+                  </dl>
                   Do not move the script - we are extracting the path to the binaries from the location of the script!
                   </p> 
                   <pre><code> PATH_TO_RELATE/script/RelateParallel/RelateParallel.sh\
@@ -129,7 +129,7 @@
                   -o example \
                   --threads 8 </code></pre>
                   Output: example.anc, example.mut<br/><br/>
-           
+
 
                 </div>
               </div>
@@ -147,7 +147,7 @@
             </div>
           </div>
 
-                    
+
           <!-- row -->
           <div class="row">
 
@@ -217,7 +217,7 @@
                   <p> 
                   <pre><code>num_chunks=$(ls parameters_* | wc -l)</code></pre>
                   </p>
-                  
+
                   <p>
                   Then, apply steps 2 - 6 to each chunk
                   <pre><code> for chunk_index in `seq 0 $(($num_chunks - 1))`;
@@ -295,7 +295,7 @@
                   <p> 
                   <pre><code>num_sections=$(ls chunk_${chunk_index}/paint/*bin | wc -l)</code></pre>
                   </p>
-                  
+
                   You can now code a for loop,
                   <pre><code> for section in `seq 0 $(($num_sections - 1))`;
                   do
@@ -464,11 +464,12 @@
             </div>
 
           </div>
-   
+
         </div>
 
       </div>
 
+    </div>
 
   </body>
 </html>     

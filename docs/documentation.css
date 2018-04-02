@@ -198,6 +198,7 @@ ul.CTAs a {
 
 
 
+
 /* ---------------------------------------------------
     MEDIAQUERIES
 ----------------------------------------------------- */
@@ -210,6 +211,8 @@ ul.CTAs a {
     }
     #content {
         width: 100%;
+        padding: 0;
+        padding-top: 50px; 
     }
     #content.active {
         width: calc(100% - 250px);
