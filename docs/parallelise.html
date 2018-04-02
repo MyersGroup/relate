@@ -93,7 +93,7 @@
               <hr/>
 
               <p>                 
-              <b>Relate</b> has been coded such that it can be parallelized on hundreds of cores on large computing clusters (see <a href="parallelise.html#RelateModes">here</a>). For smaller datasets where it is sufficient to parallelise over only a few cores, we also provide a bash script that parallelises <b>Relate</b> without having to submit jobs (see <a href="parallelise.html#RelateParallel">here</a>).           
+              <b>Relate</b> has been coded such that it can be parallelized on hundreds of cores on large computing clusters (see <a href="parallelise.html#RelateModes">here</a>). For smaller datasets, where it is sufficient to parallelise over only a few cores, we also provide a bash script that parallelises <b>Relate</b> without having to submit many jobs (see <a href="parallelise.html#RelateParallel">here</a>).           
               </p>
 
             </div>
@@ -115,20 +115,21 @@
 
                  <dl class="dl-horizontal">                   
                    <dt>--threads</dt>
-                    <dd>Maximum number of cores used. Default is 1. Currently, we only parallelise by chromosome.</dd>
+                   <dd>Maximum number of cores used. Default is 1. Note that the script only parallelizes <b>Relate</b> if the input data set is sufficiently large. Otherwise, it is more efficient to run <b>Relate</b> on a single core, and <b>Relate</b> will automatically do so. If you set --max_memory to a smaller value, <b>Relate</b> will parallelise over more cores.
+</dd>
                  </dl>
                   Do not move the script - we are extracting the path to the binaries from the location of the script!
                   </p> 
                   <pre><code> PATH_TO_RELATE/script/RelateParallel/RelateParallel.sh\
-                  --path "PATH_TO_RELATE" \
                   --haps data/example.haps \
                   --sample data/example.sample \
                   --map data/genetic_map.txt \
+                  -m 1.25e-8 \
+                  -N 30000 \
                   -o example \
                   --threads 8 </code></pre>
                   Output: example.anc, example.mut<br/><br/>
            
-                  Note that the script only parallelizes <b>Relate</b> if the input data set is sufficiently large. Otherwise, it is more efficient to run <b>Relate</b> on a single core, and <b>Relate</b> will automatically do so.
 
                 </div>
               </div>
