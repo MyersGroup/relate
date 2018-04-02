@@ -36,7 +36,7 @@ p1 <- ggplot(pop_size) +
   ylab("population size") +
   xlab("years ago") +
 
-pdf("pop_size.pdf", width = 10, height = 8)
+pdf(paste(filename,".pdf",sep = ""), width = 10, height = 8)
 plot(p1)
 dev.off()
 
