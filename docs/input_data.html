@@ -99,86 +99,80 @@ gtag('config', 'UA-115753061-1');
 
               <p>The input file format for <b>Relate</b> is the haps/sample file format, which is used as an output file format by SHAPEIT2 (see <a href="http://www.shapeit.fr/pages/m02_formats/hapssample.html">here</a>).</p>
 
-              <div class="table-responsive">
-                <table class="table">
-                  <tbody>
-                    <tr>
-                      <a class="anchor" name="haps"></a> 
-                      <td>.haps</td>
-                      <td>The first five columns are:
-                        <ol>
-                          <li>Chromosome number [integer]</li>
-                          <li>SNP ID [string]</li>
-                          <li>SNP position [integer]</li>
-                          <li>Ancestral allele [char]</li>
-                          <li>Alternative allele [char]</li>
-                        </ol>
-                        Then, the successive column pairs correspond to the haplotypes carried by an individual at that SNP.<br/>
-                        <b>Please make sure that the ancestral allele is represented by 0 and the alternative allele is represented by 1.</b>
-                        <pre><code>7 SNP1 123 A G 0 0 1 0 0 0 1 1<br/>7 SNP2 456 T C 0 1 1 0 0 1 0 1<br/>7 SNP3 789 A T 0 1 1 0 1 1 1 1</code></pre>
-                        This file is space delimited.
-                      </td>
-                    </tr>
-                    <tr>
-                      <a class="anchor" name="sample"></a> 
-                      <td>.sample</td>
-                      <td>The three columns are:
-                        <ol>
-                          <li>First individual ID</li>
-                          <li>Second individual ID</li>
-                          <li>Missing data proportion</li>
-                        </ol>
-                        <pre><code>ID_1 ID_2 missing<br/>0    0    0<br/>UNR1 UNR1 0<br/>UNR2 UNR2 0<br/>UNR3 UNR3 0<br/>UNR4 UNR4 0<br/></code></pre>
-                        This file is space delimited. 
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <a class="anchor" name="haps"></a> 
+                    <td>.haps</td>
+                    <td>The first five columns are:
+                      <ol>
+                        <li>Chromosome number [integer]</li>
+                        <li>SNP ID [string]</li>
+                        <li>SNP position [integer]</li>
+                        <li>Ancestral allele [char]</li>
+                        <li>Alternative allele [char]</li>
+                      </ol>
+                      Then, the successive column pairs correspond to the haplotypes carried by an individual at that SNP.<br/>
+                      <b>Please make sure that the ancestral allele is represented by 0 and the alternative allele is represented by 1.</b>
+                      <pre><code>7 SNP1 123 A G 0 0 1 0 0 0 1 1<br/>7 SNP2 456 T C 0 1 1 0 0 1 0 1<br/>7 SNP3 789 A T 0 1 1 0 1 1 1 1</code></pre>
+                      This file is space delimited.
+                    </td>
+                  </tr>
+                  <tr>
+                    <a class="anchor" name="sample"></a> 
+                    <td>.sample</td>
+                    <td>The three columns are:
+                      <ol>
+                        <li>First individual ID</li>
+                        <li>Second individual ID</li>
+                        <li>Missing data proportion</li>
+                      </ol>
+                      <pre><code>ID_1 ID_2 missing<br/>0    0    0<br/>UNR1 UNR1 0<br/>UNR2 UNR2 0<br/>UNR3 UNR3 0<br/>UNR4 UNR4 0<br/></code></pre>
+                      This file is space delimited. 
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
               <p>Recombination rates are specified using a genomic map.</p>
-              <div class="table-responsive">
-                <table class="table">
-                  <tbody>
-                    <tr>
-                      <a class="anchor" name="map"></a> 
-                      <td>.map</td>
-                      <td>This is the standard file format for genetic recombination maps. The three columns are:
-                        <ol>
-                          <li>Position (b) [integer]</li>
-                          <li>Recombination rate (cM/Mb) [float]</li>
-                          <li>Genetic position (cM) [float]</li>
-                        </ol>
-                        <pre><code>position COMBINED_rate(cM/Mb) Genetic_Map(cM)<br/>0        2.6858 0.4103<br/>2529     2.8222 0.4174<br/>2601     2.9813 0.4176</code></pre>
-                        This file is space delimited.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <a class="anchor" name="map"></a> 
+                    <td>.map</td>
+                    <td>This is the standard file format for genetic recombination maps. The three columns are:
+                      <ol>
+                        <li>Position (b) [integer]</li>
+                        <li>Recombination rate (cM/Mb) [float]</li>
+                        <li>Genetic position (cM) [float]</li>
+                      </ol>
+                      <pre><code>position COMBINED_rate(cM/Mb) Genetic_Map(cM)<br/>0        2.6858 0.4103<br/>2529     2.8222 0.4174<br/>2601     2.9813 0.4176</code></pre>
+                      This file is space delimited.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
               <p>For some add-on modules of <b>Relate</b>, we also want to specify population labels. The .poplabels file format is identical to the sample file in the <a href="http://www.shapeit.fr/pages/m02_formats/haplegsample.html">hap/legend/sample file format</a>.</p>
-              <div class="table-responsive">
-                <table class="table">
-                  <tbody>
-                    <tr>
-                      <a class="anchor" name="poplabels"></a> 
-                      <td>.poplabels</td>
-                      <td>This is the standard file format for genetic recombination maps. The three columns are:
-                        <ol>
-                          <li>Individual ID as specified in the .sample file [string]</li>
-                          <li>Population label [string]</li>
-                          <li>Group label [string]</li>
-                          <li>Sex [integer]</li>
-                        </ol>
-                        <pre><code>sample population group sex<br/>UNR1 PJB SAS 1<br/>UNR2 JPT EAS 2<br/>UNR3 GBR EUR 2<br/>UNR4 YRI AFR 2</code></pre>
-                        This file is space delimited.<br>
-                        <b>Samples must be listed in the same order as in the .sample file above.</b>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <a class="anchor" name="poplabels"></a> 
+                    <td>.poplabels</td>
+                    <td>This is the standard file format for genetic recombination maps. The three columns are:
+                      <ol>
+                        <li>Individual ID as specified in the .sample file [string]</li>
+                        <li>Population label [string]</li>
+                        <li>Group label [string]</li>
+                        <li>Sex [integer]</li>
+                      </ol>
+                      <pre><code>sample population group sex<br/>UNR1 PJB SAS 1<br/>UNR2 JPT EAS 2<br/>UNR3 GBR EUR 2<br/>UNR4 YRI AFR 2</code></pre>
+                      This file is space delimited.<br>
+                      <b>Samples must be listed in the same order as in the .sample file above.</b>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
 
 
@@ -430,14 +424,14 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-body">  
 
                   This code uses the ancestral genome and population labels of samples to append additional information to the output of <b>Relate</b>. Fileformat for population labels is described <a href="input_data.html#poplabels">here</a>. The ancestral genome should be saved in fasta file format and aligned to the data set. Argument --ancestor is optional. If argument --mut is specified, output is directly appended to the .mut file.</br>
-                        <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                      <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode GenerateSNPAnnotations \
                  --haps example.haps \
                  --sample example.sample \
                  --poplabels example.poplabels \
                  --ancestor ancestor.fa \
                  -o example </code></pre>
-                        Output: example.annot. If --mut is specified, columns are appended to this file.
+                      Output: example.annot. If --mut is specified, columns are appended to this file.
 
                 </div>
               </div>

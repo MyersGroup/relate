@@ -172,17 +172,18 @@ gtag('config', 'UA-115753061-1');
               -o example_popsize</code></pre>
                   <h4>Output</h4>
                   <div class="table-responsive">
-                    <table class="table">
-                      <tbody>
-                        <tr>
-                          <td>example_popsize.pdf</td>
-                          <td>A plot showing the estimated population size.</td>
-                        </tr>
+                  <table class="table">
+                    <tbody>
+                      <tr>
+                        <td>example_popsize.pdf</td>
+                        <td>A plot showing the estimated population size.</td>
+                      </tr>
 
-                        <tr>
-                          <td>example_popsize.anc, example_popsize.mut</td>
-                          <td>Genealogy with updated branch lengths. By default, --threshold is set to a value larger than 0, such that these files will include only a part of the genealogy. You can reestimate branch lengths for the entire genealogy using
-                            <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
+                      <tr>
+                        <td>example_popsize.anc, example_popsize.mut</td>
+                        <td>Genealogy with updated branch lengths. By default, --threshold is set to a value larger than 0, such that these files will include only a part of the genealogy.<br>
+                          You can reestimate branch lengths for the entire genealogy using
+                          <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
                 -i example \
                 -m 1.25e-8 \
                 --poplabels data/example.poplabels \
@@ -190,72 +191,70 @@ gtag('config', 'UA-115753061-1');
                 --coal example_popsize.coal \
                 --num_iter 1 \
                 -o example_whole_genome</code></pre>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>example_popsize.dist</td>
-                          <td>Contains distances between SNPs (see <a href="#dist">here</a> for file format).</td>
-                        </tr>
-                        <tr>
-                          <td>example_popsize.coal</td>
-                          <td>Contains coalescence rates and cross-coalescence rates for populations specified in the .poplabels file.(see below for file format).</td>
-                        </tr>
-                        <tr>
-                          <td>example_popsize.bin</td>
-                          <td>Binary file containing coalescence rates. Can be used by <a href="#FinalizePopulationSize">RelateCoalescenceRates --mode FinalizePopulationSize</a> to extract coalescence rates (e.g., for a different .poplabels file).</td>
-                        </tr>
-                        <tr>
-                          <td>example_popsize_avg.rate</td>
-                          <td>Contains average mutation rate through time.</td>
-                        </tr>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>example_popsize.dist</td>
+                        <td>Contains distances between SNPs (see <a href="#dist">here</a> for file format).</td>
+                      </tr>
+                      <tr>
+                        <td>example_popsize.coal</td>
+                        <td>Contains coalescence rates and cross-coalescence rates for populations specified in the .poplabels file.(see below for file format).</td>
+                      </tr>
+                      <tr>
+                        <td>example_popsize.bin</td>
+                        <td>Binary file containing coalescence rates. Can be used by <a href="#FinalizePopulationSize">RelateCoalescenceRates --mode FinalizePopulationSize</a> to extract coalescence rates (e.g., for a different .poplabels file).</td>
+                      </tr>
+                      <tr>
+                        <td>example_popsize_avg.rate</td>
+                        <td>Contains average mutation rate through time.</td>
+                      </tr>
 
-                      </tbody>
-                    </table>
+                    </tbody>
+                  </table>
                   </div>
 
                   <p>
                   <h4>File formats</h4>
                   </p> 
-                  <div class="table-responsive">
-                    <table class="table">
-                      <tbody>
-                        <tr>
-                          <a class="anchor" name=".coal"></a> 
-                          <td>.coal</td>
-                          <td>
-                            <ul>
-                              <li>The first line lists populations</li>
-                              <li>The second line lists the epochs (in generations).</li>
-                              <li>Each subsequent line contains the coalescence rates between two populations. Each line starts with two integers indicating the populations considered.</li>
-                            </ul>
+                  <table class="table">
+                    <tbody>
+                      <tr>
+                        <a class="anchor" name=".coal"></a> 
+                        <td>.coal</td>
+                        <td>
+                          <ul>
+                            <li>The first line lists populations</li>
+                            <li>The second line lists the epochs (in generations).</li>
+                            <li>Each subsequent line contains the coalescence rates between two populations. Each line starts with two integers indicating the populations considered.</li>
+                          </ul>
 
-                            <pre><code>group1 group2
+                          <pre><code>group1 group2
 0 35.7143 49.6248 ...
 0 0 8.62951e-05 0.000104302 7.33554e-05 ...
 0 1 8.62327e-05 0.000115472 9.85662e-05 ...
 1 0 8.62327e-05 0.000115472 9.85662e-05 ...
 1 1 0.000114249 8.37037e-05 7.23175e-05 ...</code></pre>
-                          </td>
-                        </tr>                       
-                        <tr>
-                          <a class="anchor" name=".rate"></a> 
-                          <td>.rate</td>
-                          <td>
-                            <ul>
-                              <li>The first column lists the epochs (in generations).</li>
-                              <li>The second column lists the mutation rate in this epoch.</li>
-                            </ul>
-                            <pre><code>0 1.23894e-08
+                        </td>
+                      </tr>                       
+                      <tr>
+                        <a class="anchor" name=".rate"></a> 
+                        <td>.rate</td>
+                        <td>
+                          <ul>
+                            <li>The first column lists the epochs (in generations).</li>
+                            <li>The second column lists the mutation rate in this epoch.</li>
+                          </ul>
+                          <pre><code>0 1.23894e-08
 35.7143 1.26274e-08
 49.6248 1.2925e-08
 68.9535 1.23841e-08</pre></code>
-                          </td>
-                        </tr>
-                        <br/>
+                        </td>
+                      </tr>
+                      <br/>
 
-                      </tbody>
-                    </table>
-                  </div>
+                    </tbody>
+                  </table>
 
                 </div>
               </div> 
@@ -524,31 +523,29 @@ gtag('config', 'UA-115753061-1');
               <p>
               <h5>File formats</h5>
               </p> 
-              <div class="table-responsive">
-                <table class="table">
-                  <tbody>
-                    <tr>
-                      <a class="anchor" name=".freq"></a> 
-                      <td>.freq</td>
-                      <td>
-                      </td>
-                    </tr>
-                    <tr>
-                      <a class="anchor" name=".lin"></a> 
-                      <td>.lin</td>
-                      <td>
-                      </td>
-                    </tr>
-                    <tr>
-                      <a class="anchor" name=".sele"></a> 
-                      <td>.sele</td>
-                      <td>
-                      </td>
-                    </tr>
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <a class="anchor" name=".freq"></a> 
+                    <td>.freq</td>
+                    <td>
+                    </td>
+                  </tr>
+                  <tr>
+                    <a class="anchor" name=".lin"></a> 
+                    <td>.lin</td>
+                    <td>
+                    </td>
+                  </tr>
+                  <tr>
+                    <a class="anchor" name=".sele"></a> 
+                    <td>.sele</td>
+                    <td>
+                    </td>
+                  </tr>
 
-                  </tbody>
-                </table>
-              </div>
+                </tbody>
+              </table>
 
             </div>
 
@@ -782,29 +779,27 @@ gtag('config', 'UA-115753061-1');
               <p>
               <h5>File formats</h5>
               </p> 
-              <div class="table-responsive">
-                <table class="table">
-                  <tbody>
-                    <tr>
-                      <a class="anchor" name="dist"></a> 
-                      <td>.dist</td>
-                      <td>
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <a class="anchor" name="dist"></a> 
+                    <td>.dist</td>
+                    <td>
 
-                        <ul>    
-                          <li>The first line is a header</li>
-                          <li>Each subsequent line contains the base pair position of the SNP and the distance (in bp) to the next SNP.</li>
-                        </ul>
+                      <ul>    
+                        <li>The first line is a header</li>
+                        <li>Each subsequent line contains the base pair position of the SNP and the distance (in bp) to the next SNP.</li>
+                      </ul>
 
-                        <pre><code>#pos dist
+                      <pre><code>#pos dist
 51479 22
 51675 20
 51872 42
 51914 21</code></pre>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
             </div>
           </div>

@@ -146,34 +146,38 @@ make</code></pre>
                 DO NOT RUN MORE THAN ONE INSTANCE OF <b>RELATE</b> IN THE SAME DIRECTORY.<br/>
                 (You can run <b>Relate</b> in different subdirectories.)
               </div>
-
-              <p>If you are not using the example data set, create a new working directory. Then, create a subdirectory called <b>data/</b>.</p>
-              <div class="col-xs-offset-0.5 col1">
-                <pre><code>mkdir example
+              div class="col-xs-offset-0.5 col1">
+              <pre><code>mkdir example
 cd example
 mkdir data</code></pre>
-              </div>
+            </div>
 
-              <p>In the subdirectory <b>data/</b>, place the following three files
-              <div class="table-responsive">
-                <table class="table table-hover">
-                  <tbody>
-                    <tr>
-                      <td>haps</td>
-                      <td>A file containing haplotype information (<a href="input_data.html#haps">more info</a>)</td>
-                    </tr>
-                    <tr>
-                      <td>sample</td>
-                      <td>A file containing information about individuals in the data set (<a href="input_data.html#sample">more info</a>)</td>
-                    </tr>
-                    <tr>
-                      <td>map</td>
-                      <td>A file containing recombination rates and distances (<a href="input_data.html#map">more info</a>)</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              </p>
+          </div>
+
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+
+
+
+              <p>In the subdirectory <b>data/</b>, place the following three files</p>
+
+              <table class="table table-hover">
+                <tbody>
+                  <tr>
+                    <td>haps</td>
+                    <td>A file containing haplotype information (<a href="input_data.html#haps">more info</a>)</td>
+                  </tr>
+                  <tr>
+                    <td>sample</td>
+                    <td>A file containing information about individuals in the data set (<a href="input_data.html#sample">more info</a>)</td>
+                  </tr>
+                  <tr>
+                    <td>map</td>
+                    <td>A file containing recombination rates and distances (<a href="input_data.html#map">more info</a>)</td>
+                  </tr>
+                </tbody>
+              </table>
 
               <p>
               Now change back to the parent directory <b>example/</b> and execute
@@ -213,7 +217,7 @@ mkdir data</code></pre>
 
               <dl class="dl-horizontal">
                 <dt>--dist</dt>
-                <dd>Specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="input_data.html#FilterHapsUsingMask">here</a>).<</dd>
+                <dd>Specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="input_data.html#FilterHapsUsingMask">here</a>).</dd>
                 <dt>--annot</dt>
                 <dd>Add columns to the .mut file. This can also be done after running <b>Relate</b> (a tool for generating a .annot file and/or appends columns to the .mut file can be found <a href="input_data.html#GenerateSNPAnnotations">here</a>). The additional columns are needed, for instance, when estimating population size.</dd>
                 <dt>--coal</dt>
@@ -223,7 +227,7 @@ mkdir data</code></pre>
                 <dt>--seed</dt>
                 <dd>Optional: Seed for random number generator used for branch lengths estimation.</dd>
                 <dt>other arguments</dt>
-                <dd>Arguments --chunk_index, --first_section, --last_section are only relevant when executing <b>Relate</b> in a mode other that <b>All</b>. This is needed for parallelising <b>Relate</b> (<a href="parallelise.html">more info</a>).</dd>
+                <dd>Arguments --chunk_index, --first_section, --last_section are only relevant when executing <b>Relate</b> in a mode other than <b>All</b>. This is needed for parallelising <b>Relate</b> (<a href="parallelise.html">more info</a>).</dd>
               </dl>
 
 
@@ -241,125 +245,149 @@ mkdir data</code></pre>
                   </li>
               </ul>
 
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+
 
               <a class="anchor" name="Output"></a>
               <h2>Output and analysis</h2>
 
               <p><b>Relate</b> outputs two files.</p>
-              <div class="table-responsive">
-                <table class="table table-hover">
-                  <tbody>
-                    <tr>
-                      <td>.anc </td>
-                      <td>This file contains the trees. The first line shows the number of haplotypes. The second line shows the number of trees. <br/>
-                        Then, each line represents one tree. 
-                        <ul>
 
-                          <li> Every line starts with an integer specifying at which SNP the tree begins. </li>
-                          <li> Then, the i'th space separated entry shows the parent of the i'th internal node. In brackets we specify the branch length, the number of mutations on this branch, the SNP at which the branch appears, and the SNP at which the branch disappears.</li>
-                        </ul></td>
-                    </tr>
-                    <tr>
-                      <td>.mut </td> 
-                      <td>This file contains detailed information about each SNP. The header describes each column.<br>
-                        Without .annot file, the columns are<br>
-                        snp;pos_of_snp;dist;rs-id;tree_index;branch_indices;is_not_mapping;is_flipped;age_begin;age_end;ancestral_allele/alternative_allele;<br>
-                        <ol>
-                          <li>Number of SNP in .haps file (int)</li>
-                          <li>Position of SNP in bp (int)</li>
-                          <li>Distance to next SNP in bp (int). If --dist option was specified, this may be different to the actual distance to the next SNP.</li>
-                          <li>rd-id of SNP (string)</li>
-                          <li>Number of tree, starting from 0, in the .anc file (int)</li>
-                          <li>Number of branch on tree. If a mutation cannot be mapped to a unique branch, more than one branch indices are given (space separated ints)</li>
-                          <li>0 means SNP could be mapped to a unique branch, 1 means SNP could not be mapped to a unique branch(bool)</li>
-                          <li>0 means SNP is not flipped, 1 means SNP is flipped (bool)</li>
-                          <li>Age of lower end of branch in generations (dbl)</li>
-                          <li>Age of upper end of branch in generations (dbl)</li>
-                          <li>Ancestral and alternative alleles at this locus (string)</li>
-                        </ol>
+              <table class="table table-hover">
+                <tbody>
+                  <tr>
+                    <td>.anc </td>
+                    <td>This file contains the trees. The first line shows the number of haplotypes. The second line shows the number of trees. <br/>
+                      Then, each line represents one tree. 
+                      <ul>
+
+                        <li> Every line starts with an integer specifying at which SNP the tree begins. </li>
+                        <li> Then, the i'th space separated entry shows the parent of the i'th internal node. In brackets we specify the branch length, the number of mutations on this branch, the SNP at which the branch appears, and the SNP at which the branch disappears.</li>
+                      </ul></td>
+                  </tr>
+                  <tr>
+                    <td>.mut </td> 
+                    <td>This file contains detailed information about each SNP. The header describes each column.<br>
+                      Without .annot file, the columns are<br>
+
+                      <dl class="dl-horizontal">
+                        <dt>snp</dt>
+                        <dd>Number of SNP in .haps file (int)</dd>                        
+                        <dt>pos_of_snp</dt>
+                        <dd>Position of SNP in bp (int)</dd>
+                        <dt>dist</dt>
+                        <dd>Distance to next SNP in bp (int). If --dist option was specified, this may be different to the actual distance to the next SNP.</dd>
+                        <dt>rs-d</dt>
+                        <dd>rd-id of SNP (string)</dd>
+                        <dt>tree_index</dt>
+                        <dd>Number of tree, starting from 0, in the .anc file (int)</dd>
+                        <dt>branch_indices</dt>
+                        <dd>Number of branch on tree. If a mutation cannot be mapped to a unique branch, more than one branch indices are given (space separated ints)</dd>
+                        <dt>is_not_mapping</dt>
+                        <dd>0 means SNP could be mapped to a unique branch, 1 means SNP could not be mapped to a unique branch(bool)</dd>
+                        <dt>is_flipped</dt>
+                        <dd>0 means SNP is not fddpped, 1 means SNP is fddpped (bool)</dd>
+                        <dt>age_begin</dt>
+                        <dd>Age of lower end of branch in generations (dbl)</dd>
+                        <dt>age_end</dt>
+                        <dd>Age of upper end of branch in generations (dbl)</dd>
+                        <dt>ancestral_allele/alternative_allele</dt>
+                        <dd>Ancestral and alternative alleles at this locus (string)</dd>
+                        </dl>
                         With .annot fil, the following columns are appended<br>
                         upstream_allele;downstream_allele;pop1;pop2;...
-                        <ol start = "12">
-                          <li>Allele adjacent to the SNP in the 5' direction</li>
-                          <li>Allele adjacent to the SNP in the 3' direction</li>
-                          <li>Number of carriers of the derived allele in pop1</li>
-                          <li>Number of carriers of the derived allele in pop2</li>
-                        </ol>
+                                        
+                        <dl class="dl-horizontal">
+                          <dt>upstream_allele</dt>
+                          <dd>Allele adjacent to the SNP in the 5' direction</dd>
+                          <dt>downstream_allele</dt>
+                          <dd>Allele adjacent to the SNP in the 3' direction</dd>       
+                          <dt>...</dt>
+                          <dd>Number of carriers of the derived allele in populations</dd>
+                        </dl>
 
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
-          <h4> Using the output </h4>
-
-          <p>We provide a number of add-on modules to analyse the genealogy (look <a href="modules.html">here</a> for details).</p>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#TreeView">Plot marginal trees</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can find a bash script under 
-                  <pre><code>PATH_TO_RELATE/scripts/TreeView/TreeView.sh</code></pre> 
-                  The script will produce a plot of the marginal tree at a bp position of interest with tips labelled by their assigned population.
-                  Details about how to run the script can be found <a href="modules.html#TreeView">here</a>)</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#CoalescenceRate">Estimate population size</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can find a bash script under 
-                  <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre> 
-                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for file format). Details about how to run the script can be found <a href="modules.html#CoalescenceRate">here</a>)</p>
-                </div>
-              </div>
             </div>
           </div>
 
           <div class="row">
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#MutationRate">Estimate mutation rates</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can estimate mutation rates through time using <a href="modules.html#MutationRate">this module</a>. This can be used to calculate average mutation rates, or mutation rates of triplets.</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#Selection">Calculate p-values for selection evidence</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can calculate a pvalue for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. The pvalue quantifies whether derived allele has spread surprisingly quickly under the standard coalescent model.</p>
-                </div>
-              </div>
-            </div>
-          </div>
+            <div class="col-md-10 col-md-offset-1">
 
-          <div class="row">          
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#Extract">Extract trees of interest</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can extract trees in .newick format, or get genealogies for subpopulations using <a href="modules.html#Extract">this module</a>.</p>
+
+              <h4> Using the output </h4>
+
+              <p>We provide a number of add-on modules to analyse the genealogy (look <a href="modules.html">here</a> for details).</p>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#TreeView">Plot marginal trees</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can find a bash script under 
+                      <pre><code>PATH_TO_RELATE/scripts/TreeView/TreeView.sh</code></pre> 
+                      The script will produce a plot of the marginal tree at a bp position of interest with tips labelled by their assigned population.
+                      Details about how to run the script can be found <a href="modules.html#TreeView">here</a>)</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#CoalescenceRate">Estimate population size</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can find a bash script under 
+                      <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre> 
+                      To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for file format). Details about how to run the script can be found <a href="modules.html#CoalescenceRate">here</a>)</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#MutationRate">Estimate mutation rates</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can estimate mutation rates through time using <a href="modules.html#MutationRate">this module</a>. This can be used to calculate average mutation rates, or mutation rates of triplets.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#Selection">Calculate p-values for selection evidence</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can calculate a pvalue for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. The pvalue quantifies whether derived allele has spread surprisingly quickly under the standard coalescent model.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">          
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#Extract">Extract trees of interest</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can extract trees in .newick format, or get genealogies for subpopulations using <a href="modules.html#Extract">this module</a>.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+
+          </div>
         </div>
 
-
       </div>
-    </div>
-
-    </div>
 
   </body>
 </html>                            
