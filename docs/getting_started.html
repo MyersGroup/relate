@@ -5,7 +5,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115753061-1"></script>
     <script>
-window.dataLayer = window.dataLayer || [];
+      window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 
@@ -68,12 +68,6 @@ gtag('config', 'UA-115753061-1');
 
         <ul class="list-unstyled components">
           <li>
-            <a href="#Requirements">Requirements</a>
-          </li>
-          <li>
-            <a href="#Installation">Installation</a>
-          </li>
-          <li>
             <a href="#PreparingData">Preparing the data</a>
           </li>
           <li>
@@ -95,24 +89,6 @@ gtag('config', 'UA-115753061-1');
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-10 col-md-offset-1">
-
-              <a class="anchor" name="Requirements"></a>
-              <h2> Requirements </h2>
-              <b>Relate</b> requires C++11 and cmake version 3.1.<br/>
-
-              If you do not have cmake, you can download pre-compiled binaries and source files of cmake <a href="https://cmake.org/download/">here</a>.
-
-              <a class="anchor" name="Installation"></a>
-              <h2> Installation </h2>
-
-              <p> Download <b>Relate</b> from <a href="https://github.com/leospeidel/relate">this git repository</a> to a local directory.<br/>
-              Then compile the code: </p>
-              <pre><code>cd PATH_TO_RELATE/</b> 
-mkdir build</b>
-cd build
-cmake ..
-make</code></pre>
-              <p> After compiling the source code, you should find the binaries in <b>bin/</b>.<br/> 
 
               <a class="anchor" name="PreparingData"></a>
               <h2>Preparing the data</h2>
@@ -294,71 +270,75 @@ mkdir data</code></pre>
             </div>
           </div>
 
-          <h4> Using the output </h4>
-
-          <p>We provide a number of add-on modules to analyse the genealogy (look <a href="modules.html">here</a> for details).</p>
-
           <div class="row">
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#TreeView">Plot marginal trees</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can find a bash script under 
-                  <pre><code>PATH_TO_RELATE/scripts/TreeView/TreeView.sh</code></pre> 
-                  The script will produce a plot of the marginal tree at a bp position of interest with tips labelled by their assigned population.
-                  Details about how to run the script can be found <a href="modules.html#TreeView">here</a>)</p>
+            <div class="col-md-10 col-md-offset-1">
+
+              <h4> Using the output </h4>
+
+              <p>We provide a number of add-on modules to analyse the genealogy (look <a href="modules.html">here</a> for details).</p>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#TreeView">Plot marginal trees</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can find a bash script under 
+                      <pre><code>PATH_TO_RELATE/scripts/TreeView/TreeView.sh</code></pre> 
+                      The script will produce a plot of the marginal tree at a bp position of interest with tips labelled by their assigned population.
+                      Details about how to run the script can be found <a href="modules.html#TreeView">here</a>)</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#CoalescenceRate">Estimate population size</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can find a bash script under 
+                      <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre> 
+                      To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for file format). Details about how to run the script can be found <a href="modules.html#CoalescenceRate">here</a>)</p>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#MutationRate">Estimate mutation rates</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can estimate mutation rates through time using <a href="modules.html#MutationRate">this module</a>. This can be used to calculate average mutation rates, or mutation rates of triplets.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#Selection">Calculate p-values for selection evidence</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can calculate a pvalue for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. The pvalue quantifies whether derived allele has spread surprisingly quickly under the standard coalescent model.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">          
+                <div class="col-md-6">
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4><a href="modules.html#Extract">Extract trees of interest</a></h4></div>
+                    <div class="panel-body">  
+                      <p>You can extract trees in .newick format, or genealogies for subpopulations using <a href="modules.html#Extract">this module</a>.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#CoalescenceRate">Estimate population size</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can find a bash script under 
-                  <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre> 
-                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for file format). Details about how to run the script can be found <a href="modules.html#CoalescenceRate">here</a>)</p>
-                </div>
-              </div>
-            </div>
+
           </div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#MutationRate">Estimate mutation rates</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can estimate mutation rates through time using <a href="modules.html#MutationRate">this module</a>. This can be used to calculate average mutation rates, or mutation rates of triplets.</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#Selection">Calculate p-values for selection evidence</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can calculate a pvalue for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. The pvalue quantifies whether derived allele has spread surprisingly quickly under the standard coalescent model.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">          
-            <div class="col-md-6">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#Extract">Extract trees of interest</a></h4></div>
-                <div class="panel-body">  
-                  <p>You can extract trees in .newick format, or get genealogies for subpopulations using <a href="modules.html#Extract">this module</a>.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
 
-
       </div>
-    </div>
-
     </div>
 
   </body>

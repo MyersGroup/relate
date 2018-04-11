@@ -41,12 +41,6 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
   }
   std::string line_hap, line_legend;
 
-
-  ogzstream os_test("test.txt");
-  std::string test;
-  os_test << "Hello\n";
-  os_test.close();
-
   //parse hap and legend
   //combine hap and legend to haps
 

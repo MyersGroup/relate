@@ -29,7 +29,8 @@ TreeView <- function(filename_plot, years_per_gen, ...){
                                   legend.key.width= unit(3, "line"),
                                   legend.key.height= unit(1.5, "line"),
                                   legend.text=element_text(size=35),
-                                  strip.text = element_text(face="bold"), plot.margin = margin(t = 0, r = 20, b = 60, l = 30, unit = "pt")) 
+                                  strip.text = element_text(face="bold"), plot.margin = margin(t = 0, r = 20, b = 60, l = 30, unit = "pt")) + 
+                             scale_x_continuous(limits = c(0, max(plotcoords$x_begin)+1))
 
   return(p)
 
@@ -95,7 +96,8 @@ PopLabels <- function(filename_plot, filename_poplabels, text_size = 100, ...){
                                   panel.grid.minor=element_blank(),plot.background=element_blank(), 
                                   strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
                                   strip.text = element_text(face="bold"), plot.margin = margin(t = 0, r = 20, b = 60, l = 60, unit = "pt")) +
-                   guides(color = F, shape = F) 
+                   guides(color = F, shape = F) + 
+                   scale_x_continuous(limits = c(0, max(tips$x_begin)+1))
 
   return(p)
 

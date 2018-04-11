@@ -102,13 +102,13 @@ echo "********************************"
 
 
 # remove biallelic SNPs
-RelateFileFormats \
+${PATH_TO_RELATE}/bin/RelateFileFormats \
   --mode RemoveNonBiallelicSNPs \
   --haps ${filename_haps} \
   -o ${filename_output}_biall
 
 # flip haps using ancestor
-RelateFileFormats \
+${PATH_TO_RELATE}/bin/RelateFileFormats \
   --mode FlipHapsUsingAncestor \
   --haps ${filename_output}_biall.haps \
   --sample ${filename_sample} \
@@ -116,7 +116,16 @@ RelateFileFormats \
   --ancestor ${filename_ancestor}
 
 rm ${filename_output}_biall.haps
-cp ${filename_sample} ${filename_output}.sample
+
+is_gzipped=$(file ${filename_sample} | grep -c gzip)
+if [ ${is_gzipped} -eq 0 ];
+then
+  cp ${filename_sample} ${filename_output}.sample
+else
+  gunzip -c ${filename_sample} > ${filename_output}.sample
+fi
+
+
 
 if [ ! -z "${filename_remove-}" ];
 then
@@ -124,7 +133,7 @@ then
   if [ ! -z "${filename_poplabels-}" ];
   then
     # Subset individuals
-    RelateFileFormats \
+    ${PATH_TO_RELATE}/bin/RelateFileFormats \
       --mode RemoveSamples \
       --haps ${filename_output}_ancest.haps \
       --sample ${filename_output}.sample \
@@ -136,7 +145,7 @@ then
     filename_poplabels=${filename_output}.poplabels
   else
     # Subset individuals
-    RelateFileFormats \
+    ${PATH_TO_RELATE}/bin/RelateFileFormats \
       --mode RemoveSamples \
       --haps ${filename_output}_ancest.haps \
       --sample ${filename_output}.sample \
@@ -152,7 +161,7 @@ then
   then
 
     # filter data using genomic mask
-    RelateFileFormats \
+    ${PATH_TO_RELATE}/bin/RelateFileFormats \
       --mode FilterHapsUsingMask \
       --haps ${filename_output}_rem.haps \
       --sample ${filename_output}.sample \
@@ -173,7 +182,7 @@ else
   then
 
     # filter data using genomic mask
-    RelateFileFormats \
+    ${PATH_TO_RELATE}/bin/RelateFileFormats \
       --mode FilterHapsUsingMask \
       --haps ${filename_output}_ancest.haps \
       --sample ${filename_output}.sample \
@@ -192,7 +201,7 @@ fi
 
 if [ ! -z "${filename_poplabels-}" ];
 then
-    RelateFileFormats \
+    ${PATH_TO_RELATE}/bin/RelateFileFormats \
       --mode GenerateSNPAnnotations \
       --haps ${filename_output}.haps \
       --sample ${filename_output}.sample \

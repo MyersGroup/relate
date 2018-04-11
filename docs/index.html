@@ -84,24 +84,19 @@ gtag('config', 'UA-115753061-1');
             </div>
 
             <div class="col-md-4">
-              <div class="row">
-                <h4>Updates: </h4>
-                <ul>
-                  <li>...</li>
-
-                  <li>...</li>
-                </ul>
-              </div>
 
               <div class="row">
                 <h4>Download </h4>
+
+                <p><b>Relate</b> is available for academic use. To see rules for non-academic use, please read the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf" download>LICENCE</a> file, which is included with each software download.</p>
+                <p>Pre-compiled <b>Relate</b> binaries and example files can be downloaded from the links below. If you have any problems getting the program to work on your machine or would like to request an executable for a platform not shown here, please send a message to leo.speidel [at] outlook [dot] com. </p>
 
                 <form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
                   <div class="form-group">
                     <div class="checkbox">
                       <label>
                         <input type="checkbox" id="terms" oninvalid="this.setCustomValidity('Required')" onchange="this.setCustomValidity('')" required>
-                        I agree with the <a href="">terms and conditions</a>
+                        I agree with the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf">terms and conditions</a>
                       </label>
                       <div class="help-block with-errors"></div>
                     </div>
@@ -109,15 +104,23 @@ gtag('config', 'UA-115753061-1');
                   <div class="form-group">
                     <ul>
 
-                      <li><button type="submit" class="btn btn-link" formaction="download/relate_v1_linux.tar">Download Relate for Linux</button></li>
-                      <li><button type="submit" class="btn btn-link" formaction="download/relate_v1_mac.tar">Download Relate for Mac</button></li>
+                      <li><button type="submit" class="btn btn-link" formaction="download/relate_v1_x86_64_dynamic.tgz">Download Relate for Linux (x86_64)</button></li>
+                      <li><button type="submit" class="btn btn-link" formaction="download/relate_v1_MacOSX.tgz">Download Relate for Mac</button></li>
                     </ul>
                    
                   </div>
                 </form>
-                <hr>
 
               </div>
+
+              <div class="row">
+                <h4>Updates: </h4>
+                <ul>
+                  <li>11/04/2018: <b>Relate</b> v1 released.</li>
+                </ul>
+              </div>
+
+              <hr>
 
             </div>
 
@@ -171,7 +174,7 @@ gtag('config', 'UA-115753061-1');
 
             <div class="col-md-6">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4><a href="modules.html#TreeView">Plot tree of interest</a></h4></div>
+                <div class="panel-heading"> <h4><a href="modules.html#TreeView">Plot marginal trees</a></h4></div>
                 <div class="panel-body">  
                   <img src="figures/tree.jpg">
                   <b>Relate</b> can be used to plot a marginal tree of interest. This tree corresponds to the LCT region, where a mutation at SNP rs4988235 is believed to be responsible for Lactose tolerance in Europeans (here GBR). We can see that the derived allele at this SNP has spread rapidly in GBR, indicative of strong positive selection. </div>
