@@ -110,7 +110,7 @@ gtag('config', 'UA-115753061-1');
                   </ol>
                 </li>
               </ul>
-              <p>You can find a toy data set in the subdirectory <a href="https://github.com/leospeidel/relate"><b>example/</b></a>. </p>
+              <p>You can find a toy data set in the subdirectory <b>example/</b>.</p>
 
 
               <a class="anchor" name="GettingStarted"></a>
@@ -122,41 +122,35 @@ gtag('config', 'UA-115753061-1');
                 DO NOT RUN MORE THAN ONE INSTANCE OF <b>RELATE</b> IN THE SAME DIRECTORY.<br/>
                 (You can run <b>Relate</b> in different subdirectories.)
               </div>
-              div class="col-xs-offset-0.5 col1">
-              <pre><code>mkdir example
-cd example
-mkdir data</code></pre>
-            </div>
 
+            </div>
           </div>
 
           <div class="row">
 
             <div class="col-md-10 col-md-offset-1">
 
-
-
-              <p>In the subdirectory <b>data/</b>, place the following three files</p>
+              <p>In the subdirectory <b>example/data/</b>, you should find the following three files</p>
 
               <table class="table table-hover">
                 <tbody>
                   <tr>
-                    <td>haps</td>
+                    <td>example.haps</td>
                     <td>A file containing haplotype information (<a href="input_data.html#haps">more info</a>)</td>
                   </tr>
                   <tr>
-                    <td>sample</td>
+                    <td>example.sample</td>
                     <td>A file containing information about individuals in the data set (<a href="input_data.html#sample">more info</a>)</td>
                   </tr>
                   <tr>
-                    <td>map</td>
+                    <td>genetic_map.txt</td>
                     <td>A file containing recombination rates and distances (<a href="input_data.html#map">more info</a>)</td>
                   </tr>
                 </tbody>
               </table>
 
               <p>
-              Now change back to the parent directory <b>example/</b> and execute
+              Change into the directory <b>example/</b> and execute
               <pre><code> PATH_TO_RELATE/bin/Relate \
       --mode All \
       -m 1.25e-8 \
@@ -169,7 +163,6 @@ mkdir data</code></pre>
 
               <p>
               We are specifying the following arguments:
-
 
               <dl class="dl-horizontal">
                 <dt>--mode</dt>
