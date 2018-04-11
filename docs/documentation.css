@@ -196,7 +196,19 @@ ul.CTAs a {
     right: 0;
 }
 
+.table{
+  max-width: none;
+  width: 100%;    
+  word-wrap: break-word;
+}
 
+pre {
+    overflow-x: auto;
+}
+pre code {
+    overflow-wrap: normal;
+    white-space: pre;
+}
 
 
 /* ---------------------------------------------------
@@ -219,5 +231,10 @@ ul.CTAs a {
     }
     #sidebarCollapse span {
         display: none;
+    }
+    .table{
+      max-width: 768px;
+      width: 100%;    
+      word-wrap: break-word;
     }
 }
