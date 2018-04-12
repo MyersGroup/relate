@@ -162,7 +162,7 @@ gtag('config', 'UA-115753061-1');
                   <tr>
                     <a class="anchor" name="poplabels"></a> 
                     <td>.poplabels</td>
-                    <td>The four columns are:
+                    <td>The three columns are:
                       <ol>
                         <li>Individual ID as specified in the .sample file [string]</li>
                         <li>Population label [string]</li>
