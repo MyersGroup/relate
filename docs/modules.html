@@ -124,7 +124,7 @@ gtag('config', 'UA-115753061-1');
                     <li>estimates an average mutation rate.</li>
                   </ol>
                   To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a>).<br/>
-                  You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small to obtain reliable estimates.
+                  You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small (in terms of sequence length, not sample size) to obtain reliable estimates.
                   Do not move the script - we are extracting the path to the binaries from the location of the script!
 
                   <h5>Input arguments</h5>
@@ -169,6 +169,7 @@ gtag('config', 'UA-115753061-1');
               -i example \
               -m 1.25e-8 \
               --poplabels data/example.poplabels \
+              --seed 1 \
               -o example_popsize</code></pre>
 
                   <h4>Output</h4>

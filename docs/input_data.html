@@ -80,6 +80,9 @@ gtag('config', 'UA-115753061-1');
           <li>
             <a href="#Prepare">Preparing input files</a>
           </li> 
+          <li>
+            <a href="#Data">External resources</a>
+          </li> 
         </ul>
 
       </nav>
@@ -279,7 +282,8 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-heading"> <h4>Prepate input files</h4></div>
                 <div class="panel-body">  
 
-                  Prepares input files for <b>Relate</b>. The script will remove non-biallelic SNPs, flip haplotypes according to the ancestral genome such that the ancestral allele is always denoted by 0, remove samples if specified, filter SNPs and adjust distances between SNPs using a genomic mask if specified, and generate SNP annotations needed needed for some add-on modules.
+                  Prepares input files for <b>Relate</b>. The script will remove non-biallelic SNPs, flip haplotypes according to the ancestral genome such that the ancestral allele is always denoted by 0, remove samples if specified, filter SNPs and adjust distances between SNPs using a genomic mask if specified, and generate SNP annotations needed for some add-on modules.<br/> 
+                  See <a href="input_data.html#Data">here</a> for links to external resources, such as an ancestral genome.
 
                   <dl class="dl-horizontal">
                     <dt>--haps</dt>
@@ -437,6 +441,26 @@ gtag('config', 'UA-115753061-1');
               </div>
             </div>
           </div>
+
+          <!-- row -->
+          <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+
+              <a class="anchor" name="Data"></a>
+              <h3>External resources</h3>
+              <hr/>
+
+              <h4>Humans</h4>
+
+              <ul class="list-unstyled">
+                <li><a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/supporting/ancestral_alignments/">Ancestral genome (GRCh37)</a></li>
+                <li><a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/accessible_genome_masks/">Genome mask for 1000GP_Phase3 (GRCh37)</a></li>
+                <li><a href="https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html">1000GP_Phase3 haplotypes</a></li>
+
+              </ul>
+            </div>
+          </div>
+
 
         </div>
 

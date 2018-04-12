@@ -76,7 +76,6 @@ gtag('config', 'UA-115753061-1');
           <li>
             <a href="#Output">Output and analysis</a>
           </li>
-
         </ul>
 
       </nav>
@@ -102,7 +101,7 @@ gtag('config', 'UA-115753061-1');
                   (see <a href="input_data.html#Prepare">here</a> for how to use the script)<br>
                   This script will
                   <ol>
-                    <li>make sure that, for every SNP, the <b>ancestral allele is denoted by 0</b> and the alternative allele is denoted by 1.</li> 
+                    <li>make sure that, for every SNP, the <b>ancestral allele is denoted by 0 and the derived allele is denoted by 1</b>.</li> 
                     <li>make sure that every SNP is <b>biallelic</b>.</li>
                     <li>Optional: filter SNPs (and adjust distances between SNPs) using a genomic mask.</li>
                     <li>Optional: subset the samples in the data set.</li>
@@ -130,6 +129,10 @@ gtag('config', 'UA-115753061-1');
 
             <div class="col-md-10 col-md-offset-1">
 
+
+              To unpack the downloaded files on a linux computer, you can use
+              <pre><code> tar -zxvf relate_v1_x86_64_dynamic.tgz </code></pre>
+
               <p>In the subdirectory <b>example/data/</b>, you should find the following three files</p>
 
               <table class="table table-hover">
@@ -150,7 +153,7 @@ gtag('config', 'UA-115753061-1');
               </table>
 
               <p>
-              Change into the directory <b>example/</b> and execute
+              Please change into the directory <b>example/</b> and execute
               <pre><code> PATH_TO_RELATE/bin/Relate \
       --mode All \
       -m 1.25e-8 \
@@ -158,6 +161,7 @@ gtag('config', 'UA-115753061-1');
       --haps data/example.haps \
       --sample data/example.sample \
       --map data/genetic_map.txt \
+      --seed 1 \
       -o example</code></pre>
               Output files are <b>example.anc</b> and <b>example.mut</b>. </p>
 
