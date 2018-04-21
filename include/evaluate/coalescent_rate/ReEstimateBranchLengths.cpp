@@ -6,7 +6,7 @@
 #include <sys/resource.h>
 #include <string>
 
-#include "gzstream.h"
+#include "gzstream.hpp"
 #include "cxxopts.hpp"
 #include "data.hpp"
 #include "anc.hpp"

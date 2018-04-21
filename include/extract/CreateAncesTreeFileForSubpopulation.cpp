@@ -8,7 +8,7 @@
 #include <sys/resource.h>
 
 #include "filesystem.hpp"
-#include "gzstream.h"
+#include "gzstream.hpp"
 #include "collapsed_matrix.hpp"
 #include "anc.hpp"
 #include "cxxopts.hpp"

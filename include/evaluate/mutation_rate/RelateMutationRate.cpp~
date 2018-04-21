@@ -1189,7 +1189,7 @@ int main(int argc, char* argv[]){
     ("mode", "Choose which part of the algorithm to run.", cxxopts::value<std::string>())
     ("first_chr", "Index of fist chr", cxxopts::value<int>())
     ("last_chr", "Index of last chr", cxxopts::value<int>())
-    ("years_per_gen", "Years per generation (float). Default: 28.")
+    ("years_per_gen", "Years per generation (float). Default: 28.", cxxopts::value<float>())
     ("num_bins", "Number of bins.", cxxopts::value<int>())
     ("dist", "Filename of file containing dist.", cxxopts::value<std::string>())
     ("mask", "Filename of file containing mask", cxxopts::value<std::string>())

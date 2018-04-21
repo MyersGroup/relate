@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include "gzstream.h"
+#include "gzstream.hpp"
 #include "collapsed_matrix.hpp"
 #include "anc.hpp"
 #include "anc_builder.hpp"
@@ -375,6 +375,10 @@ Frequency(cxxopts::Options& options){
   float quality_threshold;
   if(options.count("quality")){
     igzstream is_qual(options["quality"].as<std::string>());
+    if(is_qual.fail()){
+      std::cerr << "Failed to open file " << options["quality"].as<std::string>() << "." << std::endl;
+      exit(1);
+    }
     int num_lines = 0;
     getline(is_qual, line);
     while ( std::getline(is_qual, line) ){
@@ -675,7 +679,8 @@ Frequency(cxxopts::Options& options){
 }
 
 
-void Quality(cxxopts::Options& options){
+void 
+Quality(cxxopts::Options& options){
 
   //////////////////////////////////
   //Program options

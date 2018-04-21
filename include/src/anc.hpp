@@ -5,7 +5,7 @@
 // Class for Trees and AncesTrees
 ///////////////////////////
 
-#include "gzstream.h"
+#include "gzstream.hpp"
 #include "data.hpp"
 #include "sample.hpp"
 

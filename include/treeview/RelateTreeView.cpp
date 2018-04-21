@@ -7,7 +7,7 @@ int main(int argc, char* argv[]){
 
   //////////////////////////////////
   //Program options  
-  cxxopts::Options options("RelateTreeview");
+  cxxopts::Options options("RelateTreeView");
   options.add_options()
     ("help", "Print help.")
     ("mode", "Choose which part of the algorithm to run.", cxxopts::value<std::string>())

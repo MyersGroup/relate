@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include "gzstream.h"
+#include "gzstream.hpp"
 #include "collapsed_matrix.hpp"
 #include "anc.hpp"
 #include "anc_builder.hpp"
@@ -675,7 +675,8 @@ Frequency(cxxopts::Options& options){
 }
 
 
-void Quality(cxxopts::Options& options){
+void 
+Quality(cxxopts::Options& options){
 
   //////////////////////////////////
   //Program options
@@ -904,7 +905,7 @@ int main(int argc, char* argv[]){
     ("last_snp", "Index of last SNP. Optional.", cxxopts::value<int>())
     ("quality", "Optional: Filename of file containing quality assessment of SNPs (obtained using mode quality).", cxxopts::value<std::string>())
     ("threshold", "Optional: Threshold for number of mutations that trees need for inclusion. Default = 0.", cxxopts::value<int>())
-    ("years_per_gen", "Optional: Years per generation (float). Default: 28.")
+    ("years_per_gen", "Optional: Years per generation (float). Default: 28.", cxxopts::value<float>())
     ("num_bins", "Optional: Number of bins.", cxxopts::value<int>())
     ("i,input", "Filename of .anc and .mut file without file extension", cxxopts::value<std::string>())
     ("o,output", "Output file", cxxopts::value<std::string>());

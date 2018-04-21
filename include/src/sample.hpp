@@ -1,7 +1,7 @@
 #ifndef SAMPLE_HPP
 #define SAMPLE_HPP
 
-#include "gzstream.h"
+#include "gzstream.hpp"
 #include <iostream>
 #include <iomanip>
 #include <fstream>

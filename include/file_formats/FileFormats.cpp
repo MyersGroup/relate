@@ -7,7 +7,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include "gzstream.h"
+#include "gzstream.hpp"
 #include "collapsed_matrix.hpp"
 #include "data.hpp"
 #include "sample.hpp"
@@ -546,6 +546,9 @@ RemoveSamples(cxxopts::Options& options){
   if(options.count("poplabels")){
     poplabels = true;
     is_pop.open(options["poplabels"].as<std::string>());
+    if(is_pop.fail()){
+      std::cerr << "Error while opening file " << options["poplabels"].as<std::string>() << "." << std::endl;
+    }
     os_pop.open(options["output"].as<std::string>() + ".poplabels");
     getline(is_pop, line2);
     os_pop << line2 << "\n";
