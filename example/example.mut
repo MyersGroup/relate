@@ -1,4 +1,4 @@
-snp;pos_of_snp;dist;rs-id;tree_index;branch_indices;is_not_mapping;is_flipped;age_begin;age_end;ancestral_allele/alternative_allele;upstream_allele;downstream_allele;group1;
+snp;pos_of_snp;dist;rs-id;tree_index;branch_indices;is_not_mapping;is_flipped;age_begin;age_end;ancestral_allele/alternative_allele;upstream_allele;downstream_allele;group1;upstream_allele;downstream_allele;group1;
 0;73;51;.;0;6;0;0;0;1181.68;A/T;NA;NA;1;
 1;124;26;.;0;160;0;0;829.751;2220;A/T;NA;NA;5;
 2;150;68;.;0;193;0;0;9292.97;13600.2;A/T;NA;NA;79;

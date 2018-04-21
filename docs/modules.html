@@ -124,6 +124,14 @@ gtag('config', 'UA-115753061-1');
                     <li>estimates an average mutation rate.</li>
                   </ol>
                   To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a>).<br/>
+
+                  <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
+              -i example \
+              -m 1.25e-8 \
+              --poplabels data/example.poplabels \
+              --seed 1 \
+              -o example_popsize</code></pre>
+
                   You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small (in terms of sequence length, not sample size) to obtain reliable estimates.
                   Do not move the script - we are extracting the path to the binaries from the location of the script!
 
@@ -164,13 +172,6 @@ gtag('config', 'UA-115753061-1');
                     <dd>Optional: Seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</dd>
 
                   </dl>
-
-                  <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
-              -i example \
-              -m 1.25e-8 \
-              --poplabels data/example.poplabels \
-              --seed 1 \
-              -o example_popsize</code></pre>
 
                   <h4>Output</h4>
                   <div class="table-responsive">
