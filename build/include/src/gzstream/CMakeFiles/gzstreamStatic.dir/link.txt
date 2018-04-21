@@ -1,2 +1,0 @@
-/Library/Developer/CommandLineTools/usr/bin/ar qc ../../../../bin/libgzstreamStatic.a  CMakeFiles/gzstreamStatic.dir/gzstream.c.o
-/Library/Developer/CommandLineTools/usr/bin/ranlib ../../../../bin/libgzstreamStatic.a

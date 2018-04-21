@@ -1,1 +1,0 @@
-/Library/Developer/CommandLineTools/usr/bin/cc   -dynamiclib -Wl,-headerpad_max_install_names  -o ../../../../bin/libgzstreamShared.dylib -install_name @rpath/libgzstreamShared.dylib CMakeFiles/gzstreamShared.dir/gzstream.c.o /opt/local/lib/libz.dylib 

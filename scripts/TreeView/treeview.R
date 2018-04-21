@@ -1,7 +1,6 @@
-library(ggplot2)
-library(grid)
-library(gridExtra)
-library(data.table)
+if(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
+if(!require(grid)) install.packages("grid", repos = "http://cran.us.r-project.org")
+if(!require(gridExtra)) install.packages("gridExtra", repos = "http://cran.us.r-project.org")
 
 filetype <- function(path){
     f = file(path)
@@ -61,18 +60,22 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
   muts          <- cbind(muts, id = 1:nrow(muts))
   muts$id       <- muts$id - muts$id[min(which(muts$pos >= snp))]
 
-  if(filetype(filename_mut) != "gzfile"){
-    mutation_file <- fread(filename_mut, sep = ";")
-  }else{
-    mutation_file <- fread(paste("zcat",filename_mut), sep = ";")
-  }  
+  #if(filetype(filename_mut) != "gzfile"){
+    #mutation_file <- as.data.frame(fread(filename_mut, sep = ";"))
+  #}else{
+    #mutation_file <- as.data.frame(fread(paste("zcat",filename_mut), sep = ";"))
+  #}
+  mutation_file <- read.table(filename_mut, header = T, sep = ";")  
   colnames(mutation_file)[2] <- "pos"
+
   muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos")
   muts$is_flipped[muts$is_flipped == 0] <- "unflipped"
   muts$is_flipped[muts$is_flipped == 1] <- "flipped"
   muts$is_flipped <- factor(muts$is_flipped, levels = c("unflipped", "flipped"))
 
-  return(geom_point(data = muts, aes(x = x_begin, y = y_begin, color = is_flipped), ...))
+  p <- geom_point(data = muts, aes(x = x_begin, y = y_begin, color = is_flipped), ...)
+
+  return(p)
   #geom_text(data = muts, aes(x = x_begin + 6, y = y_begin, label = id), size = 8) +
 
 }
@@ -147,23 +150,17 @@ system(paste("rm ",filename_plot, ".plotcoords.mut", sep = ""))
 
 # Combine plots p1 and p2
 
-gb1 <- ggplot_build(p1)
-gb2 <- ggplot_build(p2)
+g <- rbind(ggplotGrob(p1), ggplotGrob(p2))
 
-n1 <- 30
-n2 <- 5
-
-gA <- ggplot_gtable(gb1)
-gB <- ggplot_gtable(gb2)
-g  <- gtable_rbind(gA, gB, size = "last")
-
-# locate the panels in the gtable layout
-panels <- g$layout$t[grepl("panel", g$layout$name)]
-# assign new (relative) heights to the panels, based on the number of breaks
-g$heights[panels] <- unit(c(n1,n2),"null")
+resize_heights <- function(g, heights = rep(1, length(idpanels))){
+  idpanels <- unique(g$layout[grepl("panel",g$layout$name), "t"])
+  g$heights <- grid:::unit.list(g$heights)
+  g$heights[idpanels] <- lapply(heights, unit, "null")
+  g
+}
 
 pdf(paste(filename_plot,".pdf", sep = ""), height = 30, width = 30)
-grid.draw(g)
+grid.draw(resize_heights(g, c(6,1)))
 dev.off()
 
 system("rm Rplots.pdf")
