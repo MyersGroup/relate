@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../../bin/libUnitTest.a  CMakeFiles/UnitTest.dir/UnitTest.cpp.o CMakeFiles/UnitTest.dir/test_log.cpp.o CMakeFiles/UnitTest.dir/test_painting.cpp.o CMakeFiles/UnitTest.dir/test_treebuilder.cpp.o CMakeFiles/UnitTest.dir/test_ancbuilder.cpp.o
+/usr/bin/ranlib ../../../bin/libUnitTest.a
