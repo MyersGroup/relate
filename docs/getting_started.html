@@ -129,11 +129,11 @@ gtag('config', 'UA-115753061-1');
 
             <div class="col-md-10 col-md-offset-1">
 
+              To unpack the downloaded files on a Linux or Mac computer, you can use
+              <pre><code> tar -zxvf filename </code></pre>
+              where you have replace filename by the name of the downloaded file.
 
-              To unpack the downloaded files on a linux computer, you can use
-              <pre><code> tar -zxvf relate_v1_x86_64_dynamic.tgz </code></pre>
-
-              <p>In the subdirectory <b>example/data/</b>, you should find the following three files</p>
+              <p>In the subdirectory <b>example/data/</b>, you should find the following four files</p>
 
               <table class="table table-hover">
                 <tbody>
@@ -149,6 +149,11 @@ gtag('config', 'UA-115753061-1');
                     <td>genetic_map.txt</td>
                     <td>A file containing recombination rates and distances (<a href="input_data.html#map">more info</a>)</td>
                   </tr>
+                  <tr>
+                    <td>example.annot</td>
+                    <td>A file containing additional annotation of SNPs (Optional, but needed e.g., for population size estimation) (see <a href="input_data.html#GenerateSNPAnnotations">here</a> for how to generate this file).</td>
+                  </tr>
+
                 </tbody>
               </table>
 
@@ -190,10 +195,10 @@ gtag('config', 'UA-115753061-1');
               <b>Relate</b> has a few more optional arguments.
 
               <dl class="dl-horizontal">
-                <dt>--dist</dt>
-                <dd>Specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="input_data.html#FilterHapsUsingMask">here</a>).</dd>
                 <dt>--annot</dt>
                 <dd>Add columns to the .mut file. This can also be done after running <b>Relate</b> (a tool for generating a .annot file and/or appends columns to the .mut file can be found <a href="input_data.html#GenerateSNPAnnotations">here</a>). The additional columns are needed, for instance, when estimating population size.</dd>
+                <dt>--dist</dt>
+                <dd>Specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="input_data.html#FilterHapsUsingMask">here</a>).</dd>
                 <dt>--coal</dt>
                 <dd>Specifies variable coalescence rates through time in form of a .coal file. See <a href="modules.html#.coal"> here </a> for file format. Specifying this option will overwrite the --effectiveN option.</dd>
                 <dt>--memory</dt>
@@ -296,7 +301,7 @@ gtag('config', 'UA-115753061-1');
 
               <h4> Using the output </h4>
 
-              <p>We provide a number of add-on modules to analyse the genealogy (look <a href="modules.html">here</a> for details).</p>
+              <p>We provide a number of add-on modules to analyse the genealogy (see <a href="modules.html">here</a> for details).</p>
 
               <div class="row">
                 <div class="col-md-6">
@@ -306,7 +311,7 @@ gtag('config', 'UA-115753061-1');
                       <p>You can find a bash script under 
                       <pre><code>PATH_TO_RELATE/scripts/TreeView/TreeView.sh</code></pre> 
                       The script will produce a plot of the marginal tree at a bp position of interest with tips labelled by their assigned population.
-                      Details about how to run the script can be found <a href="modules.html#TreeView">here</a>)</p>
+                      Details about how to run the script can be found <a href="modules.html#TreeView">here</a>).</p>
                     </div>
                   </div>
                 </div>
@@ -317,7 +322,7 @@ gtag('config', 'UA-115753061-1');
                     <div class="panel-body">  
                       <p>You can find a bash script under 
                       <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre> 
-                      To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for file format). Details about how to run the script can be found <a href="modules.html#CoalescenceRate">here</a>)</p>
+                      To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for file format). Details about how to run the script can be found <a href="modules.html#CoalescenceRate">here</a>).</p>
                     </div>
                   </div>
                 </div>
@@ -336,7 +341,7 @@ gtag('config', 'UA-115753061-1');
                   <div class="panel panel-info">
                     <div class="panel-heading"> <h4><a href="modules.html#Selection">Calculate p-values for selection evidence</a></h4></div>
                     <div class="panel-body">  
-                      <p>You can calculate a pvalue for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. The pvalue quantifies whether derived allele has spread surprisingly quickly under the standard coalescent model.</p>
+                      <p>You can calculate a p-value for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. The p-value quantifies whether the derived allele has spread surprisingly quickly under the standard coalescent model.</p>
                     </div>
                   </div>
                 </div>

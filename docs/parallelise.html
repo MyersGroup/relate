@@ -121,11 +121,13 @@ gtag('config', 'UA-115753061-1');
                   Do not move the script - we are extracting the path to the binaries from the location of the script!
                   </p> 
                   <pre><code> PATH_TO_RELATE/script/RelateParallel/RelateParallel.sh\
+                  -m 1.25e-8 \
+                  -N 30000 \
                   --haps data/example.haps \
                   --sample data/example.sample \
                   --map data/genetic_map.txt \
-                  -m 1.25e-8 \
-                  -N 30000 \
+                  --annot data/example.annot \
+                  --seed 1 \
                   -o example \
                   --threads 8 </code></pre>
                   Output: example.anc, example.mut<br/><br/>
