@@ -161,6 +161,7 @@ gtag('config', 'UA-115753061-1');
       --haps data/example.haps \
       --sample data/example.sample \
       --map data/genetic_map.txt \
+      --annot data/example.annot \
       --seed 1 \
       -o example</code></pre>
               Output files are <b>example.anc</b> and <b>example.mut</b>. </p>
@@ -235,35 +236,35 @@ gtag('config', 'UA-115753061-1');
                   <tr>
                     <td>.anc </td>
                     <td>This file contains the trees. The first line shows the number of haplotypes. The second line shows the number of trees. <br/>
-                      Then, each line represents one tree. 
+                      Each subsequent line represents one tree. 
                       <ul>
 
                         <li> Every line starts with an integer specifying at which SNP the tree begins. </li>
-                        <li> Then, the i'th space separated entry shows the parent of the i'th internal node. In brackets we specify the branch length, the number of mutations on this branch, the SNP at which the branch appears, and the SNP at which the branch disappears.</li>
+                        <li> Then, the i'th space-separated entry shows the parent of the i'th internal node. In brackets we specify the branch length, the number of mutations on this branch, the SNP at which the branch appears, and the SNP at which the branch disappears.</li>
                       </ul></td>
                   </tr>
                   <tr>
                     <td>.mut </td> 
-                    <td>This file contains detailed information about each SNP. The header describes each column.<br>
+                    <td>This file contains detailed information about each SNP. The columns are described in the header.<br>
                       Without .annot file, the columns are<br>
 
                       <dl class="dl-horizontal">
                         <dt>snp</dt>
-                        <dd>Number of SNP in .haps file (int)</dd>                        
+                        <dd>Index of SNP in .haps file (int)</dd>                        
                         <dt>pos_of_snp</dt>
                         <dd>Position of SNP in bp (int)</dd>
                         <dt>dist</dt>
                         <dd>Distance to next SNP in bp (int). If --dist option was specified, this may be different to the actual distance to the next SNP.</dd>
-                        <dt>rs-d</dt>
+                        <dt>rs-id</dt>
                         <dd>rd-id of SNP (string)</dd>
                         <dt>tree_index</dt>
-                        <dd>Number of tree, starting from 0, in the .anc file (int)</dd>
+                        <dd>Index of tree, starting from 0, in the .anc file (int)</dd>
                         <dt>branch_indices</dt>
-                        <dd>Number of branch on tree. If a mutation cannot be mapped to a unique branch, more than one branch indices are given (space separated ints)</dd>
+                        <dd>Index of branch on tree. If a mutation cannot be mapped to a unique branch, multiple branch indices are given (space-separated ints)</dd>
                         <dt>is_not_mapping</dt>
-                        <dd>0 means SNP could be mapped to a unique branch, 1 means SNP could not be mapped to a unique branch(bool)</dd>
+                        <dd>0 means SNP could be mapped to a unique branch, 1 means SNP could not be mapped to a unique branch (bool)</dd>
                         <dt>is_flipped</dt>
-                        <dd>0 means SNP is not fddpped, 1 means SNP is fddpped (bool)</dd>
+                        <dd>0 means SNP is not flipped, 1 means SNP is flipped (bool)</dd>
                         <dt>age_begin</dt>
                         <dd>Age of lower end of branch in generations (dbl)</dd>
                         <dt>age_end</dt>
@@ -271,7 +272,7 @@ gtag('config', 'UA-115753061-1');
                         <dt>ancestral_allele/alternative_allele</dt>
                         <dd>Ancestral and alternative alleles at this locus (string)</dd>
                       </dl>
-                      With .annot fil, the following columns are appended<br>
+                      With .annot file, the following columns are appended<br>
 
                       <dl class="dl-horizontal">
                         <dt>upstream_allele</dt>
