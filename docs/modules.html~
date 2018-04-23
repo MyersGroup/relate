@@ -693,7 +693,7 @@ gtag('config', 'UA-115753061-1');
                  --mode TreeAtSNPAsNewick \
                  --anc example.anc \
                  --mut example.mut \
-                 --snp_of_interest 3000000 \
+                 --snp_of_interest 1023 \
                  -o example </code></pre>
                   Output: example_at_.newick.
 

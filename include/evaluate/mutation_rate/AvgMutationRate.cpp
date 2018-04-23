@@ -128,7 +128,6 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
     ++L;
   }
   is_L.close();
-  L--;
 
   Data data(N,L);
   int N_total = 2*data.N-1;
