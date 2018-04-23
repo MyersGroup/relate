@@ -1,1 +1,1 @@
-/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/Relate.dir/Relate.cpp.o  -o ../../../bin/Relate -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz  -static
+/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/Relate.dir/Relate.cpp.o  -o ../../../bin/Relate -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz 

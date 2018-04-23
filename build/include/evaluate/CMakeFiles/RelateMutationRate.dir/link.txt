@@ -1,1 +1,1 @@
-/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/RelateMutationRate.dir/mutation_rate/RelateMutationRate.cpp.o  -o ../../../bin/RelateMutationRate -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz  -static
+/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/RelateMutationRate.dir/mutation_rate/RelateMutationRate.cpp.o  -o ../../../bin/RelateMutationRate -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz 

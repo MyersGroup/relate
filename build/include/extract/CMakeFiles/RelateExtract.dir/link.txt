@@ -1,1 +1,1 @@
-/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/RelateExtract.dir/RelateExtract.cpp.o  -o ../../../bin/RelateExtract -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz  -static
+/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/RelateExtract.dir/RelateExtract.cpp.o  -o ../../../bin/RelateExtract -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz 
