@@ -150,40 +150,74 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
     }
     if(snp == (int)mut.info.size()) break; 
     assert(mut.info[snp].tree == count_tree);
-    while(mut.info[snp].tree == count_tree){
 
-      freq = 0.0; 
-      for(std::vector<int>::iterator it_group_of_interest = sample.group_of_interest.begin(); it_group_of_interest != sample.group_of_interest.end(); it_group_of_interest++){
-        freq += mut.info[snp].freq[*it_group_of_interest];
-        if(freq > 0.0) break;
-      }
+    if(mut.info[snp].freq.size() == sample.groups.size()){
 
-      if(freq > 0.0){
+      while(mut.info[snp].tree == count_tree){
 
-        if(mut.info[snp].branch.size() == 1){
-          branch = convert_index[*mut.info[snp].branch.begin()];
-          if(branch != -1 && branch != root && number_in_subpop[*mut.info[snp].branch.begin()] > 0){
-            num_snps_mapped_onto_tree++;
-            include_snp.push_back(snp);
-            mut.info[snp].age_begin = coordinates[branch];
-            mut.info[snp].age_end   = coordinates[(*(*it_subseq).tree.nodes[branch].parent).label];
-            assert(count_included_tree >= 0);
-            mut.info[snp].tree      = count_included_tree;
-          }
-        }
-        for(std::deque<int>::iterator it_branch = mut.info[snp].branch.begin(); it_branch != mut.info[snp].branch.end(); it_branch++){
-          branch = convert_index[*it_branch];
-          if(branch != -1){
-            (*it_subseq).tree.nodes[branch].num_events += 1.0/((float) mut.info[snp].branch.size());
-            *it_branch = branch;
-          }
+        freq = 0.0; 
+        for(std::vector<int>::iterator it_group_of_interest = sample.group_of_interest.begin(); it_group_of_interest != sample.group_of_interest.end(); it_group_of_interest++){
+          freq += mut.info[snp].freq[*it_group_of_interest];
+          if(freq > 0.0) break;
         }
 
+        if(freq > 0.0){
+
+          if(mut.info[snp].branch.size() == 1){
+            branch = convert_index[*mut.info[snp].branch.begin()];
+            if(branch != -1 && branch != root && number_in_subpop[*mut.info[snp].branch.begin()] > 0){
+              num_snps_mapped_onto_tree++;
+              include_snp.push_back(snp);
+              mut.info[snp].age_begin = coordinates[branch];
+              mut.info[snp].age_end   = coordinates[(*(*it_subseq).tree.nodes[branch].parent).label];
+              assert(count_included_tree >= 0);
+              mut.info[snp].tree      = count_included_tree;
+            }
+          }
+          for(std::deque<int>::iterator it_branch = mut.info[snp].branch.begin(); it_branch != mut.info[snp].branch.end(); it_branch++){
+            branch = convert_index[*it_branch];
+            if(branch != -1){
+              (*it_subseq).tree.nodes[branch].num_events += 1.0/((float) mut.info[snp].branch.size());
+              *it_branch = branch;
+            }
+          }
+
+        }
+        snp++;
+        if(snp == (int)mut.info.size()) break; 
+
       }
-      snp++;
-      if(snp == (int)mut.info.size()) break; 
+
+    }else{
+    
+      while(mut.info[snp].tree == count_tree){
+
+          if(mut.info[snp].branch.size() == 1){
+            branch = convert_index[*mut.info[snp].branch.begin()];
+            if(branch != -1 && branch != root && number_in_subpop[*mut.info[snp].branch.begin()] > 0){
+              num_snps_mapped_onto_tree++;
+              include_snp.push_back(snp);
+              mut.info[snp].age_begin = coordinates[branch];
+              mut.info[snp].age_end   = coordinates[(*(*it_subseq).tree.nodes[branch].parent).label];
+              assert(count_included_tree >= 0);
+              mut.info[snp].tree      = count_included_tree;
+            }
+          }
+          for(std::deque<int>::iterator it_branch = mut.info[snp].branch.begin(); it_branch != mut.info[snp].branch.end(); it_branch++){
+            branch = convert_index[*it_branch];
+            if(branch != -1){
+              (*it_subseq).tree.nodes[branch].num_events += 1.0/((float) mut.info[snp].branch.size());
+              *it_branch = branch;
+            }
+          }
+
+        snp++;
+        if(snp == (int)mut.info.size()) break; 
+      
+      }
 
     }
+
 
     //increment except if no mutations mapped onto it
     if(num_snps_mapped_onto_tree != 0){
@@ -273,8 +307,8 @@ CreateAncesTreeFileForSubpopulation(cxxopts::Options& options){
   Mutations mut;
   mut.Read(options["mut"].as<std::string>());
   if(mut.info[0].freq.size() == 0){
-    std::cerr << "Please first add population annotation to .mut using RelateFileFormats --mode GenerateSNPAnnotations" << std::endl;
-    exit(1);
+    std::cerr << "We recommend to first add population annotation to .mut using RelateFileFormats --mode GenerateSNPAnnotations" << std::endl;
+    //exit(1);
   }
   MakeAncesTreeFile(options, mut, include_snp);
 
@@ -340,12 +374,14 @@ CreateAncesTreeFileForSubpopulation(cxxopts::Options& options){
       }
     }
 
-    //update freq
-    mut_subset.info[snp].freq.resize(sample.group_of_interest.size());
-    int k = 0;
-    for(std::vector<int>::iterator it_group_of_interest = sample.group_of_interest.begin(); it_group_of_interest != sample.group_of_interest.end(); it_group_of_interest++){
-      mut_subset.info[snp].freq[k] = mut.info[*it_snp].freq[*it_group_of_interest];
-      k++;
+    if(mut.info[snp].freq.size() == sample.groups.size()){
+      //update freq
+      mut_subset.info[snp].freq.resize(sample.group_of_interest.size());
+      int k = 0;
+      for(std::vector<int>::iterator it_group_of_interest = sample.group_of_interest.begin(); it_group_of_interest != sample.group_of_interest.end(); it_group_of_interest++){
+        mut_subset.info[snp].freq[k] = mut.info[*it_snp].freq[*it_group_of_interest];
+        k++;
+      }
     }
     snp++;
   }
