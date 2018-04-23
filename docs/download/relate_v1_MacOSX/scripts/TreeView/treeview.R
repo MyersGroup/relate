@@ -150,12 +150,18 @@ system(paste("rm ",filename_plot, ".plotcoords.mut", sep = ""))
 
 # Combine plots p1 and p2
 
-g <- rbind(ggplotGrob(p1), ggplotGrob(p2))
+g <- try(rbind(ggplotGrob(p1), ggplotGrob(p2)), TRUE)
+if(grep(g[1], pattern = "Error")){
+  g <- gtable_rbind(ggplotGrob(p1), ggplotGrob(p2))
+}
 
 resize_heights <- function(g, heights = rep(1, length(idpanels))){
   idpanels <- unique(g$layout[grepl("panel",g$layout$name), "t"])
   g$heights <- grid:::unit.list(g$heights)
-  g$heights[idpanels] <- lapply(heights, unit, "null")
+  h <- lapply(heights, unit, "null")
+  for(i in 1:length(idpanels)){
+    g$heights[idpanels[i]] <- h[[i]]
+  }
   g
 }
 
