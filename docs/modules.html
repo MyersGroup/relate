@@ -123,7 +123,9 @@ gtag('config', 'UA-115753061-1');
                     <li>re-estimates branch lengths using the estimated population sizes</li>
                     <li>estimates an average mutation rate.</li>
                   </ol>
-                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a>).<br/>
+                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for the file format).<br/>
+                  It is NOT necessary, however recommended, to have appended SNP annotation with --annot when estimating the .anc and .mut files. This can also be done after inferring .anc, .mut files, see <a href = "input_data.html#GenerateSNPAnnotations"></a>. 
+
 
                   <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
               -i example \
@@ -132,7 +134,7 @@ gtag('config', 'UA-115753061-1');
               --seed 1 \
               -o example_popsize</code></pre>
 
-                  You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small (in terms of sequence length, not sample size) to obtain reliable estimates.
+                  You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small (in terms of sequence length, not sample size) to obtain reliable estimates.<br/>
                   Do not move the script - we are extracting the path to the binaries from the location of the script!
 
                   <h5>Input arguments</h5>
@@ -423,7 +425,8 @@ gtag('config', 'UA-115753061-1');
                 <div class="panel-heading"> <h4>Calculate the mutation rates grouped by nucleotide in sequence</h4></div>
                 <div class="panel-body">  
 
-                  Calculates the mutation rate for 96 groups of mutations, where each group corresponds to a triplet mutation (e.g. TCC to TTC mutation).
+                  Calculates the mutation rate for 96 groups of mutations, where each group corresponds to a triplet mutation (e.g. TCC to TTC mutation).<br/>
+                  It is necessary to have appended SNP annotation with --annot to use this function (This can also be done after inferring .anc,.mut files, see <a href = "input_data.html#GenerateSNPAnnotations"></a>). 
 
                   <dl class="dl-horizontal">
                     <dt>-i,--input</dt>
