@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/src/gzstream/gzstream.hpp
+iostream
+-
+fstream
+-
+zlib.h
+-
+string
+-
+
+/users/myers/speidel/Documents/relate/include/src/gzstream/gzstream.cpp
+gzstream.hpp
+-
+iostream
+-
+string.h
+-
+

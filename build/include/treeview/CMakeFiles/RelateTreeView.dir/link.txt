@@ -1,0 +1,1 @@
+/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/RelateTreeView.dir/RelateTreeView.cpp.o  -o ../../../bin/RelateTreeView -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz  -static
