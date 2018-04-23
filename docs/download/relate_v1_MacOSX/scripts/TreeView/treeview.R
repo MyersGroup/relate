@@ -149,21 +149,28 @@ system(paste("rm ",filename_plot, ".plotcoords.mut", sep = ""))
 ##################################################################################
 
 # Combine plots p1 and p2
-
-g <- try(rbind(ggplotGrob(p1), ggplotGrob(p2)), TRUE)
-if(grep(g[1], pattern = "Error")){
-  g <- gtable_rbind(ggplotGrob(p1), ggplotGrob(p2))
-}
-
-resize_heights <- function(g, heights = rep(1, length(idpanels))){
-  idpanels <- unique(g$layout[grepl("panel",g$layout$name), "t"])
-  g$heights <- grid:::unit.list(g$heights)
-  h <- lapply(heights, unit, "null")
-  for(i in 1:length(idpanels)){
-    g$heights[idpanels[i]] <- h[[i]]
+if(length(find("gtable_rbind")) > 0){
+  g <- gtable_rbind(ggplotGrob(p1), ggplotGrob(p2), size = "last")
+  resize_heights <- function(g, heights = rep(1, length(idpanels))){
+    idpanels <- unique(g$layout[grepl("panel",g$layout$name), "t"])
+    g$heights <- grid:::unit.list(g$heights)
+    h <- lapply(heights, unit, "null")
+    for(i in 1:length(idpanels)){
+      g$heights[idpanels[i]] <- h[[i]]
+    }
+    g
   }
-  g
+}else{
+  g <- rbind(ggplotGrob(p1), ggplotGrob(p2), size = "last")
+  resize_heights <- function(g, heights = rep(1, length(idpanels))){
+    idpanels <- unique(g$layout[grepl("panel",g$layout$name), "t"])
+    g$heights <- grid:::unit.list(g$heights)
+    h <- lapply(heights, unit, "null")
+    g$heights[idpanels] <- h
+    g
+  }
 }
+
 
 pdf(paste(filename_plot,".pdf", sep = ""), height = 30, width = 30)
 grid.draw(resize_heights(g, c(6,1)))
