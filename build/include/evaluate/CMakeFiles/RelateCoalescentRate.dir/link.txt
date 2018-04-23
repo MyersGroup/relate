@@ -1,1 +1,0 @@
-/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/RelateCoalescentRate.dir/coalescent_rate/RelateCoalescentRate.cpp.o  -o ../../../bin/RelateCoalescentRate -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz 

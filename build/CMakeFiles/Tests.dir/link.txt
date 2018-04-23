@@ -1,1 +1,0 @@
-/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/Tests.dir/include/test/Tests.cpp.o  -o ../bin/Tests -rdynamic ../bin/librelateStatic.a ../bin/libUnitTest.a ../bin/libgzstreamStatic.a -lz 
