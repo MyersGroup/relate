@@ -1,4 +1,4 @@
-# Install script for directory: /users/myers/speidel/Documents/relate
+# Install script for directory: /Users/leo/Documents/genomics/relate
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -27,21 +27,16 @@ if(NOT CMAKE_INSTALL_COMPONENT)
   endif()
 endif()
 
-# Install shared libraries without execute permission?
-if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
-  set(CMAKE_INSTALL_SO_NO_EXE "0")
-endif()
-
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/users/myers/speidel/Documents/relate/build/include/src/cmake_install.cmake")
-  include("/users/myers/speidel/Documents/relate/build/include/src/gzstream/cmake_install.cmake")
-  include("/users/myers/speidel/Documents/relate/build/include/test/cmake_install.cmake")
-  include("/users/myers/speidel/Documents/relate/build/include/pipeline/cmake_install.cmake")
-  include("/users/myers/speidel/Documents/relate/build/include/evaluate/cmake_install.cmake")
-  include("/users/myers/speidel/Documents/relate/build/include/treeview/cmake_install.cmake")
-  include("/users/myers/speidel/Documents/relate/build/include/file_formats/cmake_install.cmake")
-  include("/users/myers/speidel/Documents/relate/build/include/extract/cmake_install.cmake")
+  include("/Users/leo/Documents/genomics/relate/build/include/src/cmake_install.cmake")
+  include("/Users/leo/Documents/genomics/relate/build/include/src/gzstream/cmake_install.cmake")
+  include("/Users/leo/Documents/genomics/relate/build/include/test/cmake_install.cmake")
+  include("/Users/leo/Documents/genomics/relate/build/include/pipeline/cmake_install.cmake")
+  include("/Users/leo/Documents/genomics/relate/build/include/evaluate/cmake_install.cmake")
+  include("/Users/leo/Documents/genomics/relate/build/include/treeview/cmake_install.cmake")
+  include("/Users/leo/Documents/genomics/relate/build/include/file_formats/cmake_install.cmake")
+  include("/Users/leo/Documents/genomics/relate/build/include/extract/cmake_install.cmake")
 
 endif()
 
@@ -53,5 +48,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/users/myers/speidel/Documents/relate/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/leo/Documents/genomics/relate/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
