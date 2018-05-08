@@ -317,7 +317,6 @@ void FinalizeAvg(cxxopts::Options& options){
       it_row_opp++;
     }
     os << mut/opp*3.0 << "\n";
-    //std::cerr << mut << " " << opp << " " << mut/opp*3.0 << std::endl; 
   }
   os.close();
 

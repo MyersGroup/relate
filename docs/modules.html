@@ -123,8 +123,7 @@ gtag('config', 'UA-115753061-1');
                     <li>re-estimates branch lengths using the estimated population sizes</li>
                     <li>estimates an average mutation rate.</li>
                   </ol>
-                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for the file format).<br/>
-                  It is NOT necessary, however recommended, to have appended SNP annotation with --annot when estimating the .anc and .mut files. This can also be done after inferring .anc, .mut files, see <a href = "input_data.html#GenerateSNPAnnotations">here</a>. 
+                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for the file format).<br/> 
                   You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small (in terms of sequence length, not sample size) to obtain reliable estimates.<br/>
                   Do not move the script - we are extracting the path to the binaries from the location of the script!</p>
 
@@ -152,7 +151,7 @@ gtag('config', 'UA-115753061-1');
                   In addition, the following optional arguments can be specified:
                   <dl class="dl-horizontal">
                     <dt>--pop_of_interest</dt>
-                    <dd>Optional: Specifies populations for which population size is estimated. The second column of the .poplabels file is used for population labels. You can specify multiple populations separated by commas, e.g. pop1,pop2.</dd>
+                    <dd>Optional: Specifies populations for which population size is estimated. The second column of the .poplabels file is used for population labels. You can specify multiple populations separated by commas, e.g. pop1,pop2. When using this option, it is recommended (but NOT necessary), to run <b>Relate</b> with --annot. This can also be done after running <b>Relate</b> without --annot, see <a href = "input_data.html#GenerateSNPAnnotations">here</a>. </dd>
                     <dt>--first_chr & --last_chr</dt>
                     <dd>Optional: Allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
                     Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
@@ -608,6 +607,10 @@ gtag('config', 'UA-115753061-1');
                  --years_per_gen 28 \
                  -o example </code></pre>
                   Output: example.pdf.
+
+                  <p>
+                  You can change plotting parameters by editing <b>PATH_TO_RELATE/scripts/TreeView/treeview.R</b>.
+                  Specifically, lines 9 - 22 directly influence the plotting parameters.</p>
 
                 </div>
               </div>

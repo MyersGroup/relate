@@ -404,7 +404,7 @@ MutationsOnBranches(cxxopts::Options& options){
       }
       m_hap.CloseFile();
 
-    std::ofstream os(options["output"].as<std::string>() + ".plotcoords.mut");
+     std::ofstream os(options["output"].as<std::string>() + ".plotcoords.mut");
     
       os << "pos branchID\n";
 

@@ -139,7 +139,7 @@ struct Qual{
   std::string id;
   int pos;
   int num_decendants;
-  int freq;
+  int frac_branches_with_mut;
   float frac_not_mapping;
 
 };
@@ -394,7 +394,7 @@ Frequency(cxxopts::Options& options){
     std::vector<float>::iterator it_frac_not_mapping = frac_not_mapping.begin();
     char buffer[80];
     while(getline(is_qual, line)){
-      sscanf(line.c_str(), "%s %d %d %d %f\n", buffer, &(*it_qual).pos, &(*it_qual).num_decendants, &(*it_qual).freq, &(*it_qual).frac_not_mapping);
+      sscanf(line.c_str(), "%s %d %d %f %f\n", buffer, &(*it_qual).pos, &(*it_qual).num_decendants, &(*it_qual).frac_branches_with_mut, &(*it_qual).frac_not_mapping);
       (*it_qual).id = buffer;
       *it_frac_not_mapping = (*it_qual).frac_not_mapping;
       it_qual++;
@@ -764,7 +764,6 @@ Quality(cxxopts::Options& options){
   MarginalTree mtr;
   int root = N_total-1;
   int snp_of_next_tree;
-  std::vector<Leaves> leaves;
 
   igzstream is_anc(options["input"].as<std::string>() + ".anc");
   if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + ".anc.gz");
@@ -784,7 +783,8 @@ Quality(cxxopts::Options& options){
 
   //read tree
   mtr.Read(line, N);
-  int num_snps_on_tree = 0;
+  float num_snps_on_tree = 0.0;
+  float num_branches_with_snp = 0.0;
   int num_snps_not_mapping_to_tree = 0;
   int i = first_snp;
   while(tree_index[i] == tree_index[first_snp]){
@@ -794,16 +794,17 @@ Quality(cxxopts::Options& options){
   int num_snps_tree_persisting = i - first_snp;
 
   for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
+    if((*it_node).num_events >= 1.0) num_branches_with_snp += 1.0;
     num_snps_on_tree += (*it_node).num_events;
   }
-  mtr.tree.FindAllLeaves(leaves);
+  num_branches_with_snp /= 2.0 * data.N - 1.0;
 
   SNPInfo snp_info;
   int freq;
   int count_tree = 0;
   int num_snps_not_mapping = 0;
 
-  os << "ID pos decendants_below_branch carriers_in_data fraction_snps_not_mapping\n";
+  os << "ID pos num_branches_with_snp num_snps_on_tree fraction_snps_not_mapping\n";
 
   if(last_snp - first_snp < 1000){
     std::cerr << "Need at least 1000 SNPs." << std::endl;
@@ -846,11 +847,14 @@ Quality(cxxopts::Options& options){
       }
       num_snps_tree_persisting = i - snp;
 
-      num_snps_on_tree = 0;
+      num_snps_on_tree = 0.0;
+      num_branches_with_snp = 0.0;
       for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
+        if((*it_node).num_events >= 1.0) num_branches_with_snp += 1.0;
         num_snps_on_tree += (*it_node).num_events;
       }
-      mtr.tree.FindAllLeaves(leaves);
+      num_branches_with_snp /= 2.0 * data.N - 1.0;
+
     }
 
     int b = *snp_info.branch.begin();
@@ -859,7 +863,7 @@ Quality(cxxopts::Options& options){
       carriers += *it_freq;
     }
     os << snp_info.rs_id << " " << snp_info.pos << " ";
-    os << leaves[b].num_leaves << " " << carriers << " ";
+    os << num_branches_with_snp << " " << num_snps_on_tree << " ";
     //os << num_snps_not_mapping_to_tree/((float) num_snps_tree_persisting) << " " << num_snps_tree_persisting << " ";
 
     if(snp - first_snp < 500){

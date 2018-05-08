@@ -599,7 +599,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   assert(section_boundary_start.size() == section_boundary_end.size());
   int num_chunks = section_boundary_start.size();
 
-  std::cerr << std::setprecision(2) << "Warning: Will use approx " << 2.0*(4.0 * N * N * (max_windows_per_section+2.0))/1e9 << "GB of hard disc." << std::endl;
+  std::cerr << std::setprecision(2) << "Warning: Will use min " << 2.0*(4.0 * N * N * (max_windows_per_section+2.0))/1e9 << "GB of hard disc." << std::endl;
   //std::cerr << "Warning: Will open max " << max_windows_per_section << " files." << std::endl;
 
   /////////////////// Output program parameters into file ///////////////
@@ -875,6 +875,10 @@ fasta::Read(const std::string filename){
   std::string line;
   getline(is,line);
   while(getline(is,line)){
+
+    for(std::string::iterator it_c = line.begin(); it_c != line.end(); it_c++){
+      *it_c = std::toupper(*it_c);
+    }
     seq += line;
   }
   is.close();

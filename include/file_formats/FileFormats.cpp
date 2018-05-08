@@ -1016,6 +1016,7 @@ GenerateSNPAnnotations(cxxopts::Options& options){
   std::cerr << "[" << percentage << "%]\r";
   std::cerr.flush();
   for(int snp = 0; snp < data.L; snp++){
+    
     m_hap.ReadSNP(sequence, bp);
 
     //std::cerr << (int)(data.L/100) << " " << snp % (int)(data.L/100) << std::endl;

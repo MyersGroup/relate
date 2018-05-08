@@ -118,7 +118,7 @@ class haps{
   public:
 
     int chr;
-    char rsid[30];
+    char rsid[1024];
     char ancestral, alternative;
 
     haps(const char* filename_haps, const char* filename_sample){ 
