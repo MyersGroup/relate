@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/gzstreamShared.dir/gzstream.cpp.o"
   "../../../../bin/libgzstreamShared.pdb"
-  "../../../../bin/libgzstreamShared.so"
+  "../../../../bin/libgzstreamShared.dylib"
 )
 
 # Per-language clean rules from dependency scanning.

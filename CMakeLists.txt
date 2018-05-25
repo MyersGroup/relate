@@ -24,8 +24,8 @@ set(TREEVIEW_DIR ${CMAKE_SOURCE_DIR}/include/treeview)
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/include/test)
 set(GZSTREAM_DIR ${CMAKE_SOURCE_DIR}/include/src/gzstream)
 
-add_definitions(-static)
-set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -static")
+#add_definitions(-static)
+#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -static")
 
 # Set includes
 include_directories(${PROJECT_SOURCE_DIR} ${TEST_DIR})
