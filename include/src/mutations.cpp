@@ -139,13 +139,13 @@ Mutations::ReadShortFormat(const std::vector<std::string>& filenames){
 }
 
 void
-Mutations::Read(igzstream& is, int start_index, int end_index){
+Mutations::Read(igzstream& is){
 
+  info.clear();
   info.resize(L);
   std::string line;
   int snp = 0;
 
-  int add_tree_index  = 0;
   num_flips           = 0;
   num_notmappingmutations = 0;
 
@@ -154,39 +154,8 @@ Mutations::Read(igzstream& is, int start_index, int end_index){
   //file structure:
   //snp;pos_of_snp;rs-id;tree_index;branch_indices;is_mapping;is_flipped;(age_begin,age_end);ancestral_allele/alternative_allele;downstream_allele;upstream_allele;ACB;ASW;BEB;CDX;CEU;CHB;CHS;CLM;ESN;FIN;GBR;GIH;GWD;IBS;ITU;JPT;KHV;LWK;MSL;MXL;PEL;PJL;PUR;STU;TSI;YRI
 
-  info[snp].tree = -1;
-  while(info[snp].tree < start_index){
-    
-    assert(getline(is, line));
-    int i = 0;
-
-    //snp-id
-    while(line[i] != ';') i++;
-    i++;
-    //skip pos_of_snp
-    while(line[i] != ';') i++;
-    i++;
-    //skip dist_to_next_snp
-    
-    while(line[i] != ';') i++;
-    i++;
-    
-    //rs-id
-    while(line[i] != ';') i++;
-    i++;
-
-    inread.clear();
-    while(line[i] != ';'){
-      inread += line[i];
-      i++;
-    }
-    info[snp].tree = std::stoi(inread) + add_tree_index;
-    inread.clear();
-
-  }
-
-    int i = 0;
-   do{ 
+   int i = 0;
+   while(getline(is, line)){ 
 
     i = 0;
 
@@ -232,7 +201,7 @@ Mutations::Read(igzstream& is, int start_index, int end_index){
       inread += line[i];
       i++;
     }
-    info[snp].tree = std::stoi(inread) + add_tree_index;
+    info[snp].tree = std::stoi(inread);
     inread.clear();
 
     do{
@@ -317,11 +286,10 @@ Mutations::Read(igzstream& is, int start_index, int end_index){
     if(info[snp].branch.size() > 1) num_notmappingmutations++;
     snp++;
 
-  }while(getline(is, line) && info[snp-1].tree <= end_index);
+  }
 
   info.resize(snp);
   is.close();
-  add_tree_index = info[snp-1].tree + 1;
 
 }
 
@@ -347,23 +315,7 @@ Mutations::Read(const std::string& filename){
   is.open(filename);
   if(is.fail()) is.open(filename + ".gz");
   std::getline(is, line);
-  Read(is, 0, L);
-
-}
-
-void
-Mutations::Read(const std::string& filename, int start_index, int end_index){
-
-  std::string line;
-  igzstream is(filename);
-  if(is.fail()) is.open(filename + ".gz");
-  if(is.fail()){
-    std::cerr << "Error while reading " << filename << "(.gz)." << std::endl;
-    exit(1);
-  }
-
-  std::getline(is, header);
-  Read(is, start_index, end_index);
+  Read(is);
 
 }
 
@@ -400,11 +352,16 @@ Mutations::Dump(const std::string& filename){
         os << ";0;";
       }
       os << (*it).flipped << ";" << (*it).age_begin << ";" << (*it).age_end << ";";
-      os << (*it).mutation_type << ";" << (*it).upstream_base << ";" << (*it).downstream_base << ";";
+      os << (*it).mutation_type << ";";
 
-      for(std::vector<int>::iterator it_freq = (*it).freq.begin(); it_freq != (*it).freq.end(); it_freq++){
-        os << *it_freq << ";";
+      if((*it).freq.size() > 0){
+        os << (*it).upstream_base << ";" << (*it).downstream_base << ";";
+        for(std::vector<int>::iterator it_freq = (*it).freq.begin(); it_freq != (*it).freq.end(); it_freq++){
+          os << *it_freq << ";";
+        }
+
       }
+
       os << "\n";
 
     }

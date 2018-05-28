@@ -94,7 +94,7 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   bool help = false;
   if(!options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output. Optional: num_bins." << std::endl;
+    std::cout << "Needed: input, output. Optional: years_per_gen, num_bins." << std::endl;
     help = true;
   }
   if(options.count("help") || help){

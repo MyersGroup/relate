@@ -50,6 +50,7 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
     coalescent_rate_data[e].ReadFromFile(fp); 
   }
   fclose(fp);
+  std::remove(filenames[0].c_str());
 
   std::vector<float>::iterator it_coalescent_rate_data;
   CollapsedMatrix<float> coalescent_rate_data_section;
@@ -69,6 +70,7 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
       }
     }
     fclose(fp);
+    std::remove(filenames[i].c_str());
   }
 
   //output as bin

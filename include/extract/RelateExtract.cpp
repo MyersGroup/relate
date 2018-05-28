@@ -1,7 +1,9 @@
 #include "GetTreeOfInterest.cpp"
 #include "CreateAncesTreeFileForSubpopulation.cpp"
 #include "RemoveTreesWithFewMutations.cpp"
+#include "AncMutChunks.cpp"
 
+#include "filesystem.hpp"
 #include "cxxopts.hpp"
 #include <string>
 
@@ -19,6 +21,7 @@ int main(int argc, char* argv[]){
     ("pop_of_interest", "Population label. If not specified, use all haplotypes.", cxxopts::value<std::string>())
     ("snp_of_interest", "BP of SNP of interest.", cxxopts::value<int>())
     ("threshold", "Threshold used in RemoveTreesWithFewMutations.", cxxopts::value<int>())
+    ("threads", "Optional: Number of threads used (only used to decide chunk size in DivideAncMut)", cxxopts::value<int>())
     ("o,output", "Filename of output (excl file extension).", cxxopts::value<std::string>());
 
   options.parse(argc, argv);
@@ -42,12 +45,20 @@ int main(int argc, char* argv[]){
   
     GetDistFromMut(options);
 
+  }else if(!mode.compare("DivideAncMut")){
+  
+    DivideAncMut(options);
+  
+  }else if(!mode.compare("CombineAncMut")){
+  
+    CombineAncMut(options);
+
   }else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "TreeAtSNPAsNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut." << std::endl;
+    std::cout << "TreeAtSNPAsNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut." << std::endl;
   
   }
 

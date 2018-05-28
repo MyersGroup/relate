@@ -156,7 +156,7 @@ gtag('config', 'UA-115753061-1');
                     <dd>Optional: Allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
                     Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
                     <dt>--threads</dt>
-                    <dd>Optional: Maximum number of cores used. Default is 1. Currently, we only parallelise by chromosome.</dd>
+                    <dd>Optional: Maximum number of cores used. Default is 1.</dd>
                     <dt>--num_bins</dt>
                     <dd>Optional: Specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </dd>
                     <dt>--years_per_gen</dt>
@@ -182,7 +182,7 @@ gtag('config', 'UA-115753061-1');
                       </tr>
 
                       <tr>
-                        <td>example_popsize.anc, example_popsize.mut</td>
+                        <td>example_popsize.anc.gz, example_popsize.mut.gz</td>
                         <td>Genealogy with updated branch lengths. By default, --threshold is set to a value larger than 0, such that these files will include only a part of the genealogy.<br>
                           You can reestimate branch lengths for the entire genealogy using
                           <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \

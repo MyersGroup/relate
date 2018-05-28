@@ -48,9 +48,8 @@ class Mutations{
 
     void GetAge(AncesTree& anc);
    
-    void Read(igzstream& is, int start_index, int end_index);
+    void Read(igzstream& is);
     void Read(const std::string& filename);
-    void Read(const std::string& filename, int start_index, int end_index);
     void Dump(const std::string& filename);
 
 

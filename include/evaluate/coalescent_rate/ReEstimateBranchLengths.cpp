@@ -18,17 +18,17 @@ void ShowProgress(int progress){
   std::cerr << "[" << progress << "%]\r";
   std::cerr.flush();
   /*
-  int p = 0;
-  std::cerr << "[";
-  for(; p < progress; p++){
-    std::cerr << "*";
-  }
-  for(; p < 100; p++){
-    std::cerr << " ";
-  }
-  std::cerr << "]" << progress << "%\r";
-  std::cerr.flush();
-  */
+     int p = 0;
+     std::cerr << "[";
+     for(; p < progress; p++){
+     std::cerr << "*";
+     }
+     for(; p < 100; p++){
+     std::cerr << " ";
+     }
+     std::cerr << "]" << progress << "%\r";
+     std::cerr.flush();
+     */
 
 }
 
@@ -89,7 +89,6 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   mut.Read(options["input"].as<std::string>() + ".mut");
 
   data.pos.resize(L);
-
   if(options.count("dist")){
     igzstream is_dist(options["dist"].as<std::string>());
     if(is_dist.fail()){
@@ -111,10 +110,11 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     }
   }
 
+
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Reinferring branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
 
-  
+
   // read epochs and population size 
   igzstream is(options["coal"].as<std::string>()); 
   std::vector<double> epoch, coalescent_rate;
@@ -167,11 +167,11 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   }
 
   /* 
-  for(int i = 0; i < (int)coalescent_rate.size(); i++){
-    std::cerr << coalescent_rate[i] << " ";
-  }
-  std::cerr << std::endl;
-  */
+     for(int i = 0; i < (int)coalescent_rate.size(); i++){
+     std::cerr << coalescent_rate[i] << " ";
+     }
+     std::cerr << std::endl;
+     */
 
   ///////////////////////////////////////// TMRCA Inference /////////////////////////
   //Infer Branchlengths
@@ -187,12 +187,16 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
 
   int num_trees = anc.seq.size();
   int progress_interval = (int)(num_trees/100.0) + 1;
-  int count_trees = 0, progress = 0;
+  int count_trees = 0, progress = 0, progress_step = 1;
+  if(num_trees < 100){
+    progress_step = 100/num_trees;
+  }
+
   CorrTrees::iterator it_seq   = anc.seq.begin();
   for(; it_seq != anc.seq.end(); it_seq++){
 
     if(count_trees % progress_interval == 0){
-      progress++;
+      progress += progress_step;
       ShowProgress(progress); 
     }
     count_trees++; 
@@ -208,7 +212,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   anc.Dump(options["output"].as<std::string>() + ".anc");
 
   ////////////////////////// Update mutation file
-  
+
   CorrTrees::iterator it_anc = anc.seq.begin();
   std::vector<float> coordinates(2*data.N-1);
   int num_tree = mut.info[0].tree;
