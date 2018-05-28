@@ -660,18 +660,6 @@ else
           -i ${output} \
           -o ${output}
 
-        ${PATH_TO_RELATE}/bin/RelateExtract \
-          --mode DivideAncMut \
-          --threads $maxjobs \
-          --anc ${output}.anc \
-          --mut ${output}.mut \
-          -o ${output}_tmp
-
-        first_chunk=0
-        last_chunk=$(ls ${output}_tmp_chr*.mut.gz | wc -l)
-        last_chunk=$((${last_chunk} - 1))
-
-
         if [ -z "${coal-}" ]
         then
 
