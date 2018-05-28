@@ -1,1 +1,1 @@
-/apps/well/gcc/5.4.0/bin/g++  -fPIC -O3  -shared -Wl,-soname,libgzstreamShared.so -o ../../../../bin/libgzstreamShared.so CMakeFiles/gzstreamShared.dir/gzstream.cpp.o -lz 
+/Library/Developer/CommandLineTools/usr/bin/c++  -O3 -dynamiclib -Wl,-headerpad_max_install_names  -o ../../../../bin/libgzstreamShared.dylib -install_name @rpath/libgzstreamShared.dylib CMakeFiles/gzstreamShared.dir/gzstream.cpp.o /opt/local/lib/libz.dylib 

@@ -4,12 +4,13 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/users/myers/speidel/Documents/relate/include/pipeline/Relate.cpp" "/users/myers/speidel/Documents/relate/build/include/pipeline/CMakeFiles/Relate.dir/Relate.cpp.o"
+  "/Users/leo/Documents/genomics/relate/include/pipeline/Relate.cpp" "/Users/leo/Documents/genomics/relate/build/include/pipeline/CMakeFiles/Relate.dir/Relate.cpp.o"
   )
-set(CMAKE_CXX_COMPILER_ID "GNU")
+set(CMAKE_CXX_COMPILER_ID "Clang")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
+  "/opt/local/include"
   "../include/src"
   "../include/test"
   "../include/src/gzstream"
@@ -17,8 +18,8 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/users/myers/speidel/Documents/relate/build/include/src/CMakeFiles/relateStatic.dir/DependInfo.cmake"
-  "/users/myers/speidel/Documents/relate/build/include/src/gzstream/CMakeFiles/gzstreamStatic.dir/DependInfo.cmake"
+  "/Users/leo/Documents/genomics/relate/build/include/src/CMakeFiles/relateStatic.dir/DependInfo.cmake"
+  "/Users/leo/Documents/genomics/relate/build/include/src/gzstream/CMakeFiles/gzstreamStatic.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

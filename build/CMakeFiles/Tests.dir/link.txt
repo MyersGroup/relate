@@ -1,1 +1,1 @@
-/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/Tests.dir/include/test/Tests.cpp.o  -o ../bin/Tests -rdynamic ../bin/librelateStatic.a ../bin/libUnitTest.a ../bin/libgzstreamStatic.a -lz  -static
+/Library/Developer/CommandLineTools/usr/bin/c++   -O3 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/Tests.dir/include/test/Tests.cpp.o  -o ../bin/Tests  ../bin/librelateStatic.a ../bin/libUnitTest.a ../bin/libgzstreamStatic.a /opt/local/lib/libz.dylib 
