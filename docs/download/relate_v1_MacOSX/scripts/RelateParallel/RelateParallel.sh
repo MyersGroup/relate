@@ -29,7 +29,7 @@ then
   echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB."
   echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
-  echo "--threads:Optional. Number of threads used."
+  echo "--threads:Optional. Maximum number of threads."
   exit 1;
 fi
 
@@ -144,7 +144,7 @@ if [ ! -z "${seed-}" ];
 then
   echo "seed   = $seed"
 fi
-echo "Number of threads used: $maxjobs" 
+echo "Maximum number of threads: $maxjobs" 
 echo "********************************"
 
 

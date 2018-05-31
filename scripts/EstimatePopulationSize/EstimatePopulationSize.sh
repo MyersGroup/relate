@@ -23,7 +23,7 @@ then
   echo "--first_chr:       Optional: Index of first chr. Assumes that input files are indexed by chr, e.g. example_chr1.anc, example_chr1.mut, etc. Specify -i example in this case. "
   echo "--last_chr:        Optional: Index of last chr."
   echo "--coal:            Optional: Initial estimate of coalescent rate, treating all haplotypes as one population. Ignored if num_bins is specified."
-  echo "--threads:         Optional. Number of threads used. We currently only parallelize by chromosome."
+  echo "--threads:         Optional. Maximum number of threads."
   echo "--seed:            Optional: Random seed for branch lengths estimation"
   echo ""
   exit 1;
@@ -165,6 +165,7 @@ if [ ! -z "${seed-}" ];
 then
   echo "seed          = $seed"
 fi
+echo "Maximum number of threads: $maxjobs" 
 echo "********************************"
 
 if [ $filename == $output ];
