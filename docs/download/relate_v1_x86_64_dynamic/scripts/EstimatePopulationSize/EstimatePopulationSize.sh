@@ -200,9 +200,9 @@ then
         --pop_of_interest ${pop_of_interest} \
         --anc ${filename}.anc \
         --mut ${filename}.mut \
-        -o ${output}_${labels}
+        -o ${output}
 
-      filename=${output}_${labels}
+      filename=${output}
       filename_poplabels=${filename}.poplabels
 
       if [ -z "${threshold-}" ];
@@ -380,16 +380,16 @@ then
           --pop_of_interest ${pop_of_interest} \
           --anc ${filename}_chr${chr}.anc \
           --mut ${filename}_chr${chr}.mut \
-          -o ${output}_${labels}_chr${chr} 
+          -o ${output}_chr${chr} 
 
       done
 
-      mv ${output}_${labels}_chr${first_chr}.poplabels ${output}_${labels}.poplabels
+      mv ${output}_chr${first_chr}.poplabels ${output}.poplabels
       for chr in `seq $((${first_chr}+1)) 1 ${last_chr}`
       do
-        rm ${output}_${labels}_chr${chr}.poplabels 
+        rm ${output}_chr${chr}.poplabels 
       done
-      filename=${output}_${labels}
+      filename=${output}
       filename_poplabels=${filename}.poplabels
 
       if [ -z "${threshold-}" ];
@@ -593,9 +593,9 @@ else
         --pop_of_interest ${pop_of_interest} \
         --anc ${filename}.anc \
         --mut ${filename}.mut \
-        -o ${output}_${labels}
+        -o ${output}
 
-      filename=${output}_${labels}
+      filename=${output}
       filename_poplabels=${filename}.poplabels
 
       if [ -z "${threshold-}" ];
@@ -830,7 +830,7 @@ else
           --pop_of_interest ${pop_of_interest} \
           --anc ${filename}_chr${chr}.anc \
           --mut ${filename}_chr${chr}.mut \
-          -o ${output}_${labels}_chr${chr} 2> ${output}_chr${chr}.log  
+          -o ${output}_chr${chr} 2> ${output}_chr${chr}.log  
       }
 
       parallelize_extract_subtrees () {
@@ -851,12 +851,12 @@ else
         rm ${output}_chr${chr}.log  
       done
 
-      mv ${output}_${labels}_chr${first_chr}.poplabels ${output}_${labels}.poplabels
+      mv ${output}_chr${first_chr}.poplabels ${output}.poplabels
       for chr in `seq $((${first_chr}+1)) 1 ${last_chr}`
       do
-        rm ${output}_${labels}_chr${chr}.poplabels 
+        rm ${output}_chr${chr}.poplabels 
       done
-      filename=${output}_${labels}
+      filename=${output}
       filename_poplabels=${filename}.poplabels
 
       if [ -z "${threshold-}" ];
@@ -1245,11 +1245,6 @@ else
 
   fi
 
-fi
-
-if [ ! -z "${pop_of_interest-}" ];
-then
-  rm ${output}_${labels}*
 fi
 
 #plot results

@@ -102,10 +102,11 @@ DivideAncMut(cxxopts::Options& options){
       os << line << "\n";
 
       if(snp < data.L){
-        while(mut.info[snp].tree == tree_index && snp < data.L){
+        while(mut.info[snp].tree == tree_index){
           assert(getline(is_mut,line));
           os_mut << line << "\n";
           snp++;
+          if(snp >= data.L) break;
         }
       }else{
         std::cerr << "Mutation file does not seem to contain all SNPs.\n";
@@ -131,10 +132,11 @@ DivideAncMut(cxxopts::Options& options){
   while(getline(is, line)){
     os << line << "\n";
     if(snp < data.L){
-      while(mut.info[snp].tree == tree_index && snp < data.L){
+      while(mut.info[snp].tree == tree_index){
         assert(getline(is_mut,line));
         os_mut << line << "\n";
         snp++;
+        if(snp >= data.L) break;
       }
     }else{
       std::cerr << "Mutation file does not seem to contain all SNPs.\n";
@@ -148,6 +150,10 @@ DivideAncMut(cxxopts::Options& options){
   os_mut.close();
 
   std::ofstream os_param(options["output"].as<std::string>() + ".param");
+  if(os_param.fail()){
+    std::cerr << "Error while opening " << options["output"].as<std::string>() + ".param" << std::endl;
+    exit(1);
+  }
   os_param << "NUM_HAPLOTYPES NUM_SNPS NUM_TREES NUM_CHUNKS\n";
   os_param << data.N << " " << data.L << " " << num_trees_check << " " << i + 1 << std::endl;
   os_param.close();
