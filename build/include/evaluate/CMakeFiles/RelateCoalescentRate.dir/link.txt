@@ -1,1 +1,1 @@
-/Library/Developer/CommandLineTools/usr/bin/c++   -O3 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/RelateCoalescentRate.dir/coalescent_rate/RelateCoalescentRate.cpp.o  -o ../../../bin/RelateCoalescentRate  ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a /opt/local/lib/libz.dylib 
+/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/RelateCoalescentRate.dir/coalescent_rate/RelateCoalescentRate.cpp.o  -o ../../../bin/RelateCoalescentRate -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz  -static
