@@ -38,8 +38,8 @@ int main(int argc, char* argv[]){
 
   }else if(!mode.compare("RemoveTreesWithFewMutations")){
   
-    RemoveTreesWithFewMutations(options);
     GetDistFromMut(options);
+    RemoveTreesWithFewMutations(options);
 
   }else if(!mode.compare("ExtractDistFromMut")){
   
