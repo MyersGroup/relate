@@ -394,7 +394,7 @@ Frequency(cxxopts::Options& options){
     std::vector<float>::iterator it_frac_not_mapping = frac_not_mapping.begin();
     char buffer[80];
     while(getline(is_qual, line)){
-      sscanf(line.c_str(), "%s %d %f %f %f\n", buffer, &(*it_qual).pos, &(*it_qual).frac_branches_with_mut, &(*it_qual).num_snps_on_tree, &(*it_qual).frac_not_mapping);
+      sscanf(line.c_str(), "%s %d %d %f %f\n", buffer, &(*it_qual).pos, &(*it_qual).frac_branches_with_mut, &(*it_qual).num_snps_on_tree, &(*it_qual).frac_not_mapping);
       (*it_qual).id = buffer;
       *it_frac_not_mapping = (*it_qual).frac_not_mapping;
       it_qual++;
