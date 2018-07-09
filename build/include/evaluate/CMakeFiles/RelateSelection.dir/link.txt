@@ -1,1 +1,0 @@
-/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/RelateSelection.dir/selection/RelateSelection.cpp.o  -o ../../../bin/RelateSelection -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz  -static

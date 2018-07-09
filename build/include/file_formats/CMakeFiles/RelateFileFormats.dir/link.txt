@@ -1,1 +1,0 @@
-/apps/well/gcc/5.4.0/bin/g++   -O3   CMakeFiles/RelateFileFormats.dir/RelateFileFormats.cpp.o  -o ../../../bin/RelateFileFormats -rdynamic ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz  -static
