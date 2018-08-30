@@ -459,6 +459,10 @@ Tree::TraverseTreeToGetCoordinates(Node& n, std::vector<float>& coordinates){
     TraverseTreeToGetCoordinates(*n.child_right, coordinates);
     coordinates[n.label] = coordinates[(*n.child_left).label] + (*n.child_left).branch_length;  
 
+    if(coordinates[n.label] < coordinates[(*n.child_right).label]){
+      coordinates[n.label] = coordinates[(*n.child_right).label];
+    }
+
   }else{
     coordinates[n.label] = 0.0;
   }

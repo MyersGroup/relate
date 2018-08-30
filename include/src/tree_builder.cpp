@@ -663,6 +663,7 @@ InferBranchLengths::InitializeMCMC(const Data& data, Tree& tree){
     int snp_begin = tree.nodes[i].SNP_begin;
     int snp_end   = tree.nodes[i].SNP_end;
 
+    assert(snp_end < data.pos.size());
     //if(snp_end >= data.pos.size()) snp_end = data.pos.size()-1;
     mut_rate[i]            = 0.0;
     for(int snp = snp_begin; snp < snp_end; snp++){

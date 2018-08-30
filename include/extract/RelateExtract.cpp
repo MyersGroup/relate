@@ -20,6 +20,8 @@ int main(int argc, char* argv[]){
     ("mut", "Filename of file containing mut.", cxxopts::value<std::string>())
     ("pop_of_interest", "Population label. If not specified, use all haplotypes.", cxxopts::value<std::string>())
     ("snp_of_interest", "BP of SNP of interest.", cxxopts::value<int>())
+    ("first_bp", "BP of first SNP of interest.", cxxopts::value<int>())
+    ("last_bp", "BP of last SNP of interest.", cxxopts::value<int>())
     ("threshold", "Threshold used in RemoveTreesWithFewMutations.", cxxopts::value<int>())
     ("threads", "Optional: Number of threads used (only used to decide chunk size in DivideAncMut)", cxxopts::value<int>())
     ("o,output", "Filename of output (excl file extension).", cxxopts::value<std::string>());
@@ -36,13 +38,18 @@ int main(int argc, char* argv[]){
   
     CreateAncesTreeFileForSubpopulation(options);
 
+  }else if(!mode.compare("AncMutForSubregion")){
+ 
+    GetDistFromMut(options);
+    AncMutForSubregion(options);
+
   }else if(!mode.compare("RemoveTreesWithFewMutations")){
   
     GetDistFromMut(options);
     RemoveTreesWithFewMutations(options);
 
   }else if(!mode.compare("ExtractDistFromMut")){
-  
+ 
     GetDistFromMut(options);
 
   }else if(!mode.compare("DivideAncMut")){

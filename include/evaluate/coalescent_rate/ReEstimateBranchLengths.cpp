@@ -117,6 +117,14 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
 
   // read epochs and population size 
   igzstream is(options["coal"].as<std::string>()); 
+  if(is.fail()){
+    is.open(options["coal"].as<std::string>() + ".gz");
+    if(is.fail()){ 
+      std::cerr << "Error while opening " << options["coal"].as<std::string>() << "(.gz)." << std::endl;
+      exit(1);
+    }
+  } 
+
   std::vector<double> epoch, coalescent_rate;
   getline(is, line);
   getline(is, line);

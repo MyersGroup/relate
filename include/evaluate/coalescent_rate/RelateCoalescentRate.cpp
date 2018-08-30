@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
     bool help = false;
     if(!options.count("input") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
-      std::cout << "Needed: input, output. Optional: first_chr, last_chr, poplabels." << std::endl;
+      std::cout << "Needed: input, output. Optional: first_chr, last_chr, poplabels, years_per_gen, num_bins." << std::endl;
       help = true;
     }
     if(options.count("help") || help){
@@ -70,6 +70,38 @@ int main(int argc, char* argv[]){
     }else{
       FinalizePopulationSize(options);
     }
+
+  }else if(!mode.compare("EstimateDirPopulationSize")){
+ 
+    //variable population size.
+    //Do this for whole chromosome
+    //The Final Finalize should be a FinalizeByGroup  
+    bool help = false;
+    if(!options.count("input") || !options.count("output") || !options.count("poplabels")){
+      std::cout << "Not enough arguments supplied." << std::endl;
+      std::cout << "Needed: poplabels, input, output. Optional: first_chr, last_chr, years_per_gen, num_bins." << std::endl;
+      help = true;
+    }
+    if(options.count("help") || help){
+      std::cout << options.help({""}) << std::endl;
+      std::cout << "Estimate population size and directional migration." << std::endl;
+      exit(0);
+    }  
+
+    if(options.count("first_chr") && options.count("last_chr")){
+      if(options["first_chr"].as<int>() < 0 || options["last_chr"].as<int>() < 0){
+        std::cerr << "Do not use negative chr indices." << std::endl;
+        exit(1);
+      }
+      for(int chr = options["first_chr"].as<int>(); chr <= options["last_chr"].as<int>(); chr++){ 
+        CoalescentRateDir(options, chr);
+      }
+      SummarizeCoalescentRateForGenome(options);  
+    }else{
+      CoalescentRateDir(options);
+    }    
+
+    FinalizePopulationSizeDir(options);
 
   }else if(!mode.compare("CoalescentRateForSection")){
   
@@ -116,7 +148,7 @@ int main(int argc, char* argv[]){
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "EstimatePopulationSize, ReEstimateBranchLengths, CoalescentRateForSection, SummarizeCoalescentRateForGenome, FinalizePopulationSize." << std::endl;
+    std::cout << "EstimatePopulationSize, EstimateDirPopulationSize, ReEstimateBranchLengths, CoalescentRateForSection, SummarizeCoalescentRateForGenome, FinalizePopulationSize." << std::endl;
   
   }
 

@@ -37,7 +37,7 @@ gzip::open(const char* filename, const char* mode){
 
   if(is_gzipped){
 
-    const char prefix[] = "gunzip -c ";
+    const char prefix[] = "zcat ";
     char *cmd;
     cmd = (char*) malloc(sizeof(prefix) + strlen(filename) + 10);
     if (!cmd) {

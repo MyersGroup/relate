@@ -364,7 +364,12 @@ ConvertFromVcf(cxxopts::Options& options){
         freq += 2;
         c += 2;
       }
-      c++;
+      if(c < line.size()){
+        while(line[c] != ' ' && line[c] != '\t' && line[c] != '\n' && c < line.size()-1){
+          c++;
+        }
+        c++;
+      }
     }
 
     if(N == N_prev){

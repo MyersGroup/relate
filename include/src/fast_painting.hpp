@@ -35,18 +35,9 @@ class FastPainting{
       theta_ratio = data.theta/(1.0 - data.theta) - 1.0;
       log_ntheta = log(data.ntheta);
       log_small  = log(0.01);
-
-      //normalizing_constant = (double) log(Nminusone) - data.L * log_ntheta;
-      //distance_rescaling_constant = log(data.theta/data.ntheta);  
-
+ 
     }
-
-    /* 
-    void Paint(const Data& data, CollapsedMatrix<float>& topology, std::vector<float>& logscales, const int k);
-    void PaintToFile(const Data& data, CollapsedMatrix<float>& topology, std::vector<float>& logscales, CollapsedMatrix<int>& boundarySNP, const int k);
-    void PaintAll(const Data& data, CollapsedMatrix<float>& topology, std::vector<float>& logscales, const int k);
-    void PaintSteppingStones2(const Data& data, std::vector<FILE*> pfiles, const int k);
-    */
+  
     void PaintSteppingStones(const Data& data, std::vector<int>& window_boundaries, std::vector<FILE*> pfiles, const int k);
     void RePaintSection(const Data& data, CollapsedMatrix<float>& topology, std::vector<float>& logscales, CollapsedMatrix<float>& alpha_begin, CollapsedMatrix<float>& beta_end, int boundarySNP_begin, int boundarySNP_end, float logscale_alpha, float logscale_beta, const int k);
 

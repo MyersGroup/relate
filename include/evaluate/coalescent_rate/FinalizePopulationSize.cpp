@@ -376,3 +376,244 @@ int FinalizePopulationSizeByHaplotype(cxxopts::Options& options){
 
 
 }
+
+
+int FinalizePopulationSizeDir(cxxopts::Options& options){
+
+  //////////////////////////////////
+  //Program options
+
+  bool help = false;
+  if(!options.count("poplabels") || !options.count("output")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: poplabels, output." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Estimate population size using coalescent rate." << std::endl;
+    exit(0);
+  }  
+
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  std::cerr << "Finalizing coalescent rate..." << std::endl;
+
+  ////////// read labels of sequences //////////
+
+  Sample sample;
+  sample.Read(options["poplabels"].as<std::string>());
+  int N = sample.group_of_haplotype.size();
+
+  /////////////////// INITIALIZE EPOCHES //////////////////////
+  
+  int num_epochs;
+  std::vector<float> epoch;
+
+  FILE* fp = fopen((options["output"].as<std::string>() + ".bin").c_str(),"rb");
+  assert(fp != NULL);
+
+  fread(&num_epochs, sizeof(int), 1, fp);
+  epoch.resize(num_epochs);
+  fread(&epoch[0], sizeof(float), num_epochs, fp);
+  std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epochs);
+  for(int e = 0; e < num_epochs; e++){
+    coalescent_rate_data[e].ReadFromFile(fp);
+    //assert(coalescent_rate_data[e].size() == N);
+    //assert(coalescent_rate_data[e].subVectorSize(0) == N);
+  }
+  fclose(fp);
+
+  /////////////////// SUMMARIZE //////////////////////
+
+  //rows of coalescent_rate:
+  //(1,1),2
+  //(2,2),1
+  //(1,2),2
+  //(1,2),1
+
+  std::vector<CollapsedMatrix<float>> coalescent_rate(num_epochs);
+  for(std::vector<CollapsedMatrix<float>>::iterator it_c = coalescent_rate.begin(); it_c != coalescent_rate.end(); it_c++){
+    (*it_c).resize(4, sample.groups.size() * (sample.groups.size()-1)/2.0);
+    std::fill((*it_c).vbegin(), (*it_c).vend(), 0.0);
+  }
+
+  std::vector<std::vector<int>> group_haplotype(sample.groups.size());
+  for(int i = 0; i < sample.groups.size(); i++){
+  
+    group_haplotype[i].resize(sample.group_sizes[i]);
+    int j = 0, k = 0;
+    for(std::vector<int>::iterator it_hap = sample.group_of_haplotype.begin(); it_hap != sample.group_of_haplotype.end(); it_hap++){
+      if(*it_hap == i){
+        group_haplotype[i][j] = k;
+        j++;
+      }
+      k++;
+    }
+
+  }
+
+  for(int i = 0; i < sample.groups.size(); i++){
+    for(int j = i+1; j < sample.groups.size(); j++){
+   
+      if(i != j){
+
+        int m = i * sample.groups.size() - (i*(i+1.0))/2.0 + j - i - 1;
+        assert(m < sample.groups.size() * (sample.groups.size()-1)/2.0);
+
+        std::vector<CollapsedMatrix<float>>::iterator it_coal = coalescent_rate.begin();
+        for(std::vector<CollapsedMatrix<float>>::iterator it_coal_data = coalescent_rate_data.begin(); it_coal_data != coalescent_rate_data.end(); it_coal_data++){
+
+          for(std::vector<int>::iterator it_hap1 = group_haplotype[i].begin(); it_hap1 != std::prev(group_haplotype[i].end(),1); it_hap1++){
+            for(std::vector<int>::iterator it_hap2 = std::next(it_hap1,1); it_hap2 != group_haplotype[i].end(); it_hap2++){
+              for(std::vector<int>::iterator it_hap3 = group_haplotype[j].begin(); it_hap3 != group_haplotype[j].end(); it_hap3++){
+
+                assert(*it_hap1 < N);
+                assert(*it_hap2 < N);
+                assert(*it_hap3 < N);
+
+                int n = MatrixIndex(*it_hap1, *it_hap2, *it_hap3, N);
+                n = (n - (n % 3))/3;
+                assert(3*n+2 < (*it_coal_data).subVectorSize(0));
+
+                //columns of (*it_coal_data):
+                //((i,j),k), ((i,k),j), ((j,k),i)
+                if(*it_hap1 < *it_hap2 && *it_hap2 < *it_hap3){
+                  //1 < 1 < 2
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[0][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,1),2 
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,2),1
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,2),1
+                }else if(*it_hap1 < *it_hap3 && *it_hap3 < *it_hap2){
+                  //1 < 2 < 1
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[0][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,1),2
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,2),1
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,2),1
+                }else if(*it_hap3 < *it_hap1 && *it_hap1 < *it_hap2){
+                  //2 < 1 < 1
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[0][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,1),2
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,2),1
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,2),1
+                }else if(*it_hap3 < *it_hap2 && *it_hap2 < *it_hap1){
+                  //2 < 1 < 1
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[0][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,1),2
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,2),1
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,2),1
+                }else if(*it_hap2 < *it_hap1 && *it_hap1 < *it_hap3){
+                  //1 < 1 < 2
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[0][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,1),2 
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,2),1
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,2),1
+                }else if(*it_hap2 < *it_hap3 && *it_hap3 < *it_hap1){
+                  //1 < 2 < 1
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[0][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,1),2
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,2),1
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[3][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,2),1
+                }
+
+
+              }
+            }
+          }
+
+          for(std::vector<int>::iterator it_hap1 = group_haplotype[j].begin(); it_hap1 != std::prev(group_haplotype[j].end(),1); it_hap1++){
+            for(std::vector<int>::iterator it_hap2 = std::next(it_hap1,1); it_hap2 != group_haplotype[j].end(); it_hap2++){
+              for(std::vector<int>::iterator it_hap3 = group_haplotype[i].begin(); it_hap3 != group_haplotype[i].end(); it_hap3++){
+
+                int n = MatrixIndex(*it_hap1, *it_hap2, *it_hap3, N);
+                n = (n - (n % 3))/3;
+
+                //columns of (*it_coal_data):
+                //((i,j),k), ((i,k),j), ((j,k),i)
+                if(*it_hap1 < *it_hap2 && *it_hap2 < *it_hap3){
+                  //2 < 2 < 1
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[1][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (2,2),1 
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,2),2
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,2),2
+                }else if(*it_hap1 < *it_hap3 && *it_hap3 < *it_hap2){
+                  //2 < 1 < 2
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[1][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (2,2),1
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,2),2
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,2),2
+                }else if(*it_hap3 < *it_hap1 && *it_hap1 < *it_hap2){
+                  //1 < 2 < 2
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[1][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (2,2),1
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,2),2
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,2),2
+                }else if(*it_hap3 < *it_hap2 && *it_hap2 < *it_hap1){
+                  //1 < 2 < 2
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[1][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (2,2),1
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,2),2
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,2),2
+                }else if(*it_hap2 < *it_hap1 && *it_hap1 < *it_hap3){
+                  //2 < 2 < 1
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[1][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (2,2),1
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (1,2),2
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,2),2
+                }else if(*it_hap2 < *it_hap3 && *it_hap3 < *it_hap1){
+                  //2 < 1 < 2
+                  if((*it_coal_data)[1][3*n+1] > 0) (*it_coal)[1][m] += (*it_coal_data)[0][3*n+1]/(*it_coal_data)[1][3*n+1]; // (2,2),1
+                  if((*it_coal_data)[1][3*n] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n]/(*it_coal_data)[1][3*n]; // (1,2),2
+                  if((*it_coal_data)[1][3*n+2] > 0) (*it_coal)[2][m] += (*it_coal_data)[0][3*n+2]/(*it_coal_data)[1][3*n+2]; // (1,2),2
+                }
+
+
+              }
+            }
+          }
+
+          it_coal++;
+        }
+
+      }
+    
+    }
+  }
+
+  /////////////////// OUTPUT //////////////////////
+
+  std::ofstream os(options["output"].as<std::string>() + ".coal");
+  if(os.fail()){
+    std::cerr << "Error while opening file." << std::endl;
+    exit(1);
+  } 
+
+  for(std::vector<std::string>::iterator it_groups = sample.groups.begin(); it_groups != sample.groups.end(); it_groups++){
+    os << *it_groups << " ";
+  }
+  os << "\n";
+
+  os << "group1 group2 epoch ((1,1),2) ((2,2),1) ((1,2),2) ((1,2),1)\n";
+
+  for(int i = 0; i < sample.groups.size(); i++){
+    for(int j = i+1; j < sample.groups.size(); j++){
+   
+      if(i != j){
+        int m = i * sample.groups.size() - (i*(i+1.0))/2.0 + j - i - 1;
+        float size1 = sample.group_sizes[i] * (sample.group_sizes[i]-1) * sample.group_sizes[j];
+        float size2 = sample.group_sizes[j] * (sample.group_sizes[j]-1) * sample.group_sizes[i];
+        std::vector<float>::iterator it_epoch = epoch.begin();
+        for(std::vector<CollapsedMatrix<float>>::iterator it_coal = coalescent_rate.begin(); it_coal != coalescent_rate.end(); it_coal++){
+          os << i << " " << j << " " << *it_epoch << " " << 2.0 * (*it_coal)[0][m]/size1 << " " << 2.0 * (*it_coal)[1][m]/size2 << " " << (*it_coal)[2][m]/size2 << " " << (*it_coal)[3][m]/size1 << "\n";
+          it_epoch++;
+        }
+      }
+
+    }
+  }
+
+
+  os.close();
+
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6) << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+  return 0;
+
+
+}
+
