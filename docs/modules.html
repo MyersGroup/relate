@@ -490,14 +490,71 @@ gtag('config', 'UA-115753061-1');
 
           <!-- row -->
           <div class="row"> 
+            <a class="anchor" name="SelectionPvalues"></a>
 
-            <a class="anchor" name="SelectionPvalues"></a> 
+            <div class="alert alert-warning">
+              <strong>Warning!</strong><br/>
+              Still subject to change.
+            </div>
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
             <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>Detect selection</h4></div>
+                <div class="panel-body">  
 
-              <div class="alert alert-warning">
-                <strong>Warning!</strong><br/>
-                Still subject to change.
+                  <p>Calculates p-values for selection evidence from genealogy.<br> 
+
+                  <p>
+                  We recommend that you first estimate the population size history using <a href="modules.html#CoalescenceRate">this module</a>, with setting --threshold 0. This is so that the branch lengths in all trees are updated for the estimated population size history. Alternatively, if the region you are analysing is short, you can specify a .coal file in this module and the script reestimates branch lengths for the trees of interest before calculating selection p-values.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of .anc and .mut files without file extension. Needs to contain all SNPs in haps/sample input file.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                    <dt>-m,--mu</dt>
+                    <dd>Mutation rate, e.g., 1.25e-8.</dd>
+                    <dt>--first_bp</dt>
+                    <dd>Optional: First bp position.</dd>
+                    <dt>--last_bp</dt>
+                    <dd>Optional: Last bp position.</dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Optional: Years per generation. Default: 28.0</dd>
+                    <dt>--coal</dt>
+                    <dd>Optional: Estimate of coalescent rate, treating all haplotypes as one population. Not necessary if .anc/.mut files were obtained using EstimatePopulationSize.sh, otherwise strongly recommended.</dd>
+                    <dt>--seed</dt>
+                    <dd>Optional: Random seed for branch lengths estimation. Only used if --coal is specified.</dd>
+                  </dl>
+
+                  </p>
+
+                  <pre><code> PATH_TO_RELATE/scripts/DetectSelection/DetectSelection.sh \
+                 -i example \
+                 -o example_selection \
+                 -m 1.25e-8 \
+                 --first_bp 1000000 \
+                 --last_bp 1000000 \
+                 --years_per_gen 28 \
+                 --coal popsize.coal </code></pre>
+                  Output: example_selection.lin, example_selection.freq, example_selection.sele, (example_selection.anc, example_selection.mut, example_selection_dist if coal is specified).
+
+                </div>
+                <h4>More details</h4>
+                Below, we describe details about the functions used to calculate the selection p-value.<br\>
               </div>
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row"> 
+            <div class="col-md-10 col-md-offset-1">
 
               <div class="panel panel-info">
                 <div class="panel-heading"> <h4>Get selection pvalues</h4></div>
@@ -524,26 +581,29 @@ gtag('config', 'UA-115753061-1');
 
 
               <p>
-              <h5>File formats</h5>
+              <h4>File formats</h4>
               </p> 
               <table class="table">
                 <tbody>
                   <tr>
                     <a class="anchor" name=".freq"></a> 
                     <td>.freq</td>
-                    <td>
+                    <td>Records the frequency of the derived allele at generations genN .. gen1 (specified in the header)<br/>
+                      pos rs_id genN genN-1 ... gen1 0
                     </td>
                   </tr>
                   <tr>
                     <a class="anchor" name=".lin"></a> 
                     <td>.lin</td>
-                    <td>
+                    <td>Records the number of lineages in the tree at generations genN .. gen1 (specified in the header), as well as the number of lineages when the mutation had frequency 2<br/>
+                      pos rs_id genN genN-1 ... gen1 0 when_mutation_has_freq2
                     </td>
                   </tr>
                   <tr>
                     <a class="anchor" name=".sele"></a> 
                     <td>.sele</td>
-                    <td>
+                    <td>Records the log10 p-value for selection evidence at generations genN .. gen1 (specified in the header), as well as the log10 p-value when the mutation had frequency 2. Log10 p-value is set to 1 if mutation had frequency >= 1 at a generation.<br/>
+                      pos rs_id genN genN-1 ... gen1 0 when_mutation_has_freq2
                     </td>
                   </tr>
 
@@ -624,7 +684,7 @@ gtag('config', 'UA-115753061-1');
             <a class="anchor" name="Extract"></a> 
             <div class="col-md-10 col-md-offset-1">
 
-              <h3>Extract subtrees and trees of interest</h3>
+              <h3>Extract subtrees, trees in region of interest, and trees in newick format.</h3>
               <hr/>
 
             </div>
@@ -669,6 +729,48 @@ gtag('config', 'UA-115753061-1');
             </div>
 
           </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="ExtractSubtree"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>Extract subtrees corresponding to a subpopulation</h4></div>
+                <div class="panel-body">  
+
+                  <p>Extracts trees in region of interest.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--first_bp</dt>
+                    <dd>BP of start of region.</dd>
+                    <dt>--last_bp</dt>
+                    <dd>BP of end of region.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                 --mode AncMutForSubregion\
+                 --anc example.anc \
+                 --mut example.mut \
+                 --first_bp 0 \
+                 --last_bp 10000 \
+                 -o example_subregion </code></pre>
+                  Output: example_subregion.anc, example_subregion.mut, example_subregion.dist.
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
 
           <!-- row -->
           <div class="row">
@@ -853,7 +955,7 @@ gtag('config', 'UA-115753061-1');
             <div class="col-md-10 col-md-offset-1">
 
               <p>
-              <h5>File formats</h5>
+              <h4>File formats</h4>
               </p> 
               <table class="table">
                 <tbody>

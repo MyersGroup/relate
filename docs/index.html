@@ -115,9 +115,11 @@ gtag('config', 'UA-115753061-1');
                   </div>
                 </form>
 
-                <p>In the downloaded directory, we have included a toy data set. You can try out <b>Relate</b> using this toy data set by following the instructions on our <a href="getting_started.html">Getting started</a> page.</p>
+                <p>In the downloaded directory, we have included a toy data set. You can try out <b>Relate</b> using this toy data set by following the instructions on our <a href="getting_started.html">getting started</a> page.</p>
 
                 <p>If you have any problems getting the program to work on your machine or would like to request an executable for a platform not shown here, please send a message to leo.speidel [at] outlook [dot] com. </p>
+
+                <p>We document changes to previous versions in a <a href="#change-log">change-log</a>.</p>
               </div>
 
             </div>
@@ -206,6 +208,102 @@ gtag('config', 'UA-115753061-1');
 
         </div>
       </div>
+
+
+     <div class="container-fluid">
+
+   
+        <!-- 1st row -->
+        <div class="row">
+          <div class="col-md-10 col-md-offset-1">
+
+            <h3>Change-log</h3>
+            <hr/>
+
+            <a class="anchor" name="change-log"></a> 
+
+            <div class="panel-group" id="accordion">
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+                      v1.0.3
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapse4" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    Date: 30th September 2018<br/>     
+                    <ul>
+                      <li>Implemented pipeline for calculating p-values for selection evidence. Updated corresponing entry in the documentation.</li>
+                      <li>Bug fix in RelateSelection --mode Frequency: Previous version had a bug whenever two internal nodes had same age.</li>
+                      <li>Fixed function RelateFileFormats --mode ConvertFromVcf which previously parsed the vcf incorrectly in some cases.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                      v1.0.2
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapse3" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    Date: 16th July 2018<br/>     
+                    <ul>
+                      <li>Implemented parallelization of module EstimatePopulationSize.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                      v1.0.1
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapse2" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    Date: 30th June 2018<br/>
+                    <ul>
+                      <li>Bug fix in parsing function of haps/sample.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                      v1.0.0
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapse1" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    Date: 4th June 2018
+                    <ul>
+                      <li> Initial release.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
 
   </body>
 </html>        

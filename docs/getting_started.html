@@ -96,6 +96,7 @@ gtag('config', 'UA-115753061-1');
               <p><b>Relate</b> uses the haps/sample file format (output file format of <a href="https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html">SHAPEIT2</a>) as input.  </p>
               <ul>
                 <li>Please separate your data by chromosome.</li>
+                <li>The data needs to be <b>phased</b>. This can be done, for instance, using <a href="https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html">SHAPEIT2</a>.</li>
                 <li>You can <b>convert</b> from <b>vcf</b> to <b>haps/sample</b> using <a href="input_data.html#ConvertFromVcf">this function</a> and from <b>hap/legend/sample</b> to <b>haps/sample</b> using <a href="input_data.html#ConvertFromHapLegendSample">this function</a>.</li>
                 <li>We provide a script to prepare your data under
                   <pre><code> PATH_TO_RELATE/scripts/PrepareInputFiles/PrepareInputFiles.sh </code></pre>
@@ -339,8 +340,10 @@ gtag('config', 'UA-115753061-1');
                 <div class="col-md-6">
                   <div class="panel panel-info">
                     <div class="panel-heading"> <h4><a href="modules.html#Selection">Calculate p-values for selection evidence</a></h4></div>
-                    <div class="panel-body">  
-                      <p>You can calculate a p-value for selection evidence for every SNP using <a href="modules.html#Selection">this module</a>. The p-value quantifies whether the derived allele has spread surprisingly quickly under the standard coalescent model.</p>
+                    <div class="panel-body"> 
+                      <p>You can find a bash script under 
+                      <pre><code>PATH_TO_RELATE/scripts/DetectSelection/DetectSelection.sh</code></pre> 
+                      <p>The script calculates a p-value for selection evidence using <a href="modules.html#Selection">this module</a>. The p-value quantifies whether the derived allele has spread surprisingly quickly under the standard coalescent model.</p>
                     </div>
                   </div>
                 </div>
