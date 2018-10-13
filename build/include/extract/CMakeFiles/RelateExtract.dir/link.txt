@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/c++   -O3 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/RelateExtract.dir/RelateExtract.cpp.o  -o ../../../bin/RelateExtract  ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a /opt/local/lib/libz.dylib 
