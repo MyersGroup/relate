@@ -17,9 +17,9 @@ GetTreeOfInterest(cxxopts::Options& options){
   //Program options
   
   bool help = false;
-  if(!options.count("anc") || !options.count("mut") || !options.count("snp_of_interest")){
+  if(!options.count("anc") || !options.count("mut") || !options.count("pos_of_interest") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: anc, snp_of_interest." << std::endl;
+    std::cout << "Needed: anc, mut, pos_of_interest, output." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -28,11 +28,11 @@ GetTreeOfInterest(cxxopts::Options& options){
     exit(0);
   }  
   
-  int snp_of_interest = options["snp_of_interest"].as<int>();
-  int index_of_snp_of_interest;
+  int pos_of_interest = options["pos_of_interest"].as<int>();
+  int index_of_pos_of_interest;
 
   std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Get tree from " << options["anc"].as<std::string>() << " at BP " << snp_of_interest << "..." << std::endl;
+  std::cerr << "Get tree from " << options["anc"].as<std::string>() << " at BP " << pos_of_interest << "..." << std::endl;
 
 
   //////////////////////////////////
@@ -50,12 +50,16 @@ GetTreeOfInterest(cxxopts::Options& options){
 
   Mutations mut;
   mut.Read(options["mut"].as<std::string>());
-  index_of_snp_of_interest = 0;
+  index_of_pos_of_interest = -1;
   for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
-    if((*it_mut).pos == snp_of_interest) break;
-    index_of_snp_of_interest++;
+    if((*it_mut).pos > pos_of_interest) break;
+    index_of_pos_of_interest++;
   }
-  int tree_index_of_interest = mut.info[index_of_snp_of_interest].tree;
+  if(index_of_pos_of_interest == -1){
+    std::cerr << "SNP does not exist" << std::endl;
+    exit(1);
+  }
+  int tree_index_of_interest = mut.info[index_of_pos_of_interest].tree;
 
   igzstream is_anc(options["anc"].as<std::string>());
   if(is_anc.fail()){
@@ -79,19 +83,21 @@ GetTreeOfInterest(cxxopts::Options& options){
       for(int k = 0; k < (int) mtr.tree.nodes.size(); k++){
         mtr.tree.nodes[k].branch_length *= 28.0;
       }
-      mtr.tree.WriteNewick("tree_at_" + std::to_string(mtr.pos) + ".newick");
+      mtr.tree.WriteNewick( options["output"].as<std::string>() + "_at_" + std::to_string(pos_of_interest) + ".newick");
 
+      if(0){
       for(int i = 0; i < (int) mtr.tree.nodes.size(); i++){
         mtr.tree.nodes[i].branch_length = mtr.tree.nodes[i].SNP_end - mtr.tree.nodes[i].SNP_begin;
         assert(!std::isnan(mtr.tree.nodes[i].branch_length));
       }
-      mtr.tree.WriteNewick("tree_at_" + std::to_string(mtr.pos) + "_lifespan.newick");
+      mtr.tree.WriteNewick( options["output"].as<std::string>() + "_at_" + std::to_string(mtr.pos) + "_lifespan.newick");
       
       for(int i = 0; i < (int) mtr.tree.nodes.size(); i++){
         mtr.tree.nodes[i].branch_length = mtr.tree.nodes[i].num_events;
         assert(!std::isnan(mtr.tree.nodes[i].branch_length));
       }
-      mtr.tree.WriteNewick("tree_at_" + std::to_string(mtr.pos) + "_events.newick"); 
+      mtr.tree.WriteNewick( options["output"].as<std::string>() + "_at_" + std::to_string(mtr.pos) + "_events.newick"); 
+      }
 
       break; 
 
