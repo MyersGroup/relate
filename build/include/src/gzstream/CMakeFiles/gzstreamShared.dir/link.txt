@@ -1,1 +1,0 @@
-/apps/well/gcc/5.4.0/bin/g++  -fPIC -O3  -shared -Wl,-soname,libgzstreamShared.so -o ../../../../bin/libgzstreamShared.so CMakeFiles/gzstreamShared.dir/gzstream.cpp.o -lz 
