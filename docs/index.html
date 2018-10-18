@@ -97,7 +97,7 @@ gtag('config', 'UA-115753061-1');
 
                 <p><b>Relate</b> is available for academic use. To see rules for non-academic use, please read the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf" download>LICENCE</a> file, which is included with each software download.</p>
                
-                <h5>Pre-compiled binaries (last updated: 13/10/2018)</h5> 
+                <h5>Pre-compiled binaries (last updated: 18/10/2018)</h5> 
                 <form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
                   <div class="form-group">
                     <div class="checkbox">
@@ -109,9 +109,9 @@ gtag('config', 'UA-115753061-1');
                     </div>
                   </div>
                   <div class="form-group">
-                    <button type="submit" class="btn btn-link" formaction="download/relate_v1.0.4_x86_64_dynamic.tgz">Linux (x86_64, dynamic) - v1.0.4</button><br/>
-                    <button type="submit" class="btn btn-link" formaction="download/relate_v1.0.4_x86_64_static.tgz">Linux (x86_64, static) - v1.0.4</button><br/>
-                    <button type="submit" class="btn btn-link" formaction="download/relate_v1.0.4_MacOSX.tgz">Mac OSX - v1.0.4</button>                   
+                    <button type="submit" class="btn btn-link" formaction="download/relate_v1.0.5_x86_64_dynamic.tgz">Linux (x86_64, dynamic) - v1.0.5</button><br/>
+                    <button type="submit" class="btn btn-link" formaction="download/relate_v1.0.5_x86_64_static.tgz">Linux (x86_64, static) - v1.0.5</button><br/>
+                    <button type="submit" class="btn btn-link" formaction="download/relate_v1.0.5_MacOSX.tgz">Mac OSX - v1.0.5</button>                   
                   </div>
                 </form>
 
@@ -224,6 +224,26 @@ gtag('config', 'UA-115753061-1');
 
             <div class="panel-group" id="accordion">
 
+
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse6">
+                      v1.0.5
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapse6" class="panel-collapse collapse">
+                  <div class="panel-body">
+                    Date: 18th October 2018<br/>     
+                    <ul>
+                      <li>I had introduced a bug in update v1.0.4 in the function RelateExtract --mode TreeAtSNPAsNewick which has been fixed.</li> 
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+
              <div class="panel panel-default">
                 <div class="panel-heading">
                   <h4 class="panel-title">
@@ -234,7 +254,7 @@ gtag('config', 'UA-115753061-1');
                 </div>
                 <div id="collapse5" class="panel-collapse collapse">
                   <div class="panel-body">
-                    Date: xx yy 2018<br/>     
+                    Date: 13th October 2018<br/>     
                     <ul>
                       <li>Substituted zcat with gunzip -c to fix a bug in Macs.</li>
                       <li>Added requirement of R version >= 3.3.1 for TreeView because of a known bug with grid.draw() in older versions.</li>
