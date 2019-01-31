@@ -8,7 +8,9 @@
     ga('create', 'UA-115753061-1', 'auto');
 
     // Replace the following lines with the plugins you want to use.
-    ga('require', 'eventTracker');
+    ga('require', 'eventTracker', {
+      attributePrefix: 'data-'
+    });
     ga('require', 'outboundLinkTracker');
     ga('require', 'urlChangeTracker');
     // ...
@@ -115,7 +117,12 @@
                     </div>
                   </div>
                   <div class="form-group">
-                    <button type="submit" class="btn btn-link" formaction="download/relate_v1.0.5_x86_64_dynamic.tgz" data-event-category="Relate" data-event-action="download">Linux (x86_64, dynamic) - v1.0.5</button><br/>
+                    <button type="submit" 
+                            class="btn btn-link" 
+                            formaction="download/relate_v1.0.5_x86_64_dynamic.tgz"   
+                            data-on="click"
+                            data-event-category="Relate download"
+                            data-event-action="click">Linux (x86_64, dynamic) - v1.0.5</button><br/>
                     <button type="submit" class="btn btn-link" formaction="download/relate_v1.0.5_x86_64_static.tgz">Linux (x86_64, static) - v1.0.5</button><br/>
                     <button type="submit" class="btn btn-link" formaction="download/relate_v1.0.5_MacOSX.tgz">Mac OSX - v1.0.5</button>                   
                   </div>

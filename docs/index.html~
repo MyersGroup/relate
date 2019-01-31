@@ -1,26 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 
-  <head>
-
-    <!--
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115753061-1"></script>
-    <script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-
-gtag('config', 'UA-115753061-1');
-    </script>
-    -->
+  <head> 
 
     <script>
     window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
     ga('create', 'UA-115753061-1', 'auto');
 
     // Replace the following lines with the plugins you want to use.
-    ga('require', 'eventTracker');
+    ga('require', 'eventTracker', {
+      attributePrefix: 'data-'
+    });
     ga('require', 'outboundLinkTracker');
     ga('require', 'urlChangeTracker');
     // ...
