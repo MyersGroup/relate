@@ -4,17 +4,18 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/convert.c" "/users/myers/speidel/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/convert.c.o"
-  "/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/core.c" "/users/myers/speidel/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/core.c.o"
-  "/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/genotypes.c" "/users/myers/speidel/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/genotypes.c.o"
-  "/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/stats.c" "/users/myers/speidel/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/stats.c.o"
-  "/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/tables.c" "/users/myers/speidel/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/tables.c.o"
-  "/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/trees.c" "/users/myers/speidel/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/trees.c.o"
+  "/Users/leo/Documents/genomics/relate/include/file_formats/tskit/convert.c" "/Users/leo/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/convert.c.o"
+  "/Users/leo/Documents/genomics/relate/include/file_formats/tskit/core.c" "/Users/leo/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/core.c.o"
+  "/Users/leo/Documents/genomics/relate/include/file_formats/tskit/genotypes.c" "/Users/leo/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/genotypes.c.o"
+  "/Users/leo/Documents/genomics/relate/include/file_formats/tskit/stats.c" "/Users/leo/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/stats.c.o"
+  "/Users/leo/Documents/genomics/relate/include/file_formats/tskit/tables.c" "/Users/leo/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/tables.c.o"
+  "/Users/leo/Documents/genomics/relate/include/file_formats/tskit/trees.c" "/Users/leo/Documents/genomics/relate/build/include/file_formats/tskit/CMakeFiles/tskitStatic.dir/trees.c.o"
   )
-set(CMAKE_C_COMPILER_ID "GNU")
+set(CMAKE_C_COMPILER_ID "Clang")
 
 # The include file search paths:
 set(CMAKE_C_TARGET_INCLUDE_PATH
+  "/opt/local/include"
   "../include/src"
   "../include/test"
   "../include/src/gzstream"

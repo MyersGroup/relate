@@ -16,17 +16,17 @@ zlib.h
 string
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/anc.cpp
+/Users/leo/Documents/genomics/relate/include/src/anc.cpp
 anc.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/anc.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/anc.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc.hpp
 gzstream.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/gzstream.hpp
+/Users/leo/Documents/genomics/relate/include/src/gzstream.hpp
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/data.hpp
+/Users/leo/Documents/genomics/relate/include/src/data.hpp
 sample.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/sample.hpp
+/Users/leo/Documents/genomics/relate/include/src/sample.hpp
 iostream
 -
 iomanip
@@ -42,25 +42,25 @@ ctime
 tgmath.h
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/anc_builder.cpp
+/Users/leo/Documents/genomics/relate/include/src/anc_builder.cpp
 anc_builder.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/anc_builder.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc_builder.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/anc_builder.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc_builder.hpp
 fast_log.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_log.hpp
+/Users/leo/Documents/genomics/relate/include/src/fast_log.hpp
 collapsed_matrix.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/collapsed_matrix.hpp
+/Users/leo/Documents/genomics/relate/include/src/collapsed_matrix.hpp
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/data.hpp
+/Users/leo/Documents/genomics/relate/include/src/data.hpp
 anc.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/anc.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc.hpp
 mutations.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/mutations.hpp
+/Users/leo/Documents/genomics/relate/include/src/mutations.hpp
 fast_painting.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_painting.hpp
+/Users/leo/Documents/genomics/relate/include/src/fast_painting.hpp
 tree_builder.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/tree_builder.hpp
+/Users/leo/Documents/genomics/relate/include/src/tree_builder.hpp
 utility
 -
 limits
@@ -70,19 +70,19 @@ utility
 tgmath.h
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/branch_length_estimator.cpp
+/Users/leo/Documents/genomics/relate/include/src/branch_length_estimator.cpp
 branch_length_estimator.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/branch_length_estimator.hpp
+/Users/leo/Documents/genomics/relate/include/src/branch_length_estimator.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/branch_length_estimator.hpp
+/Users/leo/Documents/genomics/relate/include/src/branch_length_estimator.hpp
 fast_log.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_log.hpp
+/Users/leo/Documents/genomics/relate/include/src/fast_log.hpp
 collapsed_matrix.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/collapsed_matrix.hpp
+/Users/leo/Documents/genomics/relate/include/src/collapsed_matrix.hpp
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/data.hpp
+/Users/leo/Documents/genomics/relate/include/src/data.hpp
 anc.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/anc.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc.hpp
 sys/types.h
 -
 math.h
@@ -100,11 +100,11 @@ set
 random
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/collapsed_matrix.cpp
+/Users/leo/Documents/genomics/relate/include/src/collapsed_matrix.cpp
 collapsed_matrix.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/collapsed_matrix.hpp
+/Users/leo/Documents/genomics/relate/include/src/collapsed_matrix.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/collapsed_matrix.hpp
+/Users/leo/Documents/genomics/relate/include/src/collapsed_matrix.hpp
 stdio.h
 -
 iostream
@@ -114,15 +114,15 @@ vector
 cassert
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/data.cpp
+/Users/leo/Documents/genomics/relate/include/src/data.cpp
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/data.hpp
+/Users/leo/Documents/genomics/relate/include/src/data.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/data.hpp
+/Users/leo/Documents/genomics/relate/include/src/data.hpp
 collapsed_matrix.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/collapsed_matrix.hpp
+/Users/leo/Documents/genomics/relate/include/src/collapsed_matrix.hpp
 gzstream.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/gzstream.hpp
+/Users/leo/Documents/genomics/relate/include/src/gzstream.hpp
 iostream
 -
 iomanip
@@ -152,23 +152,23 @@ string.h
 cassert
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_log.cpp
+/Users/leo/Documents/genomics/relate/include/src/fast_log.cpp
 fast_log.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_log.hpp
+/Users/leo/Documents/genomics/relate/include/src/fast_log.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_log.hpp
+/Users/leo/Documents/genomics/relate/include/src/fast_log.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_painting.cpp
+/Users/leo/Documents/genomics/relate/include/src/fast_painting.cpp
 fast_painting.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_painting.hpp
+/Users/leo/Documents/genomics/relate/include/src/fast_painting.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_painting.hpp
+/Users/leo/Documents/genomics/relate/include/src/fast_painting.hpp
 fast_log.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_log.hpp
+/Users/leo/Documents/genomics/relate/include/src/fast_log.hpp
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/data.hpp
+/Users/leo/Documents/genomics/relate/include/src/data.hpp
 collapsed_matrix.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/collapsed_matrix.hpp
+/Users/leo/Documents/genomics/relate/include/src/collapsed_matrix.hpp
 iostream
 -
 list
@@ -182,11 +182,11 @@ tgmath.h
 cassert
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/filesystem.cpp
+/Users/leo/Documents/genomics/relate/include/src/filesystem.cpp
 filesystem.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/filesystem.hpp
+/Users/leo/Documents/genomics/relate/include/src/filesystem.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/filesystem.hpp
+/Users/leo/Documents/genomics/relate/include/src/filesystem.hpp
 stdio.h
 -
 iostream
@@ -206,27 +206,27 @@ sys/types.h
 sys/stat.h
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/mutations.cpp
+/Users/leo/Documents/genomics/relate/include/src/mutations.cpp
 mutations.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/mutations.hpp
+/Users/leo/Documents/genomics/relate/include/src/mutations.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/mutations.hpp
+/Users/leo/Documents/genomics/relate/include/src/mutations.hpp
 gzstream.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/gzstream.hpp
+/Users/leo/Documents/genomics/relate/include/src/gzstream.hpp
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/data.hpp
+/Users/leo/Documents/genomics/relate/include/src/data.hpp
 anc.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/anc.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc.hpp
 iostream
 -
 deque
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/plot.cpp
+/Users/leo/Documents/genomics/relate/include/src/plot.cpp
 plot.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/plot.hpp
+/Users/leo/Documents/genomics/relate/include/src/plot.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/plot.hpp
+/Users/leo/Documents/genomics/relate/include/src/plot.hpp
 iostream
 -
 vector
@@ -236,13 +236,13 @@ cassert
 tgmath.h
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/sample.cpp
+/Users/leo/Documents/genomics/relate/include/src/sample.cpp
 sample.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/sample.hpp
+/Users/leo/Documents/genomics/relate/include/src/sample.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/sample.hpp
+/Users/leo/Documents/genomics/relate/include/src/sample.hpp
 gzstream.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/gzstream.hpp
+/Users/leo/Documents/genomics/relate/include/src/gzstream.hpp
 iostream
 -
 iomanip
@@ -256,19 +256,19 @@ algorithm
 map
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/tree_builder.cpp
+/Users/leo/Documents/genomics/relate/include/src/tree_builder.cpp
 tree_builder.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/tree_builder.hpp
+/Users/leo/Documents/genomics/relate/include/src/tree_builder.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/tree_builder.hpp
+/Users/leo/Documents/genomics/relate/include/src/tree_builder.hpp
 fast_log.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/fast_log.hpp
+/Users/leo/Documents/genomics/relate/include/src/fast_log.hpp
 collapsed_matrix.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/collapsed_matrix.hpp
+/Users/leo/Documents/genomics/relate/include/src/collapsed_matrix.hpp
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/data.hpp
+/Users/leo/Documents/genomics/relate/include/src/data.hpp
 anc.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/anc.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc.hpp
 sys/types.h
 -
 math.h
@@ -286,15 +286,35 @@ set
 random
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/src/tree_comparer.cpp
+/Users/leo/Documents/genomics/relate/include/src/tree_comparer.cpp
 tree_comparer.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/tree_comparer.hpp
+/Users/leo/Documents/genomics/relate/include/src/tree_comparer.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/src/tree_comparer.hpp
+/Users/leo/Documents/genomics/relate/include/src/tree_comparer.hpp
 anc.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/anc.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc.hpp
 tree_builder.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/tree_builder.hpp
+/Users/leo/Documents/genomics/relate/include/src/tree_builder.hpp
 anc_builder.hpp
-/users/myers/speidel/Documents/genomics/relate/include/src/anc_builder.hpp
+/Users/leo/Documents/genomics/relate/include/src/anc_builder.hpp
+
+/opt/local/include/zconf.h
+windows.h
+-
+limits.h
+-
+sys/types.h
+-
+stdarg.h
+-
+stddef.h
+-
+unistd.h
+-
+unixio.h
+-
+
+/opt/local/include/zlib.h
+zconf.h
+/opt/local/include/zconf.h
 

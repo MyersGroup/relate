@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/convert.c
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/convert.c
 stdio.h
 -
 string.h
@@ -20,13 +20,13 @@ stdlib.h
 math.h
 -
 convert.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/convert.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/convert.h
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/convert.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/convert.h
 genotypes.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/genotypes.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/genotypes.h
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/core.c
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/core.c
 stdio.h
 -
 stdlib.h
@@ -38,19 +38,19 @@ errno.h
 assert.h
 -
 kastore.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/kastore.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/kastore.h
 core.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/core.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/core.h
 windows.h
 -
 wincrypt.h
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/core.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/core.h
 stdbool.h
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/genotypes.c
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/genotypes.c
 stdio.h
 -
 string.h
@@ -62,13 +62,13 @@ stdbool.h
 stdlib.h
 -
 genotypes.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/genotypes.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/genotypes.h
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/genotypes.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/genotypes.h
 trees.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/trees.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/trees.h
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/kastore.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/kastore.h
 stdint.h
 -
 stddef.h
@@ -76,7 +76,7 @@ stddef.h
 stdio.h
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/stats.c
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/stats.c
 stdio.h
 -
 string.h
@@ -88,13 +88,13 @@ assert.h
 math.h
 -
 stats.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/stats.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/stats.h
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/stats.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/stats.h
 trees.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/trees.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/trees.h
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/tables.c
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/tables.c
 stdio.h
 -
 stddef.h
@@ -110,9 +110,9 @@ stdlib.h
 float.h
 -
 tables.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/tables.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/tables.h
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/tables.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/tables.h
 stdio.h
 -
 stdbool.h
@@ -120,11 +120,11 @@ stdbool.h
 stdint.h
 -
 kastore.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/kastore.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/kastore.h
 core.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/core.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/core.h
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/trees.c
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/trees.c
 stdio.h
 -
 string.h
@@ -136,9 +136,9 @@ stdbool.h
 stdlib.h
 -
 trees.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/trees.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/trees.h
 
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/trees.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/trees.h
 tables.h
-/users/myers/speidel/Documents/genomics/relate/include/file_formats/tskit/tables.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/tables.h
 

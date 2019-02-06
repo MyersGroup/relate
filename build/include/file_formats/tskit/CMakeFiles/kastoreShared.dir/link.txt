@@ -1,1 +1,1 @@
-/apps/well/gcc/5.4.0/bin/gcc  -fPIC   -shared -Wl,-soname,libkastoreShared.so -o ../../../../bin/libkastoreShared.so CMakeFiles/kastoreShared.dir/kastore.c.o 
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -dynamiclib -Wl,-headerpad_max_install_names  -o ../../../../bin/libkastoreShared.dylib -install_name @rpath/libkastoreShared.dylib CMakeFiles/kastoreShared.dir/kastore.c.o 

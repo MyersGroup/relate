@@ -1,2 +1,2 @@
-/usr/bin/ar qc ../../../../bin/libgzstreamStatic.a  CMakeFiles/gzstreamStatic.dir/gzstream.cpp.o
-/usr/bin/ranlib ../../../../bin/libgzstreamStatic.a
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc ../../../../bin/libgzstreamStatic.a  CMakeFiles/gzstreamStatic.dir/gzstream.cpp.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib ../../../../bin/libgzstreamStatic.a

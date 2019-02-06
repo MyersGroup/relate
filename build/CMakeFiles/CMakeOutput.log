@@ -1,6 +1,6 @@
-The system is: Linux - 3.10.0-514.26.2.el7.x86_64 - x86_64
+The system is: Darwin - 18.2.0 - x86_64
 Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
-Compiler: /apps/well/gcc/5.4.0/bin/gcc 
+Compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc 
 Build flags: 
 Id flags: 
 
@@ -10,10 +10,10 @@ The output was:
 
 Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
 
-The C compiler identification is GNU, found in "/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/3.7.2/CompilerIdC/a.out"
+The C compiler identification is AppleClang, found in "/Users/leo/Documents/genomics/relate/build/CMakeFiles/3.5.2/CompilerIdC/a.out"
 
 Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
-Compiler: /apps/well/gcc/5.4.0/bin/g++ 
+Compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ 
 Build flags: 
 Id flags: 
 
@@ -23,131 +23,108 @@ The output was:
 
 Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
 
-The CXX compiler identification is GNU, found in "/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/3.7.2/CompilerIdCXX/a.out"
+The CXX compiler identification is AppleClang, found in "/Users/leo/Documents/genomics/relate/build/CMakeFiles/3.5.2/CompilerIdCXX/a.out"
 
 Determining if the C compiler works passed with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_7b501/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_7b501.dir/build.make CMakeFiles/cmTC_7b501.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_7b501.dir/testCCompiler.c.o
-/apps/well/gcc/5.4.0/bin/gcc     -o CMakeFiles/cmTC_7b501.dir/testCCompiler.c.o   -c /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp/testCCompiler.c
-Linking C executable cmTC_7b501
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7b501.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/gcc       CMakeFiles/cmTC_7b501.dir/testCCompiler.c.o  -o cmTC_7b501 -rdynamic 
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Run Build Command:"/opt/local/bin/gmake" "cmTC_bf5a6/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_bf5a6.dir/build.make CMakeFiles/cmTC_bf5a6.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_bf5a6.dir/testCCompiler.c.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -o CMakeFiles/cmTC_bf5a6.dir/testCCompiler.c.o   -c /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp/testCCompiler.c
+Linking C executable cmTC_bf5a6
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bf5a6.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_bf5a6.dir/testCCompiler.c.o  -o cmTC_bf5a6  
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
 Detecting C compiler ABI info compiled with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_e23f4/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_e23f4.dir/build.make CMakeFiles/cmTC_e23f4.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_e23f4.dir/CMakeCCompilerABI.c.o
-/apps/well/gcc/5.4.0/bin/gcc     -o CMakeFiles/cmTC_e23f4.dir/CMakeCCompilerABI.c.o   -c /gpfs0/apps/well/cmake/3.7.2/share/cmake-3.7/Modules/CMakeCCompilerABI.c
-Linking C executable cmTC_e23f4
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e23f4.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/gcc      -v CMakeFiles/cmTC_e23f4.dir/CMakeCCompilerABI.c.o  -o cmTC_e23f4 -rdynamic  
-Reading specs from /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/specs
-COLLECT_GCC=/apps/well/gcc/5.4.0/bin/gcc
-COLLECT_LTO_WRAPPER=/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper
-Target: x86_64-unknown-linux-gnu
-Configured with: ../gcc-5.4.0/configure --prefix=/apps/well/gcc/5.4.0
+Run Build Command:"/opt/local/bin/gmake" "cmTC_c5c03/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_c5c03.dir/build.make CMakeFiles/cmTC_c5c03.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c5c03.dir/CMakeCCompilerABI.c.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -o CMakeFiles/cmTC_c5c03.dir/CMakeCCompilerABI.c.o   -c /opt/local/share/cmake-3.5/Modules/CMakeCCompilerABI.c
+Linking C executable cmTC_c5c03
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c5c03.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -v -Wl,-v CMakeFiles/cmTC_c5c03.dir/CMakeCCompilerABI.c.o  -o cmTC_c5c03   
+Apple LLVM version 10.0.0 (clang-1000.11.45.5)
+Target: x86_64-apple-darwin18.2.0
 Thread model: posix
-gcc version 5.4.0 (GCC) 
-COMPILER_PATH=/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/
-LIBRARY_PATH=/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_e23f4' '-rdynamic' '-mtune=generic' '-march=x86-64'
- /gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_e23f4 /lib/../lib64/crt1.o /lib/../lib64/crti.o /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_e23f4.dir/CMakeCCompilerABI.c.o -rpath /apps/well/gcc/5.4.0/lib64 -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /lib/../lib64/crtn.o
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -macosx_version_min 10.14.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -o cmTC_c5c03 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_c5c03.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a
+@(#)PROGRAM:ld  PROJECT:ld64-409.12
+BUILD 17:47:51 Sep 25 2018
+configured to support archs: armv6 armv7 armv7s arm64 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em arm64e arm64_32
+Library search paths:
+	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib
+Framework search paths:
+	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
 Parsed C implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  ignore line: [Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp]
+  ignore line: [Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command:"/usr/bin/gmake" "cmTC_e23f4/fast"]
-  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTC_e23f4.dir/build.make CMakeFiles/cmTC_e23f4.dir/build]
-  ignore line: [gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp']
-  ignore line: [Building C object CMakeFiles/cmTC_e23f4.dir/CMakeCCompilerABI.c.o]
-  ignore line: [/apps/well/gcc/5.4.0/bin/gcc     -o CMakeFiles/cmTC_e23f4.dir/CMakeCCompilerABI.c.o   -c /gpfs0/apps/well/cmake/3.7.2/share/cmake-3.7/Modules/CMakeCCompilerABI.c]
-  ignore line: [Linking C executable cmTC_e23f4]
-  ignore line: [/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e23f4.dir/link.txt --verbose=1]
-  ignore line: [/apps/well/gcc/5.4.0/bin/gcc      -v CMakeFiles/cmTC_e23f4.dir/CMakeCCompilerABI.c.o  -o cmTC_e23f4 -rdynamic  ]
-  ignore line: [Reading specs from /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/specs]
-  ignore line: [COLLECT_GCC=/apps/well/gcc/5.4.0/bin/gcc]
-  ignore line: [COLLECT_LTO_WRAPPER=/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper]
-  ignore line: [Target: x86_64-unknown-linux-gnu]
-  ignore line: [Configured with: ../gcc-5.4.0/configure --prefix=/apps/well/gcc/5.4.0]
+  ignore line: [Run Build Command:"/opt/local/bin/gmake" "cmTC_c5c03/fast"]
+  ignore line: [/opt/local/bin/gmake -f CMakeFiles/cmTC_c5c03.dir/build.make CMakeFiles/cmTC_c5c03.dir/build]
+  ignore line: [gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp']
+  ignore line: [Building C object CMakeFiles/cmTC_c5c03.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -o CMakeFiles/cmTC_c5c03.dir/CMakeCCompilerABI.c.o   -c /opt/local/share/cmake-3.5/Modules/CMakeCCompilerABI.c]
+  ignore line: [Linking C executable cmTC_c5c03]
+  ignore line: [/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c5c03.dir/link.txt --verbose=1]
+  ignore line: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -v -Wl,-v CMakeFiles/cmTC_c5c03.dir/CMakeCCompilerABI.c.o  -o cmTC_c5c03   ]
+  ignore line: [Apple LLVM version 10.0.0 (clang-1000.11.45.5)]
+  ignore line: [Target: x86_64-apple-darwin18.2.0]
   ignore line: [Thread model: posix]
-  ignore line: [gcc version 5.4.0 (GCC) ]
-  ignore line: [COMPILER_PATH=/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/]
-  ignore line: [LIBRARY_PATH=/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_e23f4' '-rdynamic' '-mtune=generic' '-march=x86-64']
-  link line: [ /gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_e23f4 /lib/../lib64/crt1.o /lib/../lib64/crti.o /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_e23f4.dir/CMakeCCompilerABI.c.o -rpath /apps/well/gcc/5.4.0/lib64 -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /lib/../lib64/crtn.o]
-    arg [/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2] ==> ignore
-    arg [--eh-frame-hdr] ==> ignore
-    arg [-m] ==> ignore
-    arg [elf_x86_64] ==> ignore
-    arg [-export-dynamic] ==> ignore
-    arg [-dynamic-linker] ==> ignore
-    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+  ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+  link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -macosx_version_min 10.14.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -o cmTC_c5c03 -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_c5c03.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
+    arg [-demangle] ==> ignore
+    arg [-lto_library] ==> lib [to_library]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib] ==> ignore
+    arg [-dynamic] ==> ignore
+    arg [-arch] ==> ignore
+    arg [x86_64] ==> ignore
+    arg [-macosx_version_min] ==> ignore
+    arg [10.14.0] ==> ignore
+    arg [-syslibroot] ==> ignore
+    arg [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_e23f4] ==> ignore
-    arg [/lib/../lib64/crt1.o] ==> ignore
-    arg [/lib/../lib64/crti.o] ==> ignore
-    arg [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o] ==> ignore
-    arg [-L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
-    arg [-L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc] ==> dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc]
-    arg [-L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64]
-    arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
-    arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
-    arg [-L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..]
-    arg [CMakeFiles/cmTC_e23f4.dir/CMakeCCompilerABI.c.o] ==> ignore
-    arg [-rpath] ==> ignore
-    arg [/apps/well/gcc/5.4.0/lib64] ==> ignore
-    arg [-lgcc] ==> lib [gcc]
-    arg [--as-needed] ==> ignore
-    arg [-lgcc_s] ==> lib [gcc_s]
-    arg [--no-as-needed] ==> ignore
-    arg [-lc] ==> lib [c]
-    arg [-lgcc] ==> lib [gcc]
-    arg [--as-needed] ==> ignore
-    arg [-lgcc_s] ==> lib [gcc_s]
-    arg [--no-as-needed] ==> ignore
-    arg [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o] ==> ignore
-    arg [/lib/../lib64/crtn.o] ==> ignore
-  remove lib [gcc]
-  remove lib [gcc_s]
-  remove lib [gcc]
-  remove lib [gcc_s]
-  collapse library dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> [/gpfs0/apps/well/gcc/5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
-  collapse library dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc] ==> [/gpfs0/apps/well/gcc/5.4.0/lib/gcc]
-  collapse library dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> [/gpfs0/apps/well/gcc/5.4.0/lib64]
-  collapse library dir [/lib/../lib64] ==> [/lib64]
-  collapse library dir [/usr/lib/../lib64] ==> [/usr/lib64]
-  collapse library dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> [/gpfs0/apps/well/gcc/5.4.0/lib]
-  implicit libs: [c]
-  implicit dirs: [/gpfs0/apps/well/gcc/5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0;/gpfs0/apps/well/gcc/5.4.0/lib/gcc;/gpfs0/apps/well/gcc/5.4.0/lib64;/lib64;/usr/lib64;/gpfs0/apps/well/gcc/5.4.0/lib]
-  implicit fwks: []
+    arg [cmTC_c5c03] ==> ignore
+    arg [-search_paths_first] ==> ignore
+    arg [-headerpad_max_install_names] ==> ignore
+    arg [-v] ==> ignore
+    arg [CMakeFiles/cmTC_c5c03.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [-lSystem] ==> lib [System]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+  Library search paths: [;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib]
+  Framework search paths: [;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/]
+  remove lib [System]
+  collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib]
+  collapse framework dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks]
+  implicit libs: [to_library;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+  implicit dirs: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib]
+  implicit fwks: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks]
 
 
 
 
 Detecting C [-std=c11] compiler features compiled with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_ac06e/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_ac06e.dir/build.make CMakeFiles/cmTC_ac06e.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_ac06e.dir/feature_tests.c.o
-/apps/well/gcc/5.4.0/bin/gcc    -std=c11 -o CMakeFiles/cmTC_ac06e.dir/feature_tests.c.o   -c /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/feature_tests.c
-Linking C executable cmTC_ac06e
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ac06e.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/gcc       CMakeFiles/cmTC_ac06e.dir/feature_tests.c.o  -o cmTC_ac06e -rdynamic 
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Run Build Command:"/opt/local/bin/gmake" "cmTC_1bb58/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_1bb58.dir/build.make CMakeFiles/cmTC_1bb58.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1bb58.dir/feature_tests.c.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -std=c11 -o CMakeFiles/cmTC_1bb58.dir/feature_tests.c.o   -c /Users/leo/Documents/genomics/relate/build/CMakeFiles/feature_tests.c
+Linking C executable cmTC_1bb58
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1bb58.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_1bb58.dir/feature_tests.c.o  -o cmTC_1bb58  
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: C_FEATURE:1c_function_prototypes
@@ -157,17 +134,17 @@ gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relat
 
 
 Detecting C [-std=c99] compiler features compiled with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_b50a5/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_b50a5.dir/build.make CMakeFiles/cmTC_b50a5.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_b50a5.dir/feature_tests.c.o
-/apps/well/gcc/5.4.0/bin/gcc    -std=c99 -o CMakeFiles/cmTC_b50a5.dir/feature_tests.c.o   -c /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/feature_tests.c
-Linking C executable cmTC_b50a5
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b50a5.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/gcc       CMakeFiles/cmTC_b50a5.dir/feature_tests.c.o  -o cmTC_b50a5 -rdynamic 
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Run Build Command:"/opt/local/bin/gmake" "cmTC_c3118/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_c3118.dir/build.make CMakeFiles/cmTC_c3118.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c3118.dir/feature_tests.c.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -std=c99 -o CMakeFiles/cmTC_c3118.dir/feature_tests.c.o   -c /Users/leo/Documents/genomics/relate/build/CMakeFiles/feature_tests.c
+Linking C executable cmTC_c3118
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c3118.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_c3118.dir/feature_tests.c.o  -o cmTC_c3118  
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: C_FEATURE:1c_function_prototypes
@@ -177,17 +154,17 @@ gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relat
 
 
 Detecting C [-std=c90] compiler features compiled with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_dc15d/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_dc15d.dir/build.make CMakeFiles/cmTC_dc15d.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_dc15d.dir/feature_tests.c.o
-/apps/well/gcc/5.4.0/bin/gcc    -std=c90 -o CMakeFiles/cmTC_dc15d.dir/feature_tests.c.o   -c /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/feature_tests.c
-Linking C executable cmTC_dc15d
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dc15d.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/gcc       CMakeFiles/cmTC_dc15d.dir/feature_tests.c.o  -o cmTC_dc15d -rdynamic 
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Run Build Command:"/opt/local/bin/gmake" "cmTC_f0b82/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_f0b82.dir/build.make CMakeFiles/cmTC_f0b82.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f0b82.dir/feature_tests.c.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -std=c90 -o CMakeFiles/cmTC_f0b82.dir/feature_tests.c.o   -c /Users/leo/Documents/genomics/relate/build/CMakeFiles/feature_tests.c
+Linking C executable cmTC_f0b82
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f0b82.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_f0b82.dir/feature_tests.c.o  -o cmTC_f0b82  
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: C_FEATURE:1c_function_prototypes
@@ -195,128 +172,106 @@ gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relat
     Feature record: C_FEATURE:0c_static_assert
     Feature record: C_FEATURE:0c_variadic_macros
 Determining if the CXX compiler works passed with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_dfebe/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_dfebe.dir/build.make CMakeFiles/cmTC_dfebe.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_dfebe.dir/testCXXCompiler.cxx.o
-/apps/well/gcc/5.4.0/bin/g++      -o CMakeFiles/cmTC_dfebe.dir/testCXXCompiler.cxx.o -c /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
-Linking CXX executable cmTC_dfebe
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dfebe.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/g++        CMakeFiles/cmTC_dfebe.dir/testCXXCompiler.cxx.o  -o cmTC_dfebe -rdynamic 
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Run Build Command:"/opt/local/bin/gmake" "cmTC_7238f/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_7238f.dir/build.make CMakeFiles/cmTC_7238f.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_7238f.dir/testCXXCompiler.cxx.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -o CMakeFiles/cmTC_7238f.dir/testCXXCompiler.cxx.o -c /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTC_7238f
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7238f.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_7238f.dir/testCXXCompiler.cxx.o  -o cmTC_7238f  
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
 Detecting CXX compiler ABI info compiled with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_705c6/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_705c6.dir/build.make CMakeFiles/cmTC_705c6.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_705c6.dir/CMakeCXXCompilerABI.cpp.o
-/apps/well/gcc/5.4.0/bin/g++      -o CMakeFiles/cmTC_705c6.dir/CMakeCXXCompilerABI.cpp.o -c /gpfs0/apps/well/cmake/3.7.2/share/cmake-3.7/Modules/CMakeCXXCompilerABI.cpp
-Linking CXX executable cmTC_705c6
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_705c6.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/g++       -v CMakeFiles/cmTC_705c6.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_705c6 -rdynamic  
-Reading specs from /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/specs
-COLLECT_GCC=/apps/well/gcc/5.4.0/bin/g++
-COLLECT_LTO_WRAPPER=/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper
-Target: x86_64-unknown-linux-gnu
-Configured with: ../gcc-5.4.0/configure --prefix=/apps/well/gcc/5.4.0
+Run Build Command:"/opt/local/bin/gmake" "cmTC_f708b/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_f708b.dir/build.make CMakeFiles/cmTC_f708b.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_f708b.dir/CMakeCXXCompilerABI.cpp.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -o CMakeFiles/cmTC_f708b.dir/CMakeCXXCompilerABI.cpp.o -c /opt/local/share/cmake-3.5/Modules/CMakeCXXCompilerABI.cpp
+Linking CXX executable cmTC_f708b
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f708b.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -v -Wl,-v CMakeFiles/cmTC_f708b.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_f708b   
+Apple LLVM version 10.0.0 (clang-1000.11.45.5)
+Target: x86_64-apple-darwin18.2.0
 Thread model: posix
-gcc version 5.4.0 (GCC) 
-COMPILER_PATH=/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/
-LIBRARY_PATH=/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_705c6' '-rdynamic' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
- /gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_705c6 /lib/../lib64/crt1.o /lib/../lib64/crti.o /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -rpath /apps/well/gcc/5.4.0/lib64 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_705c6.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -rpath /apps/well/gcc/5.4.0/lib64 -lgcc_s -lgcc -lc -lgcc_s -lgcc /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /lib/../lib64/crtn.o
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -macosx_version_min 10.14.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -o cmTC_f708b -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_f708b.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a
+@(#)PROGRAM:ld  PROJECT:ld64-409.12
+BUILD 17:47:51 Sep 25 2018
+configured to support archs: armv6 armv7 armv7s arm64 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em arm64e arm64_32
+Library search paths:
+	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib
+Framework search paths:
+	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
 Parsed CXX implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  ignore line: [Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp]
+  ignore line: [Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command:"/usr/bin/gmake" "cmTC_705c6/fast"]
-  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTC_705c6.dir/build.make CMakeFiles/cmTC_705c6.dir/build]
-  ignore line: [gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp']
-  ignore line: [Building CXX object CMakeFiles/cmTC_705c6.dir/CMakeCXXCompilerABI.cpp.o]
-  ignore line: [/apps/well/gcc/5.4.0/bin/g++      -o CMakeFiles/cmTC_705c6.dir/CMakeCXXCompilerABI.cpp.o -c /gpfs0/apps/well/cmake/3.7.2/share/cmake-3.7/Modules/CMakeCXXCompilerABI.cpp]
-  ignore line: [Linking CXX executable cmTC_705c6]
-  ignore line: [/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_705c6.dir/link.txt --verbose=1]
-  ignore line: [/apps/well/gcc/5.4.0/bin/g++       -v CMakeFiles/cmTC_705c6.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_705c6 -rdynamic  ]
-  ignore line: [Reading specs from /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/specs]
-  ignore line: [COLLECT_GCC=/apps/well/gcc/5.4.0/bin/g++]
-  ignore line: [COLLECT_LTO_WRAPPER=/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/lto-wrapper]
-  ignore line: [Target: x86_64-unknown-linux-gnu]
-  ignore line: [Configured with: ../gcc-5.4.0/configure --prefix=/apps/well/gcc/5.4.0]
+  ignore line: [Run Build Command:"/opt/local/bin/gmake" "cmTC_f708b/fast"]
+  ignore line: [/opt/local/bin/gmake -f CMakeFiles/cmTC_f708b.dir/build.make CMakeFiles/cmTC_f708b.dir/build]
+  ignore line: [gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp']
+  ignore line: [Building CXX object CMakeFiles/cmTC_f708b.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -o CMakeFiles/cmTC_f708b.dir/CMakeCXXCompilerABI.cpp.o -c /opt/local/share/cmake-3.5/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Linking CXX executable cmTC_f708b]
+  ignore line: [/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f708b.dir/link.txt --verbose=1]
+  ignore line: [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -v -Wl,-v CMakeFiles/cmTC_f708b.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_f708b   ]
+  ignore line: [Apple LLVM version 10.0.0 (clang-1000.11.45.5)]
+  ignore line: [Target: x86_64-apple-darwin18.2.0]
   ignore line: [Thread model: posix]
-  ignore line: [gcc version 5.4.0 (GCC) ]
-  ignore line: [COMPILER_PATH=/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/:/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/]
-  ignore line: [LIBRARY_PATH=/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64/:/lib/../lib64/:/usr/lib/../lib64/:/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_705c6' '-rdynamic' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
-  link line: [ /gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_705c6 /lib/../lib64/crt1.o /lib/../lib64/crti.o /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o -rpath /apps/well/gcc/5.4.0/lib64 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../.. CMakeFiles/cmTC_705c6.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -rpath /apps/well/gcc/5.4.0/lib64 -lgcc_s -lgcc -lc -lgcc_s -lgcc /gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o /lib/../lib64/crtn.o]
-    arg [/gpfs0/apps/well/gcc/5.4.0/bin/../libexec/gcc/x86_64-unknown-linux-gnu/5.4.0/collect2] ==> ignore
-    arg [--eh-frame-hdr] ==> ignore
-    arg [-m] ==> ignore
-    arg [elf_x86_64] ==> ignore
-    arg [-export-dynamic] ==> ignore
-    arg [-dynamic-linker] ==> ignore
-    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+  ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
+  link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch x86_64 -macosx_version_min 10.14.0 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -o cmTC_f708b -search_paths_first -headerpad_max_install_names -v CMakeFiles/cmTC_f708b.dir/CMakeCXXCompilerABI.cpp.o -lc++ -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
+    arg [-demangle] ==> ignore
+    arg [-lto_library] ==> lib [to_library]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib] ==> ignore
+    arg [-dynamic] ==> ignore
+    arg [-arch] ==> ignore
+    arg [x86_64] ==> ignore
+    arg [-macosx_version_min] ==> ignore
+    arg [10.14.0] ==> ignore
+    arg [-syslibroot] ==> ignore
+    arg [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_705c6] ==> ignore
-    arg [/lib/../lib64/crt1.o] ==> ignore
-    arg [/lib/../lib64/crti.o] ==> ignore
-    arg [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtbegin.o] ==> ignore
-    arg [-rpath] ==> ignore
-    arg [/apps/well/gcc/5.4.0/lib64] ==> ignore
-    arg [-L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
-    arg [-L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc] ==> dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc]
-    arg [-L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64]
-    arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
-    arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
-    arg [-L/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..]
-    arg [CMakeFiles/cmTC_705c6.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
-    arg [-lstdc++] ==> lib [stdc++]
-    arg [-lm] ==> lib [m]
-    arg [-rpath] ==> ignore
-    arg [/apps/well/gcc/5.4.0/lib64] ==> ignore
-    arg [-lgcc_s] ==> lib [gcc_s]
-    arg [-lgcc] ==> lib [gcc]
-    arg [-lc] ==> lib [c]
-    arg [-lgcc_s] ==> lib [gcc_s]
-    arg [-lgcc] ==> lib [gcc]
-    arg [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/crtend.o] ==> ignore
-    arg [/lib/../lib64/crtn.o] ==> ignore
-  remove lib [gcc_s]
-  remove lib [gcc]
-  remove lib [gcc_s]
-  remove lib [gcc]
-  collapse library dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0] ==> [/gpfs0/apps/well/gcc/5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0]
-  collapse library dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc] ==> [/gpfs0/apps/well/gcc/5.4.0/lib/gcc]
-  collapse library dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../../../lib64] ==> [/gpfs0/apps/well/gcc/5.4.0/lib64]
-  collapse library dir [/lib/../lib64] ==> [/lib64]
-  collapse library dir [/usr/lib/../lib64] ==> [/usr/lib64]
-  collapse library dir [/gpfs0/apps/well/gcc/5.4.0/bin/../lib/gcc/x86_64-unknown-linux-gnu/5.4.0/../../..] ==> [/gpfs0/apps/well/gcc/5.4.0/lib]
-  implicit libs: [stdc++;m;c]
-  implicit dirs: [/gpfs0/apps/well/gcc/5.4.0/lib/gcc/x86_64-unknown-linux-gnu/5.4.0;/gpfs0/apps/well/gcc/5.4.0/lib/gcc;/gpfs0/apps/well/gcc/5.4.0/lib64;/lib64;/usr/lib64;/gpfs0/apps/well/gcc/5.4.0/lib]
-  implicit fwks: []
+    arg [cmTC_f708b] ==> ignore
+    arg [-search_paths_first] ==> ignore
+    arg [-headerpad_max_install_names] ==> ignore
+    arg [-v] ==> ignore
+    arg [CMakeFiles/cmTC_f708b.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [-lc++] ==> lib [c++]
+    arg [-lSystem] ==> lib [System]
+    arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+  Library search paths: [;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib]
+  Framework search paths: [;/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/]
+  remove lib [System]
+  collapse library dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib]
+  collapse framework dir [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/] ==> [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks]
+  implicit libs: [to_library;c++;/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/lib/darwin/libclang_rt.osx.a]
+  implicit dirs: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/lib]
+  implicit fwks: [/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks]
 
 
 
 
 Detecting CXX [-std=c++14] compiler features compiled with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_09fd3/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_09fd3.dir/build.make CMakeFiles/cmTC_09fd3.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_09fd3.dir/feature_tests.cxx.o
-/apps/well/gcc/5.4.0/bin/g++     -std=c++14 -o CMakeFiles/cmTC_09fd3.dir/feature_tests.cxx.o -c /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/feature_tests.cxx
-Linking CXX executable cmTC_09fd3
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_09fd3.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/g++        CMakeFiles/cmTC_09fd3.dir/feature_tests.cxx.o  -o cmTC_09fd3 -rdynamic 
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Run Build Command:"/opt/local/bin/gmake" "cmTC_181eb/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_181eb.dir/build.make CMakeFiles/cmTC_181eb.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_181eb.dir/feature_tests.cxx.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -std=c++14 -o CMakeFiles/cmTC_181eb.dir/feature_tests.cxx.o -c /Users/leo/Documents/genomics/relate/build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_181eb
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_181eb.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_181eb.dir/feature_tests.cxx.o  -o cmTC_181eb  
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
@@ -379,17 +334,17 @@ gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relat
 
 
 Detecting CXX [-std=c++11] compiler features compiled with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_ff3c7/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_ff3c7.dir/build.make CMakeFiles/cmTC_ff3c7.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_ff3c7.dir/feature_tests.cxx.o
-/apps/well/gcc/5.4.0/bin/g++     -std=c++11 -o CMakeFiles/cmTC_ff3c7.dir/feature_tests.cxx.o -c /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/feature_tests.cxx
-Linking CXX executable cmTC_ff3c7
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ff3c7.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/g++        CMakeFiles/cmTC_ff3c7.dir/feature_tests.cxx.o  -o cmTC_ff3c7 -rdynamic 
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Run Build Command:"/opt/local/bin/gmake" "cmTC_e8c9f/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_e8c9f.dir/build.make CMakeFiles/cmTC_e8c9f.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_e8c9f.dir/feature_tests.cxx.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -std=c++11 -o CMakeFiles/cmTC_e8c9f.dir/feature_tests.cxx.o -c /Users/leo/Documents/genomics/relate/build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_e8c9f
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e8c9f.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_e8c9f.dir/feature_tests.cxx.o  -o cmTC_e8c9f  
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers
@@ -452,17 +407,17 @@ gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relat
 
 
 Detecting CXX [-std=c++98] compiler features compiled with the following output:
-Change Dir: /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
+Change Dir: /Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/gmake" "cmTC_fabab/fast"
-/usr/bin/gmake -f CMakeFiles/cmTC_fabab.dir/build.make CMakeFiles/cmTC_fabab.dir/build
-gmake[1]: Entering directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_fabab.dir/feature_tests.cxx.o
-/apps/well/gcc/5.4.0/bin/g++     -std=c++98 -o CMakeFiles/cmTC_fabab.dir/feature_tests.cxx.o -c /users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/feature_tests.cxx
-Linking CXX executable cmTC_fabab
-/gpfs0/apps/well/cmake/3.7.2/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fabab.dir/link.txt --verbose=1
-/apps/well/gcc/5.4.0/bin/g++        CMakeFiles/cmTC_fabab.dir/feature_tests.cxx.o  -o cmTC_fabab -rdynamic 
-gmake[1]: Leaving directory `/gpfs0/users/myers/speidel/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Run Build Command:"/opt/local/bin/gmake" "cmTC_9ecb2/fast"
+/opt/local/bin/gmake -f CMakeFiles/cmTC_9ecb2.dir/build.make CMakeFiles/cmTC_9ecb2.dir/build
+gmake[1]: Entering directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_9ecb2.dir/feature_tests.cxx.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -std=c++98 -o CMakeFiles/cmTC_9ecb2.dir/feature_tests.cxx.o -c /Users/leo/Documents/genomics/relate/build/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_9ecb2
+/opt/local/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9ecb2.dir/link.txt --verbose=1
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++     -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/cmTC_9ecb2.dir/feature_tests.cxx.o  -o cmTC_9ecb2  
+gmake[1]: Leaving directory '/Users/leo/Documents/genomics/relate/build/CMakeFiles/CMakeTmp'
 
 
     Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers

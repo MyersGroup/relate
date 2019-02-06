@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/kastoreShared.dir/kastore.c.o"
   "../../../../bin/libkastoreShared.pdb"
-  "../../../../bin/libkastoreShared.so"
+  "../../../../bin/libkastoreShared.dylib"
 )
 
 # Per-language clean rules from dependency scanning.

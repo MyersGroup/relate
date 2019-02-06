@@ -182,11 +182,11 @@ set
 random
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/test/UnitTest.cpp
+/Users/leo/Documents/genomics/relate/include/test/UnitTest.cpp
 catch.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/catch.hpp
+/Users/leo/Documents/genomics/relate/include/test/catch.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/test/catch.hpp
+/Users/leo/Documents/genomics/relate/include/test/catch.hpp
 sstream
 -
 algorithm
@@ -370,7 +370,7 @@ algorithm
 map
 -
 Foundation/Foundation.h
-/users/myers/speidel/Documents/genomics/relate/include/test/Foundation/Foundation.h
+/Users/leo/Documents/genomics/relate/include/test/Foundation/Foundation.h
 sstream
 -
 stdexcept
@@ -436,41 +436,61 @@ cfloat
 cstdio
 -
 
-/users/myers/speidel/Documents/genomics/relate/include/test/test_ancbuilder.cpp
+/Users/leo/Documents/genomics/relate/include/test/test_ancbuilder.cpp
 catch.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/catch.hpp
+/Users/leo/Documents/genomics/relate/include/test/catch.hpp
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/data.hpp
+/Users/leo/Documents/genomics/relate/include/test/data.hpp
 anc.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/anc.hpp
+/Users/leo/Documents/genomics/relate/include/test/anc.hpp
 tree_builder.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/tree_builder.hpp
+/Users/leo/Documents/genomics/relate/include/test/tree_builder.hpp
 anc_builder.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/anc_builder.hpp
+/Users/leo/Documents/genomics/relate/include/test/anc_builder.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/test/test_log.cpp
+/Users/leo/Documents/genomics/relate/include/test/test_log.cpp
 catch.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/catch.hpp
+/Users/leo/Documents/genomics/relate/include/test/catch.hpp
 fast_log.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/fast_log.hpp
+/Users/leo/Documents/genomics/relate/include/test/fast_log.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/test/test_painting.cpp
+/Users/leo/Documents/genomics/relate/include/test/test_painting.cpp
 catch.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/catch.hpp
+/Users/leo/Documents/genomics/relate/include/test/catch.hpp
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/data.hpp
+/Users/leo/Documents/genomics/relate/include/test/data.hpp
 fast_painting.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/fast_painting.hpp
+/Users/leo/Documents/genomics/relate/include/test/fast_painting.hpp
 
-/users/myers/speidel/Documents/genomics/relate/include/test/test_treebuilder.cpp
+/Users/leo/Documents/genomics/relate/include/test/test_treebuilder.cpp
 catch.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/catch.hpp
+/Users/leo/Documents/genomics/relate/include/test/catch.hpp
 algorithm
 -
 data.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/data.hpp
+/Users/leo/Documents/genomics/relate/include/test/data.hpp
 anc.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/anc.hpp
+/Users/leo/Documents/genomics/relate/include/test/anc.hpp
 tree_builder.hpp
-/users/myers/speidel/Documents/genomics/relate/include/test/tree_builder.hpp
+/Users/leo/Documents/genomics/relate/include/test/tree_builder.hpp
+
+/opt/local/include/zconf.h
+windows.h
+-
+limits.h
+-
+sys/types.h
+-
+stdarg.h
+-
+stddef.h
+-
+unistd.h
+-
+unixio.h
+-
+
+/opt/local/include/zlib.h
+zconf.h
+/opt/local/include/zconf.h
 
