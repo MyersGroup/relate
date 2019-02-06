@@ -1,1 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc   -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -dynamiclib -Wl,-headerpad_max_install_names  -o ../../../../bin/libkastoreShared.dylib -install_name @rpath/libkastoreShared.dylib CMakeFiles/kastoreShared.dir/kastore.c.o 

@@ -559,14 +559,14 @@ gtag('config', 'UA-115753061-1');
                   We first calculate, for each SNP, its frequency through time. This information is stored in two files: the .freq file and the .lin file. The former stores the frequency of a SNP through time, the latter stores the number of lineages in the corresponding tree through time. 
                   </p> 
                   <pre><code> PATH_TO_RELATE/bin/RelateSelection \
-                 --mode Frequency\
+                 --mode Frequency \
                  -i example \
                  -o example </code></pre>
                   Output: example.freq, example.lin.<br/>
 
                   <p>We then use these two files to calculate a p-value for selection evidence for each SNP.</p> 
                   <pre><code> PATH_TO_RELATE/bin/RelateSelection \
-                 --mode Frequency\
+                 --mode Selection \
                  -i example \
                  -o example </code></pre>
                   Output: example.sele.<br/>
