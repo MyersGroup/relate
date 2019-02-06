@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../../../bin/libtskitStatic.a  CMakeFiles/tskitStatic.dir/core.c.o CMakeFiles/tskitStatic.dir/tables.c.o CMakeFiles/tskitStatic.dir/trees.c.o CMakeFiles/tskitStatic.dir/genotypes.c.o CMakeFiles/tskitStatic.dir/convert.c.o CMakeFiles/tskitStatic.dir/stats.c.o
+/usr/bin/ranlib ../../../../bin/libtskitStatic.a

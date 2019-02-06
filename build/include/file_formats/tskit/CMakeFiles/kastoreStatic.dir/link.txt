@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../../../bin/libkastoreStatic.a  CMakeFiles/kastoreStatic.dir/kastore.c.o
+/usr/bin/ranlib ../../../../bin/libkastoreStatic.a

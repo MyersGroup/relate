@@ -1,0 +1,1 @@
+/apps/well/gcc/5.4.0/bin/gcc  -fPIC   -shared -Wl,-soname,libkastoreShared.so -o ../../../../bin/libkastoreShared.so CMakeFiles/kastoreShared.dir/kastore.c.o 
