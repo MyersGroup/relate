@@ -183,8 +183,8 @@ int main(int argc, char* argv[]){
     std::cerr << "*********************************************************" << std::endl;
     std::cerr << "---------------------------------------------------------" << std::endl;
     std::cerr << "Relate" << std::endl;
-    std::cerr << " * Authors:       Leo Speidel, Simon Myers." << std::endl;
-    std::cerr << " * Documentation: https://myersgroup.github.io/relate" << std::endl;
+    std::cerr << " * Authors: Leo Speidel, Marie Forest, Sinan Shi, Simon Myers." << std::endl;
+    std::cerr << " * Doc:     https://myersgroup.github.io/relate" << std::endl;
     std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
     int N, L;

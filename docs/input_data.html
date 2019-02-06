@@ -81,6 +81,9 @@ gtag('config', 'UA-115753061-1');
             <a href="#Prepare">Preparing input files</a>
           </li> 
           <li>
+            <a href="#Convert">Convert output to other formats</a>
+          </li> 
+          <li>
             <a href="#Data">External resources</a>
           </li> 
         </ul>
@@ -445,13 +448,98 @@ gtag('config', 'UA-115753061-1');
             </div>
           </div>
 
+
+        <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+
+              <a class="anchor" name="Convert"></a>
+              <h3>Convert output to other formats</h3>
+              <hr/>
+              <p>The following code can be used to convert the output to other file format<p>
+
+            </div>
+
+          </div>
+
           <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="TreeSequence"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>Convert to tree sequence file format (<a href="https://tskit.readthedocs.io/en/stable/">tskit</a>)</h4></div>
+                <div class="panel-body">  
+
+                  <p>This function converts anc/mut files inferred by <b>Relate</b> into the tree sequence file format used by <a href="https://tskit.readthedocs.io/en/stable/">tskit</a>. In the current implementation, each tree is stored with new nodes in the tree sequence file format, leading to no compression. In addition, information about how long branches persist, and how many mutations map to a branch are lost by this conversion.
+                  </p>
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of .anc and .mut files without file extension.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>Filename of the output tree sequence file without file extensions.</dd>
+                  </dl>
+
+                      <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                 --mode ConvertToTreeSequence \
+                 -i example \
+                 -o example
+                      </code></pre>
+                      Output: example.trees.
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <a class="anchor" name="TreeAtSNPAsNewick"></a> 
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>Extract tree at a SNP of interest in newick format</h4></div>
+                <div class="panel-body">  
+
+                  <p>Extracts a tree at a SNP of interest in newick format.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--bp_of_interest</dt>
+                    <dd>Integer specfifying the BP position of interest</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                 --mode TreeAtSNPAsNewick \
+                 --anc example.anc \
+                 --mut example.mut \
+                 --bp_of_interest 3000000 \
+                 -o example </code></pre>
+                  Output: example_at_.newick.
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+ 
+
+
           <div class="row">
             <div class="col-md-10 col-md-offset-1">
 
               <a class="anchor" name="Data"></a>
               <h3>External resources</h3>
               <hr/>
+
+              <p>Below is a list of external resources that can be useful for Relate-based analyses. These resources were compiled by thrid parties, and their respective conditions (such as citations of corresponding publications) for using these resources apply.</p>
 
               <h4>Humans</h4>
 

@@ -9,8 +9,10 @@ Tree::GetMsPrime(igzstream& is, int num_nodes){
 
   std::string line;
   int count_lines = 0;
-  while(count_lines < 2*num_nodes){
+  while(count_lines < 2*num_nodes-1){
     getline(is, line); 
+
+    //std::cerr << count_lines << " " << 2*num_nodes << ": " << line << std::endl;
 
     float node, child_node_left, child_node_right, branch_length_left, branch_length_right; 
     std::stringstream lineStream(line);
@@ -957,7 +959,10 @@ AncesTree::ReadMsPrime(const std::string& filename_el){
   for(int snp = 0; snp < num_snp; snp++){
     seq.emplace_back();
     it_seq = std::prev(seq.end(),1);
-    is >> (*it_seq).pos; 
+    //is >> (*it_seq).pos; 
+    getline(is, line);
+    (*it_seq).pos = std::stoi(line); 
+    //std::cerr << "SNP:" << snp << ",POS: " << (*it_seq).pos << std::endl;
     (*it_seq).tree.GetMsPrime(is, num_nodes);
   }
 
@@ -1253,7 +1258,7 @@ AncesTree::ReadRent(const std::string& filename, float Ne){
   int i;
 
   std::vector<float> coordinates;
-  int num_tree = 0;
+  int num_tree = 1;
   seq.resize(1);
   CorrTrees::iterator it_seq = seq.begin();
   while(std::getline(is, line)){ 
@@ -1270,7 +1275,6 @@ AncesTree::ReadRent(const std::string& filename, float Ne){
 
     }
 
-    //std::cerr << N << std::endl;
     //std::cerr << line << std::endl;
     //exit(1);
 
@@ -1372,7 +1376,8 @@ AncesTree::ReadRent(const std::string& filename, float Ne){
 
     num_tree++;
     seq.emplace_back();
-    it_seq++;
+    it_seq = std::prev(seq.end(),1);
+    //it_seq++;
   }
 
   seq.pop_back();

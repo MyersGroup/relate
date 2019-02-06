@@ -518,9 +518,9 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
     if(num_windows > max_windows_per_section) max_windows_per_section = num_windows;
 
     //std::cerr << min_snps_in_window << " " << mean_snps_in_window << std::endl;
-    if(mean_snps_in_window < 400){
-      std::cerr << "Memory allowance should be set " << 400/mean_snps_in_window << " times larger than" << std::endl;
-      std::cerr << "the current setting using --min_memory (Default 5GB)." << std::endl;
+    if(mean_snps_in_window < 100){
+      std::cerr << "Memory allowance should be set " << 100/mean_snps_in_window << " times larger than" << std::endl;
+      std::cerr << "the current setting using --memory (Default 5GB)." << std::endl;
     }
     //std::cerr << snp << " " << chunk_size << " " << L << " " << num_windows << std::endl;
 

@@ -80,7 +80,6 @@ int FinalizePopulationSize(cxxopts::Options& options){
     }
   }
 
-
   std::ofstream os(options["output"].as<std::string>() + ".coal");
   if(os.fail()){
     std::cerr << "Error while opening file." << std::endl;

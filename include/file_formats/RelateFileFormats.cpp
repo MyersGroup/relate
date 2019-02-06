@@ -1,4 +1,5 @@
 #include "FileFormats.cpp"
+#include "ConvertToTreeSequence.cpp"
 
 #include "cxxopts.hpp"
 #include <string>
@@ -54,12 +55,20 @@ int main(int argc, char* argv[]){
   
     GenerateSNPAnnotations(options);
  
+  }else if(!mode.compare("ConvertToTreeSequenceTxt")){
+  
+    ConvertToTreeSequenceTxt(options);
+ 
+  }else if(!mode.compare("ConvertToTreeSequence")){
+  
+    ConvertToTreeSequence(options);
+ 
   }else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "ConvertFromHapLegendSample, ConvertFromVcf, RemoveNonBiallelicSNPs, RemoveSamples, FilterHapsUsingMask, FlipHapsUsingAncestor, GenerateSNPAnnotations." << std::endl;
+    std::cout << "ConvertFromHapLegendSample, ConvertFromVcf, RemoveNonBiallelicSNPs, RemoveSamples, FilterHapsUsingMask, FlipHapsUsingAncestor, GenerateSNPAnnotations, ConvertToTreeSequenceTxt, ConvertToTreeSequence." << std::endl;
   
   }
 

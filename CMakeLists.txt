@@ -23,17 +23,20 @@ set(MISC_DIR ${CMAKE_SOURCE_DIR}/include/misc)
 set(TREEVIEW_DIR ${CMAKE_SOURCE_DIR}/include/treeview)
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/include/test)
 set(GZSTREAM_DIR ${CMAKE_SOURCE_DIR}/include/src/gzstream)
+set(TSKIT_DIR ${CMAKE_SOURCE_DIR}/include/file_formats/tskit)
 
-add_definitions(-static)
-set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -static")
+#add_definitions(-static)
+#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -static")
 
 # Set includes
 include_directories(${PROJECT_SOURCE_DIR} ${TEST_DIR})
 include_directories(${PROJECT_SOURCE_DIR} ${GZSTREAM_DIR})
+include_directories(${PROJECT_SOURCE_DIR} ${TSKIT_DIR})
 
 # Add subdirectories
 add_subdirectory(${PROJECT_SOURCE_DIR})
 add_subdirectory(${GZSTREAM_DIR})
+add_subdirectory(${TSKIT_DIR})
 add_subdirectory(${TEST_DIR})
 add_subdirectory(${PIPELINE_DIR})
 add_subdirectory(${EVALUATE_DIR})
