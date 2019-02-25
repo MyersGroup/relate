@@ -195,6 +195,17 @@ DistanceMeasure::GetMatrix(const int snp){
   }
 
 
+  /* 
+  std::cout << snp << std::endl; 
+  for(int i = 0; i < (*data).N; i++){
+    for(int j = 0; j < (*data).N; j++){
+      std::cout << matrix[i][j] << " " ;
+    }
+    std::cout << std::endl;
+  }
+  */
+  
+
 }
 
 

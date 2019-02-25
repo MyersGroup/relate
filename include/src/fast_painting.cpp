@@ -276,7 +276,7 @@ FastPainting::PaintSteppingStones(const Data& data, std::vector<int>& window_bou
 
     if(*it_r_prob < 1){
 
-      logscale[aux_index_prev]    = logscale[aux_index];
+      logscale[aux_index]         = logscale[aux_index_prev];
       logscale[aux_index]        += (*it_nor_x_theta);
       alpha_sum                   = 0.0; 
 
@@ -334,12 +334,15 @@ FastPainting::PaintSteppingStones(const Data& data, std::vector<int>& window_bou
     if(r_x_alpha_sum < lower_rescaling_threshold || r_x_alpha_sum > upper_rescaling_threshold){
       tmp           = r_x_alpha_sum; 
       it2_alpha_aux = alpha_aux_rowbegin[aux_index];
+      //r_x_alpha_sum = 0.0;
       for(; it2_alpha_aux != alpha_aux_rowend[aux_index];){
         *it2_alpha_aux /= tmp;
+        //r_x_alpha_sum += *it2_alpha_aux;
         it2_alpha_aux++;
       }
       logscale[aux_index]   += log(tmp);
       r_x_alpha_sum          = 1.0;
+      //std::cerr << r_x_alpha_sum << std::endl;
       assert(logscale[aux_index] < std::numeric_limits<double>::infinity());
     } 
 
@@ -465,7 +468,7 @@ FastPainting::PaintSteppingStones(const Data& data, std::vector<int>& window_bou
     if(*it_r_prob < 1.0){
 
       //inner loop of backwards algorithm
-      logscale[aux_index_prev]               = logscale[aux_index];
+      logscale[aux_index]                    = logscale[aux_index_prev];
       logscale[aux_index]                   += *it_nor_x_theta;
       beta_sum                               = 0.0;
       beta_sum_oneminustheta                 = r_x_beta_sum / data.ntheta;
@@ -529,14 +532,17 @@ FastPainting::PaintSteppingStones(const Data& data, std::vector<int>& window_bou
 
     }
 
+    //std::cerr << beta_sum << std::endl;
     r_x_beta_sum = beta_sum;
 
     if(r_x_beta_sum < lower_rescaling_threshold || r_x_beta_sum > upper_rescaling_threshold){
       //if they get too small, rescale
       tmp          = r_x_beta_sum;
       it2_beta_aux = beta_aux_rowbegin[aux_index];
+      //r_x_beta_sum = 0.0;
       for(; it2_beta_aux < beta_aux_rowend[aux_index];){
         *it2_beta_aux /= tmp;
+        //r_x_beta_sum += *it2_beta_aux;
         it2_beta_aux++;
       }
       logscale[aux_index]      += fast_log(tmp);
@@ -556,8 +562,9 @@ FastPainting::PaintSteppingStones(const Data& data, std::vector<int>& window_bou
 
         it2_beta                          = beta.rowbegin(rit1_beta);
         it2_beta_aux                      = beta_aux_rowbegin[aux_index];
-        for(; it2_beta_aux != beta_aux_rowend[aux_index];){ 
+        for(; it2_beta_aux != beta_aux_rowend[aux_index];){
           *it2_beta                       = *it2_beta_aux;
+          //if(snp == 8493) std::cerr << *it2_beta << " " << fast_log(*it2_beta) + logscale[aux_index] << std::endl;
           it2_beta++;
           it2_beta_aux++;
         }
@@ -780,7 +787,7 @@ FastPainting::RePaintSection(const Data& data, CollapsedMatrix<float>& topology,
   }else{
     r_x_alpha_sum = alpha_sum;
   }
-  double prev_logscale = 0.0;
+  double prev_logscale = *it_logscale;
   for(; it_derived_k != derived_k.end();){
 
     /////////////////
@@ -852,7 +859,6 @@ FastPainting::RePaintSection(const Data& data, CollapsedMatrix<float>& topology,
       } 
 
     }
-
     r_x_alpha_sum = alpha_sum;
 
     //check if alpha_sums get too small, if they do, rescale
@@ -903,17 +909,17 @@ FastPainting::RePaintSection(const Data& data, CollapsedMatrix<float>& topology,
   }
 
   it2_beta                         = it2_beta_rowbegin;
+  *std::next(it2_beta_rowbegin, k)       = 0.0;
   //this loop does not vectorize
-  for(; it2_beta != beta.rowend(rit1_beta);){
-    if(seq_k  > *it2_sequence){
-      beta_sum                    += data.theta;
+  for(; it2_beta != beta.rowend(rit1_beta);){      
+    if(seq_k > *it2_sequence){
+      beta_sum                    += data.theta * (*it2_beta); 
     }else{
-      beta_sum                    += data.ntheta;       
+      beta_sum                    += data.ntheta * (*it2_beta); 
     }
     it2_sequence++;
     it2_beta++;
   }
-  beta_sum                        -= data.ntheta;
 
   //calculate topology matrix
   it2_topology                     = topology.rowbegin(rit1_topology);
@@ -922,10 +928,12 @@ FastPainting::RePaintSection(const Data& data, CollapsedMatrix<float>& topology,
   for(; it2_topology != topology.rowend(rit1_topology);){ 
     //*it2_topology                   = std::log(*it2_alpha) + std::log(*it2_beta);
     *it2_topology                  = (*it2_alpha) * (*it2_beta);
+    //std::cout << *it2_topology << " ";
     it2_topology++;
     it2_alpha++;
     it2_beta++;
   }
+  //std::cout << std::endl;
 
   rit1_alpha++;
   rit1_topology++;
@@ -940,7 +948,7 @@ FastPainting::RePaintSection(const Data& data, CollapsedMatrix<float>& topology,
     r_x_beta_sum = beta_sum;
   } 
   snp_next = last_snp;
-  prev_logscale = 0.0;
+  prev_logscale = logscale_beta;
   while(rit1_topology != topology.irend()){
 
     it_derived_k--;
@@ -1029,17 +1037,21 @@ FastPainting::RePaintSection(const Data& data, CollapsedMatrix<float>& topology,
     for(; it2_topology != topology.rowend(rit1_topology);){  
       //*it2_topology                        = std::log(*it2_alpha) + std::log(*it2_beta);
       *it2_topology                        = (*it2_alpha) * (*it2_beta);
+      //std::cout << *it2_topology << " ";
       it2_topology++;
       it2_alpha++;
       it2_beta++;
     }
+    //std::cout << std::endl;
 
     if(r_x_beta_sum < lower_rescaling_threshold || r_x_beta_sum > upper_rescaling_threshold){
       //if they get too small, rescale
       tmp        = r_x_beta_sum;
       it2_beta   = it2_beta_rowbegin;
+      //r_x_beta_sum = 0.0;
       for(; it2_beta < beta.rowend(rit1_beta);){
         *it2_beta /= tmp;
+        //r_x_beta_sum += *it2_beta;
         it2_beta++;
       }
       prev_logscale            += log(tmp);
