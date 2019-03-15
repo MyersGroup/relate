@@ -268,6 +268,9 @@ then
             -o ${output}
         else
           cp $coal ${output}.coal
+          chmod +w ${output}.coal
+          cat ${output}_avg.rate | awk -v mu=${mu} '{print $1 " " mu}' > ${output}_avg_tmp.rate
+          mv ${output}_avg_tmp.rate ${output}_avg.rate
         fi
 
       else
@@ -460,6 +463,8 @@ then
             -o ${output}
         else
           cp $coal $output.coal
+          cat ${output}_avg.rate | awk -v mu=${mu} '{print $1 " " mu}' > ${output}_avg_tmp.rate
+          mv ${output}_avg_tmp.rate ${output}_avg.rate
         fi
 
       else
@@ -672,6 +677,8 @@ else
 
         else
           cp $coal ${output}.coal
+          cat ${output}_avg.rate | awk -v mu=${mu} '{print $1 " " mu}' > ${output}_avg_tmp.rate
+          mv ${output}_avg_tmp.rate ${output}_avg.rate
         fi
 
       else
@@ -988,7 +995,10 @@ else
             -o ${output}
 
         else
-          cp $coal $output.coal
+          cp $coal ${output}.coal
+          chmod +w ${output}.coal
+          cat ${output}_avg.rate | awk -v mu=${mu} '{print $1 " " mu}' > ${output}_avg_tmp.rate
+          mv ${output}_avg_tmp.rate ${output}_avg.rate
         fi
 
       else

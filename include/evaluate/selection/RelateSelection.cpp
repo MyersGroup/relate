@@ -256,21 +256,17 @@ Selection(cxxopts::Options& options){
 
     fN = num_freq[num_freq.size() - 1]; //frequency when N lineages are remaining
 
-    for(int i = 0; i < num_freq.size(); i++){
-      os << log_pvalue(num_lin[i], num_freq[i], N, fN, logF) << " ";
-    }
-
-    if(0){
-    for(int K = 2; K <=7 ; K++){
-      if(fN >= K){
-        os << " " << log_pvalue(num_lin[num_lin.size() + (K - (add_entries + 2))], K, N, fN, logF);
-      }else{
-        os << " 1";
+    if(fN <= 2){
+      for(int i = 0; i < num_freq.size(); i++){
+        os << "1 ";
+      }
+    }else{
+      for(int i = 0; i < num_freq.size(); i++){
+        os << log_pvalue(num_lin[i], num_freq[i], N, fN, logF) << " ";
       }
     }
-    }
 
-    if(fN >= 2){
+    if(fN > 2){
       os << log_pvalue(num_lin[num_lin.size() - add_entries], 2.0, N, fN, logF) << "\n";
     }else{
       os << "1\n";
@@ -394,42 +390,6 @@ Frequency(cxxopts::Options& options){
   Mutations mutations(data);
   mutations.Read(options["input"].as<std::string>() + ".mut");
 
-  //read in quality file if specified
-  std::vector<Qual> quality;
-  float quality_threshold;
-  if(options.count("quality")){
-    igzstream is_qual(options["quality"].as<std::string>());
-    if(is_qual.fail()){
-      std::cerr << "Failed to open file " << options["quality"].as<std::string>() << "." << std::endl;
-      exit(1);
-    }
-    int num_lines = 0;
-    getline(is_qual, line);
-    while ( std::getline(is_qual, line) ){
-      ++num_lines;
-    }
-    is_qual.close();
-
-    is_qual.open(options["quality"].as<std::string>());
-    getline(is_qual, line);
-    quality.resize(num_lines);
-    std::vector<Qual>::iterator it_qual = quality.begin();
-    std::vector<float> frac_not_mapping(quality.size());
-    std::vector<float>::iterator it_frac_not_mapping = frac_not_mapping.begin();
-    char buffer[80];
-    while(getline(is_qual, line)){
-      sscanf(line.c_str(), "%s %d %d %f %f\n", buffer, &(*it_qual).pos, &(*it_qual).frac_branches_with_mut, &(*it_qual).num_snps_on_tree, &(*it_qual).frac_not_mapping);
-      (*it_qual).id = buffer;
-      *it_frac_not_mapping = (*it_qual).frac_not_mapping;
-      it_qual++;
-      it_frac_not_mapping++;
-    }
-    is_qual.close();
-    std::sort(frac_not_mapping.begin(), frac_not_mapping.end());
-    int index_quantile = (int) (0.95 * quality.size());
-    quality_threshold = frac_not_mapping[index_quantile];
-  }
-
   ////////////////////
   //for a mutation, record how its frequency is changing
 
@@ -494,35 +454,20 @@ Frequency(cxxopts::Options& options){
   SNPInfo snp_info;
   int freq;
   float rec;
-  bool passing_quality_test = true;
-  std::vector<Qual>::iterator it_qual = quality.begin();
   for(int snp = first_snp; snp <= last_snp; snp++){
 
     snp_info = mutations.info[snp];
 
-    int freq = 0;
-    for(std::vector<int>::iterator it_freq = snp_info.freq.begin(); it_freq != snp_info.freq.end(); it_freq++){
-      freq += *it_freq;
-      if(freq > 2) break;
-    }
-
-    if(options.count("quality")){
-
-      while((*it_qual).pos < snp_info.pos) it_qual++;
-      if((*it_qual).pos != snp_info.pos){
-        std::cerr << (*it_qual).pos << " " << snp_info.pos << std::endl;
-        std::cerr << "Quality assessment file not sorted by pos or doesn't contain all SNPs." << std::endl;
-        exit(1);
+    int freq = 3;
+    if(snp_info.freq.size() > 0){
+      freq = 0;
+      for(std::vector<int>::iterator it_freq = snp_info.freq.begin(); it_freq != snp_info.freq.end(); it_freq++){
+        freq += *it_freq;
+        if(freq > 2) break;
       }
-      if((*it_qual).frac_not_mapping >= quality_threshold){
-        passing_quality_test = false;
-      }else{
-        passing_quality_test = true;
-      }
-
     }
-
-    if(snp_info.branch.size() == 1 && freq > 2 && !snp_info.flipped && passing_quality_test){
+ 
+    if(snp_info.branch.size() == 1 && freq > 2 && !snp_info.flipped){
 
       if(count_tree < snp_info.tree){
         while(count_tree < snp_info.tree){
@@ -680,6 +625,7 @@ Frequency(cxxopts::Options& options){
           os_lin  << num_lineages << " ";
 
           os_freq << " " << num_carriers << " ";
+          
           int carriers = 0;
           for(std::vector<int>::iterator it_freq = snp_info.freq.begin(); it_freq != snp_info.freq.end(); it_freq++){
             carriers += *it_freq;
@@ -848,7 +794,6 @@ SDS(cxxopts::Options& options){
   SNPInfo snp_info;
   int freq;
   float rec;
-  bool passing_quality_test = true;
   for(int snp = first_snp; snp <= last_snp; snp++){
 
     snp_info = mutations.info[snp];
@@ -859,7 +804,7 @@ SDS(cxxopts::Options& options){
       if(freq > 2) break;
     }
 
-    if(snp_info.branch.size() == 1 && freq > 2 && !snp_info.flipped && passing_quality_test){
+    if(snp_info.branch.size() == 1 && freq > 2 && !snp_info.flipped){
 
       if(count_tree < snp_info.tree){
         while(count_tree < snp_info.tree){
@@ -1155,7 +1100,6 @@ int main(int argc, char* argv[]){
     ("mode", "Choose which part of the algorithm to run.", cxxopts::value<std::string>())
     ("first_snp", "Index of first SNP. Optional.", cxxopts::value<int>())
     ("last_snp", "Index of last SNP. Optional.", cxxopts::value<int>())
-    ("quality", "Optional: Filename of file containing quality assessment of SNPs (obtained using mode quality).", cxxopts::value<std::string>())
     ("threshold", "Optional: Threshold for number of mutations that trees need for inclusion. Default = 0.", cxxopts::value<int>())
     ("years_per_gen", "Optional: Years per generation (float). Default: 28.", cxxopts::value<float>())
     ("num_bins", "Optional: Number of bins.", cxxopts::value<int>())

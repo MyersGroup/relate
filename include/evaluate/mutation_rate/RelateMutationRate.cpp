@@ -471,10 +471,10 @@ void SummarizeWholeGenome(cxxopts::Options& options){
 
   for(int i = 1; i < (int) filenames.size(); i++){
     fp = fopen(filenames[i].c_str(),"rb");
-    
+
     fread(&num_epochs, sizeof(int), 1, fp);
     fread(&epochs[0], sizeof(float), num_epochs, fp);
-    
+
     mut_by_type_and_epoch_tmp.ReadFromFile(fp);
     fclose(fp);
     std::vector<double>::iterator it_mut = mut_by_type_and_epoch.vbegin();
@@ -625,14 +625,14 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
     is_dist.close();
 
   }else{
-  
+
     pos.resize(data.L);
     int snp = 0;
     for(std::vector<SNPInfo>::iterator it_mut = mutations.info.begin(); it_mut != mutations.info.end(); it_mut++){
       pos[snp]  = (*it_mut).pos;
       snp++;
     }
-  
+
   }
 
   ////////// EPOCHES ///////////
@@ -759,72 +759,87 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
     snp_info = mutations.info[snp];
     if(snp_info.branch.size() == 1){
 
-        if(num_tree < snp_info.tree){
-          while(num_tree < snp_info.tree){
-            if(!getline(is_anc,line)){
-              break; 
-            };
-            num_tree++;
-          }
-
-          //read tree
-          mtr.Read(line, N);
-          mtr.tree.GetCoordinates(coordinates_tree);
-          std::sort(coordinates_tree.begin(), coordinates_tree.end());
-          GetBranchLengthsInEpoche(data, epoch, coordinates_tree, branch_lengths_in_epoch);
+      if(num_tree < snp_info.tree){
+        while(num_tree < snp_info.tree){
+          if(!getline(is_anc,line)){
+            break; 
+          };
+          num_tree++;
         }
-        assert(num_tree == snp_info.tree);
 
-        //if(snp_info.age_begin <= coordinates_tree[root]){
+        //read tree
+        mtr.Read(line, N);
+        mtr.tree.GetCoordinates(coordinates_tree);
+        std::sort(coordinates_tree.begin(), coordinates_tree.end());
+        GetBranchLengthsInEpoche(data, epoch, coordinates_tree, branch_lengths_in_epoch);
+      }
+      assert(num_tree == snp_info.tree);
 
-          // identify cathegory of mutation
-          pattern = snp_info.upstream_base + snp_info.downstream_base + snp_info.mutation_type;
-          // then identify its age and number of lineages at the time
-          int ind = dict_mutation_pattern[pattern];
 
-          // identify epoch and add to number of mutations per lineage in epoch
-          int ep = 0;
-          while(epoch[ep] <= snp_info.age_begin){
-            ep++;
-            if(ep == epoch.size()) break;
-          }
-          ep--;
+      if(snp_info.upstream_base != "NA" && snp_info.downstream_base != "NA" && snp_info.mutation_type[0] != snp_info.mutation_type[2]){
 
-          //std::cerr << ep << " " << ind << " " << mutation_by_type_and_epoch.size() << " " << mutation_by_type_and_epoch.subVectorSize(ep) << std::endl;
-          //std::cerr << ep << " " << ind << " " << age << " " << epoch[0] << " " << epoch[1] << std::endl;
-          assert(ep >= 0);
-          assert(mutation_by_type_and_epoch.subVectorSize(ep) == num_mutation_cathegories);
-          //assert(count_bases_by_type[snp][ind] > 0);
+        if(snp_info.mutation_type.size() == 3){
 
-          int ep_begin = ep;
-          float age_end = std::min(snp_info.age_end,coordinates_tree[root]);
-          assert(age_end < epoch[num_epochs-1]);
-          double branch_length = age_end - snp_info.age_begin;
+          if(snp_info.mutation_type[0] == 'A' || snp_info.mutation_type[0] == 'C' || snp_info.mutation_type[0] == 'G' || snp_info.mutation_type[0] == 'T'){
 
-          if(age_end <= epoch[ep+1]){
+            if(snp_info.mutation_type[2] == 'A' || snp_info.mutation_type[2] == 'C' || snp_info.mutation_type[2] == 'G' || snp_info.mutation_type[2] == 'T'){
 
-            mutation_by_type_and_epoch[ep][ind] += 1.0;
+              // identify cathegory of mutation
+              pattern = snp_info.upstream_base + snp_info.downstream_base + snp_info.mutation_type;
+              // then identify its age and number of lineages at the time
+              int ind = dict_mutation_pattern[pattern];
 
-          }else{
+              // identify epoch and add to number of mutations per lineage in epoch
+              int ep = 0;
+              while(epoch[ep] <= snp_info.age_begin){
+                ep++;
+                if(ep == epoch.size()) break;
+              }
+              ep--;
 
-            mutation_by_type_and_epoch[ep][ind]   += (epoch[ep+1] - snp_info.age_begin)/branch_length;
-            ep++;
-            while(epoch[ep+1] <= age_end){
-              mutation_by_type_and_epoch[ep][ind] += (epoch[ep+1]-epoch[ep])/branch_length;
-              ep++;
+              //std::cerr << ep << " " << ind << " " << mutation_by_type_and_epoch.size() << " " << mutation_by_type_and_epoch.subVectorSize(ep) << std::endl;
+              //std::cerr << ep << " " << ind << " " << age << " " << epoch[0] << " " << epoch[1] << std::endl;
+              assert(ep >= 0);
+              assert(mutation_by_type_and_epoch.subVectorSize(ep) == num_mutation_cathegories);
+              //assert(count_bases_by_type[snp][ind] > 0);
+
+              int ep_begin = ep;
+              float age_end = std::min(snp_info.age_end,coordinates_tree[root]);
+              assert(age_end < epoch[num_epochs-1]);
+              double branch_length = age_end - snp_info.age_begin;
+
+              if(age_end <= epoch[ep+1]){
+
+                mutation_by_type_and_epoch[ep][ind] += 1.0;
+
+              }else{
+
+                mutation_by_type_and_epoch[ep][ind]   += (epoch[ep+1] - snp_info.age_begin)/branch_length;
+                ep++;
+                while(epoch[ep+1] <= age_end){
+                  mutation_by_type_and_epoch[ep][ind] += (epoch[ep+1]-epoch[ep])/branch_length;
+                  ep++;
+                }
+                mutation_by_type_and_epoch[ep][ind]   += (age_end-epoch[ep])/branch_length;
+
+              }
+
+              for(int ep_tmp = 0; ep_tmp < num_epochs; ep_tmp++){
+                double bl = branch_lengths_in_epoch[ep_tmp];
+                for(int ind_tmp = 0; ind_tmp < num_mutation_cathegories; ind_tmp++){
+                  opportunity_by_type_and_epoch[ep_tmp][ind_tmp] += bl * count_bases_by_type[snp][ind_tmp];
+                }
+              }
+
+              //count_snps++;
+              //
             }
-            mutation_by_type_and_epoch[ep][ind]   += (age_end-epoch[ep])/branch_length;
 
           }
 
-          for(int ep_tmp = 0; ep_tmp < num_epochs; ep_tmp++){
-            double bl = branch_lengths_in_epoch[ep_tmp];
-            for(int ind_tmp = 0; ind_tmp < num_mutation_cathegories; ind_tmp++){
-              opportunity_by_type_and_epoch[ep_tmp][ind_tmp] += bl * count_bases_by_type[snp][ind_tmp];
-            }
-          }
- 
-          //count_snps++;
+        }
+
+      }
 
     }
 

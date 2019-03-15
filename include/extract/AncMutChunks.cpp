@@ -63,7 +63,7 @@ DivideAncMut(cxxopts::Options& options){
 
   int num_threads = options["threads"].as<int>();
   //divide anc/mut into chunks with ((int) num_trees/(100.0 + num_threads)) + 1 trees each
-  int num_trees_per_chunk = ((int) num_trees/(100.0 * num_threads)) + 1;
+  int num_trees_per_chunk = ((int) num_trees/(5.0 * num_threads)) + 1;
   if(num_trees_per_chunk < 10) num_trees_per_chunk = 10;
 
   std::string line;

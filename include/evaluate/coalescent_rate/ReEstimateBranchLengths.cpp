@@ -211,6 +211,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     //for(std::vector<Node>::iterator it_node = (*it_seq).tree.nodes.begin(); it_node != (*it_seq).tree.nodes.end(); it_node++){
     //  (*it_node).num_events = 0.0;
     //}
+    
     bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
     //bl2.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
   }

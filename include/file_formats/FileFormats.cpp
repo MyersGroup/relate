@@ -65,31 +65,31 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
   int bp1, bp2, bp3;
   char rsid1[40], rsid2[40], rsid3[40];
   char type1[40], type2[40], type3[40];
-  char ancestral1, alternative1, ancestral2, alternative2, ancestral3, alternative3;
+  char ancestral1[40], alternative1[40], ancestral2[40], alternative2[40], ancestral3[40], alternative3[40];
   int matches1, matches2, matches3;
   int snp = 1, snp_accepted = 1;
 
   getline(is_legend, line_legend); //skip header
   assert(getline(is_legend, line_legend));
-  matches1 = sscanf(line_legend.c_str(), "%s %d %c %c %s", rsid1, &bp1, &ancestral1, &alternative1, type1);
+  matches1 = sscanf(line_legend.c_str(), "%s %d %s %s %s", rsid1, &bp1, ancestral1, alternative1, type1);
   assert(getline(is_legend, line_legend));
-  matches2 = sscanf(line_legend.c_str(), "%s %d %c %c %s", rsid2, &bp2, &ancestral2, &alternative2, type2);
+  matches2 = sscanf(line_legend.c_str(), "%s %d %s %s %s", rsid2, &bp2, ancestral2, alternative2, type2);
 
   while(getline(is_legend, line_legend)){
 
     assert(getline(is_hap, line_hap));
-    matches3 = sscanf(line_legend.c_str(), "%s %d %c %c %s", rsid3, &bp3, &ancestral3, &alternative3, type3);
+    matches3 = sscanf(line_legend.c_str(), "%s %d %s %s %s", rsid3, &bp3, ancestral3, alternative3, type3);
 
     if(snp == 1 && bp2 > bp1){ //if first SNP is unique
 
-      if(matches1 >= 4){
-        fprintf(fp_haps, "%d %s %d %c %c", chr, rsid1, bp1, ancestral1, alternative1);
+      if(matches1 == 4){
+        fprintf(fp_haps, "%d %s %d %s %s", chr, rsid1, bp1, ancestral1, alternative1);
         fprintf(fp_haps, " %s\n", line_hap.c_str());
         snp_accepted++;
       }else if(matches1 == 5){
 
         if(strcmp(type1, "Biallelic_SNP") == 0){ 
-          fprintf(fp_haps, "%d %s %d %c %c", chr, rsid1, bp1, ancestral1, alternative1);
+          fprintf(fp_haps, "%d %s %d %s %s", chr, rsid1, bp1, ancestral1, alternative1);
           fprintf(fp_haps, " %s\n", line_hap.c_str());
           snp_accepted++;
         }
@@ -106,14 +106,14 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
 
     if(bp3 > bp2 && bp2 > bp1){ //if SNP is unique
 
-      if(matches2 >= 4){
-        fprintf(fp_haps, "%d %s %d %c %c", chr, rsid2, bp2, ancestral2, alternative2);
+      if(matches2 == 4){
+        fprintf(fp_haps, "%d %s %d %s %s", chr, rsid2, bp2, ancestral2, alternative2);
         fprintf(fp_haps, " %s\n", line_hap.c_str());
         snp_accepted++;
       }else if(matches2 == 5){
 
         if(strcmp(type2, "Biallelic_SNP") == 0){ 
-          fprintf(fp_haps, "%d %s %d %c %c", chr, rsid2, bp2, ancestral2, alternative2);
+          fprintf(fp_haps, "%d %s %d %s %s", chr, rsid2, bp2, ancestral2, alternative2);
           fprintf(fp_haps, " %s\n", line_hap.c_str());
           snp_accepted++;
         } 
@@ -129,15 +129,15 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
     }
 
     bp1          = bp2;
-    ancestral1   = ancestral2;
-    alternative1 = alternative2;
+    strcpy(ancestral1, ancestral2);
+    strcpy(alternative1, alternative2);
     matches1     = matches2;
     strcpy(type1, type2);
     strcpy(rsid1, rsid2);
 
     bp2          = bp3;
-    ancestral2   = ancestral3;
-    alternative2 = alternative3;
+    strcpy(ancestral2, ancestral3);
+    strcpy(alternative2, alternative3);
     matches2     = matches3;
     strcpy(type2, type3);
     strcpy(rsid2, rsid3);
@@ -148,14 +148,14 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
 
   //last SNP
   if(bp2 > bp1){
-    if(matches2 >= 4){
-      fprintf(fp_haps, "%d %s %d %c %c", chr, rsid2, bp2, ancestral2, alternative2);
+    if(matches2 == 4){
+      fprintf(fp_haps, "%d %s %d %s %s", chr, rsid2, bp2, ancestral2, alternative2);
       fprintf(fp_haps, " %s\n", line_hap.c_str());
       snp_accepted++;
     }else if(matches2 == 5){
 
       if(strcmp(type2, "Biallelic_SNP") == 0){ 
-        fprintf(fp_haps, "%d %s %d %c %c", chr, rsid2, bp2, ancestral2, alternative2);
+        fprintf(fp_haps, "%d %s %d %s %s", chr, rsid2, bp2, ancestral2, alternative2);
         fprintf(fp_haps, " %s\n", line_hap.c_str());
         snp_accepted++;
       } 
@@ -253,7 +253,7 @@ ConvertFromVcf(cxxopts::Options& options){
   int bp;
   char rsid[40];
   char type[40];
-  char ancestral, alternative;
+  char ancestral[40], alternative[40];
 
   std::string line_id;
   getline(is_vcf, line);
@@ -296,7 +296,7 @@ ConvertFromVcf(cxxopts::Options& options){
   std::vector<char> sequence;
   do{
 
-    sscanf(line.c_str(), "%d %d %s %c %c", &chr, &bp, rsid, &ancestral, &alternative);
+    sscanf(line.c_str(), "%d %d %s %s %s", &chr, &bp, rsid, ancestral, alternative);
     int c = 0;
     for(int k = 0; k < 9; k++){
       while(line[c] != '\t' && line[c] != ' '){
@@ -373,7 +373,7 @@ ConvertFromVcf(cxxopts::Options& options){
     }
 
     if(N == N_prev){
-      fprintf(fp_haps, "%d %s %d %c %c", chr, rsid, bp, ancestral, alternative);
+      fprintf(fp_haps, "%d %s %d %s %s", chr, rsid, bp, ancestral, alternative);
       for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
         fprintf(fp_haps, " %c", *it_seq);
       }
@@ -844,7 +844,7 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
 
   int bp, chr;
   char rsid[40];
-  char ancestral, alternative;
+  char ancestral[40], alternative[40];
   char ancestral_allele;
   std::vector<char> sequence(data.N);
   std::string::iterator it_line;
@@ -853,85 +853,90 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
   for(int snp = 0; snp < data.L; snp++){
 
     assert(getline(is, line));
-    sscanf(line.c_str(), "%d %s %d %c %c", &chr, rsid, &bp, &ancestral, &alternative);
+    sscanf(line.c_str(), "%d %s %d %s %s", &chr, rsid, &bp, ancestral, alternative);
     ancestral_allele = std::toupper(ancestor.seq[bp-1]);
 
-    if(ancestral_allele == 'A' || ancestral_allele == 'C' || ancestral_allele == 'G' || ancestral_allele == 'T'){
+    if(strlen(ancestral) == 1 && strlen(alternative) == 1){
+      if(ancestral_allele == 'A' || ancestral_allele == 'C' || ancestral_allele == 'G' || ancestral_allele == 'T'){
 
-      if(ancestral_allele == ancestral){
+        if(ancestral_allele == ancestral[0]){
 
-        it_line = line.begin();
-        //chr
-        while(*it_line != ' ') it_line++;
-        it_line++;
-        //rsid
-        while(*it_line != ' ') it_line++;
-        it_line++;
-        //bp
-        while(*it_line != ' ') it_line++;
-        it_line++;
-        //ancestral
-        while(*it_line != ' ') it_line++;
-        it_line++;
-        //alternative
-        while(*it_line != ' ') it_line++;
-        it_line++;
+          it_line = line.begin();
+          //chr
+          while(*it_line != ' ') it_line++;
+          it_line++;
+          //rsid
+          while(*it_line != ' ') it_line++;
+          it_line++;
+          //bp
+          while(*it_line != ' ') it_line++;
+          it_line++;
+          //ancestral
+          while(*it_line != ' ') it_line++;
+          it_line++;
+          //alternative
+          while(*it_line != ' ') it_line++;
+          it_line++;
 
-        bool is_snp = false;
-        for(; it_line != line.end(); it_line++){
-          if(*it_line == '1'){
-            is_snp = true;
-            break;
+          bool is_snp = false;
+          for(; it_line != line.end(); it_line++){
+            if(*it_line == '1'){
+              is_snp = true;
+              break;
+            }
           }
-        }
 
-        if(is_snp){
-          os << line << "\n";
+          if(is_snp){
+            os << line << "\n";
+          }else{
+            removed_snps++;
+          }
+
+        }else if(ancestral_allele == alternative[0]){
+
+          number_flipped++;
+          it_line = line.begin();
+          //chr
+          while(*it_line != ' ') it_line++;
+          it_line++;
+          //rsid
+          while(*it_line != ' ') it_line++;
+          it_line++;
+          //bp
+          while(*it_line != ' ') it_line++;
+          it_line++;
+          //ancestral
+          *it_line = alternative[0];
+          while(*it_line != ' ') it_line++;
+          it_line++;
+          //alternative
+          *it_line = ancestral[0];
+          while(*it_line != ' ') it_line++;
+          it_line++;
+
+          bool is_snp = false;
+          for(; it_line != line.end(); it_line++){
+            if(*it_line == '0'){
+              *it_line = '1';
+              is_snp = true;
+            }else if(*it_line == '1'){
+              *it_line = '0';
+            }
+          }
+
+          if(is_snp){
+            os << line << "\n";
+          }else{
+            removed_snps++;
+          }
+
         }else{
           removed_snps++;
-        }
-
-      }else if(ancestral_allele == alternative){
-
-        number_flipped++;
-        it_line = line.begin();
-        //chr
-        while(*it_line != ' ') it_line++;
-        it_line++;
-        //rsid
-        while(*it_line != ' ') it_line++;
-        it_line++;
-        //bp
-        while(*it_line != ' ') it_line++;
-        it_line++;
-        //ancestral
-        *it_line = alternative;
-        while(*it_line != ' ') it_line++;
-        it_line++;
-        //alternative
-        *it_line = ancestral;
-        while(*it_line != ' ') it_line++;
-        it_line++;
-
-        bool is_snp = false;
-        for(; it_line != line.end(); it_line++){
-          if(*it_line == '0'){
-            *it_line = '1';
-            is_snp = true;
-          }else if(*it_line == '1'){
-            *it_line = '0';
-          }
-        }
-
-        if(is_snp){
-          os << line << "\n";
-        }else{
-          removed_snps++;
+          //std::cerr << ancestral_allele << " " << ancestral << " " << alternative << " " << ancestor.seq[bp-1] << " " << ancestor.seq[bp+1] << std::endl;
         }
 
       }else{
         removed_snps++;
-        //std::cerr << ancestral_allele << " " << ancestral << " " << alternative << " " << ancestor.seq[bp-1] << " " << ancestor.seq[bp+1] << std::endl;
       }
 
     }
@@ -1021,7 +1026,7 @@ GenerateSNPAnnotations(cxxopts::Options& options){
   std::cerr << "[" << percentage << "%]\r";
   std::cerr.flush();
   for(int snp = 0; snp < data.L; snp++){
-    
+
     m_hap.ReadSNP(sequence, bp);
 
     //std::cerr << (int)(data.L/100) << " " << snp % (int)(data.L/100) << std::endl;
