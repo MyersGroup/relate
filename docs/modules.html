@@ -505,7 +505,9 @@ gtag('config', 'UA-115753061-1');
                   <p>Calculates p-values for selection evidence from genealogy.<br> 
 
                   <p>
-                  We recommend that you first estimate the population size history using <a href="modules.html#CoalescenceRate">this module</a>, with setting --threshold 0. This is so that the branch lengths in all trees are updated for the estimated population size history. Alternatively, if the region you are analysing is short, you can specify a .coal file in this module and the script reestimates branch lengths for the trees of interest before calculating selection p-values.</p>
+                  We recommend that you first estimate the population size history using <a href="modules.html#CoalescenceRate">this module</a>, with setting --threshold 0. This is so that the branch lengths in all trees are updated for the estimated population size history. Alternatively, if the region you are analysing is short, you can specify a .coal file in this module and the script reestimates branch lengths for the trees of interest before calculating selection p-values.</p> 
+                  
+                  <p>P-values can only be calculated for mutations with derived allele frequency of at least 3. Mutations with a smaller DAF are filtered out if the DAFs are appended to the .mut file using RelateFileFormats --mode GenerateSNPAnnotations, otherwise we set the -log10 p-value column to 1.</p>
 
                   <dl class="dl-horizontal">
                     <dt>-i,--input</dt>

@@ -2,8 +2,7 @@ if(as.numeric(version$major) < 3 || (as.numeric(version$major) == 3 && as.numeri
     stop("Please update your R version to at least 3.3.1.")
 }
 while(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
-while(!require(grid)) install.packages("grid", repos = "http://cran.us.r-project.org")
-while(!require(gridExtra)) install.packages("gridExtra", repos = "http://cran.us.r-project.org")
+while(!require(cowplot)) install.packages("cowplot", repos = "http://cran.us.r-project.org")
 
 ##################################################################################
 
@@ -131,17 +130,6 @@ PopLabels <- function(filename_plot, filename_poplabels, text_size = 100, ...){
 
 }
 
-resize_heights <- function(g, heights = rep(1, length(idpanels))){
-  idpanels <- unique(g$layout[grepl("panel",g$layout$name), "t"])
-  g$heights <- grid:::unit.list(g$heights)
-  h <- lapply(heights, unit, "null")
-  for(i in 1:length(idpanels)){
-    g$heights[idpanels[i]] <- h[[i]]
-  }
-  g
-}
-
-
 #################################################################################
 
 argv <- commandArgs(trailingOnly = T)
@@ -164,7 +152,7 @@ system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --
 
 # plot tree
 p1 <- TreeView(filename_plot, years_per_gen, lwd = tree_lwd) + 
-      AddMutations(filename_plot, years_per_gen, size = mut_size) 
+      AddMutations(filename_plot, years_per_gen, size = mut_size) + scale_y_continuous(trans = "log10") 
       
 # some modifications to theme
 p1 <- p1 + theme(axis.text.y = element_text(size = rel(2.3)), 
@@ -178,18 +166,10 @@ p2 <- PopLabels(filename_plot, filename_poplabels, text_size = poplabels_textsiz
 
 ##################################################################################
 
-# Combine plots p1 and p2
-g <- try(rbind(ggplotGrob(p1), ggplotGrob(p2)), TRUE)
-if(grep(g[1], pattern = "Error")){
-  g <- gtable_rbind(ggplotGrob(p1), ggplotGrob(p2))
-}
-
 pdf(paste(filename_plot,".pdf", sep = ""), height = height, width = width)
-grid.draw(resize_heights(g, ratio))
+plot_grid(p1,p2, rel_heights = ratio, labels = "", align = "v", ncol = 1)
 dev.off()
-
 
 # delete tmp files for plotting tree
 system(paste("rm ",filename_plot, ".plotcoords", sep = ""))
 system(paste("rm ",filename_plot, ".plotcoords.mut", sep = ""))
-system("rm Rplots.pdf") #not sure where this is generated

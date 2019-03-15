@@ -93,7 +93,7 @@ do
 done
 
 
-num_iter=4
+num_iter=0
 
 
 echo "********************************"
@@ -138,6 +138,12 @@ check_file_existence (){
 if [ ! -z "${first_bp-}" -a ! -z "${last_bp-}" ];
 then
 
+  if [ "${output}" == "${filename}" ]
+  then
+    echo "Output filename should be different to input filename."
+    exit 1
+  fi 
+
   #create output.anc
   ${PATH_TO_RELATE}/bin/RelateExtract \
     --mode AncMutForSubregion \
@@ -170,20 +176,12 @@ then
       fi
     fi
 
-    if [ ${num_snps} -ge 10000 ];
-    then
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        -i ${filename} \
-        -o ${output}
-    else
-      epochs=$(cat ${coal} | head -2 | tail -1)
-      echo -n > ${output}_avg.rate
-      for e in ${epochs}
-      do
-        echo "$e ${mu}" >> ${output}_avg.rate
-      done
-    fi
+    epochs=$(cat ${coal} | head -2 | tail -1)
+    echo -n > ${output}_avg.rate
+    for e in ${epochs}
+    do
+      echo "$e ${mu}" >> ${output}_avg.rate
+    done
 
     if [ ! -z "${seed-}" ];
     then
@@ -290,6 +288,12 @@ else
     echo "You can then use DetectSelection.sh without specifying the --coal option."
     echo "!!!!"
 
+    if [ ${output} == ${filename} ]
+    then
+      echo "Output filename should be different to input filename."
+      exit 1
+    fi 
+
     foo=$(check_file_existence "${filename}.mut")
     num_snps=0
     if [ ${foo} -eq "1" ];
@@ -303,20 +307,13 @@ else
       fi
     fi
 
-    if [ ${num_snps} -ge 10000 ];
-    then
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        -i ${filename} \
-        -o ${output}
-    else
-      epochs=$(cat ${coal} | head -2 | tail -1)
-      echo -n > ${output}_avg.rate
-      for e in ${epochs}
-      do
-        echo "$e ${mu}" >> ${output}_avg.rate
-      done
-    fi
+    epochs=$(cat ${coal} | head -2 | tail -1)
+    echo -n > ${output}_avg.rate
+    for e in ${epochs}
+    do
+      echo "$e ${mu}" >> ${output}_avg.rate
+    done
+
 
     #create output.anc
     cp ${filename}.anc ${output}.anc
