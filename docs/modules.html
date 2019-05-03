@@ -656,7 +656,7 @@ gtag('config', 'UA-115753061-1');
 
                   <dl class="dl-horizontal">
                     <dt>-i,--input</dt>
-                    <dd>Filename of .anc and .mut files without file extension. Needs to contain all SNPs in haps/sample input file.</dd>
+                    <dd>Filename of .anc and .mut files without file extension. Needs to contain all SNPs in input haps/sample input files. If not, see --dist option.</dd>
                     <dt>-o,--output</dt>
                     <dd>File of the output files without file extensions.</dd>
                     <dt>-m,--mu</dt>
@@ -671,6 +671,8 @@ gtag('config', 'UA-115753061-1');
                     <dd>Optional: First bp position.</dd>
                     <dt>--last_bp</dt>
                     <dd>Optional: Last bp position.</dd>
+                    <dt>--dist</dt>
+                    <dd>Optional: Filename containing bp positions of SNPs and distances between adjacent SNPs (<a href="#dist">file format</a>). E.g., obtained using <a href="#AncMutForSubregion">RelateExtract --mode AncMutForSubregion</a>. Required if anc/mut file only covers a subregion of input haps/sample files.</dd>
                     <dt>--seed</dt>
                     <dd>Optional: Random seed for branch lengths estimation. Only used if --coal is specified.</dd>
                   </dl>
@@ -847,13 +849,14 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="ExtractSubtree"></a> 
+            <a class="anchor" name="AncMutForSubregion"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Extract subtrees corresponding to a subpopulation</h4></div>
+                <div class="panel-heading"> <h4>Extract trees corresponding to a subregion</h4></div>
                 <div class="panel-body">  
 
                   <p>Extracts trees in region of interest.</p>
+                  <p>Please always apply this on the anc/mut files inferred using Relate (from haps/sample files), i.e., do not apply repeatedly to get "subregions of subregions". If you do, ignore the output .dist file and use the .dist file obtained from the original anc/mut files instead.</p>
 
                   <dl class="dl-horizontal">
                     <dt>--anc</dt>
