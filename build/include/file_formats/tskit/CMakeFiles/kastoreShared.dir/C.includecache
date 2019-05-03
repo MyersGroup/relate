@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/kastore.c
+stdio.h
+-
+string.h
+-
+stdlib.h
+-
+assert.h
+-
+errno.h
+-
+stdbool.h
+-
+kastore.h
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/kastore.h
+
+/Users/leo/Documents/genomics/relate/include/file_formats/tskit/kastore.h
+stdint.h
+-
+stddef.h
+-
+stdio.h
+-
+

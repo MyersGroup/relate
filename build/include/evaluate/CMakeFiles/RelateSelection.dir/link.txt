@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/c++   -O3 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/RelateSelection.dir/selection/RelateSelection.cpp.o  -o ../../../bin/RelateSelection  ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a /opt/local/lib/libz.dylib 
