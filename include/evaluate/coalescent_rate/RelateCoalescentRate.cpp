@@ -25,6 +25,8 @@ int main(int argc, char* argv[]){
     ("num_bins", "Optional: Number of bins.", cxxopts::value<int>())
     ("first_chr", "Optional: Index of fist chr", cxxopts::value<int>())
     ("last_chr", "Optional: Index of last chr", cxxopts::value<int>())
+    ("num_proposals", "Optional: Number of proposals between samples in SampleBranchLengths", cxxopts::value<int>())
+    ("num_samples", "Optional: Number of samples in SampleBranchLengths", cxxopts::value<int>())
     ("seed", "Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
   
   options.parse(argc, argv);
@@ -142,6 +144,26 @@ int main(int argc, char* argv[]){
     }  
 
     ReEstimateBranchLengths(options);
+
+  }else if(!mode.compare("SampleBranchLengths")){
+ 
+    //variable population size.
+    //Do this for whole chromosome
+    //The Final Finalize should be a FinalizeByGroup 
+   
+    bool help = false;
+    if(!options.count("mutation_rate") || !options.count("coal") || !options.count("num_samples") || !options.count("input") || !options.count("output")){
+      std::cout << "Not enough arguments supplied." << std::endl;
+      std::cout << "Needed: mutation_rate, coal, num_samples, input, output. Optional: dist, num_proposals, seed." << std::endl;
+      help = true;
+    }
+    if(options.count("help") || help){
+      std::cout << options.help({""}) << std::endl;
+      std::cout << "Estimate population size." << std::endl;
+      exit(0);
+    }  
+
+    SampleBranchLengths(options);
 
   }else{
 

@@ -258,6 +258,8 @@ MutationsOnBranches(cxxopts::Options& options){
   }
   int tree_index_of_interest = mut.info[index_of_snp_of_interest].tree;
 
+  //std::cerr << tree_index_of_interest << std::endl;
+
   // read pos
   int L = 0;
   igzstream is_L;
@@ -345,6 +347,8 @@ MutationsOnBranches(cxxopts::Options& options){
       }
       int min_bp = pos[min_snp], max_bp = pos[max_snp];
 
+      //std::cerr << min_bp << " " << max_bp << std::endl;
+
       haps m_hap(options["haps"].as<std::string>().c_str(), options["sample"].as<std::string>().c_str());
       Data data(m_hap.GetN(), m_hap.GetL());
       Leaves sequences_carrying_mutation;
@@ -367,7 +371,6 @@ MutationsOnBranches(cxxopts::Options& options){
       } 
       */
 
-
       while(bp <= max_bp && snp < data.L){
 
         //map sequence to tree
@@ -381,6 +384,7 @@ MutationsOnBranches(cxxopts::Options& options){
           }
         }
         if(sequences_carrying_mutation.num_leaves > 0){
+          //if(bp == 236591955) std::cerr << "SNP exists" << std::endl; 
           if(ancbuilder.IsSNPMapping(tr, sequences_carrying_mutation, snp) == 1){
             if(is_mask){
               if(std::toupper(mask.seq[bp-1]) == 'P'){           
@@ -391,9 +395,10 @@ MutationsOnBranches(cxxopts::Options& options){
               }
             }else{ 
               int branch = ancbuilder.mutations.info[snp].branch[0];
-              if(pos[mtr.tree.nodes[branch].SNP_begin] <= bp && pos[mtr.tree.nodes[branch].SNP_end] >= bp && mtr.tree.nodes[branch].num_events > 0){
+              if(pos[mtr.tree.nodes[branch].SNP_begin] <= bp && pos[mtr.tree.nodes[branch].SNP_end] >= bp){
                 mut_on_branches[branch].push_back(bp);
               }
+              //if(bp == 236591955) std::cerr << bp << " " << branch << " " << pos[mtr.tree.nodes[branch].SNP_begin] << " " << pos[mtr.tree.nodes[branch].SNP_end] << " " << mtr.tree.nodes[branch].num_events << std::endl;
             }
           }
         }

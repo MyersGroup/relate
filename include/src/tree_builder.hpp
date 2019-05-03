@@ -157,6 +157,8 @@ class InferBranchLengths{
     void MCMCVariablePopulationSize(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
     //variable population size MCMC, for Relate (i.e. correct initialization etc)
     void MCMCVariablePopulationSizeForRelate(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
+    //variable population size MCMC resample
+    void MCMCVariablePopulationSizeSample(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, int num_proposals, const int seed = std::time(0) + getpid());
     void EM(const Data& data, Tree& tree, bool called_as_main = false);
 
 };

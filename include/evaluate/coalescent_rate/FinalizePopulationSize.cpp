@@ -162,6 +162,11 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   epoch.resize(num_epochs);
   fread(&epoch[0], sizeof(float), num_epochs, fp);
   std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epochs);
+  
+  if(coalescent_rate_data[0].size() != N || coalescent_rate_data[0].subVectorSize(0) == N){
+    std::cerr << "Error: number of haplotypes in anc/mut does not match number of samples in .poplabels file" << std::endl;
+    exit(1);
+  }
   for(int e = 0; e < num_epochs; e++){
     coalescent_rate_data[e].ReadFromFile(fp);
     assert(coalescent_rate_data[e].size() == N);

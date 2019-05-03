@@ -152,14 +152,14 @@ EstimateBranchLengths::log_deltat(float t){
     if(t < 1){
       return(logt_pos[(int) (t*10000)]);
     }else{
-      return(fast_log(1+t));
+      return(fast_log(1.0+t));
     }  
   }else{
     //return(fast_log(1+t));
     if(t > -0.1){
       return(logt_neg[(int) (-t*10000)]);
     }else{
-      return(fast_log(1+t));
+      return(fast_log(1.0+t));
     }  
   }
 }
@@ -444,9 +444,9 @@ EstimateBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distribu
           }else{
 
             log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-            if(n_num_events > 0.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
-            if(child_right_num_events > 0.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
-            if(child_left_num_events > 0.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+            if(n_num_events >= 0.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
+            if(child_right_num_events >= 0.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
+            if(child_left_num_events >= 0.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
 
             delta_tau  *= -1.0;
             child_left_label  = (*tree.nodes[node_swap_k].child_left).label;
@@ -478,9 +478,9 @@ EstimateBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distribu
                   log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
                 }else{ 
                   log_likelihood_ratio += (mut_rate[node_swap_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-                  if(n_num_events > 0.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
-                  if(child_right_num_events > 0.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
-                  if(child_left_num_events > 0.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+                  if(n_num_events >= 0.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
+                  if(child_right_num_events >= 0.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
+                  if(child_left_num_events >= 0.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
                 }
 
               }
@@ -490,6 +490,24 @@ EstimateBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distribu
         }
       } 
       assert(!std::isnan(log_likelihood_ratio));
+
+      /*
+      if(node_k == 1615){
+       
+        child_left_label  = (*tree.nodes[node_k].child_left).label;
+        child_right_label = (*tree.nodes[node_k].child_right).label;
+
+        n_num_events           = tree.nodes[node_k].num_events;
+        child_left_num_events  = tree.nodes[child_left_label].num_events;
+        child_right_num_events = tree.nodes[child_right_label].num_events;
+
+        tb                 = tree.nodes[node_k].branch_length;
+        tb_child_left      = tree.nodes[child_left_label].branch_length;
+        tb_child_right     = tree.nodes[child_right_label].branch_length;
+
+        std::cerr << k << "\t" << new_order << "\t" << log_likelihood_ratio << "\t" << -delta_tau << "\t" << tb << "\t" << tb_child_right << "\t" << tb_child_left << "\t" << n_num_events << "\t" << child_right_num_events << "\t" << child_left_num_events << std::endl;
+      }
+      */
 
       accept = true;
       if(log_likelihood_ratio < 0.0){
@@ -597,8 +615,8 @@ EstimateBranchLengths::UpdateOneEvent(Tree& tree, int k, std::gamma_distribution
       }else{
 
         log_likelihood_ratio += (- mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-        if(child_right_num_events > 0.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
-        if(child_left_num_events > 0.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+        if(child_right_num_events >= 1.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
+        if(child_left_num_events >= 1.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
 
       }
     }
@@ -692,9 +710,9 @@ EstimateBranchLengths::UpdateOneEvent(Tree& tree, int k, std::gamma_distribution
           }else{
 
             log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-            if(n_num_events > 0.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
-            if(child_right_num_events > 0.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
-            if(child_left_num_events > 0.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+            if(n_num_events >= 1.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
+            if(child_right_num_events >= 1.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
+            if(child_left_num_events >= 1.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
 
           }
         }
@@ -860,7 +878,6 @@ EstimateBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform
 }
 
 
-
 //This changes the time of one event, with a beta proposal within the time while k ancestors remain
 void
 EstimateBranchLengths::UpdateOneEventVP(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::gamma_distribution<double>& dist_gamma, std::uniform_real_distribution<double>& dist_unif){
@@ -972,8 +989,8 @@ EstimateBranchLengths::UpdateOneEventVP(Tree& tree, int k, const std::vector<dou
       }else{
 
         log_likelihood_ratio += (- mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-        if(child_right_num_events > 0.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
-        if(child_left_num_events > 0.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+        if(child_right_num_events >= 1.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
+        if(child_left_num_events >= 1.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
 
       }
     }
@@ -1122,9 +1139,9 @@ EstimateBranchLengths::UpdateOneEventVP(Tree& tree, int k, const std::vector<dou
           }else{
 
             log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-            if(n_num_events > 0.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
-            if(child_right_num_events > 0.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
-            if(child_left_num_events > 0.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+            if(n_num_events >= 1.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
+            if(child_right_num_events >= 1.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
+            if(child_left_num_events >= 1.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
 
           }
         }
@@ -1156,7 +1173,6 @@ EstimateBranchLengths::UpdateOneEventVP(Tree& tree, int k, const std::vector<dou
 
 
 }
-
 
 //propose a new time and change events only up to t+bound
 void
@@ -1434,7 +1450,6 @@ EstimateBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std:
   }
 
 }
-
 
 void
 EstimateBranchLengths::ChangeTimeWhilekAncestorsVP_new(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif){
@@ -1819,8 +1834,8 @@ EstimateBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
 
   float p1 = std::min(10.0/data.N, 0.1);
   float p2 = p1 + 0.2;  
-  //p1       = 0.0;
-  //float p2 = 0.8;
+  p1 = 0.1;
+  p2 = 0.3;
 
   ////////// Initialize MCMC ///////////
 
@@ -1837,7 +1852,7 @@ EstimateBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
   //  RandomSwitchOrder(tree, dist_switch(rng), dist_unif);
   //}  
 
-  //Apply EM algorithm to calculate MLE of branch lengths given order of coalescences
+  //Initialise branch lengths
   InitializeBranchLengths(tree);
 
   /////////////// Start MCMC ///////////////
@@ -1976,6 +1991,9 @@ EstimateBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, 
 
   float p1 = std::min(10.0/data.N, 0.1);
   float p2 = p1 + 0.2;
+  p1 = 0.1;
+  p2 = 0.3;
+  //std::cerr << p1 << " " << p2 << std::endl;
 
   int delta = std::max(data.N/10.0, 10.0);
   root = N_total - 1;
@@ -2169,15 +2187,16 @@ EstimateBranchLengths::MCMCVariablePopulationSizeForRelate(const Data& data, Tre
   InitializeMCMC(data, tree); 
 
   //Randomly switch around order of coalescences
-  //for(int j = 0; j < (int) data.N * data.N; j++){
-  //  RandomSwitchOrder(tree, dist_switch(rng), dist_unif);
-  //}  
-  InitialiseEventOrder2(tree, dist_unif); 
-  for(int j = 0; j < (int) data.N; j++){
+  for(int j = 0; j < (int) data.N * data.N; j++){
     RandomSwitchOrder(tree, dist_switch(rng), dist_unif);
   }  
+  
+  //InitialiseEventOrder2(tree, dist_unif); 
+  //for(int j = 0; j < 10 * (int) data.N; j++){
+  //  RandomSwitchOrder(tree, dist_switch(rng), dist_unif);
+  //}  
 
-  //Apply EM algorithm to calculate MLE of branch lengths given order of coalescences
+  //Initialise branch lengths
   InitializeBranchLengths(tree);
 
   ////////////////// Transient /////////////////

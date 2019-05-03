@@ -270,6 +270,38 @@ gtag('config', 'UA-115753061-1');
               </div>
             </div>
 
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+
+              <a class="anchor" name="ConvertFromMs"></a> 
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>Convert from ms output format</h4></div>
+                <div class="panel-body">  
+
+                  R script that converts from the output file format used by ms to the haps/sample file format.<br/>
+                  The script removes any sites with multiple mutations.<br/>
+                  If the input file contains more than one simulation, these get separated into "chromosomes".<br/><br/>
+
+                  <a href = "./download/ms2haps.R">Download the script.</a><br><br/>
+
+                  <pre><code> Rscript ms2haps.R infile.ms example nsite</code></pre>
+              
+                  <dl class="dl-horizontal">
+                    <dt>infile.ms</dt>
+                    <dd>Input filename with file extension.</dd>
+                    <dt>example</dt>
+                    <dd>Output filename withouth file extension.</dd>
+                    <dt>nsites</dt>
+                    <dd>(Optional) Number of simulated sites. Default value is 1. This is multiplied to the positions.</dd>
+                  </dl>
+                  Output: example.haps, example.sample.
+
+                </div>
+              </div>
+            </div>
+
+
           </div>
 
           <!-- row -->

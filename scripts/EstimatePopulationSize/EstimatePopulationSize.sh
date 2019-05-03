@@ -269,8 +269,14 @@ then
         else
           cp $coal ${output}.coal
           chmod +w ${output}.coal
-          cat ${output}_avg.rate | awk -v mu=${mu} '{print $1 " " mu}' > ${output}_avg_tmp.rate
-          mv ${output}_avg_tmp.rate ${output}_avg.rate
+
+          epochs=$(cat ${coal} | head -2 | tail -1)
+          echo -n > ${output}_avg.rate
+          for e in ${epochs}
+          do
+            echo "$e ${mu}" >> ${output}_avg.rate
+          done
+
         fi
 
       else
@@ -463,8 +469,12 @@ then
             -o ${output}
         else
           cp $coal $output.coal
-          cat ${output}_avg.rate | awk -v mu=${mu} '{print $1 " " mu}' > ${output}_avg_tmp.rate
-          mv ${output}_avg_tmp.rate ${output}_avg.rate
+          epochs=$(cat ${coal} | head -2 | tail -1)
+          echo -n > ${output}_avg.rate
+          for e in ${epochs}
+          do
+            echo "$e ${mu}" >> ${output}_avg.rate
+          done
         fi
 
       else
@@ -677,8 +687,12 @@ else
 
         else
           cp $coal ${output}.coal
-          cat ${output}_avg.rate | awk -v mu=${mu} '{print $1 " " mu}' > ${output}_avg_tmp.rate
-          mv ${output}_avg_tmp.rate ${output}_avg.rate
+          epochs=$(cat ${coal} | head -2 | tail -1)
+          echo -n > ${output}_avg.rate
+          for e in ${epochs}
+          do
+            echo "$e ${mu}" >> ${output}_avg.rate
+          done
         fi
 
       else
@@ -997,8 +1011,12 @@ else
         else
           cp $coal ${output}.coal
           chmod +w ${output}.coal
-          cat ${output}_avg.rate | awk -v mu=${mu} '{print $1 " " mu}' > ${output}_avg_tmp.rate
-          mv ${output}_avg_tmp.rate ${output}_avg.rate
+          epochs=$(cat ${coal} | head -2 | tail -1)
+          echo -n > ${output}_avg.rate
+          for e in ${epochs}
+          do
+            echo "$e ${mu}" >> ${output}_avg.rate
+          done
         fi
 
       else

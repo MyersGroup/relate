@@ -39,7 +39,14 @@ int main(int argc, char* argv[]){
     CreateAncesTreeFileForSubpopulation(options);
 
   }else if(!mode.compare("AncMutForSubregion")){
- 
+
+    bool help = false;
+    if(!options.count("anc") || !options.count("mut") || !options.count("first_bp") || !options.count("last_bp") || !options.count("output")){
+      std::cout << "Not enough arguments supplied." << std::endl;
+      std::cout << "Needed: anc, mut, first_bp, last_bp, output." << std::endl;
+      help = true;
+    }
+
     GetDistFromMut(options);
     AncMutForSubregion(options);
 
@@ -65,7 +72,7 @@ int main(int argc, char* argv[]){
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "TreeAtSNPAsNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut." << std::endl;
+    std::cout << "TreeAtSNPAsNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion." << std::endl;
   
   }
 

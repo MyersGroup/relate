@@ -79,6 +79,9 @@ gtag('config', 'UA-115753061-1');
           <li>
             <a href="#Selection">Detect positive selection</a>
           </li>
+          <li> 
+            <a href="#SampleBranchLengths">Sample branch lengths<br>(e.g., for CLUES)</a>
+          </li>
           <li>
             <a href="#TreeView">Plot trees of Interest</a>
           </li>
@@ -228,6 +231,7 @@ gtag('config', 'UA-115753061-1');
                             <li>The first line lists populations</li>
                             <li>The second line lists the epochs (in generations).</li>
                             <li>Each subsequent line contains the coalescence rates between two populations. Each line starts with two integers indicating the populations considered.</li>
+                            <li>These are "raw" coalescence rates - to obtain diploid effective population size estimates, use 0.5/(coalescence rate).</li>
                           </ul>
 
                           <pre><code>group1 group2
@@ -541,17 +545,55 @@ gtag('config', 'UA-115753061-1');
                   Output: example_selection.lin, example_selection.freq, example_selection.sele, (example_selection.anc, example_selection.mut, example_selection_dist if coal is specified).
 
                 </div>
-                <h4>More details</h4>
-                Below, we describe details about the functions used to calculate the selection p-value.<br\>
               </div>
+
+              <p>
+              <h4>File formats</h4>
+              </p> 
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <a class="anchor" name=".freq"></a> 
+                    <td>.freq</td>
+                    <td>Records the frequency of the derived allele at generations genN .. gen1 (specified in the header)<br/><br/>
+                      Columns: pos rs_id genN genN-1 ... gen1 0
+                    </td>
+                  </tr>
+                  <tr>
+                    <a class="anchor" name=".lin"></a> 
+                    <td>.lin</td>
+                    <td>Records the number of lineages in the tree at generations genN .. gen1 (specified in the header), as well as the number of lineages when the mutation had frequency 2<br/><br/>
+                      Columns: pos rs_id genN genN-1 ... gen1 0 when_mutation_has_freq2
+                    </td>
+                  </tr>
+                  <tr>
+                    <a class="anchor" name=".sele"></a> 
+                    <td>.sele</td>
+                    <td>Records the log10 p-value for selection evidence at generations genN .. gen1 (specified in the header), as well as the log10 p-value when the mutation had frequency 2. Log10 p-value is set to 1 if mutation had frequency <= 1 at a generation. <br/>
+                        The "when_mutation_has_freq2" column contains the p-value for selection evidence over the lifetime of this mutation. All other p-values condition on the frequency at the specified time.<br><br>
+                      Columns: pos rs_id genN genN-1 ... gen1 0 when_mutation_has_freq2<br/><br/>
+
+                      
+
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+
             </div>
 
           </div>
+
+  
 
 
           <!-- row -->
           <div class="row"> 
             <div class="col-md-10 col-md-offset-1">
+
+              <h4>More details</h4>
+              Below, we describe details about the functions used to calculate the selection p-value.<br\>
 
               <div class="panel panel-info">
                 <div class="panel-heading"> <h4>Get selection pvalues</h4></div>
@@ -576,6 +618,78 @@ gtag('config', 'UA-115753061-1');
                 </div>
               </div>
 
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+            <a class="anchor" name="SampleBranchLengths"></a> 
+            <div class="col-md-10 col-md-offset-1">
+
+              <h3>Sample branch lengths (e.g., for <a href="https://github.com/35ajstern/clues">CLUES</a>)</h3>
+              <hr/>
+
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4>Sample branch lengths</h4></div>
+                <div class="panel-body">  
+
+                  <p>Samples branch lengths using MCMC.<br> 
+                     The output file format resembles that of <a href="https://github.com/mdrasmus/argweaver">ARGweaver</a>, which is the input file format required by <a href="https://github.com/35ajstern/clues">CLUES</a> for inference of selection and inferring allele frequency trajectories.
+                  <p>
+
+                  <p>
+                  <b>Documentation for using Relate with CLUES is under construction.</b>
+                  </p>
+                  
+                  <p>In Relate, we map mutations to branches with approximately the same descendants as carriers of the derived allele to be robust to errors. Therefore, we output an additional .sites file in which only the descendants of the branch to which the mutation is mapped are marked as derived, the rest are ancestral. Please also note that some SNPs don't map to a unique branch in the tree and such SNPs are left out of this .sites file.</p>
+
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of .anc and .mut files without file extension. Needs to contain all SNPs in haps/sample input file.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                    <dt>-m,--mu</dt>
+                    <dd>Mutation rate, e.g., 1.25e-8.</dd>
+                    <dt>--coal</dt>
+                    <dd>Estimated coalescent rate, treating all haplotypes as one population.</dd>
+                    <dt>--num_samples</dt>
+                    <dd>Number of times branch lengths are sampled.</dd>
+                    <dt>--num_proposals</dt>
+                    <dd>Optional: Number of MCMC proposals between samples. Default is max(10*N, 1000), where N is the number of haplotypes. If num_proposals=0, all samples will be identical to the input.</dd>
+                    <dt>--first_bp</dt>
+                    <dd>Optional: First bp position.</dd>
+                    <dt>--last_bp</dt>
+                    <dd>Optional: Last bp position.</dd>
+                    <dt>--seed</dt>
+                    <dd>Optional: Random seed for branch lengths estimation. Only used if --coal is specified.</dd>
+                  </dl>
+
+                  </p>
+
+                  <pre><code> PATH_TO_RELATE/scripts/SampleBranchLengths/SampleBranchLengths.sh \
+                 -i example \
+                 -o example_sub \
+                 -m 1.25e-8 \
+                 --coal popsize.coal \
+                 --num_samples 5 \
+                 --first_bp 100000 \
+                 --last_bp 200000 \
+                 --seed 1 </code></pre>
+                  Output: example_sub.newick, example_sub.sites. 
+
+                </div>
+              </div>
 
               <p>
               <h4>File formats</h4>
@@ -584,31 +698,33 @@ gtag('config', 'UA-115753061-1');
                 <tbody>
                   <tr>
                     <a class="anchor" name=".freq"></a> 
-                    <td>.freq</td>
-                    <td>Records the frequency of the derived allele at generations genN .. gen1 (specified in the header)<br/>
-                      pos rs_id genN genN-1 ... gen1 0
+                    <td>.newick</td>
+                    <td>A tab-delimited file with columns<br>
+                      chrom chromStart chromEnd MCMC_sample tree<br>
+                      <ul>
+                        <li>chrom: Chromosome id.</li>
+                        <li>chromStart: bp position at which tree starts.</li>
+                        <li>chromEnd: bp position at which tree ends.</li>
+                        <li>MCMC_sample: integer specifying the MCMC sample.</li>
+                        <li>tree: Newick string of the tree.</li>
+                      </ul>
                     </td>
                   </tr>
                   <tr>
                     <a class="anchor" name=".lin"></a> 
-                    <td>.lin</td>
-                    <td>Records the number of lineages in the tree at generations genN .. gen1 (specified in the header), as well as the number of lineages when the mutation had frequency 2<br/>
-                      pos rs_id genN genN-1 ... gen1 0 when_mutation_has_freq2
+                    <td>.sites</td>
+                    <td>A tab-delimited file with<ul>
+                        <li>First line: Lists names of haplotypes.</li>
+                        <li>Second line: Shows genomic region covered by this file.</li>
+                        <li>Remaining lines: bp position followed by haplotype pattern at this site.</li>
+                        </ul>
                     </td>
                   </tr>
-                  <tr>
-                    <a class="anchor" name=".sele"></a> 
-                    <td>.sele</td>
-                    <td>Records the log10 p-value for selection evidence at generations genN .. gen1 (specified in the header), as well as the log10 p-value when the mutation had frequency 2. Log10 p-value is set to 1 if mutation had frequency >= 1 at a generation.<br/>
-                      pos rs_id genN genN-1 ... gen1 0 when_mutation_has_freq2
-                    </td>
-                  </tr>
-
                 </tbody>
               </table>
 
-            </div>
 
+            </div>
           </div>
 
           <!-- row -->

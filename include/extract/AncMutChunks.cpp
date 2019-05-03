@@ -370,6 +370,11 @@ AncMutForSubregion(cxxopts::Options& options){
   Mutations mut_subregion;
   mut_subregion.header = header;
 
+  if(last_bp < mut.info[0].pos || first_bp > mut.info[mut.info.size()-1].pos){
+    std::cerr << "Error: Region is outside of anc/mut files." << std::endl;
+    exit(1);
+  }
+
   int tree_index_begin = -1;
   int tree_index_end   = -1;
   for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
