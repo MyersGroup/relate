@@ -23,6 +23,7 @@ gtag('config', 'UA-115753061-1');
     <!-- Scrollbar Custom CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
     <link rel="stylesheet" href="documentation.css"> 
+    <script src="anchor.js"></script>
 
   </head>
 
@@ -89,8 +90,7 @@ gtag('config', 'UA-115753061-1');
           <div class="row">
             <div class="col-md-10 col-md-offset-1">
 
-              <a class="anchor" name="PreparingData"></a>
-              <h2>Preparing the data</h2>
+              <h2 id="PreparingData">Preparing the data</h2>
 
               <p>You can find a toy data set in the subdirectory <b>example/</b>.</p>
               <p><b>Relate</b> uses the haps/sample file format (output file format of <a href="https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html">SHAPEIT2</a>) as input.  </p>
@@ -112,8 +112,7 @@ gtag('config', 'UA-115753061-1');
                 </li>
               </ul>
 
-              <a class="anchor" name="GettingStarted"></a>
-              <h2>Getting Started</h2>
+              <h2 id="GettingStarted">Getting Started</h2>
 
               <div class="alert alert-warning">
                 <strong>Warning!</strong><br/>
@@ -139,15 +138,15 @@ gtag('config', 'UA-115753061-1');
                 <tbody>
                   <tr>
                     <td>example.haps</td>
-                    <td>A file containing haplotype information (<a href="input_data.html#haps">more info</a>)</td>
+                    <td>A file containing haplotype information (<a href="input_data.html#.haps">more info</a>)</td>
                   </tr>
                   <tr>
                     <td>example.sample</td>
-                    <td>A file containing information about individuals in the data set (<a href="input_data.html#sample">more info</a>)</td>
+                    <td>A file containing information about individuals in the data set (<a href="input_data.html#.sample">more info</a>)</td>
                   </tr>
                   <tr>
                     <td>genetic_map.txt</td>
-                    <td>A file containing recombination rates and distances (<a href="input_data.html#map">more info</a>)</td>
+                    <td>A file containing recombination rates and distances (<a href="input_data.html#.map">more info</a>)</td>
                   </tr>
                   <tr>
                     <td>example.annot</td>
@@ -231,8 +230,7 @@ gtag('config', 'UA-115753061-1');
             <div class="col-md-10 col-md-offset-1">
 
 
-              <a class="anchor" name="Output"></a>
-              <h2>Output and analysis</h2>
+              <h2 id="Output">Output and analysis</h2>
 
               <p><b>Relate</b> outputs two files.</p>
 
@@ -299,14 +297,14 @@ gtag('config', 'UA-115753061-1');
           <div class="row">
             <div class="col-md-10 col-md-offset-1">
 
-              <h4> Using the output </h4>
+              <h4 id="UsingTheOutput"> Using the output </h4>
 
               <p>We provide a number of add-on modules to analyse the genealogy (see <a href="modules.html">here</a> for details).</p>
 
               <div class="row">
                 <div class="col-md-6">
                   <div class="panel panel-info">
-                    <div class="panel-heading"> <h4><a href="modules.html#TreeView">Plot marginal trees</a></h4></div>
+                    <div class="panel-heading"> <h4 id="PlotMarginalTrees"><a href="modules.html#TreeView">Plot marginal trees</a></h4></div>
                     <div class="panel-body">  
                       <p>You can find a bash script under 
                       <pre><code>PATH_TO_RELATE/scripts/TreeView/TreeView.sh</code></pre> 
@@ -318,11 +316,11 @@ gtag('config', 'UA-115753061-1');
 
                 <div class="col-md-6">
                   <div class="panel panel-info">
-                    <div class="panel-heading"> <h4><a href="modules.html#CoalescenceRate">Estimate population size</a></h4></div>
+                    <div class="panel-heading"> <h4 id="EstimatePopulationSize"><a href="modules.html#CoalescenceRate">Estimate population size</a></h4></div>
                     <div class="panel-body">  
                       <p>You can find a bash script under 
                       <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre> 
-                      To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for file format). Details about how to run the script can be found <a href="modules.html#CoalescenceRate">here</a>).</p>
+                      To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#.poplabels">here</a> for file format). Details about how to run the script can be found <a href="modules.html#CoalescenceRate">here</a>).</p>
                     </div>
                   </div>
                 </div>
@@ -331,7 +329,7 @@ gtag('config', 'UA-115753061-1');
               <div class="row">
                 <div class="col-md-6">
                   <div class="panel panel-info">
-                    <div class="panel-heading"> <h4><a href="modules.html#MutationRate">Estimate mutation rates</a></h4></div>
+                    <div class="panel-heading"> <h4 id="EstimateMutationRate"><a href="modules.html#MutationRate">Estimate mutation rates</a></h4></div>
                     <div class="panel-body">  
                       <p>You can estimate mutation rates through time using <a href="modules.html#MutationRate">this module</a>. This can be used to calculate average mutation rates, or mutation rates of triplets.</p>
                     </div>
@@ -339,7 +337,7 @@ gtag('config', 'UA-115753061-1');
                 </div>
                 <div class="col-md-6">
                   <div class="panel panel-info">
-                    <div class="panel-heading"> <h4><a href="modules.html#Selection">Calculate p-values for selection evidence</a></h4></div>
+                    <div class="panel-heading"> <h4 id="Selection"><a href="modules.html#Selection">Calculate p-values for selection evidence</a></h4></div>
                     <div class="panel-body"> 
                       <p>You can find a bash script under 
                       <pre><code>PATH_TO_RELATE/scripts/DetectSelection/DetectSelection.sh</code></pre> 
@@ -352,7 +350,7 @@ gtag('config', 'UA-115753061-1');
               <div class="row">          
                 <div class="col-md-6">
                   <div class="panel panel-info">
-                    <div class="panel-heading"> <h4><a href="modules.html#Extract">Extract trees of interest</a></h4></div>
+                    <div class="panel-heading"> <h4 id="ExtractTrees"><a href="modules.html#Extract">Extract trees of interest</a></h4></div>
                     <div class="panel-body">  
                       <p>You can extract trees in .newick format, or genealogies for subpopulations using <a href="modules.html#Extract">this module</a>.</p>
                     </div>
@@ -361,7 +359,7 @@ gtag('config', 'UA-115753061-1');
        
                 <div class="col-md-6">
                   <div class="panel panel-info">
-                    <div class="panel-heading"> <h4><a href="input_data.html#Convert">Convert output to other formats</a></h4></div>
+                    <div class="panel-heading"> <h4 id="ConvertOutput"><a href="input_data.html#Convert">Convert output to other formats</a></h4></div>
                     <div class="panel-body">  
                       <p>You can convert the output anc/mut files inferred by <b>Relate</b> to other file formats using <a href="input_data.html#Convert">this module</a>.</p>
                     </div>
@@ -378,6 +376,11 @@ gtag('config', 'UA-115753061-1');
       </div>
 
     </div>
+
+    <script>
+      anchors.add();  
+    </script>
+
 
   </body>
 </html>                            

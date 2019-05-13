@@ -24,7 +24,9 @@ gtag('config', 'UA-115753061-1');
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <!-- Scrollbar Custom CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
-    <link rel="stylesheet" href="documentation.css"> 
+    <link rel="stylesheet" href="documentation.css">
+    <script src="anchor.js"></script>
+
   </head>
 
 
@@ -100,15 +102,14 @@ gtag('config', 'UA-115753061-1');
             <div class="col-md-10 col-md-offset-1">
 
 
-              <a class="anchor" name="FileFormat"></a>
-              <h3>Input data file format</h3>
+              <h3 id="FileFormat">Input data file format</h3>
 
               <p>The input file format for <b>Relate</b> is the haps/sample file format, which is used as an output file format by SHAPEIT2 (see <a href="http://www.shapeit.fr/pages/m02_formats/hapssample.html">here</a>).</p>
 
               <table class="table">
                 <tbody>
                   <tr>
-                    <a class="anchor" name="haps"></a> 
+                    <a class="anchor" name=".haps"> </a>
                     <td>.haps</td>
                     <td>The first five columns are:
                       <ol>
@@ -125,7 +126,7 @@ gtag('config', 'UA-115753061-1');
                     </td>
                   </tr>
                   <tr>
-                    <a class="anchor" name="sample"></a> 
+                    <a class="anchor" name=".sample"></a>
                     <td>.sample</td>
                     <td>The three columns are:
                       <ol>
@@ -144,7 +145,7 @@ gtag('config', 'UA-115753061-1');
               <table class="table">
                 <tbody>
                   <tr>
-                    <a class="anchor" name="map"></a> 
+                    <a class="anchor" name=".map"></a>
                     <td>.map</td>
                     <td>This is the standard file format for genetic recombination maps. The three columns are:
                       <ol>
@@ -166,7 +167,7 @@ gtag('config', 'UA-115753061-1');
               <table class="table">
                 <tbody>
                   <tr>
-                    <a class="anchor" name="poplabels"></a> 
+                    <a class="anchor" name=".poplabels"></a>
                     <td>.poplabels</td>
                     <td>The four columns are:
                       <ol>
@@ -193,8 +194,7 @@ gtag('config', 'UA-115753061-1');
           <div class="row">
             <div class="col-md-10 col-md-offset-1">
 
-              <a class="anchor" name="ConvertToFileFormat"></a>
-              <h3>Convert to haps/sample file format</h3>
+              <h3 id="ConvertToHapsSample">Convert to haps/sample file format</h3>
               <hr/>
 
             </div>
@@ -207,9 +207,8 @@ gtag('config', 'UA-115753061-1');
 
             <div class="col-md-10 col-md-offset-1">
 
-              <a class="anchor" name="ConvertFromHapLegendSample"></a> 
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Convert from hap/legend/sample</h4></div>
+                <div class="panel-heading"> <h4 id="ConvertFromHapLegendSample">Convert from hap/legend/sample</h4></div>
                 <div class="panel-body">  
                   Converts from the hap/legend/sample file format (used for reference panels in e.g., IMPUTE2, see <a href="http://www.shapeit.fr/pages/m02_formats/haplegsample.html">here</a>) to the haps/sample file format. The code deletes non-biallelic SNPs.
 
@@ -241,9 +240,8 @@ gtag('config', 'UA-115753061-1');
 
             <div class="col-md-10 col-md-offset-1">
 
-              <a class="anchor" name="ConvertFromVcf"></a> 
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Convert from vcf</h4></div>
+                <div class="panel-heading"> <h4 id="ConvertFromVcf">Convert from vcf</h4></div>
                 <div class="panel-body">  
 
                   Converts from the vcf file format to the haps/sample file format.
@@ -270,77 +268,75 @@ gtag('config', 'UA-115753061-1');
               </div>
             </div>
 
-          <div class="row">
+            <div class="row">
 
-            <div class="col-md-10 col-md-offset-1">
+              <div class="col-md-10 col-md-offset-1">
 
-              <a class="anchor" name="ConvertFromMs"></a> 
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Convert from ms output format</h4></div>
-                <div class="panel-body">  
+                <div class="panel panel-info">
+                  <div class="panel-heading"> <h4 id="ConvertFromMs">Convert from ms output format</h4></div>
+                  <div class="panel-body">  
 
-                  R script that converts from the output file format used by ms to the haps/sample file format.<br/>
-                  The script removes any sites with multiple mutations.<br/>
-                  If the input file contains more than one simulation, these get separated into "chromosomes".<br/><br/>
+                    R script that converts from the output file format used by ms to the haps/sample file format.<br/>
+                    The script removes any sites with multiple mutations.<br/>
+                    If the input file contains more than one simulation, these get separated into "chromosomes".<br/><br/>
 
-                  <a href = "./download/ms2haps.R">Download the script.</a><br><br/>
+                    <a href = "./download/ms2haps.R">Download the script.</a><br><br/>
 
-                  <pre><code> Rscript ms2haps.R infile.ms example nsites</code></pre>
-              
-                  <dl class="dl-horizontal">
-                    <dt>infile.ms</dt>
-                    <dd>Input filename with file extension.</dd>
-                    <dt>example</dt>
-                    <dd>Output filename withouth file extension.</dd>
-                    <dt>nsites</dt>
-                    <dd>(Optional) Number of simulated sites. Default value is 1. This is multiplied to the positions.</dd>
-                  </dl>
-                  Output: example.haps, example.sample.
+                    <pre><code> Rscript ms2haps.R infile.ms example nsites</code></pre>
 
+                    <dl class="dl-horizontal">
+                      <dt>infile.ms</dt>
+                      <dd>Input filename with file extension.</dd>
+                      <dt>example</dt>
+                      <dd>Output filename withouth file extension.</dd>
+                      <dt>nsites</dt>
+                      <dd>(Optional) Number of simulated sites. Default value is 1. This is multiplied to the positions.</dd>
+                    </dl>
+                    Output: example.haps, example.sample.
+
+                  </div>
                 </div>
               </div>
+
+
             </div>
 
+            <!-- row -->
+            <div class="row">
 
-          </div>
+              <div class="col-md-10 col-md-offset-1">
 
-          <!-- row -->
-          <div class="row">
-
-            <div class="col-md-10 col-md-offset-1">
-
-              <a class="anchor" name="Prepare"></a>
-              <h3>Preparing input files</h3>
-              <hr/>
-              <p>The following code can be used to prepare the input data. We recommend to apply all steps (if applicable) in the listed order. </p>
-              <p>All input files can be gzipped.</p>
+                <h3 id="Prepare">Preparing input files</h3>
+                <hr/>
+                <p>The following code can be used to prepare the input data. We recommend to apply all steps (if applicable) in the listed order. </p>
+                <p>All input files can be gzipped.</p>
 
 
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Prepate input files</h4></div>
-                <div class="panel-body">  
+                <div class="panel panel-info">
+                  <div class="panel-heading"> <h4 id="PrepareInput">Prepate input files</h4></div>
+                  <div class="panel-body">  
 
-                  Prepares input files for <b>Relate</b>. The script will remove non-biallelic SNPs, flip haplotypes according to the ancestral genome such that the ancestral allele is always denoted by 0, remove samples if specified, filter SNPs and adjust distances between SNPs using a genomic mask if specified, and generate SNP annotations needed for some add-on modules.<br/> 
-                  See <a href="input_data.html#Data">here</a> for links to external resources, such as an ancestral genome.
+                    Prepares input files for <b>Relate</b>. The script will remove non-biallelic SNPs, flip haplotypes according to the ancestral genome such that the ancestral allele is always denoted by 0, remove samples if specified, filter SNPs and adjust distances between SNPs using a genomic mask if specified, and generate SNP annotations needed for some add-on modules.<br/> 
+                    See <a href="input_data.html#Data">here</a> for links to external resources, such as an ancestral genome.
 
-                  <dl class="dl-horizontal">
-                    <dt>--haps</dt>
-                    <dd>Filename of .haps file.</dd>
-                    <dt>--sample</dt>
-                    <dd>Filename of .sample file</dd>
-                    <dt>-o,--output</dt>
-                    <dd>Filename of output files without file extensions.</dd>
-                    <dt>--ancestor</dt>
-                    <dd>Fasta file containing ancestral genome. This is case insensitive.</dd>
-                    <dt>--mask</dt>
-                    <dd>Optional: Fasta file of same length as the ancestral genome contining a genomic mask. Loci passing the mask are denoted by P, loci not passing the mask are denoted by N. This is case insensitive.</dd>
-                    <dt>--remove_ids</dt>
-                    <dd>Optional: File containing ids of samples that will be removed from the haps/sample files. One id per line.</dd>
-                    <dt>--poplabels</dt>
-                    <dd>Optional: File containing population labels of samples.</dd>
-                  </dl>
+                    <dl class="dl-horizontal">
+                      <dt>--haps</dt>
+                      <dd>Filename of .haps file.</dd>
+                      <dt>--sample</dt>
+                      <dd>Filename of .sample file</dd>
+                      <dt>-o,--output</dt>
+                      <dd>Filename of output files without file extensions.</dd>
+                      <dt>--ancestor</dt>
+                      <dd>Fasta file containing ancestral genome. This is case insensitive.</dd>
+                      <dt>--mask</dt>
+                      <dd>Optional: Fasta file of same length as the ancestral genome contining a genomic mask. Loci passing the mask are denoted by P, loci not passing the mask are denoted by N. This is case insensitive.</dd>
+                      <dt>--remove_ids</dt>
+                      <dd>Optional: File containing ids of samples that will be removed from the haps/sample files. One id per line.</dd>
+                      <dt>--poplabels</dt>
+                      <dd>Optional: File containing population labels of samples.</dd>
+                    </dl>
 
-                  <pre><code> PATH_TO_RELATE/scripts/PrepareInputFiles.sh/PrepareInputFiles.sh \
+                    <pre><code> PATH_TO_RELATE/scripts/PrepareInputFiles.sh/PrepareInputFiles.sh \
                  --haps example.haps \
                  --sample example.sample \
                  --ancestor ancestor.fa \
@@ -348,246 +344,239 @@ gtag('config', 'UA-115753061-1');
                  --remove_ids remove_ids.txt \
                  --poplabels example.poplabels
                  -o example_input </code></pre>
-                  Output: example_input.haps, example_input.sample, example_input.dist (if --mask if specified), example_input.poplabels (if remove_ids and poplabels is specified), example_input.annot (if poplabels is specified).
+                    Output: example_input.haps, example_input.sample, example_input.dist (if --mask if specified), example_input.poplabels (if remove_ids and poplabels is specified), example_input.annot (if poplabels is specified).
 
+                  </div>
                 </div>
               </div>
+
             </div>
 
-          </div>
 
+            <!-- row -->
+            <div class="row">
 
-          <!-- row -->
-          <div class="row">
+              <div class="col-md-10 col-md-offset-1">
 
-            <a class="anchor" name="RemoveNonBiallelicSNPs"></a> 
-            <div class="col-md-10 col-md-offset-1">
+                <div class="panel panel-info">
+                  <div class="panel-heading"> <h4 id="RemoveNonBiallelicSNPs">Remove non-biallelic SNPs</h4></div>
+                  <div class="panel-body">  
 
-
-
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Remove non-biallelic SNPs</h4></div>
-                <div class="panel-body">  
-
-                  Removes SNPs that are not biallelic in the data set.
-                  <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                    Removes SNPs that are not biallelic in the data set.
+                    <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode RemoveNonBiallelicSNPs \
                  --haps example.haps \
                  -o example_biallelic </code></pre>
-                  Output: example_biallelic.haps.
+                    Output: example_biallelic.haps.
 
+                  </div>
                 </div>
               </div>
+
             </div>
 
-          </div>
 
+            <!-- row -->
+            <div class="row">
 
-          <!-- row -->
-          <div class="row">
+              <div class="col-md-10 col-md-offset-1">
+                <div class="panel panel-info">
+                  <div class="panel-heading"> <h4 id="FlipHapsUsingAncestor">Determine ancestral allele and flip if necessary</h4></div>
+                  <div class="panel-body">  
 
-            <a class="anchor" name="FlipHapsUsingAncestor"></a> 
-            <div class="col-md-10 col-md-offset-1">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Determine ancestral allele and flip if necessary</h4></div>
-                <div class="panel-body">  
-
-                  The ancestral genome should be saved as a fasta file and aligned to the data set. The code is insensitive to case in the fasta file and deletes SNPs at which neither allele matches the ancestral allele.
-                  <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                    The ancestral genome should be saved as a fasta file and aligned to the data set. The code is insensitive to case in the fasta file and deletes SNPs at which neither allele matches the ancestral allele.
+                    <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode FlipHapsUsingAncestor \
                  --haps example.haps \
                  --sample example.sample \
                  --ancestor ancestor.fa \
                  -o example_ancestral </code></pre>
-                  Output: example_ancestral.haps
+                    Output: example_ancestral.haps
 
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- row -->
-          <div class="row">
+            <!-- row -->
+            <div class="row">
 
-            <a class="anchor" name="RemoveSamples"></a> 
-            <div class="col-md-10 col-md-offset-1">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Remove samples from data set</h4></div>
-                <div class="panel-body">  
+              <div class="col-md-10 col-md-offset-1">
+                <div class="panel panel-info">
+                  <div class="panel-heading"> <h4 id="RemoveSamples">Remove samples from data set</h4></div>
+                  <div class="panel-body">  
 
-                  Write ids of individuals as specified in the .sample file into remove_ids.txt (one id per line). These indivduals will be removed from the data set. 
-                  Argument --poplabels is optional. If specified, it will generate a new poplabels file for the subsetted samples.
-                  <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                    Write ids of individuals as specified in the .sample file into remove_ids.txt (one id per line). These indivduals will be removed from the data set. 
+                    Argument --poplabels is optional. If specified, it will generate a new poplabels file for the subsetted samples.
+                    <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode RemoveSamples \
                  --haps example.haps \
                  --sample example.sample \
                  --poplabels example.poplabels \
                  -i remove_ids.txt \
                  -o example_subset </code></pre>
-                  Output: example_subset.haps, example_subset.sample, example_subset.poplabels (if --poplabels is specified).
+                    Output: example_subset.haps, example_subset.sample, example_subset.poplabels (if --poplabels is specified).
 
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- row -->
-          <div class="row">
+            <!-- row -->
+            <div class="row">
 
-            <a class="anchor" name="FilterHapsUsingMask"></a> 
-            <div class="col-md-10 col-md-offset-1">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Filter SNPs using a genomic mask</h4></div>
-                <div class="panel-body">  
+              <div class="col-md-10 col-md-offset-1">
+                <div class="panel panel-info">
+                  <div class="panel-heading"> <h4 id="FilterHapsUsingMask">Filter SNPs using a genomic mask</h4></div>
+                  <div class="panel-body">  
 
-                  The genomic mask should be saved as a fasta file and aligned to the data set. Denote the passing state by P. The code deletes all SNPs that are not passing. It also outputs a .dist file that contains the distances between SNPs, adjusted for regions that are not passing in the mask.
-                  <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                    The genomic mask should be saved as a fasta file and aligned to the data set. Denote the passing state by P. The code deletes all SNPs that are not passing. It also outputs a .dist file that contains the distances between SNPs, adjusted for regions that are not passing in the mask.
+                    <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode FilterHapsUsingMask\
                  --haps example.haps \
                  --sample example.sample \
                  --mask genomic_mask.fa \
                  -o example_mask </code></pre>
-                  Output: example_mask.haps, example_mask.dist.
+                    Output: example_mask.haps, example_mask.dist.
 
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
 
 
-          <!-- row -->
-          <div class="row">
+            <!-- row -->
+            <div class="row">
 
-            <a class="anchor" name="GenerateSNPAnnotations"></a> 
-            <div class="col-md-10 col-md-offset-1">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Generate SNP annotations</h4></div>
-                <div class="panel-body">  
+              <div class="col-md-10 col-md-offset-1">
+                <div class="panel panel-info">
+                  <div class="panel-heading"> <h4 id="GenerateSNPAnnotations">Generate SNP annotations</h4></div>
+                  <div class="panel-body">  
 
-                  This code uses the ancestral genome and population labels of samples to append additional information to the output of <b>Relate</b>. Fileformat for population labels is described <a href="input_data.html#poplabels">here</a>. The ancestral genome should be saved in fasta file format and aligned to the data set. Argument --ancestor is optional. If argument --mut is specified, output is directly appended to the .mut file.</br>
-                      <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                    This code uses the ancestral genome and population labels of samples to append additional information to the output of <b>Relate</b>. Fileformat for population labels is described <a href="input_data.html#.poplabels">here</a>. The ancestral genome should be saved in fasta file format and aligned to the data set. Argument --ancestor is optional. If argument --mut is specified, output is directly appended to the .mut file.</br>
+                    <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode GenerateSNPAnnotations \
                  --haps example.haps \
                  --sample example.sample \
                  --poplabels example.poplabels \
                  --ancestor ancestor.fa \
                  -o example </code></pre>
-                      Output: example.annot. If --mut is specified, columns are appended to example.mut.
+                    Output: example.annot. If --mut is specified, columns are appended to example.mut.
 
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
 
-        <!-- row -->
-          <div class="row">
+            <!-- row -->
+            <div class="row">
 
-            <div class="col-md-10 col-md-offset-1">
+              <div class="col-md-10 col-md-offset-1">
 
-              <a class="anchor" name="Convert"></a>
-              <h3>Convert output to other formats</h3>
-              <hr/>
-              <p>The following code can be used to convert the output to other file format<p>
+                <h3 id="Convert">Convert output to other formats</h3>
+                <hr/>
+                <p>The following code can be used to convert the output to other file format<p>
+
+              </div>
 
             </div>
 
-          </div>
+            <!-- row -->
+            <div class="row">
 
-          <!-- row -->
-          <div class="row">
+              <div class="col-md-10 col-md-offset-1">
+                <div class="panel panel-info">
+                  <div class="panel-heading"> <h4 id="TreeSequence">Convert to tree sequence file format (<a href="https://tskit.readthedocs.io/en/stable/">tskit</a>)</h4></div>
+                  <div class="panel-body">  
 
-            <a class="anchor" name="TreeSequence"></a> 
-            <div class="col-md-10 col-md-offset-1">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Convert to tree sequence file format (<a href="https://tskit.readthedocs.io/en/stable/">tskit</a>)</h4></div>
-                <div class="panel-body">  
+                    <p>This function converts anc/mut files inferred by <b>Relate</b> into the tree sequence file format used by <a href="https://tskit.readthedocs.io/en/stable/">tskit</a>. In the current implementation, each tree is stored with new nodes in the tree sequence file format, leading to no compression. In addition, information about how long branches persist, and how many mutations map to a branch are lost by this conversion.
+                    </p>
 
-                  <p>This function converts anc/mut files inferred by <b>Relate</b> into the tree sequence file format used by <a href="https://tskit.readthedocs.io/en/stable/">tskit</a>. In the current implementation, each tree is stored with new nodes in the tree sequence file format, leading to no compression. In addition, information about how long branches persist, and how many mutations map to a branch are lost by this conversion.
-                  </p>
+                    <dl class="dl-horizontal">
+                      <dt>-i,--input</dt>
+                      <dd>Filename of .anc and .mut files without file extension.</dd>
+                      <dt>-o,--output</dt>
+                      <dd>Filename of the output tree sequence file without file extensions.</dd>
+                    </dl>
 
-                  <dl class="dl-horizontal">
-                    <dt>-i,--input</dt>
-                    <dd>Filename of .anc and .mut files without file extension.</dd>
-                    <dt>-o,--output</dt>
-                    <dd>Filename of the output tree sequence file without file extensions.</dd>
-                  </dl>
-
-                      <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
+                    <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode ConvertToTreeSequence \
                  -i example \
                  -o example
-                      </code></pre>
-                      Output: example.trees.
+                    </code></pre>
+                    Output: example.trees.
 
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- row -->
-          <div class="row">
+            <!-- row -->
+            <div class="row">
 
-            <a class="anchor" name="TreeAtSNPAsNewick"></a> 
-            <div class="col-md-10 col-md-offset-1">
-              <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Extract tree at a SNP of interest in newick format</h4></div>
-                <div class="panel-body">  
+              <div class="col-md-10 col-md-offset-1">
+                <div class="panel panel-info">
+                  <div class="panel-heading"> <h4 id="TreeAtSNPAsNewick">Extract tree at a SNP of interest in newick format</h4></div>
+                  <div class="panel-body">  
 
-                  <p>Extracts a tree at a SNP of interest in newick format.</p>
+                    <p>Extracts a tree at a SNP of interest in newick format.</p>
 
-                  <dl class="dl-horizontal">
-                    <dt>--anc</dt>
-                    <dd>Filename of the .anc file.</dd>
-                    <dt>--mut</dt>
-                    <dd>Filename of the .mut file.</dd>
-                    <dt>--bp_of_interest</dt>
-                    <dd>Integer specfifying the BP position of interest</dd>
-                    <dt>-o,--output</dt>
-                    <dd>File of the output files without file extensions.</dd>
-                  </dl>
+                    <dl class="dl-horizontal">
+                      <dt>--anc</dt>
+                      <dd>Filename of the .anc file.</dd>
+                      <dt>--mut</dt>
+                      <dd>Filename of the .mut file.</dd>
+                      <dt>--bp_of_interest</dt>
+                      <dd>Integer specfifying the BP position of interest</dd>
+                      <dt>-o,--output</dt>
+                      <dd>File of the output files without file extensions.</dd>
+                    </dl>
 
-                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                    <pre><code> PATH_TO_RELATE/bin/RelateExtract\
                  --mode TreeAtSNPAsNewick \
                  --anc example.anc \
                  --mut example.mut \
                  --bp_of_interest 3000000 \
                  -o example </code></pre>
-                  Output: example_at_.newick.
+                    Output: example_at_.newick.
 
+                  </div>
                 </div>
+              </div>
+
+            </div>
+
+
+
+            <div class="row">
+              <div class="col-md-10 col-md-offset-1">
+
+                <h3 id="Data">External resources</h3>
+                <hr/>
+
+                <p>Below is a list of external resources that can be useful for Relate-based analyses. These resources were compiled by thrid parties, and their respective conditions (such as citations of corresponding publications) for using these resources apply.</p>
+
+                <h4 id="Humans">Humans</h4>
+
+                <ul class="list-unstyled">
+                  <li><a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/supporting/ancestral_alignments/">Ancestral genome (GRCh37)</a></li>
+                  <li><a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/accessible_genome_masks/">Genome mask for 1000GP_Phase3 (GRCh37)</a></li>
+                  <li><a href="https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html">1000GP_Phase3 haplotypes</a></li>
+
+                </ul>
               </div>
             </div>
 
+
           </div>
- 
-
-
-          <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-
-              <a class="anchor" name="Data"></a>
-              <h3>External resources</h3>
-              <hr/>
-
-              <p>Below is a list of external resources that can be useful for Relate-based analyses. These resources were compiled by thrid parties, and their respective conditions (such as citations of corresponding publications) for using these resources apply.</p>
-
-              <h4>Humans</h4>
-
-              <ul class="list-unstyled">
-                <li><a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/supporting/ancestral_alignments/">Ancestral genome (GRCh37)</a></li>
-                <li><a href="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/accessible_genome_masks/">Genome mask for 1000GP_Phase3 (GRCh37)</a></li>
-                <li><a href="https://mathgen.stats.ox.ac.uk/impute/1000GP_Phase3.html">1000GP_Phase3 haplotypes</a></li>
-
-              </ul>
-            </div>
-          </div>
-
 
         </div>
 
-      </div>
+        <script>
+anchors.add();  
+        </script>
 
   </body>
 </html>     

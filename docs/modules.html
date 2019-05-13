@@ -26,6 +26,8 @@ gtag('config', 'UA-115753061-1');
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
     <link rel="stylesheet" href="documentation.css"> 
 
+    <script src="anchor.js"></script>
+
   </head>
 
 
@@ -101,9 +103,8 @@ gtag('config', 'UA-115753061-1');
 
           <!-- row -->
           <div class="row">
-            <a class="anchor" name="CoalescenceRate"></a> 
             <div class="col-md-10 col-md-offset-1">
-              <h3>Estimate coalescence rates and effective population sizes</h3>
+              <h3 id="CoalescenceRate">Estimate coalescence rates and effective population sizes</h3>
               <hr/>
             </div>
           </div>
@@ -111,11 +112,10 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="CoalescenceRate"></a> 
             <div class="col-md-10 col-md-offset-1">          
 
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Estimating effective population sizes</h4></div>
+                <div class="panel-heading"> <h4 id="PopulationSizeScript">Estimating effective population sizes</h4></div>
                 <div class="panel-body">  
 
                   <p>
@@ -126,7 +126,7 @@ gtag('config', 'UA-115753061-1');
                     <li>re-estimates branch lengths using the estimated population sizes</li>
                     <li>estimates an average mutation rate.</li>
                   </ol>
-                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#poplabels">here</a> for the file format).<br/> 
+                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#.poplabels">here</a> for the file format).<br/> 
                   You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small (in terms of sequence length, not sample size) to obtain reliable estimates.<br/>
                   Do not move the script - we are extracting the path to the binaries from the location of the script!</p>
 
@@ -137,7 +137,7 @@ gtag('config', 'UA-115753061-1');
               --seed 1 \
               -o example_popsize</code></pre>
 
-                  <h5>Input arguments</h5>
+                  <h5 id="PopulationSizeScript_Input">Input arguments</h5>
 
                   <dl class="dl-horizontal">
                     <dt>-i,--input</dt>
@@ -147,7 +147,7 @@ gtag('config', 'UA-115753061-1');
                     <dt>-m,--mutation_rate</dt>
                     <dd>Mutation rate per base per generation.</dd>                    
                     <dt>--poplabels</dt>
-                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>. This file needs to always contain all samples.</dd>
+                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#.poplabels">here</a>. This file needs to always contain all samples.</dd>
 
                   </dl>
 
@@ -175,7 +175,7 @@ gtag('config', 'UA-115753061-1');
 
                   </dl>
 
-                  <h4>Output</h4>
+                  <h4 id="PopulationSizeScript_Output">Output</h4>
                   <div class="table-responsive">
                   <table class="table">
                     <tbody>
@@ -200,7 +200,7 @@ gtag('config', 'UA-115753061-1');
                       </tr>
                       <tr>
                         <td>example_popsize.dist</td>
-                        <td>Contains distances between SNPs (see <a href="#dist">here</a> for file format).</td>
+                        <td>Contains distances between SNPs (see <a href="#.dist">here</a> for file format).</td>
                       </tr>
                       <tr>
                         <td>example_popsize.coal</td>
@@ -219,12 +219,12 @@ gtag('config', 'UA-115753061-1');
                   </table>
                   </div>
 
-                  <h4>File formats</h4>
+                  <h4 id="PopulationSizeScript_FileFormats">File formats</h4>
                   <div class="table-responsive">
                   <table class="table">
                     <tbody>
                       <tr>
-                        <a class="anchor" name=".coal"></a> 
+                        <a class="anchor" name=".coal"></a>
                         <td>.coal</td>
                         <td>
                           <ul>
@@ -243,7 +243,7 @@ gtag('config', 'UA-115753061-1');
                         </td>
                       </tr>                       
                       <tr>
-                        <a class="anchor" name=".rate"></a> 
+                        <a class="anchor" name=".rate"></a>
                         <td>.rate</td>
                         <td>
                           <ul>
@@ -265,7 +265,7 @@ gtag('config', 'UA-115753061-1');
               </div> 
 
 
-              <h4>More details</h4>
+              <h4 id="PopulationSizeScript_MoreDetails">More details</h4>
 
               Below, we describe details about the functions used in the script.<br\>
               The general idea is to do the following until convergence:
@@ -278,7 +278,7 @@ gtag('config', 'UA-115753061-1');
                   </p>      
 
                   <div class="panel panel-info">
-                    <div class="panel-heading"> <h4>Calculate coalescence rates through time</h4></div>
+                    <div class="panel-heading"> <h4 id="CoalescenceRatesThroughTime">Calculate coalescence rates through time</h4></div>
                     <div class="panel-body">  
 
                       Calculates the average pairwise coalescence rate through time.
@@ -290,7 +290,7 @@ gtag('config', 'UA-115753061-1');
                         <dt>-m,--mutation_rate</dt>
                         <dd>Mutation rate per base per generation.</dd>                    
                         <dt>--poplabels</dt>
-                        <dd>Optional: Filename of a .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>.</dd>
+                        <dd>Optional: Filename of a .poplabels file. The file format is described <a href="input_data.html#.poplabels">here</a>.</dd>
                         <dt>--first_chr & --last_chr</dt>
                         <dd>Optional: Allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
                         Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
@@ -325,10 +325,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="ReEstimateBranchLengths"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Reestimate branch lengths</h4></div>
+                <div class="panel-heading"> <h4 id="ReEstimateBranchLengths">Reestimate branch lengths</h4></div>
                 <div class="panel-body">  
 
                   <p>Once the average mutation rate and coalescence rates have been calculated, we can re-estimate the branch lengths. 
@@ -376,10 +375,9 @@ gtag('config', 'UA-115753061-1');
 
           <!-- row -->
           <div class="row">
-            <a class="anchor" name="MutationRate"></a> 
             <div class="col-md-10 col-md-offset-1">
 
-              <h3>Estimate mutation rates</h3>
+              <h3 id="MutationRate">Estimate mutation rates</h3>
               <hr/>
 
             </div>
@@ -388,10 +386,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="AvgMutationRate"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Calculate the average mutation rate through time</h4></div>
+                <div class="panel-heading"> <h4 id="AvgMutationRate">Calculate the average mutation rate through time</h4></div>
                 <div class="panel-body">  
 
                   Calculates the average mutation rate. 
@@ -423,7 +420,7 @@ gtag('config', 'UA-115753061-1');
 
 
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Calculate the mutation rates grouped by nucleotide in sequence</h4></div>
+                <div class="panel-heading"> <h4 id="TripletMutationRates">Calculate the mutation rates grouped by nucleotide in sequence</h4></div>
                 <div class="panel-body">  
 
                   Calculates the mutation rate for 96 groups of mutations, where each group corresponds to a triplet mutation (e.g. TCC to TTC mutation).<br/>
@@ -485,16 +482,10 @@ gtag('config', 'UA-115753061-1');
 
           <!-- row -->
           <div class="row">
-            <a class="anchor" name="Selection"></a> 
             <div class="col-md-10 col-md-offset-1">
-              <h3>Detect positive selection</h3>
+              <h3 id="Selection">Detect positive selection</h3>
               <hr/>
             </div>
-          </div>
-
-          <!-- row -->
-          <div class="row"> 
-            <a class="anchor" name="SelectionPvalues"></a>
           </div>
 
           <!-- row -->
@@ -503,7 +494,7 @@ gtag('config', 'UA-115753061-1');
             <div class="col-md-10 col-md-offset-1">
 
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Detect selection</h4></div>
+                <div class="panel-heading"> <h4 id="SelectionPvaluesScript">Detect selection</h4></div>
                 <div class="panel-body">  
 
                   <p>Calculates p-values for selection evidence from genealogy.<br> 
@@ -548,26 +539,26 @@ gtag('config', 'UA-115753061-1');
               </div>
 
               <p>
-              <h4>File formats</h4>
+              <h4 id="SelectionPvaluesScript_FileFormats">File formats</h4>
               </p> 
               <table class="table">
                 <tbody>
                   <tr>
-                    <a class="anchor" name=".freq"></a> 
+                    <a class="anchor" name=".freq"></a>
                     <td>.freq</td>
                     <td>Records the frequency of the derived allele at generations genN .. gen1 (specified in the header)<br/><br/>
                       Columns: pos rs_id genN genN-1 ... gen1 0
                     </td>
                   </tr>
                   <tr>
-                    <a class="anchor" name=".lin"></a> 
+                    <a class="anchor" name=".lin"></a>
                     <td>.lin</td>
                     <td>Records the number of lineages in the tree at generations genN .. gen1 (specified in the header), as well as the number of lineages when the mutation had frequency 2<br/><br/>
                       Columns: pos rs_id genN genN-1 ... gen1 0 when_mutation_has_freq2
                     </td>
                   </tr>
                   <tr>
-                    <a class="anchor" name=".sele"></a> 
+                    <a class="anchor" name=".sele"></a>
                     <td>.sele</td>
                     <td>Records the log10 p-value for selection evidence at generations genN .. gen1 (specified in the header), as well as the log10 p-value when the mutation had frequency 2. Log10 p-value is set to 1 if mutation had frequency <= 1 at a generation. <br/>
                         The "when_mutation_has_freq2" column contains the p-value for selection evidence over the lifetime of this mutation. All other p-values condition on the frequency at the specified time.<br><br>
@@ -592,11 +583,11 @@ gtag('config', 'UA-115753061-1');
           <div class="row"> 
             <div class="col-md-10 col-md-offset-1">
 
-              <h4>More details</h4>
+              <h4 id="SelectionPvalues_MoreDetails">More details</h4>
               Below, we describe details about the functions used to calculate the selection p-value.<br\>
 
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Get selection pvalues</h4></div>
+                <div class="panel-heading"> <h4 id="SelectionPvalues_functions">Get selection pvalues</h4></div>
                 <div class="panel-body">  
 
                   <p>
@@ -625,10 +616,9 @@ gtag('config', 'UA-115753061-1');
 
           <!-- row -->
           <div class="row">
-            <a class="anchor" name="SampleBranchLengths"></a> 
             <div class="col-md-10 col-md-offset-1">
 
-              <h3>Sample branch lengths (e.g., for <a href="https://github.com/35ajstern/clues">CLUES</a>)</h3>
+              <h3 id="SampleBranchLengths">Sample branch lengths (e.g., for <a href="https://github.com/35ajstern/clues">CLUES</a>)</h3>
               <hr/>
 
             </div>
@@ -640,7 +630,7 @@ gtag('config', 'UA-115753061-1');
             <div class="col-md-10 col-md-offset-1">
               
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Sample branch lengths</h4></div>
+                <div class="panel-heading"> <h4 id="SampleBranchLengthsScript">Sample branch lengths</h4></div>
                 <div class="panel-body">  
 
                   <p>Samples branch lengths using MCMC.<br> 
@@ -672,7 +662,7 @@ gtag('config', 'UA-115753061-1');
                     <dt>--last_bp</dt>
                     <dd>Optional: Last bp position.</dd>
                     <dt>--dist</dt>
-                    <dd>Optional: Filename containing bp positions of SNPs and distances between adjacent SNPs (<a href="#dist">file format</a>). E.g., obtained using <a href="#AncMutForSubregion">RelateExtract --mode AncMutForSubregion</a>. Required if anc/mut file only covers a subregion of input haps/sample files.</dd>
+                    <dd>Optional: Filename containing bp positions of SNPs and distances between adjacent SNPs (<a href="#.dist">file format</a>). E.g., obtained using <a href="#AncMutForSubregion">RelateExtract --mode AncMutForSubregion</a>. Required if anc/mut file only covers a subregion of input haps/sample files.</dd>
                     <dt>--seed</dt>
                     <dd>Optional: Random seed for branch lengths estimation.</dd>
                   </dl>
@@ -694,12 +684,12 @@ gtag('config', 'UA-115753061-1');
               </div>
 
               <p>
-              <h4>File formats</h4>
+              <h4 id="SampleBranchLengths_FileFormats">File formats</h4>
               </p> 
               <table class="table">
                 <tbody>
                   <tr>
-                    <a class="anchor" name=".freq"></a> 
+                    <a class="anchor" name=".freq"></a>
                     <td>.newick</td>
                     <td>A tab-delimited file with columns<br>
                       chrom chromStart chromEnd MCMC_sample tree<br>
@@ -713,7 +703,7 @@ gtag('config', 'UA-115753061-1');
                     </td>
                   </tr>
                   <tr>
-                    <a class="anchor" name=".lin"></a> 
+                    <a class="anchor" name=".lin"></a>
                     <td>.sites</td>
                     <td>A tab-delimited file with<ul>
                         <li>First line: Lists names of haplotypes.</li>
@@ -731,10 +721,9 @@ gtag('config', 'UA-115753061-1');
 
           <!-- row -->
           <div class="row">
-            <a class="anchor" name="TreeView"></a> 
             <div class="col-md-10 col-md-offset-1">
 
-              <h3>Plot trees of interest</h3>
+              <h3 id="TreeView">Plot trees of interest</h3>
               <hr/>
 
             </div>
@@ -745,7 +734,7 @@ gtag('config', 'UA-115753061-1');
 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>TreeView</h4></div>
+                <div class="panel-heading"> <h4 id="TreeViewScript">TreeView</h4></div>
                 <div class="panel-body">  
 
                   <p>Plots a tree of interest using R.<br> 
@@ -761,7 +750,7 @@ gtag('config', 'UA-115753061-1');
                     <dt>--sample</dt>
                     <dd>Filename of sample file.</dd>
                     <dt>--poplabels</dt>
-                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>. This file needs to always contain all samples.</dd>
+                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#.poplabels">here</a>. This file needs to always contain all samples.</dd>
                     <dt>--bp_of_interest</dt>
                     <dd>Integer specfifying the BP position of the SNP of interest</dd>
                     <dt>--years_per_gen</dt>
@@ -796,10 +785,9 @@ gtag('config', 'UA-115753061-1');
 
           <!-- row -->
           <div class="row">
-            <a class="anchor" name="Extract"></a> 
             <div class="col-md-10 col-md-offset-1">
 
-              <h3>Extract subtrees, trees in region of interest, and trees in newick format.</h3>
+              <h3 id="Extract">Extract subtrees, trees in region of interest, and trees in newick format.</h3>
               <hr/>
 
             </div>
@@ -808,10 +796,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="ExtractSubtree"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Extract subtrees corresponding to a subpopulation</h4></div>
+                <div class="panel-heading"> <h4 id="ExtractSubtree">Extract subtrees corresponding to a subpopulation</h4></div>
                 <div class="panel-body">  
 
                   <p>Extracts subtrees such that all tips belong to the populations of interest.</p>
@@ -849,10 +836,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="AncMutForSubregion"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Extract trees corresponding to a subregion</h4></div>
+                <div class="panel-heading"> <h4 id="AncMutForSubregion">Extract trees corresponding to a subregion</h4></div>
                 <div class="panel-body">  
 
                   <p>Extracts trees in region of interest.</p>
@@ -891,10 +877,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="TreeAtSNPAsNewick"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Extract tree at a SNP of interest in newick format</h4></div>
+                <div class="panel-heading"> <h4 id="TreeAtSNPAsNewick">Extract tree at a SNP of interest in newick format</h4></div>
                 <div class="panel-body">  
 
                   <p>Extracts a tree at a SNP of interest in newick format.</p>
@@ -928,10 +913,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="RemoveTreesWithFewMutations"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Remove trees with few mutations</h4></div>
+                <div class="panel-heading"> <h4 id="RemoveTreesWithFewMutations">Remove trees with few mutations</h4></div>
                 <div class="panel-body">  
 
 
@@ -966,10 +950,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="ExtractDistFromMut"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Extract .dist file from .mut file.</h4></div>
+                <div class="panel-heading"> <h4 id="ExtractDistFromMut">Extract .dist file from .mut file.</h4></div>
                 <div class="panel-body">  
 
                   <p>Extracts distances between SNPs from the .mut file (3rd and 4th column). The .dist file is needed in some applications, when the .anc/.mut files have been subsetted using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a> In these cases, the .dist file needs to be generated using the <b>not</b> subsetted .mut file.
@@ -999,10 +982,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="DivideAncMut"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Divide the .anc/.mut files into smaller files to allow multi-threading.</h4></div>
+                <div class="panel-heading"> <h4 id="DivideAncMut">Divide the .anc/.mut files into smaller files to allow multi-threading.</h4></div>
                 <div class="panel-body">  
 
                   <p>Dividing the .anc/.mut files into smaller files to allow for multi-threading.
@@ -1037,10 +1019,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="CombineAncMut"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Combine the .anc/.mut files into one file.</h4></div>
+                <div class="panel-heading"> <h4 id="CombineAncMut">Combine the .anc/.mut files into one file.</h4></div>
                 <div class="panel-body">  
 
                   <p>Combining the .anc/.mut files into one file. This should be used after dividing .anc/.mut files using <a href="modules.html#DivideAncMut">this</a> function.
@@ -1071,12 +1052,12 @@ gtag('config', 'UA-115753061-1');
             <div class="col-md-10 col-md-offset-1">
 
               <p>
-              <h4>File formats</h4>
+              <h4 id="Extract_FileFormats">File formats</h4>
               </p> 
               <table class="table">
                 <tbody>
                   <tr>
-                    <a class="anchor" name="dist"></a> 
+                    <a class="anchor" name=".dist"></a>
                     <td>.dist</td>
                     <td>
 
@@ -1104,7 +1085,10 @@ gtag('config', 'UA-115753061-1');
 
       </div>
     </div>
-
+ 
+    <script>
+      anchors.add();  
+    </script>
 
   </body>
 </html>     

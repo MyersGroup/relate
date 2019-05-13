@@ -25,6 +25,8 @@ gtag('config', 'UA-115753061-1');
     <!-- Scrollbar Custom CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
     <link rel="stylesheet" href="documentation.css"> 
+    <script src="anchor.js"></script>
+
   </head>
 
 
@@ -87,9 +89,8 @@ gtag('config', 'UA-115753061-1');
 
           <!-- row -->
           <div class="row">
-            <a class="anchor" name="RelateParallel"></a> 
             <div class="col-md-10 col-md-offset-1">
-              <h3>Parallelise Relate</h3>
+              <h3 id="RelateParallel">Parallelise Relate</h3>
               <hr/>
 
               <p>                 
@@ -102,10 +103,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="RelateParallel"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>Parallelised Relate</h4></div>
+                <div class="panel-heading"> <h4 id="RelatePrallelScript">Parallelised Relate</h4></div>
                 <div class="panel-body">  
 
                   <p> 
@@ -142,9 +142,8 @@ gtag('config', 'UA-115753061-1');
 
           <!-- row -->
           <div class="row">
-            <a class="anchor" name="RelateModes"></a> 
             <div class="col-md-10 col-md-offset-1">
-              <h3>Stages of Relate</h3>
+              <h3 id="RelateModes">Stages of Relate</h3>
               <hr/>
             </div>
           </div>
@@ -177,10 +176,9 @@ gtag('config', 'UA-115753061-1');
 
             </div>
 
-            <a class="anchor" name="MakeChunks"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>1. Make chunks</h4></div>
+                <div class="panel-heading"> <h4 id="MakeChunks">1. Make chunks</h4></div>
                 <div class="panel-body">  
 
                   <p> 
@@ -209,10 +207,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="for_loop1"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>For loop</h4></div>
+                <div class="panel-heading"> <h4 id="for_loop1">For loop</h4></div>
                 <div class="panel-body">  
 
                   First, obtain the number of chunks created in the previous step. In bash, this can be done as follows
@@ -244,10 +241,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="Paint"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>2. Paint</h4></div>
+                <div class="panel-heading"> <h4 id="Paint">2. Paint</h4></div>
                 <div class="panel-body">  
 
                   <p> 
@@ -271,10 +267,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="BuildTopology"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>3. Build Topology</h4></div>
+                <div class="panel-heading"> <h4 id="BuildTopolgy">3. Build Topology</h4></div>
                 <div class="panel-body">  
 
                   <p> 
@@ -326,10 +321,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="FindEquivalentBranches"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>4. Find equivalent branches in adjacent trees and propagate mutations</h4></div>
+                <div class="panel-heading"> <h4 id="FindEquivalentBranches">4. Find equivalent branches in adjacent trees and propagate mutations</h4></div>
                 <div class="panel-body">  
 
                   <p> 
@@ -355,10 +349,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="InferBranchLengths"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>5. Estimate branch lengths</h4></div>
+                <div class="panel-heading"> <h4 id="InferBranchLengths">5. Estimate branch lengths</h4></div>
                 <div class="panel-body">  
 
                   <p> 
@@ -411,10 +404,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="CombineArgs"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>6. Combine files</h4></div>
+                <div class="panel-heading"> <h4 id="CombineArgs">6. Combine files</h4></div>
                 <div class="panel-body">  
 
                   <p> 
@@ -443,10 +435,9 @@ gtag('config', 'UA-115753061-1');
           <!-- row -->
           <div class="row">
 
-            <a class="anchor" name="Finalize"></a> 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4>7. Finalize output</h4></div>
+                <div class="panel-heading"> <h4 id="Finalize">7. Finalize output</h4></div>
                 <div class="panel-body">  
 
                   <p> 
@@ -472,6 +463,10 @@ gtag('config', 'UA-115753061-1');
       </div>
 
     </div>
+
+    <script>
+      anchors.add();  
+    </script>
 
   </body>
 </html>     
