@@ -105,7 +105,7 @@ echo "output        = $output"
 
 if [ ! -z "${dist-}" ];
 then
-  echo "dist = ${dist}"  
+  echo "dist          = ${dist}"  
 fi
 
 if [ ! -z "${first_bp-}" -a ! -z "${last_bp-}" ];
@@ -166,7 +166,7 @@ then
 
   if [ ! -z "${dist-}" ]
   then
-    is_gzipped=$(file 1000GP_GBR_chr2_LCT.dist.gz | grep -c gzip)
+    is_gzipped=$(file ${dist} | grep -c gzip)
     if [ ${is_gzipped} -eq "0" ]
     then
       cp ${dist} ${output}.dist
