@@ -1,2 +1,0 @@
-/Library/Developer/CommandLineTools/usr/bin/ar qc ../../../../bin/libkastoreStatic.a  CMakeFiles/kastoreStatic.dir/kastore.c.o
-/Library/Developer/CommandLineTools/usr/bin/ranlib ../../../../bin/libkastoreStatic.a

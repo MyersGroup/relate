@@ -126,7 +126,7 @@ Tree::ReadTreeBin(FILE* pfile, int N){
 
 
 void
-Tree::WriteNewick(const std::string& filename_newick, const bool add){
+Tree::WriteNewick(const std::string& filename_newick, double factor, const bool add) const{
 
   //coordinates.clear();
 
@@ -140,15 +140,6 @@ Tree::WriteNewick(const std::string& filename_newick, const bool add){
     }
   }
 
-  float total_tree_height = 0.0;
-  Node parent = nodes[root];
-  while(parent.child_left != NULL){
-    parent = *parent.child_left;
-    total_tree_height += parent.branch_length;
-  }
-  total_tree_height = 1.0;
-  //std::cerr << total_tree_height << std::endl;
-
   std::ofstream os_new;
   if(!add){ 
     os_new.open(filename_newick);
@@ -157,8 +148,8 @@ Tree::WriteNewick(const std::string& filename_newick, const bool add){
   }
 
   std::list<Node> todo_nodes;
-  float l1 = ((*nodes[root].child_left).branch_length)/total_tree_height;
-  float l2 = ((*nodes[root].child_right).branch_length)/total_tree_height;
+  float l1 = ((*nodes[root].child_left).branch_length) * factor;
+  float l2 = ((*nodes[root].child_right).branch_length) * factor;
 
   //if(l1 < 0.0) std::cerr << root << ": " << coordinates[root].tree << ", " << children[root][0] << ": " << coordinates[children[root][0]].tree << std::endl;    
   //if(l2 < 0.0) std::cerr << root << ": " << coordinates[root].tree << ", " << children[root][1] << ": " << coordinates[children[root][1]].tree << std::endl;
@@ -191,8 +182,8 @@ Tree::WriteNewick(const std::string& filename_newick, const bool add){
       }
       assert(index < (int) newick.size());
 
-      float l1 = ((*(*node).child_left).branch_length)/total_tree_height;
-      float l2 = ((*(*node).child_right).branch_length)/total_tree_height;
+      float l1 = ((*(*node).child_left).branch_length) * factor;
+      float l2 = ((*(*node).child_right).branch_length) * factor;
 
       std::string new_brackets = "(" + std::to_string((*(*node).child_left).label) + ":" + std::to_string(l1) + "," + std::to_string((*(*node).child_right).label) + ":" + std::to_string(l2) + ")";
       newick.replace(index-node_index.size(), node_index.size(), new_brackets);

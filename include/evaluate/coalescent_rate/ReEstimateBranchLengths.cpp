@@ -455,9 +455,17 @@ int SampleBranchLengths(cxxopts::Options& options){
       ShowProgress(progress); 
     }
 
+    for(std::vector<Node>::iterator it_node = (*it_seq).tree.nodes.begin(); it_node != (*it_seq).tree.nodes.end(); it_node++){
+      (*it_node).branch_length /= (double) data.Ne;
+    }
+
     int count = 0;
+    if(count < num_samples){
+      bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
+    }
+    count++;
     for(;count < num_samples; count++){
-      bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, seed); //this is estimating times
+      bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
 
       os.open(filename, std::ofstream::app);
       if(it_seq != std::prev(anc.seq.end(),1)){
@@ -466,7 +474,7 @@ int SampleBranchLengths(cxxopts::Options& options){
         os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << (*std::prev(mut.info.end(),1)).pos + 1 << "\t" << count << "\t";
       } 
       os.close();
-      (*it_seq).tree.WriteNewick( options["output"].as<std::string>() + ".newick", 1);
+      (*it_seq).tree.WriteNewick( options["output"].as<std::string>() + ".newick", (double) data.Ne, 1);
     }
 
     (*it_seq).tree.FindAllLeaves(leaves);

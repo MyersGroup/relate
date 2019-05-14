@@ -103,7 +103,7 @@ class Tree{
     void GetMsPrime(igzstream& is, int num_nodes);
     void ReadTree(const char* line, int N);
     void ReadTreeBin(FILE* pfile, int N);
-    void WriteNewick(const std::string& filename_newick, const bool add = 0); //this is slow. For fast output use WriteOrientedTree
+    void WriteNewick(const std::string& filename_newick, double factor, const bool add = 0) const; //this is slow. For fast output use WriteOrientedTree
     void WriteOrientedTree(const std::string& filename, const bool add = 0);
 
     //This is for debugging

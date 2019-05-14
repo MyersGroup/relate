@@ -78,26 +78,8 @@ GetTreeOfInterest(cxxopts::Options& options){
     if(count_trees == tree_index_of_interest){
       
       //tree is in line
-      mtr.Read(line, N);
-
-      for(int k = 0; k < (int) mtr.tree.nodes.size(); k++){
-        mtr.tree.nodes[k].branch_length *= 28.0;
-      }
-      mtr.tree.WriteNewick( options["output"].as<std::string>() + "_at_" + std::to_string(bp_of_interest) + ".newick");
-
-      if(0){
-      for(int i = 0; i < (int) mtr.tree.nodes.size(); i++){
-        mtr.tree.nodes[i].branch_length = mtr.tree.nodes[i].SNP_end - mtr.tree.nodes[i].SNP_begin;
-        assert(!std::isnan(mtr.tree.nodes[i].branch_length));
-      }
-      mtr.tree.WriteNewick( options["output"].as<std::string>() + "_at_" + std::to_string(mtr.pos) + "_lifespan.newick");
-      
-      for(int i = 0; i < (int) mtr.tree.nodes.size(); i++){
-        mtr.tree.nodes[i].branch_length = mtr.tree.nodes[i].num_events;
-        assert(!std::isnan(mtr.tree.nodes[i].branch_length));
-      }
-      mtr.tree.WriteNewick( options["output"].as<std::string>() + "_at_" + std::to_string(mtr.pos) + "_events.newick"); 
-      }
+      mtr.Read(line, N); 
+      mtr.tree.WriteNewick( options["output"].as<std::string>() + "_at_" + std::to_string(bp_of_interest) + ".newick", 28.0);
 
       break; 
 

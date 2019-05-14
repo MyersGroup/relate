@@ -1041,7 +1041,7 @@ InferBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distributio
         child_right_label                                = (*tree.nodes[node_swap_k].child_right).label;
         tree.nodes[child_right_label].branch_length      = coordinates[node_swap_k] - coordinates[child_right_label];
         assert(tree.nodes[child_right_label].branch_length >= 0.0);
-
+ 
       }
     }
 
@@ -1416,18 +1416,24 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
   //update coordinates and sorted_indices
   if(accept){
     //calculate new branch lengths
+
     it_sorted_indices = std::next(sorted_indices.begin(), k);
     update_node1 = k;
 
       for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
         coordinates[*it_sorted_indices]                 += delta_tau;
+        if(!(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)])){
+          std::cerr << *it_sorted_indices << " " << *std::next(sorted_indices.begin(), k) << std::endl;
+          std::cerr << coordinates[*it_sorted_indices] << " " << coordinates[*std::prev(it_sorted_indices,1)] << std::endl;
+          std::cerr << delta_tau << std::endl;
+        }
         assert(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)]);
         child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
         tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
         child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
         tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
       }
-
+ 
   }
 
 }
@@ -1981,72 +1987,78 @@ InferBranchLengths::MCMCVariablePopulationSizeForRelate(const Data& data, Tree& 
 }  
 
 void
-InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, int num_proposals, const int seed){
+InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, int num_proposals, const bool init, const int seed){
 
   float uniform_rng;
-  rng.seed(seed);
   std::uniform_real_distribution<double> dist_unif(0,1);
   std::uniform_int_distribution<int> dist_k(N,N_total-1);
   std::uniform_int_distribution<int> dist_switch(N,N_total-2);
 
-  root = N_total - 1;
-  logFactorial(N); //precalculates log(k!) for k = 0,...,N
+  if(init == 1){
+ 
+    rng.seed(seed);
+    root = N_total - 1;
+    logFactorial(N); //precalculates log(k!) for k = 0,...,N
 
-  InitializeMCMC(data, tree); //Initialize using coalescent prior 
+    InitializeMCMC(data, tree); //Initialize using coalescent prior 
 
-  for(std::vector<Node>::iterator it_node = tree.nodes.begin(); it_node != tree.nodes.end(); it_node++){
-    (*it_node).branch_length /= data.Ne;
-  }
+    /*
+    for(std::vector<Node>::iterator it_node = tree.nodes.begin(); it_node != tree.nodes.end(); it_node++){
+      (*it_node).branch_length /= (double) data.Ne;
+    }
+    */
 
-  coordinates.resize(N_total);
-  GetCoordinates(tree.nodes[root], coordinates);
+    coordinates.resize(N_total);
+    GetCoordinates(tree.nodes[root], coordinates);
 
-  std::size_t m1(0);
-  std::generate(std::begin(sorted_indices) + N, std::end(sorted_indices), [&]{ return m1++; });
-  std::sort(std::begin(sorted_indices) + N, std::end(sorted_indices), [&](int i1, int i2) { return coordinates[i1 + N] < coordinates[i2 + N]; } );
-  for(int i = 0; i < N; i++){
-    sorted_indices[i]  = i;
-  }
-  for(int i = N; i < N_total; i++){
-    sorted_indices[i] += N;
-  }
-
-  //obtain order of coalescent events
-  std::fill(order.begin(), order.end(), 0);
-  std::size_t m2(0);
-  std::generate(std::begin(order) + N, std::end(order), [&]{ return m2++; });
-  std::sort(std::begin(order) + N, std::end(order), [&](int i1, int i2) { return sorted_indices[i1 + N] < sorted_indices[i2 + N]; } );
-
-  for(int i = 0; i < N; i++){
-    order[i]  = i;
-  }
-  for(int i = N; i < N_total; i++){
-    order[i] += N;
-  }
-
-  //This is for when branch lengths are zero, because then the above does not guarantee parents to be above children
-  bool is_topology_violated = true;
-  while(is_topology_violated){
-    is_topology_violated = false;
+    std::size_t m1(0);
+    std::generate(std::begin(sorted_indices) + N, std::end(sorted_indices), [&]{ return m1++; });
+    std::sort(std::begin(sorted_indices) + N, std::end(sorted_indices), [&](int i1, int i2) { return coordinates[i1 + N] < coordinates[i2 + N]; } );
+    for(int i = 0; i < N; i++){
+      sorted_indices[i]  = i;
+    }
     for(int i = N; i < N_total; i++){
-      int node_k = sorted_indices[i];
-      if( order[(*tree.nodes[node_k].child_left).label] > order[node_k] ){
-        int tmp_order = order[node_k];
-        order[node_k] = order[(*tree.nodes[node_k].child_left).label];
-        order[(*tree.nodes[node_k].child_left).label] = tmp_order;
-        sorted_indices[order[node_k]] = node_k;
-        sorted_indices[tmp_order] = (*tree.nodes[node_k].child_left).label;
-        is_topology_violated = true;
-      }
-      if( order[(*tree.nodes[node_k].child_right).label] > order[node_k] ){
-        int tmp_order = order[node_k];
-        order[node_k] = order[(*tree.nodes[node_k].child_right).label];
-        order[(*tree.nodes[node_k].child_right).label] = tmp_order;
-        sorted_indices[order[node_k]] = node_k;
-        sorted_indices[tmp_order] = (*tree.nodes[node_k].child_right).label;
-        is_topology_violated = true;
+      sorted_indices[i] += N;
+    }
+
+    //obtain order of coalescent events
+    std::fill(order.begin(), order.end(), 0);
+    std::size_t m2(0);
+    std::generate(std::begin(order) + N, std::end(order), [&]{ return m2++; });
+    std::sort(std::begin(order) + N, std::end(order), [&](int i1, int i2) { return sorted_indices[i1 + N] < sorted_indices[i2 + N]; } );
+
+    for(int i = 0; i < N; i++){
+      order[i]  = i;
+    }
+    for(int i = N; i < N_total; i++){
+      order[i] += N;
+    }
+
+    //This is for when branch lengths are zero, because then the above does not guarantee parents to be above children
+    bool is_topology_violated = true;
+    while(is_topology_violated){
+      is_topology_violated = false;
+      for(int i = N; i < N_total; i++){
+        int node_k = sorted_indices[i];
+        if( order[(*tree.nodes[node_k].child_left).label] > order[node_k] ){
+          int tmp_order = order[node_k];
+          order[node_k] = order[(*tree.nodes[node_k].child_left).label];
+          order[(*tree.nodes[node_k].child_left).label] = tmp_order;
+          sorted_indices[order[node_k]] = node_k;
+          sorted_indices[tmp_order] = (*tree.nodes[node_k].child_left).label;
+          is_topology_violated = true;
+        }
+        if( order[(*tree.nodes[node_k].child_right).label] > order[node_k] ){
+          int tmp_order = order[node_k];
+          order[node_k] = order[(*tree.nodes[node_k].child_right).label];
+          order[(*tree.nodes[node_k].child_right).label] = tmp_order;
+          sorted_indices[order[node_k]] = node_k;
+          sorted_indices[tmp_order] = (*tree.nodes[node_k].child_right).label;
+          is_topology_violated = true;
+        }
       }
     }
+
   }
 
   ////////////////// Sample branch lengths /////////////////
@@ -2062,10 +2074,6 @@ InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tre
       ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
     }
 
-  }
- 
-  for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-    (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
   }
 
 }  
