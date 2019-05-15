@@ -227,6 +227,8 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
     it_coalescent_rate_data++;
   }
 
+  fclose(fp);
+
   /////////////////////////////////////////////
   //Resource Usage
 

@@ -12,10 +12,10 @@ Sample::Read(const std::string& filename){
   while(getline(is, line)){
 
     int i = 0;
-    while(line[i] != ' ') i++;
+    while(line[i] != ' ' && line[i] != '\t') i++;
     i++;
     read.clear();
-    while(line[i] != ' '){
+    while(line[i] != ' ' && line[i] != '\t'){
       read += line[i];
       i++;
     }
@@ -31,7 +31,7 @@ Sample::Read(const std::string& filename){
       groups.push_back(read);
 
       read.clear();
-      while(line[i] != ' '){
+      while(line[i] != ' ' && line[i] != '\t'){
         read += line[i];
         i++;
       }
@@ -54,10 +54,10 @@ Sample::Read(const std::string& filename){
   while(getline(is, line)){
 
     int i = 0;
-    while(line[i] != ' ') i++;
+    while(line[i] != ' ' && line[i] != '\t') i++;
     i++;
     read.clear();
-    while(line[i] != ' '){
+    while(line[i] != ' ' && line[i] != '\t'){
       read += line[i];
       i++;
     }
