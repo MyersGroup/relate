@@ -1,1 +1,0 @@
-/bin/c++  -O3  -rdynamic CMakeFiles/RelateFileFormats.dir/RelateFileFormats.cpp.o  -o ../../../bin/RelateFileFormats ../../../bin/libtskitStatic.a ../../../bin/libkastoreStatic.a ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz 

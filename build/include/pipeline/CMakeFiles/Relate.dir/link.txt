@@ -1,1 +1,0 @@
-/bin/c++  -O3  -rdynamic CMakeFiles/Relate.dir/Relate.cpp.o  -o ../../../bin/Relate ../../../bin/librelateStatic.a ../../../bin/libgzstreamStatic.a -lz 
