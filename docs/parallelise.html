@@ -94,7 +94,7 @@ gtag('config', 'UA-115753061-1');
               <hr/>
 
               <p>                 
-              <b>Relate</b> has been coded such that it can be parallelised on hundreds of cores on large computing clusters (see <a href="parallelise.html#RelateModes">here</a>). For smaller datasets, where it is sufficient to parallelise over only a few cores, we provide a bash script that parallelises <b>Relate</b> without having to submit many jobs.           
+              <b>Relate</b> has been coded such that it can be parallelised on hundreds of cores on large computing clusters. We provide a script for running Relate on a SGE cluster <a href="parallelise.html#RelateSGEScript">here</a>. For smaller datasets, where it is sufficient to parallelise over only a few cores, we provide a bash script that parallelises <b>Relate</b> without having to submit many jobs.           
               </p>
 
             </div>
@@ -139,6 +139,52 @@ gtag('config', 'UA-115753061-1');
             </div>
 
           </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="RelateSGEScript">Relate on a SGE cluster</h4></div>
+                <div class="panel-body">  
+
+                  <p> 
+                  We provide a bash script for running <b>Relate</b> on a Sun Grid Engine (SGE) cluster. The script can be found under 
+                  <pre><code>PATH_TO_RELATE/scripts/RelateSGE/RelateSGE.sh</code></pre>
+                  The script takes the <b>same arguments (and same optional arguments) as Relate</b>, and some additional arguments that can be directly mapped to the corresponding SGE arguments:
+
+                  <dl class="dl-horizontal">                   
+                    <dt>-P</dt>
+                    <dd>Assign job to the project.</dd>
+                    <dt>-q</dt>
+                    <dd>Queue.</dd>
+                    <dt>--pe</dt>
+                    <dd>Optional. Processor count per node. Default is 'shmem 1'.</dd>
+                  </dl>
+                  Do not move the script - we are extracting the path to the binaries from the location of the script!
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/scripts/RelateSGE/RelateSGE.sh\
+                  -m 1.25e-8 \
+                  -N 30000 \
+                  --haps data/example.haps \
+                  --sample data/example.sample \
+                  --map data/genetic_map.txt \
+                  --annot data/example.annot \
+                  --seed 1 \
+                  -o example \
+                  -P myers.prjc \
+                  -q short.qc</code></pre>
+                  Output: example.anc, example.mut<br/><br/>
+
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
 
           <!-- row -->
           <div class="row">

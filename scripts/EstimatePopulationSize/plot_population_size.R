@@ -33,11 +33,10 @@ p1 <- ggplot(pop_size) +
   geom_step(aes(time, pop_size, color = groups, linetype = groups), lwd = 1.2) +
   scale_x_continuous(limits = c(1e3,1e7), trans="log10") + annotation_logticks(sides = "bl") +  
   scale_y_continuous(trans ="log10") +
-  theme(legend.position = "bottom") +
   ylab("population size") +
   xlab("years ago") +
 
-pdf(paste(filename,".pdf",sep = ""), width = 8, height = 10)
+pdf(paste(filename,".pdf",sep = ""), width = 10, height = 8)
 plot(p1)
 dev.off()
 
