@@ -1,0 +1,1 @@
+/bin/cc -fPIC   -shared -Wl,-soname,libkastoreShared.so -o ../../../../bin/libkastoreShared.so CMakeFiles/kastoreShared.dir/kastore.c.o 

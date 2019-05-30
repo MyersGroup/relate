@@ -14,7 +14,6 @@ MinMatch::MinMatch(Data& data){
   L       = data.L;
   Ne      = data.Ne;
   threshold = -0.2 * log(data.theta/(1.0 - data.theta)); //this is 0.1 of a mutation
-  //threshold = 0;
 
   convert_index.resize(N); //convert_index converts the indices in cluster_index to their actual indices between 0 and N_total-1.
   cluster_size.resize(N);  //stores size of clusters. Accessed using cluster_index.
@@ -24,9 +23,6 @@ MinMatch::MinMatch(Data& data){
   mcandidates.resize(N);
   mcandidates_sym.resize(N);
   updated_cluster.resize(N);
-  //min_updated.resize(N);
-  //candidates_to_check.resize(N*(N-1)/2); //for candidates where I am not sure if they are valid
-  //updated_candidates.resize(N*(N-1)/2); //needed to break ties
 };
 
 void
@@ -388,11 +384,7 @@ MinMatch::CoalesceSym(const int i, const int j, CollapsedMatrix<float>& sym_d){
                 }
               }
             }
-          }
-          //if(min_value_k < min_value_old){
-          //  std::cerr << min_value_k << " " << min_value_old << std::endl;
-          //}
-          //assert(min_value_k >= min_value_old);
+          } 
           min_values_sym[*k] = min_value_k;
 
         }
@@ -566,7 +558,6 @@ MinMatch::UPGMA(CollapsedMatrix<float>& d, Tree& tree){
   best_candidate.dist = std::numeric_limits<float>::infinity();
   best_sym_candidate.dist = std::numeric_limits<float>::infinity();
 
-  //Initialize(d);
   InitializeSym(sym_d, d);
 
   //////////////////////////
@@ -664,7 +655,6 @@ InferBranchLengths::InitializeMCMC(const Data& data, Tree& tree){
     int snp_end   = tree.nodes[i].SNP_end;
 
     assert(snp_end < data.pos.size());
-    //if(snp_end >= data.pos.size()) snp_end = data.pos.size()-1;
     mut_rate[i]            = 0.0;
     for(int snp = snp_begin; snp < snp_end; snp++){
       mut_rate[i]         += data.pos[snp];
@@ -679,7 +669,6 @@ InferBranchLengths::InitializeMCMC(const Data& data, Tree& tree){
     }
 
     mut_rate[i]           *= data.Ne * data.mu;
-    //mut_rate[i]     = 0.0;
   }
 
   //initialize

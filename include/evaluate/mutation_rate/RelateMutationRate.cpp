@@ -653,7 +653,7 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   for(int e = 2; e < num_epochs-1; e++){
     epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
   }
-  epoch[num_epochs-1] = 5e7; 
+  epoch[num_epochs-1] = 1e8/years_per_gen; 
 
   ////////// define mutation types /////////
   std::string alphabet = "ACGT";

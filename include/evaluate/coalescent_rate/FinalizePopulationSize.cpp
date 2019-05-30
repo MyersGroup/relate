@@ -23,12 +23,12 @@ int FinalizePopulationSize(cxxopts::Options& options){
   }
   if(options.count("help") || help){
     std::cout << options.help({""}) << std::endl;
-    std::cout << "Estimate population size using coalescent rate." << std::endl;
+    std::cout << "Estimate population size using coalescence rate." << std::endl;
     exit(0);
   } 
 
   std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Finalizing coalescent rate..." << std::endl;
+  std::cerr << "Finalizing coalescence rate..." << std::endl;
 
   ////////// read labels of sequences //////////
 
@@ -137,12 +137,12 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   }
   if(options.count("help") || help){
     std::cout << options.help({""}) << std::endl;
-    std::cout << "Estimate population size using coalescent rate." << std::endl;
+    std::cout << "Estimate population size using coalescence rate." << std::endl;
     exit(0);
   }  
 
   std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Finalizing coalescent rate..." << std::endl;
+  std::cerr << "Finalizing coalescence rate..." << std::endl;
 
   ////////// read labels of sequences //////////
 
@@ -167,6 +167,8 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
     coalescent_rate_data[e].ReadFromFile(fp);
     if(coalescent_rate_data[e].size() != N || coalescent_rate_data[e].subVectorSize(0) != N){
       std::cerr << "Error: number of haplotypes in anc/mut does not match number of samples in .poplabels file" << std::endl;
+      std::cerr << "You can just rerun this step using:" << std::endl;
+      std::cerr << "PATH_TO_RELATE/bin/RelateCoalescentRate --mode FinalizePopulationSize -o example --poplabels example.poplabels" << std::endl;
       exit(1);
     }
   }
@@ -274,12 +276,12 @@ int FinalizePopulationSizeByHaplotype(cxxopts::Options& options){
   }
   if(options.count("help") || help){
     std::cout << options.help({""}) << std::endl;
-    std::cout << "Estimate population size using coalescent rate." << std::endl;
+    std::cout << "Estimate population size using coalescence rate." << std::endl;
     exit(0);
   }  
 
   std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Finalizing coalescent rate..." << std::endl;
+  std::cerr << "Finalizing coalescence rate..." << std::endl;
 
 
 
@@ -379,7 +381,6 @@ int FinalizePopulationSizeByHaplotype(cxxopts::Options& options){
 
 }
 
-
 int FinalizePopulationSizeDir(cxxopts::Options& options){
 
   //////////////////////////////////
@@ -393,12 +394,12 @@ int FinalizePopulationSizeDir(cxxopts::Options& options){
   }
   if(options.count("help") || help){
     std::cout << options.help({""}) << std::endl;
-    std::cout << "Estimate population size using coalescent rate." << std::endl;
+    std::cout << "Estimate population size using coalescence rate." << std::endl;
     exit(0);
   }  
 
   std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Finalizing coalescent rate..." << std::endl;
+  std::cerr << "Finalizing coalescence rate..." << std::endl;
 
   ////////// read labels of sequences //////////
 

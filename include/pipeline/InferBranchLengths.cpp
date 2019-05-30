@@ -8,7 +8,7 @@
 #include "cxxopts.hpp"
 #include "data.hpp"
 #include "anc.hpp"
-#include "branch_length_estimator.hpp"
+//#include "branch_length_estimator.hpp"
 #include "anc_builder.hpp"
 
 int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_section, int last_section){

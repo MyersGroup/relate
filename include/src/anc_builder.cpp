@@ -112,7 +112,6 @@ DistanceMeasure::GetMatrix(const int snp){
   }
   //create distance matrix
   for(int n = 0; n < N; n++){
-    //std::cerr << n << " " << (*data).sequence[snp][n] << " " << (*data).sequence[snp][n+1] << std::endl;
     float min = std::numeric_limits<float>::infinity();
     if((*data).sequence[snp][n] == '1' || snp == 0 || snp == L-1){
 
@@ -121,7 +120,6 @@ DistanceMeasure::GetMatrix(const int snp){
       std::vector<float>::iterator it_top    = (*topology)[n].rowbegin(v_snp_prev[n]);
       float logscale_prev                    = (*logscales)[n][v_snp_prev[n]];
 
-      //int count = 0;
       //loop vectorizes
       for(; it_matrix != matrix.rowend(n);){
 
@@ -167,7 +165,6 @@ DistanceMeasure::GetMatrix(const int snp){
       float exp_logscale_prev_next = exp(logscale_prev - logscale_next);
       float exp_logscale_next_prev = exp(logscale_next - logscale_prev);
 
-      //int count = 0;
       for(; it_matrix != matrix.rowend(n);){
 
         if(logscale_prev <= logscale_next){
@@ -223,10 +220,7 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data){
 
   threshold_brancheq = 0.95;
   thr = (int) (0.03 * N) + 1;
-
-  //threshold_brancheq = 0.999;
-  //thr = 0;
-
+ 
 }
 
 
@@ -345,53 +339,6 @@ AncesTreeBuilder::AssociateTrees(std::vector<AncesTree>& v_anc, const std::strin
   std::vector<std::vector<int>>::iterator it_equivalent_branches;
   std::vector<std::vector<int>>::reverse_iterator rit_equivalent_branches;
   
-  /*
-  //pre calculate the required number of leaves for two branches to be equivalent
-  potential_branches.resize(N);
-  float threshold_inv = 1/(threshold_brancheq * threshold_brancheq);
-  float N_float = N;
-  for(int i = 1; i <= N; i++){
-
-  potential_branches[i-1].push_back(i);
-  //for branches with i+1 leaves, list the number of leaves a potential equivalent branch needs
-  for(int j = i+1; j <= N; j++){
-  if(threshold_inv >= j/(N_float-j) * ((N_float-i)/i) ){
-  potential_branches[i-1].push_back(j);
-  potential_branches[j-1].push_back(i);
-  }
-  }
-  }
-
-  //calculate the map the associates a branch in a tree to branches in the next tree
-
-  for(int i = 0; i < v_anc_size; i++){
-  it_seq_prev = v_anc[i].seq.begin();
-  it_seq      = std::next(it_seq_prev,1); 
-
-  for(; it_seq != v_anc[i].seq.end();){
-  equivalent_branches.emplace_back();
-  it_equivalent_branches = std::prev(equivalent_branches.end(),1);
-  BranchAssociation((*it_seq_prev).tree, (*it_seq).tree, *it_equivalent_branches); //O(N^2) 
-  it_seq++;
-  it_seq_prev++;
-  }
-  it_seq = v_anc[i+1].seq.begin();
-  equivalent_branches.emplace_back();
-  it_equivalent_branches = std::prev(equivalent_branches.end(),1);
-  BranchAssociation((*it_seq_prev).tree, (*it_seq).tree, *it_equivalent_branches); //O(N^2)  
-  }
-  it_seq_prev = v_anc[v_anc_size].seq.begin();
-  it_seq      = std::next(it_seq_prev, 1); 
-  for(; it_seq != v_anc[v_anc_size].seq.end();){
-  equivalent_branches.emplace_back();
-  it_equivalent_branches = std::prev(equivalent_branches.end(),1);
-  BranchAssociation((*it_seq_prev).tree, (*it_seq).tree, *it_equivalent_branches); //O(N^2) 
-  it_seq++;
-  it_seq_prev++;
-  }
-  */
-
-
   int size, total_size = 0;
   for(int k = 0; k <= v_anc_size; k++){
     std::string output_filename = dirname + "equivalent_branches_" + std::to_string(k) + ".bin";
@@ -706,15 +653,7 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
 
   PropagateStructGlobal report;
   PropagateMutationGlobal(tree.nodes[root], sequences_carrying_mutations, report);
-
-  /*
-  if(snp == 1576){
-    std::cerr << sequences_carrying_mutations.num_leaves << std::endl;
-    std::cerr << report.min << " " << report.best_branch << " " << report.flipped_min << " " << report.best_flipped_branch << std::endl;
-    std::cerr << thr << std::endl;
-  }
-  */
-
+ 
   if( report.min <= report.flipped_min ){
 
     min_value = report.min;
@@ -1200,8 +1139,6 @@ AncesTreeBuilder::BranchAssociation(Tree& ref_tree, Tree& tree, std::vector<int>
   }
 
 
-  //std::cerr << unpaired_branches.size() << " " << possible_pairs.size() << std::endl;
-
   //5. Sort possible_pairs by score
   std::sort(std::begin(possible_pairs), std::end(possible_pairs), std::greater<EquivalentNode>());
 
@@ -1212,27 +1149,6 @@ AncesTreeBuilder::BranchAssociation(Tree& ref_tree, Tree& tree, std::vector<int>
       equivalent_branches_ref[(*it).node2] = (*it).node1;
     }
   }
-
-  //check here
-
-  /*
-     int count = 0;
-     for(int i = 0; i < N_total; i++){
-     if(equivalent_branches[i] == -1) count++;
-     }
-     std::cerr << count << std::endl;
-     */
-  /* 
-     for(int i = 0; i < N_total; i++){
-     std::cerr << equivalent_branches[i] << " ";
-     }
-     std::cerr << std::endl;
-     float score_child_left = PearsonCorrelation(tr_leaves[(*tree.nodes[root].child_left).label], rtr_leaves[(*ref_tree.nodes[root].child_left).label]);
-     float score_child_right = PearsonCorrelation(tr_leaves[(*tree.nodes[root].child_right).label], rtr_leaves[(*ref_tree.nodes[root].child_right).label]);
-
-     std::cerr << "scores " << score_child_left << " " << score_child_right << std::endl;
-     std::cerr << "equivalent branches " << equivalent_branches[(*tree.nodes[root].child_left).label] << " " << equivalent_branches[(*tree.nodes[root].child_right).label] << std::endl; 
-     */
 
 }
 

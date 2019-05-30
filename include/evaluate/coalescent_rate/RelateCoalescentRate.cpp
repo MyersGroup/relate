@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
     ("mode", "Choose which part of the algorithm to run.", cxxopts::value<std::string>())
     ("m,mutation_rate", "Mutation rate (float).", cxxopts::value<float>())
     ("mrate", "Filename of file containing avg mutation rates.", cxxopts::value<std::string>())
-    ("coal", "Filename of file containing coalescent rates.", cxxopts::value<std::string>()) 
+    ("coal", "Filename of file containing coalescence rates.", cxxopts::value<std::string>()) 
     ("dist", "Filename of file containing dist.", cxxopts::value<std::string>())
     ("i,input", "Filename of anc and mut files without file extension.", cxxopts::value<std::string>())
     ("o,output", "Filename for updated anc and mut files without file extension.", cxxopts::value<std::string>())
@@ -114,6 +114,18 @@ int main(int argc, char* argv[]){
     SummarizeCoalescentRateForGenome(options);
 
   }else if(!mode.compare("FinalizePopulationSize")){
+
+    bool help = false;
+    if(!options.count("output")){
+      std::cout << "Not enough arguments supplied." << std::endl;
+      std::cout << "Needed:output. Optional: poplabels." << std::endl;
+      help = true;
+    }
+    if(options.count("help") || help){
+      std::cout << options.help({""}) << std::endl;
+      std::cout << "Estimate population size." << std::endl;
+      exit(0);
+    }  
 
     if(options.count("poplabels")){
       if(options["poplabels"].as<std::string>() == "hap"){

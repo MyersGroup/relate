@@ -26,10 +26,8 @@ struct Node{
   int label;
 
   float num_events = 0.0; //on branch on top of parent
-  //float lifespan = 0.0;   //of branch on top of parent
   int SNP_begin = 0;
   int SNP_end = 0;
-  //float lifespan = 0.0;
   double branch_length = 0.0; //of branch on top of parent
 
   void operator=(const Node& node){

@@ -9,7 +9,7 @@
 #include "tree_comparer.hpp"
 #include "cxxopts.hpp"
 
-//////// functions for estimating pairwise coalescent rate /////////
+//////// functions for estimating pairwise coalescence rate /////////
 
 float
 GetCoalescentRate(Node n, float factor, std::vector<float>& epoch, std::vector<CollapsedMatrix<float>>& coalescent_rate_data, std::vector<int>& leaves){
@@ -98,15 +98,15 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   }
   if(options.count("help") || help){
     std::cout << options.help({""}) << std::endl;
-    std::cout << "Reads .anc file and calculates pairwise coalescent rate. Output is bin file. Use SummarizeCoalesecntRate to obtain coalescent rates." << std::endl;
+    std::cout << "Reads .anc file and calculates pairwise coalescence rate. Output is bin file. Use SummarizeCoalesecntRate to obtain coalescence rates." << std::endl;
     exit(0);
   }  
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   if(chr == -1){
-    std::cerr << "Calculating coalescent rate for " << options["input"].as<std::string>() << " ..." << std::endl;
+    std::cerr << "Calculating coalescence rate for " << options["input"].as<std::string>() << " ..." << std::endl;
   }else{
-    std::cerr << "Calculating coalescent rate for " << options["input"].as<std::string>() << "_chr" << chr << " ..." << std::endl;
+    std::cerr << "Calculating coalescence rate for " << options["input"].as<std::string>() << "_chr" << chr << " ..." << std::endl;
   }
 
   ////////////////////////
@@ -192,13 +192,13 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
     std::fill(coalescent_rate_data[e].vbegin(), coalescent_rate_data[e].vend(), 0.0);
   
   }
-  epoch[num_epochs-1] = 5e7;
+  epoch[num_epochs-1] = 1e8/years_per_gen;
   coalescent_rate_data[num_epochs-1].resize(data.N, data.N);
   std::fill(coalescent_rate_data[num_epochs-1].vbegin(), coalescent_rate_data[num_epochs-1].vend(), 0.0);
   
 
   ////////////////////////////////
-  //Pairwise coalescent rate
+  //Pairwise coalescence rate
   //In each tree, find the coalescent time. Then update count_per_epoch and coalescent_time_in_epoch. 
 
   float factor = 0.0;
@@ -471,15 +471,15 @@ int CoalescentRateDir(cxxopts::Options& options, int chr = -1){
   }
   if(options.count("help") || help){
     std::cout << options.help({""}) << std::endl;
-    std::cout << "Reads .anc file and calculates coalescent rate between three haplotypes. Output is bin file. Use SummarizeCoalesecntRate to obtain coalescent rates." << std::endl;
+    std::cout << "Reads .anc file and calculates coalescence rate between three haplotypes. Output is bin file. Use SummarizeCoalesecntRate to obtain coalescence rates." << std::endl;
     exit(0);
   }  
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   if(chr == -1){
-    std::cerr << "Calculating coalescent rate for " << options["input"].as<std::string>() << " ..." << std::endl;
+    std::cerr << "Calculating coalescence rate for " << options["input"].as<std::string>() << " ..." << std::endl;
   }else{
-    std::cerr << "Calculating coalescent rate for " << options["input"].as<std::string>() << "_chr" << chr << " ..." << std::endl;
+    std::cerr << "Calculating coalescence rate for " << options["input"].as<std::string>() << "_chr" << chr << " ..." << std::endl;
   }
 
   ////////////////////////
@@ -566,13 +566,13 @@ int CoalescentRateDir(cxxopts::Options& options, int chr = -1){
     std::fill(coalescent_rate_data[e].vbegin(), coalescent_rate_data[e].vend(), 0.0);
   
   }
-  epoch[num_epochs-1] = 5e7;
+  epoch[num_epochs-1] = 1e8/years_per_gen;
   coalescent_rate_data[num_epochs-1].resize(2, dim);
   std::fill(coalescent_rate_data[num_epochs-1].vbegin(), coalescent_rate_data[num_epochs-1].vend(), 0.0);
   
 
   ////////////////////////////////
-  //Pairwise coalescent rate
+  //Pairwise coalescence rate
   //In each tree, find the coalescent time. Then update count_per_epoch and coalescent_time_in_epoch. 
 
   int prog_step = anc.seq.size()/100.0+1;
