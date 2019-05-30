@@ -35,6 +35,7 @@ fi
 
 PATH_TO_RELATE=$0
 PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/EstimatePopulationSize/EstimatePopulationSize.sh '{print $1}')
+DIR="${PATH_TO_RELATE}/scripts/EstimatePopulationSize/"
 
 ######################################################################################################
 
@@ -130,6 +131,8 @@ done
 if [ -z "${num_iter-}" ];
 then
   num_iter=5
+else
+  num_iter_set="FALSE"
 fi
 
 echo "********************************"
@@ -319,6 +322,19 @@ then
           -i ${output} \
           -o ${output}
       fi
+
+      if [ -z "${num_iter_set-}" ];
+      then
+        if [ $i -ge 2 ];
+        then
+          terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
+          if [ ${terminate} == "TRUE" ];
+          then
+            break
+          fi
+        fi
+      fi
+
 
     done
 
@@ -524,6 +540,18 @@ then
             -o ${output}_chr${chr} 
         fi
       done
+
+      if [ -z "${num_iter_set-}" ]
+      then
+        if [ $i -ge 2 ]
+        then
+          terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
+          if [ ${terminate} == "TRUE" ]
+          then
+            break
+          fi
+        fi
+      fi
 
     done
 
@@ -780,6 +808,19 @@ else
         -o ${output}_tmp
       mv ${output}_tmp.anc.gz ${output}.anc.gz
       mv ${output}_tmp.mut.gz ${output}.mut.gz
+
+      if [ -z "${num_iter_set-}" ]
+      then
+        if [ $i -ge 2 ]
+        then
+          terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
+          if [ ${terminate} == "TRUE" ]
+          then
+            break
+          fi
+        fi
+      fi
+
 
     done
 
@@ -1143,6 +1184,18 @@ else
 
       done
 
+      if [ -z "${num_iter_set-}" ]
+      then
+        if [ $i -ge 2 ]
+        then
+          terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
+          if [ ${terminate} == "TRUE" ]
+          then
+            break
+          fi
+        fi
+      fi
+
     done
 
     #estimate mutation rate and coalescent rates for a final time
@@ -1281,7 +1334,6 @@ then
 fi
 
 #plot results
-DIR="${PATH_TO_RELATE}/scripts/EstimatePopulationSize/"
 Rscript ${DIR}/plot_population_size.R ${output} ${years_per_gen}
 
 

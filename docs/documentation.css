@@ -3,7 +3,14 @@ body, html {
 }
 
 img {
-  width: 100%;
+  width:100%;
+}
+img.treeplot {
+  width: 75%;
+}
+img.relate{
+  width: 13%;
+  max-width: 267px;
 }
 .panel {
   border: none !important;

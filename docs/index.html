@@ -67,7 +67,7 @@ ga('send', 'pageview');
       <div class="col-md-10 col-md-offset-1">
 
         <div class="page-header">
-          <h1>Relate</h1>
+          <h1><img class="relate" src="figures/relate.png"></h1>
           <h4 id="Overview">Software to estimate genome-wide genealogies for thousands of samples</h4>
           <p><b>Relate</b> estimates genome-wide genealogies in the form of trees that adapt to changes in local ancestry caused by recombination. The method is scalable to thousands of samples. The method is described in the following paper. Please cite this paper if you use our software in your study.</p>   
           <p>
@@ -91,7 +91,7 @@ ga('send', 'pageview');
 
               <div class="panel panel-info">
                 <div class="panel-body">  
-                  <img src="figures/treeplot.jpg" >
+                  <img class="treeplot" src="figures/treeplot.png" >
                 </div>
               </div>
 
@@ -104,7 +104,7 @@ ga('send', 'pageview');
 
                 <p><b>Relate</b> is available for academic use. To see rules for non-academic use, please read the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf" download>LICENCE</a> file, which is included with each software download.</p>
 
-                <h5 id="Binaries">Pre-compiled binaries (last updated: 14/05/2019)</h5> 
+                <h5 id="Binaries">Pre-compiled binaries (last updated: 30/05/2019)</h5> 
                 <form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
                   <div class="form-group">
                     <div class="checkbox">
@@ -118,22 +118,22 @@ ga('send', 'pageview');
                   <div class="form-group">
                     <button type="submit" 
                             class="btn btn-link" 
-                            formaction="download/relate_v1.0.12_x86_64_dynamic.tgz"   
+                            formaction="download/relate_v1.0.13_x86_64_dynamic.tgz"   
                             data-on="click"
                             data-event-category="Relate download (x86_64, dynamic)"
-                            data-event-action="click">Linux (x86_64, dynamic) - v1.0.12</button><br/>
+                            data-event-action="click">Linux (x86_64, dynamic) - v1.0.13</button><br/>
                           <button type="submit" 
                                   class="btn btn-link" 
-                                  formaction="download/relate_v1.0.12_x86_64_static.tgz"
+                                  formaction="download/relate_v1.0.13_x86_64_static.tgz"
                                   data-on="click"
                                   data-event-category="Relate download (x86_64, static)"
-                                  data-event-action="click">Linux (x86_64, static) - v1.0.12</button><br/>
+                                  data-event-action="click">Linux (x86_64, static) - v1.0.13</button><br/>
                                 <button type="submit" 
                                         class="btn btn-link" 
-                                        formaction="download/relate_v1.0.12_MacOSX.tgz"
+                                        formaction="download/relate_v1.0.13_MacOSX.tgz"
                                         data-on="click"
                                         data-event-category="Relate download (Mac_OSX)"
-                                        data-event-action="click">Mac OSX - v1.0.12</button>                   
+                                        data-event-action="click">Mac OSX - v1.0.13</button>                   
                   </div>
                 </form>
 
@@ -147,6 +147,23 @@ ga('send', 'pageview');
             </div>
 
           </div>
+
+          <!-- 2nd row -->
+          <div class="row">
+            <h3 id="1000GP">1000 Genomes coalescence rates, allele ages, and selection p-values</h3>
+            <hr/>
+          </div>
+
+          <!-- 3rd row -->
+          <div class="row">
+            <div class="col-md-12">
+              <p>We deposited Relate-estimated coalescence rates, allele ages, and p-values for evidence of positive selection for the 1000 Genomes Project <a href="https://zenodo.org/record/3234689">here</a>.<br/>
+              These were obtained by estimated the joint genealogy of all 1000 GP populations and then extracted the embedded genealogy for each population.
+For the genealogy of each population, we jointly estimated the population size history and branch lengths. 
+Variants segregating in more than one population therefore have correlated but different allele ages in each population.</p>
+            </div>
+          </div>
+
           <!-- 2nd row -->
           <div class="row">
             <h3 id="Modules">Add-on modules</h3>
