@@ -10,6 +10,7 @@ img.treeplot {
 }
 img.relate{
   width: 13%;
+  min-width: 100px;
   max-width: 267px;
 }
 .panel {
