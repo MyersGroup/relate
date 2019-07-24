@@ -325,18 +325,18 @@ gtag('config', 'UA-115753061-1');
                       <dt>--sample</dt>
                       <dd>Filename of .sample file</dd>
                       <dt>-o,--output</dt>
-                      <dd>Filename of output files without file extensions.</dd>
+                      <dd>Filename of output files without file extensions. If same as input filenames, input files will be overwritten.</dd>
                       <dt>--ancestor</dt>
                       <dd>Fasta file containing ancestral genome. This is case insensitive.</dd>
                       <dt>--mask</dt>
-                      <dd>Optional: Fasta file of same length as the ancestral genome contining a genomic mask. Loci passing the mask are denoted by P, loci not passing the mask are denoted by N. This is case insensitive.</dd>
+                      <dd>Optional: Fasta file of same length as the ancestral genome containing a genomic mask. Loci passing the mask are denoted by P, loci not passing the mask are denoted by N. This is case insensitive.</dd>
                       <dt>--remove_ids</dt>
                       <dd>Optional: File containing ids of samples that will be removed from the haps/sample files. One id per line.</dd>
                       <dt>--poplabels</dt>
                       <dd>Optional: File containing population labels of samples.</dd>
                     </dl>
 
-                    <pre><code> PATH_TO_RELATE/scripts/PrepareInputFiles.sh/PrepareInputFiles.sh \
+                    <pre><code> PATH_TO_RELATE/scripts/PrepareInputFiles/PrepareInputFiles.sh \
                  --haps example.haps \
                  --sample example.sample \
                  --ancestor ancestor.fa \
@@ -430,7 +430,7 @@ gtag('config', 'UA-115753061-1');
                   <div class="panel-heading"> <h4 id="FilterHapsUsingMask">Filter SNPs using a genomic mask</h4></div>
                   <div class="panel-body">  
 
-                    The genomic mask should be saved as a fasta file and aligned to the data set. Denote the passing state by P. The code deletes all SNPs that are not passing. It also outputs a .dist file that contains the distances between SNPs, adjusted for regions that are not passing in the mask.
+                    The genomic mask needs to be specified as a fasta file of same length as the ancestral genome, such that the xth entry is the xth base of the genome. The passing state should be denoted as P. The code is insensitive to case in the fasta file and deletes all SNPs that are not passing. It also outputs a .dist file that contains the distances between SNPs, adjusted for regions that are not passing in the mask.
                     <pre><code> PATH_TO_RELATE/bin/RelateFileFormats \
                  --mode FilterHapsUsingMask\
                  --haps example.haps \
