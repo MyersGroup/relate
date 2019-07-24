@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/cc   -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk -dynamiclib -Wl,-headerpad_max_install_names  -o ../../../../bin/libkastoreShared.dylib -install_name @rpath/libkastoreShared.dylib CMakeFiles/kastoreShared.dir/kastore.c.o 

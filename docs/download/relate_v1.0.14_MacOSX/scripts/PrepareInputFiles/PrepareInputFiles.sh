@@ -117,15 +117,13 @@ ${PATH_TO_RELATE}/bin/RelateFileFormats \
 
 rm ${filename_output}_biall.haps
 
-is_gzipped=$(file ${filename_sample} | grep -c gzip)
+is_gzipped=$(file ${filename_sample} | grep -c "gzip" || true)
 if [ ${is_gzipped} -eq 0 ];
 then
   cp ${filename_sample} ${filename_output}.sample
 else
   gunzip -c ${filename_sample} > ${filename_output}.sample
 fi
-
-
 
 if [ ! -z "${filename_remove-}" ];
 then
