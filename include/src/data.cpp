@@ -415,7 +415,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   int max_windows_per_section = 0;
 
   int overlap = 20000;
-  int max_chunk_size = std::min(L+1, (int) min_memory_size/N);
+  int max_chunk_size = std::min(L+1, (int) (min_memory_size/N));
   std::vector<std::vector<char> > p_seq(max_chunk_size), p_overlap(overlap);
   std::vector<std::vector<char> >::iterator it_p = p_seq.begin(), it_poverlap;
   for(; it_p != p_seq.end(); it_p++){
