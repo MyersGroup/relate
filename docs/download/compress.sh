@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version="1.0.14"
+version="1.0.15"
 
 tar -czvf ./relate_v${version}_MacOSX.tgz relate_v${version}_MacOSX
 tar -czvf ./relate_v${version}_x86_64_dynamic.tgz relate_v${version}_x86_64_dynamic
