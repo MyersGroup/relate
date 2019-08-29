@@ -16,7 +16,6 @@ Then execute
 
 ```` bash
 cd PATH_TO_RELATE/
-mkdir build
 cd build
 cmake ..
 make
