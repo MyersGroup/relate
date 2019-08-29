@@ -146,7 +146,7 @@ ConvertToTreeSequenceTxt(cxxopts::Options& options){
 
   std::vector<float> coordinates(2*data.N-1,0.0);
   MarginalTree mtr;
-  std::ifstream is(options["input"].as<std::string>() + ".anc");
+  igzstream is(options["input"].as<std::string>() + ".anc");
   if(is.fail()) is.open(options["input"].as<std::string>() + ".anc.gz");
   if(is.fail()){
     std::cerr << "Error while opening file " << options["anc"].as<std::string>() + ".anc" << "." << std::endl;
@@ -308,7 +308,7 @@ ConvertToTreeSequence(cxxopts::Options& options){
   }
 
   for(int i = 0; i < data.N; i++){
-    ret = tsk_node_table_add_row(&tables.nodes, 0, 0, TSK_NULL, i, NULL, 0);
+    ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, 0, TSK_NULL, i, NULL, 0);
     check_tsk_error(ret);
   }
 
@@ -316,7 +316,7 @@ ConvertToTreeSequence(cxxopts::Options& options){
 
   std::vector<float> coordinates(2*data.N-1,0.0);
   MarginalTree mtr;
-  std::ifstream is(options["input"].as<std::string>() + ".anc");
+  igzstream is(options["input"].as<std::string>() + ".anc");
   if(is.fail()) is.open(options["input"].as<std::string>() + ".anc.gz");
   if(is.fail()){
     std::cerr << "Error while opening file " << options["anc"].as<std::string>() + ".anc" << "." << std::endl;
@@ -332,6 +332,8 @@ ConvertToTreeSequence(cxxopts::Options& options){
 
     mtr.Read(line, data.N);
     mtr.tree.GetCoordinates(coordinates);
+    //std::vector<Leaves> leaves;
+    //mtr.tree.FindAllLeaves(leaves);
     pos = mut.info[mtr.pos].pos;
     if(mtr.pos == 0) pos = 0;
     snp = mtr.pos;
@@ -368,9 +370,12 @@ ConvertToTreeSequence(cxxopts::Options& options){
 
     //Node table
     std::vector<Node>::iterator it_node = std::next(mtr.tree.nodes.begin(), data.N);
+    int n = N;
     for(std::vector<float>::iterator it_coords = std::next(coordinates.begin(), data.N); it_coords != coordinates.end(); it_coords++){   
-      ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, *it_coords, TSK_NULL, TSK_NULL, NULL, 0);    
+      ret = tsk_node_table_add_row(&tables.nodes, 0, *it_coords, TSK_NULL, TSK_NULL, NULL, 0);   
+      //ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, leaves[n].num_leaves, TSK_NULL, TSK_NULL, NULL, 0);    
       check_tsk_error(ret);
+      n++;
     }
 
     //Edge table
