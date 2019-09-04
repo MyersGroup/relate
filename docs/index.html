@@ -69,10 +69,10 @@ ga('send', 'pageview');
         <div class="page-header">
           <h1><img class="relate" src="figures/relate.png"></h1>
           <h4 id="Overview">Software to estimate genome-wide genealogies for thousands of samples</h4>
-          <p><b>Relate</b> estimates genome-wide genealogies in the form of trees that adapt to changes in local ancestry caused by recombination. The method is scalable to thousands of samples. The method is described in the following paper. Please cite this paper if you use our software in your study.</p>   
+          <p><b>Relate</b> estimates genome-wide genealogies in the form of trees that adapt to changes in local ancestry caused by recombination. The method, which is scalable to thousands of samples, is described in the following paper. Please cite this paper if you use our software in your study.</p>   
           <p>
-          <b>Citation:</b> Leo Speidel, Marie Forest, Sinan Shi, Simon Myers. A method for estimating genome-wide genealogies for thousands of samples. <a href="https://www.biorxiv.org/content/10.1101/550558v1">bioRxiv:550558</a>, 2019.</b><br/>
-        <b>Contact:</b> leo.speidel [at] outlook [dot] com<br/> 
+          <b>Citation:</b> Leo Speidel, Marie Forest, Sinan Shi, Simon Myers. A method for estimating genome-wide genealogies for thousands of samples. <a href="https://www.nature.com/articles/s41588-019-0484-x">Nature Genetics 51: 1321-1329, 2019</a>.</b><br/>
+        <b>Contact:</b> leo.speidel@outlook.com<br/> 
         <b>Website:</b> <a href = "https://leospeidel.wordpress.com">https://leospeidel.wordpress.com</a>
           </p>
         </div> 
@@ -161,6 +161,22 @@ ga('send', 'pageview');
               These were obtained by estimating the joint genealogy of all 1000 GP populations and then extracted the embedded genealogy for each population.
 For the genealogy of each population, we jointly estimated the population size history and branch lengths. 
 Variants segregating in more than one population therefore have correlated but different allele ages in each population.</p>
+            </div>
+          </div>
+
+          <!-- 2nd row -->
+          <div class="row">
+            <h3 id="relater">Relater: R package for handling Relate output files</h3>
+            <hr/>
+          </div>
+
+          <!-- 3rd row -->
+          <div class="row">
+            <div class="col-md-12">
+              <p>I made an <a href="https://github.com/leospeidel/relater">R package</a> for handling Relate output files (MIT license). It's still under development but the main functionality is working.</p>
+              You can install this package, e.g., using
+              <pre><code>library(devtools)
+devtools::install_github("leospeidel/relater")</code></pre>
             </div>
           </div>
 
@@ -258,6 +274,7 @@ Variants segregating in more than one population therefore have correlated but d
             <hr/>
 
             <div class="panel-group" id="accordion">
+             
               <div class="panel panel-default">
                 <div class="panel-heading">
                   <h4 class="panel-title">
@@ -275,11 +292,8 @@ Variants segregating in more than one population therefore have correlated but d
                   </div>
                 </div>
               </div>
-            </div>
 
-
-            <div class="panel-group" id="accordion">
-             <div class="panel panel-default">
+              <div class="panel panel-default">
                 <div class="panel-heading">
                   <h4 class="panel-title">
                     <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse16">
