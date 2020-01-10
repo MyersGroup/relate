@@ -25,6 +25,7 @@ struct SNPInfo{
 
 };
 
+typedef std::vector<SNPInfo> Muts; //I could change this to deque but deque has no splice
 
 class Mutations{
 
@@ -38,7 +39,7 @@ class Mutations{
   public:
 
     std::string header;
-    std::vector<SNPInfo> info;
+    Muts info;
 
     Mutations(){};
     Mutations(Data& data);
@@ -59,6 +60,55 @@ class Mutations{
 
     int GetNumFlippedMutations(){return num_flips;}
     int GetNumNotMappingMutations(){return num_notmappingmutations;}
+
+};
+
+class AncMutIterators{
+
+  private:
+
+    igzstream is;
+    Muts::iterator pit_mut;
+    Mutations mut;
+
+    int N, num_trees;
+    int tree_index_in_anc, tree_index_in_mut;
+    double num_bases_tree_persists;
+    std::string line;
+
+  public:
+
+    AncMutIterators(){};
+    AncMutIterators(std::string filename_anc, std::string filename_mut);
+
+    void OpenFiles(std::string filename_anc, std::string filename_mut);
+    void CloseFiles(){
+      if(is.rdbuf() -> is_open()) is.close(); //close if stream is still open
+    }
+    int NumTips(){
+      return(N);
+    }
+    int NumSnps(){
+      return(mut.info.size());
+    }
+    int NumTrees(){
+      return(num_trees);
+    }
+
+    Muts::iterator mut_begin(){
+      return(mut.info.begin());
+    }
+    Muts::iterator mut_end(){
+      return(mut.info.end());
+    }
+    int get_treecount(){
+      return(tree_index_in_anc);
+    }
+
+    double NextTree(MarginalTree& mtr, Muts::iterator& it_mut);
+    double FirstSNP(MarginalTree& mtr, Muts::iterator& it_mut);
+    double NextSNP(MarginalTree& mtr, Muts::iterator& it_mut);
+
 
 };
 

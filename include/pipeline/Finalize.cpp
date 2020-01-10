@@ -85,8 +85,8 @@ int Finalize(cxxopts::Options& options){
   os << "\n";
 
   int pos, dist, snp_ind;
-  char rsid[30];
-  char ancestral, alternative;
+  char rsid[1024];
+  char ancestral[1024], alternative[1024];
 
   //Rest
   for(int c = 0; c < num_chunks; c++){
@@ -143,9 +143,9 @@ int Finalize(cxxopts::Options& options){
       fread(&snp_ind, sizeof(int), 1, fp_props);
       fread(&pos, sizeof(int), 1, fp_props);
       fread(&dist, sizeof(int), 1, fp_props);
-      fread(&rsid[0], sizeof(char), 30, fp_props);
-      fread(&ancestral, sizeof(char), 1, fp_props);
-      fread(&alternative, sizeof(char), 1, fp_props);
+      fread(&rsid[0], sizeof(char), 1024, fp_props);
+      fread(&ancestral[0], sizeof(char), 1024, fp_props);
+      fread(&alternative[0], sizeof(char), 1024, fp_props);
       
       os << snp_ind << ";" << pos << ";" << dist << ";" << rsid << ";";
       os << num_trees_chunk + num_trees_cum - first_tree << line;

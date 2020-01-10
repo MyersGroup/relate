@@ -109,6 +109,10 @@ int main(int argc, char* argv[]){
   
     CoalescentRateForSection(options);
   
+  }else if(!mode.compare("ConditionalCoalescentRateForSection")){
+ 
+    ConditionalCoalescenceRateForSection(options);
+  
   }else if(!mode.compare("SummarizeCoalescentRateForGenome")){
 
     SummarizeCoalescentRateForGenome(options);
@@ -177,12 +181,32 @@ int main(int argc, char* argv[]){
 
     SampleBranchLengths(options);
 
+  }else if(!mode.compare("SampleBranchLengthsBinary")){
+ 
+    //variable population size.
+    //Do this for whole chromosome
+    //The Final Finalize should be a FinalizeByGroup 
+   
+    bool help = false;
+    if(!options.count("mutation_rate") || !options.count("coal") || !options.count("num_samples") || !options.count("input") || !options.count("output")){
+      std::cout << "Not enough arguments supplied." << std::endl;
+      std::cout << "Needed: mutation_rate, coal, num_samples, input, output. Optional: dist, num_proposals, seed." << std::endl;
+      help = true;
+    }
+    if(options.count("help") || help){
+      std::cout << options.help({""}) << std::endl;
+      std::cout << "Estimate population size." << std::endl;
+      exit(0);
+    }  
+
+    SampleBranchLengthsBinary(options);
+
   }else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "EstimatePopulationSize, EstimateDirPopulationSize, ReEstimateBranchLengths, CoalescentRateForSection, SummarizeCoalescentRateForGenome, FinalizePopulationSize." << std::endl;
+    std::cout << "EstimatePopulationSize, EstimateDirPopulationSize, ReEstimateBranchLengths, CoalescentRateForSection, ConditionalCoalescentRateForSection, SummarizeCoalescentRateForGenome, FinalizePopulationSize, SampleBranchLengths, SampleBranchLengthsBinary." << std::endl;
   
   }
 

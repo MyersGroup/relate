@@ -33,6 +33,18 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   const std::string dirname = "chunk_" + std::to_string(chunk_index) + "/";
   if(first_section >= num_windows) return 1;
 
+  int seed;
+  if(!options.count("seed")){
+    seed = std::time(0) + getpid();
+  }else{
+    seed = options["seed"].as<int>();
+  }
+
+  bool ancestral_state = true;
+  if(options.count("anc_allele_unknown")){
+     ancestral_state = false;
+  }
+
   ///////////////////////////////////////////// Build AncesTree //////////////////////////
   //input:  Data and distance matrix
   //output: AncesTree (tree sequence)
@@ -54,7 +66,7 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
     int section_endpos   = window_boundaries[section+1]-1;
     if(section_endpos >= data.L) section_endpos = data.L-1;
 
-    ancbuilder.BuildTopology(section ,section_startpos, section_endpos, data, anc);
+    ancbuilder.BuildTopology(section, section_startpos, section_endpos, data, anc, seed, ancestral_state);
 
     /////////////////////////////////////////// Dump AncesTree to File //////////////////////
 

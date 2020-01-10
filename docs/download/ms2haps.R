@@ -1,3 +1,4 @@
+options(scipen=999)
 # Assumes that input is of form
 #  //(some text)
 #  segsites: (num_segsites)
@@ -54,7 +55,7 @@ if(length(startlines) == 1){
     seq  <- seq[-dupl,]
   }
   if(length(pos) == 0){
-    cat("No segsites\n")
+    cat("No segsites\nBP have to be integers! (Use third argument)")
     quit(status = 1)
   }
 
@@ -99,7 +100,7 @@ if(length(startlines) > 1){
       seq  <- seq[-dupl,]
     }
     if(length(pos) == 0){
-      cat("No segsites\n")
+      cat("No segsites\nBP have to be integers! (Use third argument)")
       quit(status = 1)
     }
 

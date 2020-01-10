@@ -78,6 +78,8 @@ gzip::close(FILE* fp){
 
 
 Data::Data(int N, int L, int Ne, double mu): N(N), L(L), Ne(Ne), mu(mu){ 
+  theta    = 0.025;
+  ntheta   = 1.0 - theta;
   name     = "relate"; 
 }
 
@@ -110,292 +112,8 @@ Data::Data(const char* filename_pos, const char* filename_param, int Ne, double 
 
 /////////////////////////////////////
 
-/*
-   void 
-   Data::MakeChunks2(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist){
-
-
-   haps m_haps(filename_haps.c_str(), filename_sample.c_str());
-   N = m_haps.GetN();
-   L = m_haps.GetL();
-   std::vector<char>::size_type uN = N; 
-
-   std::vector<int> bp_pos(L+1);
-   std::vector<char> ancestral(L), alternative(L);
-   std::vector<std::string> rsid(L);
-
-   int chunk_size; 
-   int num_chunks; 
-   int window_length1 = (int) (10.0/4.0 * 1e9/(N*N)) + 1;
-   int window_length2 = (int) ((L-1.0)/499.0) + 1;
-   if( window_length1 >= window_length2 ){
-
-   chunk_size = L;
-   num_chunks = 1;
-   window_length = window_length1;
-
-   }else{
-
-   int max_num_chunks = L/200000.0 + 1;
-
-   chunk_size    = L/(max_num_chunks - 1.0);
-   window_length = (int) ((chunk_size-1.0)/499.0) + 1;
-   if( (int) ((chunk_size + window_length-1)/window_length) > 500 || N*N*window_length*4.0/1e9 > 10){
-//this is when data set is theoretically too large for this programme to run on 5GB of memory (but in practise it might be OK).
-num_chunks    = max_num_chunks;
-window_length = 400;
-chunk_size    = 200000;
-}else{
-
-for(num_chunks = max_num_chunks-1; num_chunks >= 2; num_chunks--){
-chunk_size    = L/(num_chunks - 1.0);
-window_length = (int) ((chunk_size-1.0)/499.0) + 1;
-if( (int) ((chunk_size + window_length-1)/window_length) > 500 || N*N*window_length*4.0/1e9 > 10 ) break;
-}
-
-num_chunks++;
-chunk_size    = L/(num_chunks - 1.0);
-window_length = (int) ((chunk_size-1.0)/499.0) + 1;
-
-}
-
-}
-
-if(window_length > L) window_length = L;
-
-/////////////////// Output program parameters into file ///////////////
-FILE* fp = fopen("parameters.bin", "w");
-assert(fp);
-fwrite(&N, sizeof(int), 1, fp);
-fwrite(&L, sizeof(int), 1, fp);
-fwrite(&num_chunks, sizeof(int), 1, fp);
-fwrite(&window_length, sizeof(int), 1, fp);
-fclose(fp);
-
-std::cerr << std::setprecision(2) << "Warning: Will use approx " << 2.0*(4.0 * N * N * (chunk_size/((double)window_length)+2.0))/1e9 << "GB of hard disc." << std::endl;
-std::cerr << "Warning: Will open " << (int) ((chunk_size-1)/window_length) + 1 << " files." << std::endl;
-
-int overlap = 20000;
-std::vector<std::vector<char> > p_seq(chunk_size);
-std::vector<std::vector<char> >::iterator it_p = p_seq.begin();
-for(; it_p != p_seq.end(); it_p++){
-(*it_p).resize(N);
-}
-
-int snp = 0;
-for(int chunk = 0; chunk < num_chunks; chunk++){
-
-  FILE* fp_haps_chunk = fopen(("chunk_" + std::to_string(chunk) + ".hap").c_str(), "wb");
-  assert(fp_haps_chunk);
-  //output chunk bed into fp_haps_chunk and chunk pos, rpos into fp_pos
-
-  if(snp > 0){
-
-    int L_chunk           = std::min(L-snp,chunk_size) + overlap; 
-    std::vector<char>::size_type uL_chunk = std::min(L-snp,chunk_size) + overlap; 
-    fwrite(&uL_chunk, sizeof(std::vector<char>::size_type), 1, fp_haps_chunk);
-    fwrite(&uN, sizeof(std::vector<char>::size_type), 1, fp_haps_chunk);
-
-    /////////////////// Output program parameters into file ///////////////
-    FILE* fp = fopen(("parameters_c" + std::to_string(chunk) + ".bin").c_str(), "w");
-    assert(fp);
-    fwrite(&N, sizeof(int), 1, fp);
-    fwrite(&L_chunk, sizeof(int), 1, fp);
-    fwrite(&window_length, sizeof(int), 1, fp);
-    fclose(fp);
-
-    for(it_p = std::prev(p_seq.end(),overlap); it_p != p_seq.end(); it_p++){
-      for(std::vector<char>::iterator it_row = (*it_p).begin(); it_row != (*it_p).end(); it_row++){ 
-        fwrite(&(*it_row), sizeof(char), 1, fp_haps_chunk);
-      }
-    }
-
-  }else{  
-
-    int L_chunk           = std::min(L-snp,chunk_size); 
-    std::vector<char>::size_type uL_chunk = std::min(L-snp,chunk_size); 
-    fwrite(&uL_chunk, sizeof(std::vector<char>::size_type), 1, fp_haps_chunk);
-    fwrite(&uN, sizeof(std::vector<char>::size_type), 1, fp_haps_chunk);
-
-    /////////////////// Output program parameters into file ///////////////
-    FILE* fp = fopen(("parameters_c" + std::to_string(chunk) + ".bin").c_str(), "w");
-    assert(fp);
-    fwrite(&N, sizeof(int), 1, fp);
-    fwrite(&L_chunk, sizeof(int), 1, fp);
-    fwrite(&window_length, sizeof(int), 1, fp);
-    fclose(fp);
-
-  }
-
-  int snp_begin = snp;
-  it_p = p_seq.begin();
-  for(snp = snp_begin; snp < std::min(L,(chunk+1)*chunk_size); snp++){
-    m_haps.ReadSNP(*it_p, bp_pos[snp]);
-
-    ancestral[snp]   = m_haps.ancestral;
-    alternative[snp] = m_haps.alternative;
-    rsid[snp]        = m_haps.rsid;
-
-    it_p++;
-  }
-
-  if(snp-snp_begin < chunk_size){
-    p_seq.resize(snp-snp_begin);
-  }
-
-  for(it_p = p_seq.begin(); it_p != p_seq.end(); it_p++){
-    for(std::vector<char>::iterator it_row = (*it_p).begin(); it_row != (*it_p).end(); it_row++){ 
-      fwrite(&(*it_row), sizeof(char), 1, fp_haps_chunk);
-    }
-  }
-
-  fclose(fp_haps_chunk);
-
-}
-bp_pos[bp_pos.size()-1] = bp_pos[bp_pos.size()-2] + 1;
-m_haps.CloseFile();
-
-//////////////////////// calculate rpos, r, pos here
-pos.resize(L); 
-std::vector<int>::iterator it_pos, it_bppos, it_bppos_next;
-
-if(filename_dist == "unspecified"){
-
-  it_pos = pos.begin();
-  it_bppos = bp_pos.begin();
-  it_bppos_next = std::next(bp_pos.begin(), 1);
-  int count = 0;
-  for(; it_pos != std::prev(pos.end(),1);){
-    *it_pos = *it_bppos_next - *it_bppos;
-    if(*it_pos <= 0){
-      std::cerr << "SNPs are not sorted by bp or more than one SNP at same position." << std::endl;
-      exit(1);
-    }
-    it_pos++;
-    it_bppos++;
-    it_bppos_next++;
-    count++;
-  }
-  pos[pos.size()-1] = 1;
-
-}else{
-
-
-  char buffer[40];
-  FILE* fp_dist = fopen(filename_dist.c_str(), "r");
-  fscanf(fp_dist, "%s %s", buffer, buffer);
-  int bp_dist, dist;
-  snp = 0;
-  while(fscanf(fp_dist, "%d %d", &bp_dist, &dist) !=EOF){
-    assert(snp < L);
-    assert(bp_pos[snp] == bp_dist);
-    pos[snp] = dist;
-    snp++;
-  }
-  fclose(fp_dist);
-
-}
-
-//output props
-FILE* fp_props = fopen("props.bin", "wb"); //storing rsid and other info in this file
-assert(fp_props);
-
-for(snp = 0; snp < L; snp++){
-  fwrite(&snp, sizeof(int), 1, fp_props);
-  fwrite(&bp_pos[snp], sizeof(int), 1, fp_props);
-  fwrite(&pos[snp], sizeof(int), 1, fp_props);   
-  fwrite(&rsid[snp][0], sizeof(char), 30, fp_props);
-  fwrite(&ancestral[snp], sizeof(char), 1, fp_props);
-  fwrite(&alternative[snp], sizeof(char), 1, fp_props);
-}
-
-fclose(fp_props);
-
-//parse map
-map m_map(filename_map.c_str());
-r.resize(L);
-rpos.resize(L+1); 
-std::vector<double>::iterator it_r, it_rpos;
-it_rpos = rpos.begin();
-it_bppos = bp_pos.begin();
-int map_pos = 0;
-
-if(m_map.bp[map_pos] > *it_bppos){
-  *it_rpos = m_map.gen_pos[map_pos] * 1e-2;
-  it_rpos++;
-  it_bppos++;
-}
-for(; it_rpos != rpos.end();){
-  while(m_map.bp[map_pos+1] <= *it_bppos && map_pos < m_map.bp.size()-2) map_pos++;
-  if(m_map.bp[map_pos+1] < m_map.bp[map_pos]) std::cerr << m_map.bp[map_pos] << " " << m_map.bp[map_pos+1] << std::endl;
-  assert(m_map.bp[map_pos+1] - m_map.bp[map_pos] >= 0);
-
-  if(m_map.bp[map_pos+1] - m_map.bp[map_pos] == 0){
-    *it_rpos = m_map.gen_pos[map_pos] * 1e-2;
-  }else{
-    *it_rpos = ((*it_bppos - m_map.bp[map_pos])/((double)(m_map.bp[map_pos+1] - m_map.bp[map_pos])) * (m_map.gen_pos[map_pos+1] - m_map.gen_pos[map_pos]) +  m_map.gen_pos[map_pos]) * 1e-2;
-  }
-
-  it_rpos++;
-  it_bppos++;
-}
-
-it_r = r.begin();
-it_rpos = rpos.begin();
-std::vector<double>::iterator it_rpos_next = std::next(rpos.begin(),1);
-for(; it_r != r.end();){
-  *it_r = *it_rpos_next - *it_rpos;
-  if(*it_r < lower_bound) *it_r = lower_bound;
-  *it_r *= 2500;
-  it_r++;
-  it_rpos++;
-  it_rpos_next++;
-} 
-
-//////////////////////
-
-unsigned int L_chunk, L_chunk_plus_one;
-snp = 0;
-for(int chunk = 0; chunk < num_chunks; chunk++){
-
-  FILE* fp_pos   = fopen(("chunk_" + std::to_string(chunk) + ".bp").c_str(), "wb");
-  assert(fp_pos);
-  FILE* fp_rpos  = fopen(("chunk_" + std::to_string(chunk) + ".rpos").c_str(), "wb");
-  assert(fp_rpos);
-  FILE* fp_r     = fopen(("chunk_" + std::to_string(chunk) + ".r").c_str(), "wb");
-  assert(fp_r);
-  //output chunk bed into fp_haps_chunk and chunk pos, rpos into fp_pos
-
-  if(snp > 0){
-    L_chunk = std::min(L-snp,chunk_size) + overlap; 
-    L_chunk_plus_one = L_chunk + 1;
-  }else{  
-    L_chunk = std::min(L-snp,chunk_size);
-    L_chunk_plus_one = L_chunk + 1; 
-  }
-
-  fwrite(&L_chunk,          sizeof(unsigned int), 1, fp_pos);
-  fwrite(&L_chunk_plus_one, sizeof(unsigned int), 1, fp_rpos);
-  fwrite(&L_chunk,          sizeof(unsigned int), 1, fp_r);
-  fwrite(&pos[snp],         sizeof(int), L_chunk, fp_pos);
-  fwrite(&rpos[snp],        sizeof(double), L_chunk + 1, fp_rpos);
-  fwrite(&r[snp],           sizeof(double), L_chunk, fp_r);
-
-  fclose(fp_pos);
-  fclose(fp_rpos);
-  fclose(fp_r);
-
-  snp += std::min(L,(chunk+1)*chunk_size);
-
-}
-
-} 
-
-*/
-
 void 
 Data::MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist, float min_memory){
-
 
   haps m_haps(filename_haps.c_str(), filename_sample.c_str());
   N = m_haps.GetN();
@@ -403,7 +121,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   std::vector<char>::size_type uN = N; 
 
   std::vector<int> bp_pos(L+1);
-  std::vector<char> ancestral(L), alternative(L);
+  std::vector<std::string> ancestral(L), alternative(L);
   std::vector<std::string> rsid(L);
 
   double min_memory_size = (min_memory) * 1e9/4.0 - (2*N*N + 3*N), actual_min_memory_size = 0.0; //5GB per window 
@@ -415,7 +133,9 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   int max_windows_per_section = 0;
 
   int overlap = 20000;
-  int max_chunk_size = std::min(L+1, (int) (min_memory_size/N));
+  int max_chunk_size = std::min(L+1, (int) (min_memory_size/N)); //can store 
+  if(min_memory >= 100) max_chunk_size = 2500000; 
+ 
   std::vector<std::vector<char> > p_seq(max_chunk_size), p_overlap(overlap);
   std::vector<std::vector<char> >::iterator it_p = p_seq.begin(), it_poverlap;
   for(; it_p != p_seq.end(); it_p++){
@@ -665,12 +385,13 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
     fwrite(&snp, sizeof(int), 1, fp_props);
     fwrite(&bp_pos[snp], sizeof(int), 1, fp_props);
     fwrite(&pos[snp], sizeof(int), 1, fp_props);   
-    fwrite(&rsid[snp][0], sizeof(char), 30, fp_props);
-    fwrite(&ancestral[snp], sizeof(char), 1, fp_props);
-    fwrite(&alternative[snp], sizeof(char), 1, fp_props);
+    fwrite(&rsid[snp][0], sizeof(char), 1024, fp_props);
+    fwrite(&ancestral[snp][0], sizeof(char), 1024, fp_props);
+    fwrite(&alternative[snp][0], sizeof(char), 1024, fp_props);
   }
 
   fclose(fp_props);
+
 
   //parse map
   map m_map(filename_map.c_str());
@@ -772,27 +493,11 @@ haps::ReadSNP(std::vector<char>& sequence, int& bp){
 
   //read a line, extract bp and fp_props
   //snp;pos_of_snp;rs-id;ancestral_allele/alternative_allele;downstream_allele;upstream_allele;All;
-  fscanf(fp, "%d %s %d %c %c", &chr, rsid, &bp, &ancestral, &alternative);
+  fscanf(fp, "%s %s %d %s %s", chr, rsid, &bp, &ancestral, &alternative);
 
   assert(sequence.size() > 0);
   //read haplotypes into sequence
   std::vector<char>::iterator it_seq = sequence.begin(); 
-  /*
-  int d;
-  fgetc(fp);
-  d = fgetc(fp);
-  while(d != '\n' && d != EOF){
-    if(d == '0'){
-      *it_seq = '0';
-    }else{
-      *it_seq = '1';
-    }
-    d = fgetc(fp);
-    if(d == '\n' || d == EOF) break;
-    d = fgetc(fp);
-    it_seq++;
-  }
-  */
 
   fgets(line, 2*N+10, fp);
   char d = line[0];
@@ -817,7 +522,7 @@ haps::DumpSNP(std::vector<char>& sequence, int bp, FILE* fp_out){
 
   //read a line, extract bp and fp_props
   //snp;pos_of_snp;rs-id;ancestral_allele/alternative_allele;downstream_allele;upstream_allele;All;
-  fprintf(fp_out, "%d %s %d %c %c", chr, rsid, bp, ancestral, alternative);
+  fprintf(fp_out, "%s %s %d %s %s", chr, rsid, bp, ancestral, alternative);
 
   //read haplotypes into sequence
   std::vector<char>::iterator it_seq = sequence.begin(); 

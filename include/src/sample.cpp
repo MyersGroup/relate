@@ -90,6 +90,7 @@ Sample::AssignPopOfInterest(const std::string& s_pops){
 
   //read group_of_interest
   std::string label;
+  group_of_interest.clear();
 
   if(s_pops != "All"){
 

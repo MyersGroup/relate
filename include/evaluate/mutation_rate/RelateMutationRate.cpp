@@ -11,6 +11,7 @@
 #include "collapsed_matrix.hpp"
 #include "sample.hpp"
 #include "anc.hpp"
+#include "mutations.hpp"
 #include "anc_builder.hpp"
 #include "tree_comparer.hpp"
 #include "cxxopts.hpp"
@@ -60,31 +61,23 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
   std::cerr << "Done with reading ancestor." << std::endl;
 
   //read mask
-  std::string mask;
-  is.open(filename_mask);
-  if(is.fail()){
-    std::cerr << "Error while opening mask." << std::endl;
-    exit(1);
-  }
-  getline(is,line);
-  while(getline(is,line)){
-    mask += line;
-  }
-  is.close();
+  fasta mask;
+  mask.Read(filename_mask);
   std::cerr << "Done with reading mask." << std::endl;
 
   //count bases by type
 
   std::string pattern;
   std::string nucl = "ACGT";
-  int mask_threshold = 1801;
+  //int mask_threshold = 1801;
+  int mask_threshold = 2000;
   std::string::iterator it_mask, it_start, it_end, it_ancestor; 
 
-  std::cerr << mask.size() << " " << ancestor.size() << std::endl;
-  assert(mask.size() == ancestor.size());
+  std::cerr << mask.seq.size() << " " << ancestor.size() << std::endl;
+  assert(mask.seq.size() == ancestor.size());
 
-  it_start = mask.begin();
-  it_end   = std::next(mask.begin(), std::min((int)mask.size(),1001));
+  it_start = mask.seq.begin();
+  it_end   = std::next(mask.seq.begin(), std::min((int)mask.seq.size(),1001));
   int d_num_nonpass_vincity = 0;
   for(it_mask = it_start; it_mask != it_end; it_mask++){
     if(*it_mask != 'P'){
@@ -93,13 +86,13 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
   }
   it_end--;
 
-  it_mask = mask.begin();
+  it_mask = mask.seq.begin();
   it_ancestor = ancestor.begin();
   std::vector<SNPInfo>::iterator it_info = mutations.info.begin();
   std::vector<int>::iterator it_pos = pos.begin();
   int p = 0;
   int snp = 0;
-  while(it_end != mask.end() && it_mask != std::next(mask.begin(), 1001) && p < (*it_info).pos){
+  while(it_end != mask.seq.end() && it_mask != std::next(mask.seq.begin(), 1001) && p < (*it_info).pos){
     it_end++;
     if(*it_end != 'P') d_num_nonpass_vincity++;
 
@@ -108,16 +101,16 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
     p++;
   }
 
-  if(it_mask == std::next(mask.begin(), 1001)){
+  if(it_mask == std::next(mask.seq.begin(), 1001)){
 
-    while(it_end != mask.end() && it_mask != std::next(mask.begin(), 1001)){
+    while(it_end != mask.seq.end() && it_mask != std::next(mask.seq.begin(), 1001)){
       it_end++;
       if(*it_end != 'P') d_num_nonpass_vincity++;
 
       //only add if its between the previous and the next snp (in the mutations file with all SNPs)
       if( p >= 0.5*((*it_pos) + (*std::prev(it_pos,1))) && p < 0.5 * ((*it_pos) + (*std::next(it_pos,1))) ){
 
-        if(*it_mask == 'P' && d_num_nonpass_vincity < 0.5 * mask_threshold && (*it_info).branch.size() == 1){
+        if(*it_mask == 'P' && d_num_nonpass_vincity <= 0.5 * mask_threshold && (*it_info).branch.size() == 1){
           //add to count 
           if(IsCharNucl(*std::prev(it_ancestor,1)) != 'N' && IsCharNucl(*std::next(it_ancestor,1)) != 'N' && IsCharNucl(*it_ancestor) != 'N'){
             pattern  = toupper(*std::prev(it_ancestor,1));
@@ -126,7 +119,7 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
 
             for(std::string::iterator it_nucl = nucl.begin(); it_nucl != nucl.end(); it_nucl++){
               if(*it_nucl != IsCharNucl(*it_ancestor)){
-                count_bases_by_type[snp][dict_mutation_pattern[pattern + "/" + *it_nucl]] += 1.0;
+                count_bases_by_type[snp][dict_mutation_pattern[pattern + *it_nucl]] += 1.0;
               }
             }
           }
@@ -149,7 +142,7 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
     }
 
   }else{
-    while(it_end != mask.end() && p < (*it_info).pos){
+    while(it_end != mask.seq.end() && p < (*it_info).pos){
       if(*it_start != 'P') d_num_nonpass_vincity--;
       it_start++;
       it_end++;
@@ -162,7 +155,7 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
 
   assert(p <= (*it_info).pos);
 
-  while(it_end != std::prev(mask.end(),1) && it_info != std::prev(mutations.info.end(),1)){
+  while(it_end != std::prev(mask.seq.end(),1) && it_info != std::prev(mutations.info.end(),1)){
     if(*it_start != 'P') d_num_nonpass_vincity--;
     it_start++;
     it_end++;
@@ -173,7 +166,7 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
     //only add if its between the previous and the next snp (in the mutations file with all SNPs)
     if( p >= 0.5*((*it_pos) + (*std::prev(it_pos,1))) && p < 0.5 * ((*it_pos) + (*std::next(it_pos,1))) ){
 
-      if(*it_mask == 'P' && d_num_nonpass_vincity < mask_threshold && (*it_info).branch.size() == 1){
+      if(*it_mask == 'P' && d_num_nonpass_vincity <= mask_threshold && (*it_info).branch.size() == 1){
         //add to count
         if(IsCharNucl(*std::prev(it_ancestor,1)) != 'N' && IsCharNucl(*std::next(it_ancestor,1)) != 'N' && IsCharNucl(*it_ancestor) != 'N'){
           pattern  = toupper(*std::prev(it_ancestor,1));
@@ -184,7 +177,7 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
           for(std::string::iterator it_nucl = nucl.begin(); it_nucl != nucl.end(); it_nucl++){
             if(*it_nucl != IsCharNucl(*it_ancestor)){
               count++;
-              count_bases_by_type[snp][dict_mutation_pattern[pattern + "/" + *it_nucl]] += 1.0;
+              count_bases_by_type[snp][dict_mutation_pattern[pattern + *it_nucl]] += 1.0;
             }
           }
           assert(count == 3);
@@ -209,7 +202,7 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
 
   }
 
-  while(it_mask != std::prev(mask.end(),1) && it_info != std::prev(mutations.info.end(),1)){
+  while(it_mask != std::prev(mask.seq.end(),1) && it_info != std::prev(mutations.info.end(),1)){
     if(*it_start != 'P') d_num_nonpass_vincity--;
     it_start++;
 
@@ -223,7 +216,7 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
     //only add if its between the previous and the next snp (in the mutations file with all SNPs)
     if( p >= 0.5*((*it_pos) + (*std::prev(it_pos,1))) && p < 0.5 * ((*it_pos) + (*std::next(it_pos,1))) ){
 
-      if(*it_mask == 'P' && d_num_nonpass_vincity < 0.5 * mask_threshold && (*it_info).branch.size() == 1){
+      if(*it_mask == 'P' && d_num_nonpass_vincity <= 0.5 * mask_threshold && (*it_info).branch.size() == 1){
         //add to count 
         if(IsCharNucl(*std::prev(it_ancestor,1)) != 'N' && IsCharNucl(*std::next(it_ancestor,1)) != 'N' && IsCharNucl(*it_ancestor) != 'N'){
           pattern  = toupper(*std::prev(it_ancestor,1));
@@ -232,7 +225,7 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
 
           for(std::string::iterator it_nucl = nucl.begin(); it_nucl != nucl.end(); it_nucl++){
             if(*it_nucl != IsCharNucl(*it_ancestor)){
-              count_bases_by_type[snp][dict_mutation_pattern[pattern + "/" + *it_nucl]] += 1.0;
+              count_bases_by_type[snp][dict_mutation_pattern[pattern + *it_nucl]] += 1.0;
             }
           }
         }
@@ -360,6 +353,7 @@ void FinalizeMutationRate(cxxopts::Options& options){
   std::cerr << "Finalizing mutation rate..." << std::endl;
 
   int num_epochs;
+  int num_categories = 0;
   std::vector<float> epoch;
 
   CollapsedMatrix<double> mutation_by_type_and_epoch, opportunity_by_type_and_epoch;
@@ -372,6 +366,7 @@ void FinalizeMutationRate(cxxopts::Options& options){
   fread(&epoch[0], sizeof(float), num_epochs, fp);
 
   mutation_by_type_and_epoch.ReadFromFile(fp);
+  num_categories = mutation_by_type_and_epoch.subVectorSize(0);
   fclose(fp);
   fp = fopen((options["input"].as<std::string>() + "_opp" + ".bin" ).c_str(), "r");  
   opportunity_by_type_and_epoch.ReadFromFile(fp); 
@@ -383,12 +378,24 @@ void FinalizeMutationRate(cxxopts::Options& options){
     exit(1);
   }
 
-  std::string alphabet = "ACGT", pattern;
+  os << "epoch.start ";
+  //for(int i = 0; i < num_categories; i++){
+  //  os << i + 1 << " ";
+  //}
+  //os << "\n";
+
+  std::string alphabet = "ACGT";
+  //A-C, A-G, A-T, C-A, C-G, C-T
+  //T-G, T-C, T-A, G-T, G-C, G-A
+  //plus 16 flanks per mutation type, i.e. 6*16 = 96
   for(std::string::iterator it_str1 = alphabet.begin(); it_str1 != alphabet.end(); it_str1++){
     for(std::string::iterator it_str2 = alphabet.begin(); it_str2 != alphabet.end(); it_str2++){
-      pattern  = *it_str1;
-      pattern += *it_str2;
-      os << pattern + "C/A " << pattern + "C/G " << pattern + "C/T " << pattern + "T/A " << pattern + "T/C " << pattern + "T/G "; 
+      os << *it_str1 << "C/A" << *it_str2 << " ";
+      os << *it_str1 << "C/G" << *it_str2 << " ";
+      os << *it_str1 << "C/T" << *it_str2 << " ";
+      os << *it_str1 << "A/T" << *it_str2 << " ";
+      os << *it_str1 << "A/G" << *it_str2 << " ";
+      os << *it_str1 << "A/C" << *it_str2 << " ";
     }   
   }
   os << "\n";
@@ -456,6 +463,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
 
   //open files and add together
 
+  std::cerr << filenames[0] << std::endl;
   FILE* fp = fopen(filenames[0].c_str(),"rb");
   assert(fp != NULL);  
 
@@ -670,17 +678,17 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
     for(std::string::iterator it_str2 = alphabet.begin(); it_str2 != alphabet.end(); it_str2++){
       pattern = *it_str1;
       pattern += *it_str2;
-      dict_mutation_pattern[pattern + "C/A"] = index;
+      dict_mutation_pattern[pattern + "CA"] = index;
       index++;
-      dict_mutation_pattern[pattern + "C/G"] = index;
+      dict_mutation_pattern[pattern + "CG"] = index;
       index++;
-      dict_mutation_pattern[pattern + "C/T"] = index;
+      dict_mutation_pattern[pattern + "CT"] = index;
       index++;
-      dict_mutation_pattern[pattern + "A/T"] = index;
+      dict_mutation_pattern[pattern + "AT"] = index;
       index++;
-      dict_mutation_pattern[pattern + "A/G"] = index;
+      dict_mutation_pattern[pattern + "AG"] = index;
       index++;
-      dict_mutation_pattern[pattern + "A/C"] = index;
+      dict_mutation_pattern[pattern + "AC"] = index;
       index++;
     }   
   }
@@ -689,17 +697,17 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
     for(std::string::iterator it_str2 = reverse_alphabet.begin(); it_str2 != reverse_alphabet.end(); it_str2++){
       reverse_pattern = *it_str2;
       reverse_pattern += *it_str1;
-      dict_mutation_pattern[reverse_pattern + "G/T"] = index;
+      dict_mutation_pattern[reverse_pattern + "GT"] = index;
       index++;
-      dict_mutation_pattern[reverse_pattern + "G/C"] = index;
+      dict_mutation_pattern[reverse_pattern + "GC"] = index;
       index++;
-      dict_mutation_pattern[reverse_pattern + "G/A"] = index;
+      dict_mutation_pattern[reverse_pattern + "GA"] = index;
       index++;
-      dict_mutation_pattern[reverse_pattern + "T/A"] = index;
+      dict_mutation_pattern[reverse_pattern + "TA"] = index;
       index++;
-      dict_mutation_pattern[reverse_pattern + "T/C"] = index;
+      dict_mutation_pattern[reverse_pattern + "TC"] = index;
       index++;
-      dict_mutation_pattern[reverse_pattern + "T/G"] = index;
+      dict_mutation_pattern[reverse_pattern + "TG"] = index;
       index++;
     }   
   }
@@ -785,7 +793,7 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
             if(snp_info.mutation_type[2] == 'A' || snp_info.mutation_type[2] == 'C' || snp_info.mutation_type[2] == 'G' || snp_info.mutation_type[2] == 'T'){
 
               // identify cathegory of mutation
-              pattern = snp_info.upstream_base + snp_info.downstream_base + snp_info.mutation_type;
+              pattern = snp_info.upstream_base + snp_info.downstream_base + snp_info.mutation_type[0] + snp_info.mutation_type[2];
               // then identify its age and number of lineages at the time
               int ind = dict_mutation_pattern[pattern];
 
@@ -883,6 +891,1336 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
 
 
 }
+
+
+////////////////////
+void MutationRateForCategory(cxxopts::Options& options, int chr = -1){
+
+  bool help = false;
+  if(!options.count("mask") || !options.count("ancestor") || !options.count("mutcat") || !options.count("input") || !options.count("output")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: mask, ancestor, mutcat, input, output. Optional: years_per_gen, num_bins, dist." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Calculate mutation rate for categories (Do not apply after using RemoveTreesWithFewMutations).." << std::endl;
+    exit(0);
+  }  
+
+  std::string line, line2 , read;
+
+  //////////// PARSE DATA ///////////
+
+  MarginalTree mtr, prev_mtr; //stores marginal trees. mtr.pos is SNP position at which tree starts, mtr.tree stores the tree
+  Muts::iterator it_mut; //iterator for mut file
+  float num_bases_tree_persists = 0.0;
+
+  ////////// 1. Read one tree at a time /////////
+
+  //We open anc file and read one tree at a time. File remains open until all trees have been read OR ancmut.CloseFiles() is called.
+  //The mut file is read once, file is closed after constructor is called.
+  AncMutIterators ancmut;
+
+  if(chr == -1){
+    ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
+  }else{
+    ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc", options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+  }
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  int N = (mtr.tree.nodes.size() + 1)/2.0;
+  int L = ancmut.NumSnps();
+  Data data(N,L);
+  int N_total = 2*data.N-1;
+
+  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "Calculating mutation rate for categories " << options["input"].as<std::string>() << " ..." << std::endl;
+
+  ////////// read mutations file ///////////
+
+  Mutations mutations;
+  if(chr == -1){
+    mutations.Read(options["input"].as<std::string>() + ".mut");
+  }else{
+    mutations.Read(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+  }
+
+  std::vector<int> pos;
+  if(options.count("dist")){
+
+    int L_allsnps = 0;
+    igzstream is_L;
+    is_L.open(options["dist"].as<std::string>());
+    if(is_L.fail()){
+      std::cerr << "Error opening file " << options["dist"].as<std::string>() << std::endl;
+      exit(1);
+    }
+    std::string unused;
+    std::getline(is_L, unused); 
+    while ( std::getline(is_L, unused) ){
+      ++L_allsnps;
+    }
+    is_L.close();
+
+    pos.resize(L_allsnps);
+    igzstream is_dist(options["dist"].as<std::string>());
+    if(is_dist.fail()){
+      std::cerr << "Error while opening file." << std::endl;
+      exit(1);
+    }
+    getline(is_dist, line); 
+    int snp = 0, dist;
+    while(std::getline(is_dist, line)){
+      sscanf(line.c_str(), "%d %d", &pos[snp], &dist);
+      snp++;
+    }
+    is_dist.close();
+
+  }else{
+
+    pos.resize(data.L);
+    int snp = 0;
+    for(std::vector<SNPInfo>::iterator it_mut = mutations.info.begin(); it_mut != mutations.info.end(); it_mut++){
+      pos[snp]  = (*it_mut).pos;
+      snp++;
+    }
+
+  }
+
+  ////////// EPOCHES ///////////
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
+
+  int num_epochs = 30;
+  if(options.count("num_bins") > 0){
+    num_epochs = options["num_bins"].as<int>();
+  }
+  num_epochs++;
+  std::vector<float> epoch(num_epochs);
+  epoch[0] = 0.0;
+  epoch[1] = 1e4/years_per_gen;
+  float log_10 = std::log(10);
+  for(int e = 2; e < num_epochs-1; e++){
+    epoch[e] = std::exp( log_10 * ( 4.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
+  }
+  epoch[num_epochs-1] = 1e8/years_per_gen; 
+
+  /////////////////////////////////////////////////////////////////
+  //Mutation specific
+
+  ////////// define mutation types /////////
+  std::string alphabet = "ACGT";
+  std::map<char, std::string> complement;
+  complement['A'] = "T";
+  complement['C'] = "G";
+  complement['G'] = "C";
+  complement['T'] = "A";
+  std::map<std::string, int> dict_mutation_pattern;
+
+  //A-C, A-G, A-T, C-A, C-G, C-T
+  //T-G, T-C, T-A, G-T, G-C, G-A
+  //plus 16 flanks per mutation type, i.e. 6*16 = 96
+
+  //parse file storing
+  //upstream downstream ancestral derived category
+  igzstream is_cat(options["mutcat"].as<std::string>());
+  if(is_cat.fail()){
+    std::cerr << "Error: unable to open file " << options["mutcat"].as<std::string>() << std::endl;
+  }
+  getline(is_cat, line);
+  //I have to make sure all 96 categories are represented in this file
+
+  char mutation_type[5];
+  std::string pattern, reverse_pattern;
+  int category, num_categories = 0;
+  std::vector<int> check_num_categories;
+  while(getline(is_cat, line)){
+    sscanf(line.c_str(), "%c %c %c %c %d", &mutation_type[0], &mutation_type[1], &mutation_type[2], &mutation_type[3], &category);
+    pattern = mutation_type;
+    dict_mutation_pattern[pattern] = category;
+    pattern = complement[mutation_type[1]] + complement[mutation_type[0]] + complement[mutation_type[2]] + complement[mutation_type[3]];
+    dict_mutation_pattern[pattern] = category;
+    if(category >= num_categories){
+      check_num_categories.resize(category+1);
+      std::fill(std::next(check_num_categories.begin(),num_categories), check_num_categories.end(), 0);
+      num_categories = category + 1;      
+      check_num_categories[category]++;
+    }else{
+      check_num_categories[category]++;
+    }
+  }
+  is_cat.close();
+
+  for(std::vector<int>::iterator it_check = check_num_categories.begin(); it_check != check_num_categories.end(); it_check++){
+    if(*it_check == 0){
+      std::cerr << "Error: category indices not 0-indexed or contiguous." << std::endl;
+      exit(1);
+    }
+  }
+
+  //check that I got all 96 categories and that categories are contiguous integers
+  int index = 0;
+  for(std::string::iterator it_str1 = alphabet.begin(); it_str1 != alphabet.end(); it_str1++){
+    for(std::string::iterator it_str2 = alphabet.begin(); it_str2 != alphabet.end(); it_str2++){
+      pattern = *it_str1;
+      pattern += *it_str2;
+      reverse_pattern = complement[*it_str2] + complement[*it_str1];
+
+      if ( dict_mutation_pattern.find(pattern + "CA") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "GT") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "CG") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "GC") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "CT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "AG") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "AT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "TA") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "AG") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "TC") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "AC") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "TG") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+    }   
+  }
+
+  ///////// Count number of bases by type //////////
+
+  CollapsedMatrix<double> count_bases_by_type;
+  //count_bases_by_type.resize(mutations.info.size(),dict_mutation_pattern.size());
+  CountBasesByType(data, options["mask"].as<std::string>(), options["ancestor"].as<std::string>(), count_bases_by_type, dict_mutation_pattern, mutations, pos);
+  fasta mask;
+  mask.Read(options["mask"].as<std::string>());
+
+  ////////////////////////////////////////////////////////////////////////
+  // Estimate mutation rate through time
+
+  std::vector<CollapsedMatrix<double>> mutation_by_type_and_epoch(ancmut.NumTrees());
+  std::vector<CollapsedMatrix<double>> opportunity_by_type_and_epoch(ancmut.NumTrees());
+  for(std::vector<CollapsedMatrix<double>>::iterator it_m = mutation_by_type_and_epoch.begin(); it_m != mutation_by_type_and_epoch.end(); it_m++){
+    (*it_m).resize(num_epochs, num_categories);
+  }
+  for(std::vector<CollapsedMatrix<double>>::iterator it_o = opportunity_by_type_and_epoch.begin(); it_o != opportunity_by_type_and_epoch.end(); it_o++){
+    (*it_o).resize(num_epochs, num_categories);
+  } 
+
+  std::vector<double> branch_lengths_in_epoch(num_epochs);
+
+  //Tree subtr;
+  std::vector<float> coordinates_tree(N_total);
+  int root = N_total-1;
+  int i = 0;
+
+  //iterate over trees
+  SNPInfo snp_info;
+  float rec;
+  int num_tree = 0;
+  double total_branch_length = 0.0;
+  int count_snps = 0;
+
+  int snp = 0;
+  while(num_bases_tree_persists >= 0){
+
+    mtr.tree.GetCoordinates(coordinates_tree);
+    std::sort(coordinates_tree.begin(), coordinates_tree.end());
+    GetBranchLengthsInEpoche(data, epoch, coordinates_tree, branch_lengths_in_epoch);
+    num_tree = mutations.info[snp].tree;
+
+    while(num_tree == mutations.info[snp].tree){
+
+      snp_info = mutations.info[snp];
+      if(snp_info.branch.size() == 1 && mask.seq[snp_info.pos-1] != 'N'){
+
+        assert(ancmut.get_treecount() == snp_info.tree);
+
+        //if statements to make sure we have a well defined biallelic SNP
+        if(snp_info.upstream_base != "NA" && snp_info.downstream_base != "NA" && snp_info.mutation_type[0] != snp_info.mutation_type[2]){
+
+          if(snp_info.mutation_type.size() == 3){
+
+            if(snp_info.mutation_type[0] == 'A' || snp_info.mutation_type[0] == 'C' || snp_info.mutation_type[0] == 'G' || snp_info.mutation_type[0] == 'T'){
+
+              if(snp_info.mutation_type[2] == 'A' || snp_info.mutation_type[2] == 'C' || snp_info.mutation_type[2] == 'G' || snp_info.mutation_type[2] == 'T'){
+
+
+                // identify category of mutation
+                pattern = snp_info.upstream_base + snp_info.downstream_base + snp_info.mutation_type[0] + snp_info.mutation_type[2];
+                // then identify its age and number of lineages at the time
+                assert(dict_mutation_pattern.find(pattern) != dict_mutation_pattern.end());
+                int ind = dict_mutation_pattern[pattern];
+
+                // identify epoch and add to number of mutations per lineage in epoch
+                int ep = 0;
+                while(epoch[ep] <= snp_info.age_begin){
+                  ep++;
+                  if(ep == epoch.size()) break;
+                }
+                ep--;
+
+                assert(ep >= 0);
+                assert(mutation_by_type_and_epoch[num_tree].subVectorSize(ep) == num_categories);
+
+                int ep_begin = ep;
+                float age_end = std::min(snp_info.age_end,coordinates_tree[root]);
+                assert(age_end < epoch[num_epochs-1]);
+                double branch_length = age_end - snp_info.age_begin;
+
+                if(age_end <= epoch[ep+1]){
+
+                  mutation_by_type_and_epoch[num_tree][ep][ind] += 1.0;
+
+                }else{
+
+                  mutation_by_type_and_epoch[num_tree][ep][ind]   += (epoch[ep+1] - snp_info.age_begin)/branch_length;
+                  ep++;
+                  while(epoch[ep+1] <= age_end){
+                    mutation_by_type_and_epoch[num_tree][ep][ind] += (epoch[ep+1]-epoch[ep])/branch_length;
+                    ep++;
+                  }
+                  mutation_by_type_and_epoch[num_tree][ep][ind]   += (age_end-epoch[ep])/branch_length;
+
+                }
+
+                for(int ep_tmp = 0; ep_tmp < num_epochs; ep_tmp++){
+                  double bl = branch_lengths_in_epoch[ep_tmp];
+                  for(int ind_tmp = 0; ind_tmp < num_categories; ind_tmp++){
+                    //std::cerr << count_bases_by_type[snp][ind_tmp] << " ";
+                    opportunity_by_type_and_epoch[num_tree][ep_tmp][ind_tmp] += bl * count_bases_by_type[snp][ind_tmp];
+                  }
+                  //std::cerr << std::endl;
+                }
+
+              }
+
+            }
+
+          } 
+
+        }
+
+      }
+
+      snp++;
+
+    }
+
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+
+  }
+
+
+  //bootstrap
+  //sample indices from 0 too ancmut.NumTrees()-1 at random with replacement
+  //dump to files and write summarise and finalise functions for bootstrap
+
+  std::random_device rd;  //Will be used to obtain a seed for the random number engine
+  std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+  std::uniform_int_distribution<> sam(0, (ancmut.NumTrees()-1.0)/10000.0);
+
+  int n_boot = 1000;
+  std::vector<CollapsedMatrix<double>> boot_mutation_by_type_and_epoch(n_boot);
+  std::vector<CollapsedMatrix<double>> boot_opportunity_by_type_and_epoch(n_boot);
+  for(std::vector<CollapsedMatrix<double>>::iterator it_m = boot_mutation_by_type_and_epoch.begin(); it_m != boot_mutation_by_type_and_epoch.end(); it_m++){
+    (*it_m).resize(num_epochs, num_categories);
+  }
+  for(std::vector<CollapsedMatrix<double>>::iterator it_o = boot_opportunity_by_type_and_epoch.begin(); it_o != boot_opportunity_by_type_and_epoch.end(); it_o++){
+    (*it_o).resize(num_epochs, num_categories);
+  } 
+
+  for(int n = 0; n < n_boot; n++){
+  
+    std::vector<int> boot_trees(ancmut.NumTrees());
+    if(0){
+    for(std::vector<int>::iterator it_boot_trees = boot_trees.begin(); it_boot_trees != boot_trees.end(); it_boot_trees++){
+      *it_boot_trees = sam(gen);
+    }
+    }
+
+    int size = 0;
+    for(std::vector<int>::iterator it_boot_trees = boot_trees.begin(); it_boot_trees != boot_trees.end();){
+      int start = 10000*sam(gen);
+      for(int k = start; k < start + 10000 && size < boot_trees.size() && k < boot_trees.size(); k++){
+        *it_boot_trees = k;
+        it_boot_trees++;
+        size++;
+      }
+    }
+    boot_trees.resize(size);
+    //std::sort(boot_trees.begin(), boot_trees.end());
+
+    //fill in boot_mutation_by_type_and_epoch[n] and boot_opportunity_by_type_and_epoch[n] by summing over the trees  
+    for(std::vector<int>::iterator it_boot_trees = boot_trees.begin(); it_boot_trees != boot_trees.end(); it_boot_trees++){
+      std::vector<double>::iterator it_bmut_by_type_and_epoch = boot_mutation_by_type_and_epoch[n].vbegin();
+      std::vector<double>::iterator it_bopp_by_type_and_epoch = boot_opportunity_by_type_and_epoch[n].vbegin();
+      std::vector<double>::iterator it_mut_by_type_and_epoch  = mutation_by_type_and_epoch[*it_boot_trees].vbegin();
+      std::vector<double>::iterator it_opp_by_type_and_epoch  = opportunity_by_type_and_epoch[*it_boot_trees].vbegin();
+      for(; it_mut_by_type_and_epoch != mutation_by_type_and_epoch[*it_boot_trees].vend();){    
+        *it_bmut_by_type_and_epoch += *it_mut_by_type_and_epoch;
+        *it_bopp_by_type_and_epoch += *it_opp_by_type_and_epoch;
+        it_mut_by_type_and_epoch++;
+        it_opp_by_type_and_epoch++;      
+        it_bmut_by_type_and_epoch++;
+        it_bopp_by_type_and_epoch++;
+      }
+    }
+  
+  }
+
+  //output mutation_by_type_and_epoch
+  //       opportunity_by_type_and_epoch 
+  FILE* fp;
+  if(chr == -1){
+    fp = fopen((options["output"].as<std::string>() + "_mut" + ".bin" ).c_str(), "wb");  
+  }else{
+    fp = fopen((options["output"].as<std::string>() + "_chr" + std::to_string(chr) + "_mut" + ".bin" ).c_str(), "wb");  
+  }
+  fwrite(&num_epochs, sizeof(int), 1, fp);
+  fwrite(&epoch[0], sizeof(float), epoch.size(), fp);
+  for(int n = 0; n < n_boot; n++){
+    boot_mutation_by_type_and_epoch[n].DumpToFile(fp);
+  }
+  fclose(fp);
+  if(chr == -1){
+    fp = fopen((options["output"].as<std::string>() + "_opp" + ".bin" ).c_str(), "wb");  
+  }else{
+    fp = fopen((options["output"].as<std::string>() + "_chr" + std::to_string(chr) + "_opp" + ".bin" ).c_str(), "wb");  
+  }
+  for(int n = 0; n < n_boot; n++){
+    boot_opportunity_by_type_and_epoch[n].DumpToFile(fp);
+  }
+  fclose(fp);
+
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+
+}
+
+void SummarizeWholeGenomeForCategory(cxxopts::Options& options){
+
+  //////////////////////////////////
+  //Program options
+
+  bool help = false;
+  if(!options.count("first_chr") || !options.count("last_chr") || !options.count("output")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: first_chr, last_chr, output." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Reads .bin files and summarizes them into one .bin file." << std::endl;
+    exit(0);
+  }  
+
+  int start     = options["first_chr"].as<int>(); 
+  int end       = options["last_chr"].as<int>();
+  std::vector<std::string> filenames;
+  std::string filename_base = options["output"].as<std::string>();
+
+  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "Summarizing mutation rates for chr " << start << " " << end << "..." << std::endl;
+
+  for(int chr = start; chr <= end; chr++){
+    filenames.push_back(filename_base + "_chr" + std::to_string(chr) + "_mut" + ".bin");
+  }
+
+  //open files and add together
+
+  FILE* fp = fopen(filenames[0].c_str(),"rb");
+  assert(fp != NULL);  
+
+  int num_epochs;
+  std::vector<float> epochs;
+  fread(&num_epochs, sizeof(int), 1, fp);
+  epochs.resize(num_epochs);
+  fread(&epochs[0], sizeof(float), num_epochs, fp);
+
+  int n_boot = 1000;
+  std::vector<CollapsedMatrix<double>> mut_by_type_and_epoch(n_boot);
+  CollapsedMatrix<double> mut_by_type_and_epoch_tmp;
+  for(int n = 0; n < n_boot; n++){
+    mut_by_type_and_epoch[n].ReadFromFile(fp);
+  }
+  fclose(fp);
+  for(int i = 1; i < (int) filenames.size(); i++){
+    fp = fopen(filenames[i].c_str(),"rb");
+
+    fread(&num_epochs, sizeof(int), 1, fp);
+    fread(&epochs[0], sizeof(float), num_epochs, fp);
+
+    for(int n = 0; n < n_boot; n++){
+      mut_by_type_and_epoch_tmp.ReadFromFile(fp);
+      std::vector<double>::iterator it_mut = mut_by_type_and_epoch[n].vbegin();
+      for(std::vector<double>::iterator it_mut_tmp = mut_by_type_and_epoch_tmp.vbegin(); it_mut_tmp != mut_by_type_and_epoch_tmp.vend();){
+        *it_mut += *it_mut_tmp;
+        it_mut++;
+        it_mut_tmp++;
+      }
+    }
+
+    fclose(fp);
+
+  }
+
+  filenames.clear();
+  for(int chr = start; chr <= end; chr++){
+    filenames.push_back(filename_base + "_chr" + std::to_string(chr) + "_opp" + ".bin");
+  }
+
+  std::vector<CollapsedMatrix<double>> opp_by_type_and_epoch(n_boot);
+  CollapsedMatrix<double> opp_by_type_and_epoch_tmp;
+  fp = fopen(filenames[0].c_str(),"rb");
+  for(int n = 0; n < n_boot; n++){
+    opp_by_type_and_epoch[n].ReadFromFile(fp);
+  }
+  fclose(fp);
+
+  for(int i = 1; i < (int) filenames.size(); i++){
+
+    fp = fopen(filenames[i].c_str(),"rb");
+    for(int n = 0; n < n_boot; n++){
+      opp_by_type_and_epoch_tmp.ReadFromFile(fp);
+      std::vector<double>::iterator it_opp = opp_by_type_and_epoch[n].vbegin();
+      for(std::vector<double>::iterator it_opp_tmp = opp_by_type_and_epoch_tmp.vbegin(); it_opp_tmp != opp_by_type_and_epoch_tmp.vend();){
+        *it_opp += *it_opp_tmp;
+        it_opp++;
+        it_opp_tmp++;
+      }
+    }
+
+    fclose(fp);
+  }
+
+  for(int chr = start; chr <= end; chr++){ 
+    std::remove((options["input"].as<std::string>() + "_chr" + std::to_string(chr) + "_mut" + ".bin").c_str());
+    std::remove((options["input"].as<std::string>() + "_chr" + std::to_string(chr) + "_opp" + ".bin").c_str());
+  }  
+
+  fp = fopen((options["output"].as<std::string>() + "_mut" + ".bin" ).c_str(), "wb"); 
+  fwrite(&num_epochs, sizeof(int), 1, fp);
+  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
+  for(int n = 0; n < n_boot; n++){
+    mut_by_type_and_epoch[n].DumpToFile(fp);
+  }
+  fclose(fp);
+  fp = fopen((options["output"].as<std::string>() + "_opp" + ".bin" ).c_str(), "wb");  
+  for(int n = 0; n < n_boot; n++){
+    opp_by_type_and_epoch[n].DumpToFile(fp);
+  }
+  fclose(fp);
+
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+}
+
+void FinalizeMutationRateForCategory(cxxopts::Options& options){
+
+
+  //////////////////////////////////
+  //Program options
+
+  bool help = false;
+  if( !options.count("input") || !options.count("output")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: input, output. Optional: first_chr, last_chr." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Extract mutation rate of 96 categories from .bin file." << std::endl;
+    exit(0);
+  } 
+
+  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "Finalizing mutation rate..." << std::endl;
+
+  int num_epochs;
+  int num_categories = 0;
+  std::vector<float> epoch;
+
+
+  int n_boot = 1000;
+  std::vector<CollapsedMatrix<double>> boot_mutation_by_type_and_epoch(n_boot);
+  std::vector<CollapsedMatrix<double>> boot_opportunity_by_type_and_epoch(n_boot);
+  for(std::vector<CollapsedMatrix<double>>::iterator it_m = boot_mutation_by_type_and_epoch.begin(); it_m != boot_mutation_by_type_and_epoch.end(); it_m++){
+    (*it_m).resize(num_epochs, num_categories);
+  }
+  for(std::vector<CollapsedMatrix<double>>::iterator it_o = boot_opportunity_by_type_and_epoch.begin(); it_o != boot_opportunity_by_type_and_epoch.end(); it_o++){
+    (*it_o).resize(num_epochs, num_categories);
+  } 
+   
+  FILE* fp; 
+  fp = fopen((options["input"].as<std::string>() + "_mut" + ".bin" ).c_str(), "r");  
+  assert(fp != NULL);
+
+  fread(&num_epochs, sizeof(int), 1, fp);
+  epoch.resize(num_epochs);
+  fread(&epoch[0], sizeof(float), num_epochs, fp);
+
+  for(int n = 0; n < n_boot; n++){
+    boot_mutation_by_type_and_epoch[n].ReadFromFile(fp);
+    num_categories = boot_mutation_by_type_and_epoch[n].subVectorSize(0);
+  }
+  fclose(fp);
+  fp = fopen((options["input"].as<std::string>() + "_opp" + ".bin" ).c_str(), "r");    
+  for(int n = 0; n < n_boot; n++){
+    boot_opportunity_by_type_and_epoch[n].ReadFromFile(fp);
+  }
+  fclose(fp);
+
+
+  std::ofstream os(options["output"].as<std::string>() + ".rate");
+  if(os.fail()){
+    std::cerr << "Error while opening file." << std::endl;
+    exit(1);
+  }
+
+  os << "epoch.start ";
+  for(int i = 0; i < num_categories; i++){
+    os << i + 1 << " ";
+  }
+  os << "\n";
+
+  //output
+  for(int ep = 0; ep < num_epochs-1; ep++){
+    
+    for(int n = 0; n < n_boot; n++){
+      std::vector<double>::iterator it_row_mut = boot_mutation_by_type_and_epoch[n].rowbegin(ep);
+      std::vector<double>::iterator it_row_opp = boot_opportunity_by_type_and_epoch[n].rowbegin(ep);
+      os << epoch[ep] << " ";
+      for(; it_row_mut != boot_mutation_by_type_and_epoch[n].rowend(ep);){
+        os << *it_row_mut/(*it_row_opp) << " ";
+        it_row_mut++;
+        it_row_opp++;
+      }
+      os << "\n"; 
+    }
+  }
+  os.close();
+
+
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+
+}
+
+
+////////////////////
+void MutationRateForPattern(cxxopts::Options& options, int chr = -1){
+
+  bool help = false;
+  if(!options.count("mask") || !options.count("ancestor") || !options.count("mutcat") || !options.count("input") || !options.count("output")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: mask, ancestor, mutcat, input, output. Optional: years_per_gen, num_bins, dist." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Calculate mutation rate for specific pattern (Do not apply after using RemoveTreesWithFewMutations).." << std::endl;
+    exit(0);
+  }  
+
+  std::string line, line2 , read;
+
+  //////////// PARSE DATA ///////////
+
+  MarginalTree mtr, prev_mtr; //stores marginal trees. mtr.pos is SNP position at which tree starts, mtr.tree stores the tree
+  Muts::iterator it_mut; //iterator for mut file
+  float num_bases_tree_persists = 0.0;
+
+  ////////// 1. Read one tree at a time /////////
+
+  //We open anc file and read one tree at a time. File remains open until all trees have been read OR ancmut.CloseFiles() is called.
+  //The mut file is read once, file is closed after constructor is called.
+  AncMutIterators ancmut;
+
+  if(chr == -1){
+    ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
+  }else{
+    ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc", options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+  }
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  int N = (mtr.tree.nodes.size() + 1)/2.0;
+  int L = ancmut.NumSnps();
+  Data data(N,L);
+  int N_total = 2*data.N-1;
+
+  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "Calculating mutation rate for categories " << options["input"].as<std::string>() << " ..." << std::endl;
+
+  ////////// read mutations file ///////////
+
+  Mutations mutations;
+  if(chr == -1){
+    mutations.Read(options["input"].as<std::string>() + ".mut");
+  }else{
+    mutations.Read(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+  }
+
+  std::vector<int> pos;
+  if(options.count("dist")){
+
+    int L_allsnps = 0;
+    igzstream is_L;
+    is_L.open(options["dist"].as<std::string>());
+    if(is_L.fail()){
+      std::cerr << "Error opening file " << options["dist"].as<std::string>() << std::endl;
+      exit(1);
+    }
+    std::string unused;
+    std::getline(is_L, unused); 
+    while ( std::getline(is_L, unused) ){
+      ++L_allsnps;
+    }
+    is_L.close();
+
+    pos.resize(L_allsnps);
+    igzstream is_dist(options["dist"].as<std::string>());
+    if(is_dist.fail()){
+      std::cerr << "Error while opening file." << std::endl;
+      exit(1);
+    }
+    getline(is_dist, line); 
+    int snp = 0, dist;
+    while(std::getline(is_dist, line)){
+      sscanf(line.c_str(), "%d %d", &pos[snp], &dist);
+      snp++;
+    }
+    is_dist.close();
+
+  }else{
+
+    pos.resize(data.L);
+    int snp = 0;
+    for(std::vector<SNPInfo>::iterator it_mut = mutations.info.begin(); it_mut != mutations.info.end(); it_mut++){
+      pos[snp]  = (*it_mut).pos;
+      snp++;
+    }
+
+  }
+
+  ////////// EPOCHES ///////////
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
+
+  int num_epochs = 30;
+  if(options.count("num_bins") > 0){
+    num_epochs = options["num_bins"].as<int>();
+  }
+  num_epochs++;
+  std::vector<float> epoch(num_epochs);
+  epoch[0] = 0.0;
+  epoch[1] = 1e4/years_per_gen;
+  float log_10 = std::log(10);
+  for(int e = 2; e < num_epochs-1; e++){
+    epoch[e] = std::exp( log_10 * ( 4.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
+  }
+  epoch[num_epochs-1] = 1e8/years_per_gen; 
+
+  /////////////////////////////////////////////////////////////////
+  //Mutation specific
+
+  ////////// define mutation types /////////
+  std::string alphabet = "ACGT";
+  std::map<char, std::string> complement;
+  complement['A'] = "T";
+  complement['C'] = "G";
+  complement['G'] = "C";
+  complement['T'] = "A";
+  std::map<std::string, int> dict_mutation_pattern;
+
+  //A-C, A-G, A-T, C-A, C-G, C-T
+  //T-G, T-C, T-A, G-T, G-C, G-A
+  //plus 16 flanks per mutation type, i.e. 6*16 = 96
+
+  //parse file storing
+  //upstream downstream ancestral derived category
+  igzstream is_cat(options["mutcat"].as<std::string>());
+  if(is_cat.fail()){
+    std::cerr << "Error: unable to open file " << options["mutcat"].as<std::string>() << std::endl;
+  }
+  getline(is_cat, line);
+  //I have to make sure all 96 categories are represented in this file
+
+  char mutation_type[5];
+  std::string pattern, reverse_pattern;
+  int category, num_categories = 0;
+  std::vector<int> check_num_categories;
+  while(getline(is_cat, line)){
+    sscanf(line.c_str(), "%c %c %c %c %d", &mutation_type[0], &mutation_type[1], &mutation_type[2], &mutation_type[3], &category);
+    pattern = mutation_type;
+    dict_mutation_pattern[pattern] = category;
+    pattern = complement[mutation_type[1]] + complement[mutation_type[0]] + complement[mutation_type[2]] + complement[mutation_type[3]];
+    dict_mutation_pattern[pattern] = category;
+    if(category >= num_categories){
+      check_num_categories.resize(category+1);
+      std::fill(std::next(check_num_categories.begin(),num_categories), check_num_categories.end(), 0);
+      num_categories = category + 1;      
+      check_num_categories[category]++;
+    }else{
+      check_num_categories[category]++;
+    }
+  }
+  is_cat.close();
+
+  for(std::vector<int>::iterator it_check = check_num_categories.begin(); it_check != check_num_categories.end(); it_check++){
+    if(*it_check == 0){
+      std::cerr << "Error: category indices not 0-indexed or contiguous." << std::endl;
+      exit(1);
+    }
+  }
+
+  //check that I got all 96 categories and that categories are contiguous integers
+  int index = 0;
+  for(std::string::iterator it_str1 = alphabet.begin(); it_str1 != alphabet.end(); it_str1++){
+    for(std::string::iterator it_str2 = alphabet.begin(); it_str2 != alphabet.end(); it_str2++){
+      pattern = *it_str1;
+      pattern += *it_str2;
+      reverse_pattern = complement[*it_str2] + complement[*it_str1];
+
+      if ( dict_mutation_pattern.find(pattern + "CA") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "GT") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "CG") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "GC") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "CT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "AG") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "AT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "TA") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "AG") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "TC") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+      if ( dict_mutation_pattern.find(pattern + "AC") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "TG") == dict_mutation_pattern.end() ) {
+        // not found
+        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+        exit(1);
+      }
+    }   
+  }
+
+  ///////// Count number of bases by type //////////
+
+  CollapsedMatrix<double> count_bases_by_type;
+  //count_bases_by_type.resize(mutations.info.size(),dict_mutation_pattern.size());
+  CountBasesByType(data, options["mask"].as<std::string>(), options["ancestor"].as<std::string>(), count_bases_by_type, dict_mutation_pattern, mutations, pos);
+
+  ////////////////////////////////////////////////////////////////////////
+  // Estimate mutation rate through time
+
+  std::vector<CollapsedMatrix<double>> mutation_by_type_and_epoch(ancmut.NumTrees());
+  std::vector<CollapsedMatrix<double>> opportunity_by_type_and_epoch(ancmut.NumTrees());
+  for(std::vector<CollapsedMatrix<double>>::iterator it_m = mutation_by_type_and_epoch.begin(); it_m != mutation_by_type_and_epoch.end(); it_m++){
+    (*it_m).resize(num_epochs, num_categories);
+  }
+  for(std::vector<CollapsedMatrix<double>>::iterator it_o = opportunity_by_type_and_epoch.begin(); it_o != opportunity_by_type_and_epoch.end(); it_o++){
+    (*it_o).resize(num_epochs, num_categories);
+  } 
+
+  std::vector<double> branch_lengths_in_epoch(num_epochs);
+
+  //Tree subtr;
+  std::vector<float> coordinates_tree(N_total);
+  int root = N_total-1;
+  int i = 0;
+
+  //iterate over trees
+  SNPInfo snp_info;
+  float rec;
+  int num_tree = 0;
+  double total_branch_length = 0.0;
+  int count_snps = 0;
+
+  int snp = 0;
+  while(num_bases_tree_persists >= 0){
+
+    mtr.tree.GetCoordinates(coordinates_tree);
+    std::sort(coordinates_tree.begin(), coordinates_tree.end());
+    GetBranchLengthsInEpoche(data, epoch, coordinates_tree, branch_lengths_in_epoch);
+    num_tree = mutations.info[snp].tree;
+
+    while(num_tree == mutations.info[snp].tree){
+
+      snp_info = mutations.info[snp];
+      if(snp_info.branch.size() == 1){
+
+        assert(ancmut.get_treecount() == snp_info.tree);
+
+        //if statements to make sure we have a well defined biallelic SNP
+        if(snp_info.upstream_base != "NA" && snp_info.downstream_base != "NA" && snp_info.mutation_type[0] != snp_info.mutation_type[2]){
+
+          if(snp_info.mutation_type.size() == 3){
+
+            if(snp_info.mutation_type[0] == 'A' || snp_info.mutation_type[0] == 'C' || snp_info.mutation_type[0] == 'G' || snp_info.mutation_type[0] == 'T'){
+
+              if(snp_info.mutation_type[2] == 'A' || snp_info.mutation_type[2] == 'C' || snp_info.mutation_type[2] == 'G' || snp_info.mutation_type[2] == 'T'){
+
+
+                // identify category of mutation
+                pattern = snp_info.upstream_base + snp_info.downstream_base + snp_info.mutation_type[0] + snp_info.mutation_type[2];
+                // then identify its age and number of lineages at the time
+                assert(dict_mutation_pattern.find(pattern) != dict_mutation_pattern.end());
+                int ind = dict_mutation_pattern[pattern];
+
+                // identify epoch and add to number of mutations per lineage in epoch
+                int ep = 0;
+                while(epoch[ep] <= snp_info.age_begin){
+                  ep++;
+                  if(ep == epoch.size()) break;
+                }
+                ep--;
+
+                assert(ep >= 0);
+                assert(mutation_by_type_and_epoch[num_tree].subVectorSize(ep) == num_categories);
+
+                int ep_begin = ep;
+                float age_end = std::min(snp_info.age_end,coordinates_tree[root]);
+                assert(age_end < epoch[num_epochs-1]);
+                double branch_length = age_end - snp_info.age_begin;
+
+                if(age_end <= epoch[ep+1]){
+
+                  mutation_by_type_and_epoch[num_tree][ep][ind] += 1.0;
+
+                }else{
+
+                  mutation_by_type_and_epoch[num_tree][ep][ind]   += (epoch[ep+1] - snp_info.age_begin)/branch_length;
+                  ep++;
+                  while(epoch[ep+1] <= age_end){
+                    mutation_by_type_and_epoch[num_tree][ep][ind] += (epoch[ep+1]-epoch[ep])/branch_length;
+                    ep++;
+                  }
+                  mutation_by_type_and_epoch[num_tree][ep][ind]   += (age_end-epoch[ep])/branch_length;
+
+                }
+
+                for(int ep_tmp = 0; ep_tmp < num_epochs; ep_tmp++){
+                  double bl = branch_lengths_in_epoch[ep_tmp];
+                  for(int ind_tmp = 0; ind_tmp < num_categories; ind_tmp++){
+                    opportunity_by_type_and_epoch[num_tree][ep_tmp][ind_tmp] += bl * count_bases_by_type[snp][ind_tmp];
+                  }
+                }
+
+              }
+
+            }
+
+          } 
+
+        }
+
+      }
+
+      snp++;
+
+    }
+
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+
+  }
+
+
+  //bootstrap
+  //sample indices from 0 too ancmut.NumTrees()-1 at random with replacement
+  //dump to files and write summarise and finalise functions for bootstrap
+
+  std::random_device rd;  //Will be used to obtain a seed for the random number engine
+  std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+  //std::uniform_int_distribution<> sam(0, ancmut.NumTrees()-1);
+  std::uniform_int_distribution<> sam(0, (ancmut.NumTrees()-1)/10000.0);
+
+  int n_boot = 1000;
+  std::vector<CollapsedMatrix<double>> boot_mutation_by_type_and_epoch(n_boot);
+  std::vector<CollapsedMatrix<double>> boot_opportunity_by_type_and_epoch(n_boot);
+  for(std::vector<CollapsedMatrix<double>>::iterator it_m = boot_mutation_by_type_and_epoch.begin(); it_m != boot_mutation_by_type_and_epoch.end(); it_m++){
+    (*it_m).resize(num_epochs, num_categories);
+  }
+  for(std::vector<CollapsedMatrix<double>>::iterator it_o = boot_opportunity_by_type_and_epoch.begin(); it_o != boot_opportunity_by_type_and_epoch.end(); it_o++){
+    (*it_o).resize(num_epochs, num_categories);
+  } 
+
+  for(int n = 0; n < n_boot; n++){
+ 
+    //random trees 
+    std::vector<int> boot_trees(ancmut.NumTrees());
+    if(0){
+    for(std::vector<int>::iterator it_boot_trees = boot_trees.begin(); it_boot_trees != boot_trees.end(); it_boot_trees++){
+      *it_boot_trees = sam(gen);
+    }
+    }
+
+    int size = 0;
+    for(std::vector<int>::iterator it_boot_trees = boot_trees.begin(); it_boot_trees != boot_trees.end();){
+      int start = 10000*sam(gen);
+      for(int k = start; k < start + 10000 || k < ancmut.NumTrees(); k++){
+        *it_boot_trees = k;
+        it_boot_trees++;
+        size++;
+      }
+    }
+    std::cerr << size << " " << ancmut.NumTrees() << std::endl;
+    boot_trees.resize(size);
+    //std::sort(boot_trees.begin(), boot_trees.end());
+
+    //fill in boot_mutation_by_type_and_epoch[n] and boot_opportunity_by_type_and_epoch[n] by summing over the trees  
+    for(std::vector<int>::iterator it_boot_trees = boot_trees.begin(); it_boot_trees != boot_trees.end(); it_boot_trees++){
+      std::vector<double>::iterator it_bmut_by_type_and_epoch = boot_mutation_by_type_and_epoch[n].vbegin();
+      std::vector<double>::iterator it_bopp_by_type_and_epoch = boot_opportunity_by_type_and_epoch[n].vbegin();
+      std::vector<double>::iterator it_mut_by_type_and_epoch  = mutation_by_type_and_epoch[*it_boot_trees].vbegin();
+      std::vector<double>::iterator it_opp_by_type_and_epoch  = opportunity_by_type_and_epoch[*it_boot_trees].vbegin();
+      for(; it_mut_by_type_and_epoch != mutation_by_type_and_epoch[*it_boot_trees].vend();){    
+        *it_bmut_by_type_and_epoch += *it_mut_by_type_and_epoch;
+        *it_bopp_by_type_and_epoch += *it_opp_by_type_and_epoch;
+        it_mut_by_type_and_epoch++;
+        it_opp_by_type_and_epoch++;      
+        it_bmut_by_type_and_epoch++;
+        it_bopp_by_type_and_epoch++;
+      }
+    }
+  
+  }
+
+  //output mutation_by_type_and_epoch
+  //       opportunity_by_type_and_epoch 
+  FILE* fp;
+  if(chr == -1){
+    fp = fopen((options["output"].as<std::string>() + "_mut" + ".bin" ).c_str(), "wb");  
+  }else{
+    fp = fopen((options["output"].as<std::string>() + "_chr" + std::to_string(chr) + "_mut" + ".bin" ).c_str(), "wb");  
+  }
+  fwrite(&num_epochs, sizeof(int), 1, fp);
+  fwrite(&epoch[0], sizeof(float), epoch.size(), fp);
+  for(int n = 0; n < n_boot; n++){
+    boot_mutation_by_type_and_epoch[n].DumpToFile(fp);
+  }
+  fclose(fp);
+  if(chr == -1){
+    fp = fopen((options["output"].as<std::string>() + "_opp" + ".bin" ).c_str(), "wb");  
+  }else{
+    fp = fopen((options["output"].as<std::string>() + "_chr" + std::to_string(chr) + "_opp" + ".bin" ).c_str(), "wb");  
+  }
+  for(int n = 0; n < n_boot; n++){
+    boot_opportunity_by_type_and_epoch[n].DumpToFile(fp);
+  }
+  fclose(fp);
+
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+
+}
+
+void SummarizeWholeGenomeForPattern(cxxopts::Options& options){
+
+  //////////////////////////////////
+  //Program options
+
+  bool help = false;
+  if(!options.count("first_chr") || !options.count("last_chr") || !options.count("output")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: first_chr, last_chr, output." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Reads .bin files and summarizes them into one .bin file." << std::endl;
+    exit(0);
+  }  
+
+  int start     = options["first_chr"].as<int>(); 
+  int end       = options["last_chr"].as<int>();
+  std::vector<std::string> filenames;
+  std::string filename_base = options["output"].as<std::string>();
+
+  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "Summarizing mutation rates for chr " << start << " " << end << "..." << std::endl;
+
+  for(int chr = start; chr <= end; chr++){
+    filenames.push_back(filename_base + "_chr" + std::to_string(chr) + "_mut" + ".bin");
+  }
+
+  //open files and add together
+
+  FILE* fp = fopen(filenames[0].c_str(),"rb");
+  assert(fp != NULL);  
+
+  int num_epochs;
+  std::vector<float> epochs;
+  fread(&num_epochs, sizeof(int), 1, fp);
+  epochs.resize(num_epochs);
+  fread(&epochs[0], sizeof(float), num_epochs, fp);
+
+  int n_boot = 1000;
+  std::vector<CollapsedMatrix<double>> mut_by_type_and_epoch(n_boot);
+  CollapsedMatrix<double> mut_by_type_and_epoch_tmp;
+  for(int n = 0; n < n_boot; n++){
+    mut_by_type_and_epoch[n].ReadFromFile(fp);
+  }
+  fclose(fp);
+  for(int i = 1; i < (int) filenames.size(); i++){
+    fp = fopen(filenames[i].c_str(),"rb");
+
+    fread(&num_epochs, sizeof(int), 1, fp);
+    fread(&epochs[0], sizeof(float), num_epochs, fp);
+
+    for(int n = 0; n < n_boot; n++){
+      mut_by_type_and_epoch_tmp.ReadFromFile(fp);
+      std::vector<double>::iterator it_mut = mut_by_type_and_epoch[n].vbegin();
+      for(std::vector<double>::iterator it_mut_tmp = mut_by_type_and_epoch_tmp.vbegin(); it_mut_tmp != mut_by_type_and_epoch_tmp.vend();){
+        *it_mut += *it_mut_tmp;
+        it_mut++;
+        it_mut_tmp++;
+      }
+    }
+
+    fclose(fp);
+
+  }
+
+  filenames.clear();
+  for(int chr = start; chr <= end; chr++){
+    filenames.push_back(filename_base + "_chr" + std::to_string(chr) + "_opp" + ".bin");
+  }
+
+  std::vector<CollapsedMatrix<double>> opp_by_type_and_epoch(n_boot);
+  CollapsedMatrix<double> opp_by_type_and_epoch_tmp;
+  fp = fopen(filenames[0].c_str(),"rb");
+  for(int n = 0; n < n_boot; n++){
+    opp_by_type_and_epoch[n].ReadFromFile(fp);
+  }
+  fclose(fp);
+
+  for(int i = 1; i < (int) filenames.size(); i++){
+
+    fp = fopen(filenames[i].c_str(),"rb");
+    for(int n = 0; n < n_boot; n++){
+      opp_by_type_and_epoch_tmp.ReadFromFile(fp);
+      std::vector<double>::iterator it_opp = opp_by_type_and_epoch[n].vbegin();
+      for(std::vector<double>::iterator it_opp_tmp = opp_by_type_and_epoch_tmp.vbegin(); it_opp_tmp != opp_by_type_and_epoch_tmp.vend();){
+        *it_opp += *it_opp_tmp;
+        it_opp++;
+        it_opp_tmp++;
+      }
+    }
+
+    fclose(fp);
+  }
+
+  for(int chr = start; chr <= end; chr++){ 
+    std::remove((options["input"].as<std::string>() + "_chr" + std::to_string(chr) + "_mut" + ".bin").c_str());
+    std::remove((options["input"].as<std::string>() + "_chr" + std::to_string(chr) + "_opp" + ".bin").c_str());
+  }  
+
+  fp = fopen((options["output"].as<std::string>() + "_mut" + ".bin" ).c_str(), "wb"); 
+  fwrite(&num_epochs, sizeof(int), 1, fp);
+  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
+  for(int n = 0; n < n_boot; n++){
+    mut_by_type_and_epoch[n].DumpToFile(fp);
+  }
+  fclose(fp);
+  fp = fopen((options["output"].as<std::string>() + "_opp" + ".bin" ).c_str(), "wb");  
+  for(int n = 0; n < n_boot; n++){
+    opp_by_type_and_epoch[n].DumpToFile(fp);
+  }
+  fclose(fp);
+
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+}
+
+void FinalizeMutationRateForPattern(cxxopts::Options& options){
+
+
+  //////////////////////////////////
+  //Program options
+
+  bool help = false;
+  if( !options.count("input") || !options.count("output")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: input, output. Optional: first_chr, last_chr." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Extract mutation rate of 96 categories from .bin file." << std::endl;
+    exit(0);
+  } 
+
+  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "Finalizing mutation rate..." << std::endl;
+
+  int num_epochs;
+  int num_categories = 0;
+  std::vector<float> epoch;
+
+
+  int n_boot = 1000;
+  std::vector<CollapsedMatrix<double>> boot_mutation_by_type_and_epoch(n_boot);
+  std::vector<CollapsedMatrix<double>> boot_opportunity_by_type_and_epoch(n_boot);
+  for(std::vector<CollapsedMatrix<double>>::iterator it_m = boot_mutation_by_type_and_epoch.begin(); it_m != boot_mutation_by_type_and_epoch.end(); it_m++){
+    (*it_m).resize(num_epochs, num_categories);
+  }
+  for(std::vector<CollapsedMatrix<double>>::iterator it_o = boot_opportunity_by_type_and_epoch.begin(); it_o != boot_opportunity_by_type_and_epoch.end(); it_o++){
+    (*it_o).resize(num_epochs, num_categories);
+  } 
+   
+  FILE* fp; 
+  fp = fopen((options["input"].as<std::string>() + "_mut" + ".bin" ).c_str(), "r");  
+  assert(fp != NULL);
+
+  fread(&num_epochs, sizeof(int), 1, fp);
+  epoch.resize(num_epochs);
+  fread(&epoch[0], sizeof(float), num_epochs, fp);
+
+  for(int n = 0; n < n_boot; n++){
+    boot_mutation_by_type_and_epoch[n].ReadFromFile(fp);
+    num_categories = boot_mutation_by_type_and_epoch[n].subVectorSize(0);
+  }
+  fclose(fp);
+  fp = fopen((options["input"].as<std::string>() + "_opp" + ".bin" ).c_str(), "r");    
+  for(int n = 0; n < n_boot; n++){
+    boot_opportunity_by_type_and_epoch[n].ReadFromFile(fp);
+  }
+  fclose(fp);
+
+
+  std::ofstream os(options["output"].as<std::string>() + ".rate");
+  if(os.fail()){
+    std::cerr << "Error while opening file." << std::endl;
+    exit(1);
+  }
+
+  os << "epoch.start ";
+  for(int i = 0; i < num_categories; i++){
+    os << i + 1 << " ";
+  }
+  os << "\n";
+
+  //output
+  for(int ep = 0; ep < num_epochs-1; ep++){
+    
+    for(int n = 0; n < n_boot; n++){
+      std::vector<double>::iterator it_row_mut = boot_mutation_by_type_and_epoch[n].rowbegin(ep);
+      std::vector<double>::iterator it_row_opp = boot_opportunity_by_type_and_epoch[n].rowbegin(ep);
+      os << epoch[ep] << " ";
+      for(; it_row_mut != boot_mutation_by_type_and_epoch[n].rowend(ep);){
+        os << *it_row_mut/(*it_row_opp) << " ";
+        it_row_mut++;
+        it_row_opp++;
+      }
+      os << "\n"; 
+    }
+  }
+  os.close();
+
+
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+
+}
+
 
 
 //////////////// Other applications ///////////////
@@ -1208,6 +2546,7 @@ int main(int argc, char* argv[]){
     ("dist", "Filename of file containing dist.", cxxopts::value<std::string>())
     ("mask", "Filename of file containing mask", cxxopts::value<std::string>())
     ("ancestor", "Filename of file containing human ancestor genome.", cxxopts::value<std::string>())
+    ("mutcat", "Filename of file containing mutation categories.", cxxopts::value<std::string>())
     ("i,input", "Filename of .anc and .mut file without file extension", cxxopts::value<std::string>())
     ("o,output", "Output file", cxxopts::value<std::string>());
 
@@ -1249,6 +2588,46 @@ int main(int argc, char* argv[]){
       FinalizeMutationRate(options);
     }
 
+  }else if(!mode.compare("MutationRateForCategory")){
+
+    //////////////////////////////////
+    //Program options
+    bool help = false;
+    if( !options.count("input") || !options.count("output")){
+      std::cout << "Not enough arguments supplied." << std::endl;
+      std::cout << "Needed: mask, ancestor, mutcat, input, output. Optional: first_chr, last_chr, years_per_gen, num_bins, dist." << std::endl;
+      help = true;
+    }
+    if(options.count("help") || help){
+      std::cout << options.help({""}) << std::endl;
+      std::cout << "Calculate mutation rate for categories specified in input.mutcat (Do not apply after using RemoveTreesWithFewMutations)." << std::endl;
+      exit(0);
+    } 
+    if(options["input"].as<std::string>() != options["output"].as<std::string>()){
+      std::cerr << "Sorry, in this mode input and output need to be the same!." << std::endl;
+      exit(1);
+    }
+
+    if(options.count("first_chr") && options.count("last_chr")){
+      if(options["first_chr"].as<int>() < 0 || options["last_chr"].as<int>() < 0){
+        std::cerr << "Do not use negative chr indices." << std::endl;
+        exit(1);
+      }
+      for(int chr = options["first_chr"].as<int>(); chr <= options["last_chr"].as<int>(); chr++){ 
+        MutationRateForCategory(options, chr);
+      }
+      SummarizeWholeGenomeForCategory(options);      
+      FinalizeMutationRateForCategory(options);
+    }else{
+      MutationRateForCategory(options);
+      FinalizeMutationRateForCategory(options);
+    }
+
+
+  }else if(!mode.compare("ForCategoryForChromosome")){
+
+    MutationRateForCategory(options);
+
   }else if(!mode.compare("WithContextForChromosome")){
 
     MutationRateWithContext(options);
@@ -1256,6 +2635,10 @@ int main(int argc, char* argv[]){
   }else if(!mode.compare("SummarizeForGenome")){
 
     SummarizeWholeGenome(options);
+
+  }else if(!mode.compare("SummarizeForGenomeForCategory")){
+
+    SummarizeWholeGenomeForCategory(options);
 
   }else if(!mode.compare("Finalize")){
 
@@ -1267,6 +2650,17 @@ int main(int argc, char* argv[]){
       SummarizeWholeGenome(options);
     }
     FinalizeMutationRate(options);
+
+  }else if(!mode.compare("FinalizeForCategory")){
+
+    if(options.count("first_chr") && options.count("last_chr")){
+      if(options["first_chr"].as<int>() < 0 || options["last_chr"].as<int>() < 0){
+        std::cerr << "Do not use negative chr indices." << std::endl;
+        exit(1);
+      }
+      SummarizeWholeGenomeForCategory(options);
+    }
+    FinalizeMutationRateForCategory(options);
 
   }else if(!mode.compare("FinalizeMutationCount")){
 
@@ -1305,7 +2699,7 @@ int main(int argc, char* argv[]){
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "Avg, WithContext, WithContextForChromosome, SummarizeForGenome, Finalize, FinalizeMutationCount, XY." << std::endl;
+    std::cout << "Avg, MutationRateForCategory, ForCategoryForChromosome, WithContext, WithContextForChromosome, SummarizeForGenome, SummarizeForGenomeForCategory, Finalize, FinalizeForCategory, FinalizeMutationCount, XY." << std::endl;
 
   }
 

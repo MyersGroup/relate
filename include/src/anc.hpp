@@ -102,6 +102,7 @@ class Tree{
     void ReadTree(const char* line, int N);
     void ReadTreeBin(FILE* pfile, int N);
     void WriteNewick(const std::string& filename_newick, double factor, const bool add = 0) const; //this is slow. For fast output use WriteOrientedTree
+    void WriteNHX(const std::string& filename_nhx, std::vector<std::string>& property, const bool add = 0) const; 
     void WriteOrientedTree(const std::string& filename, const bool add = 0);
 
     //This is for debugging
@@ -150,6 +151,8 @@ struct MarginalTree{
   MarginalTree(int pos, Tree tree): pos(pos), tree(tree){}
   
   void Read(const std::string& line, int N);
+  void Dump(std::ofstream& os);
+  void Dump(FILE *pfile);
   void operator=(const MarginalTree& mtr){
     pos = mtr.pos;
     tree = mtr.tree;
@@ -186,6 +189,7 @@ class AncesTree{
     void ReadTreesimOldStyle(const std::string& filename, const Data& data);
     void ReadArgweaverSMC(const std::string& filename);
     void ReadRent(const std::string& filename, float Ne);
+    void ReadNewick(const std::string& filename, float Ne);
 
 };
 

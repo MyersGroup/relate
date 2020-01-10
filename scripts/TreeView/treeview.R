@@ -10,7 +10,7 @@ while(!require(cowplot)) install.packages("cowplot", repos = "http://cran.us.r-p
 
 #plot height and width
 height              <- 30
-width               <- 30
+width               <- 40
 #ratio of tree to poplabels
 ratio               <- c(6,1)
 
@@ -21,7 +21,7 @@ mut_size            <- 8
 #size of | indicating population label
 poplabels_shapesize <- 10 
 #population label text size
-poplabels_textsize  <- 100
+poplabels_textsize  <- 50
 
 
 ##################################################################################

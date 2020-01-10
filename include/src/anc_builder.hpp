@@ -17,6 +17,8 @@
 #include <limits>
 #include <utility>
 #include <tgmath.h>
+#include <random>
+#include <cassert>
 
 //////////////////////////////////////////////////////
 
@@ -133,8 +135,12 @@ class AncesTreeBuilder{
     float threshold_brancheq; //threshold for R2 value for regarding two branches as equivalent
     std::vector<std::vector<int>> potential_branches;
 
+    //for random flipping
+    std::mt19937 rng;
+
     //////////////////
     //A few helper functions used for building AncesTrees 
+    int MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, std::uniform_real_distribution<double>& dist_unif, const int snp, float& min_value);
     int MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, float& min_value);
     int ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, const bool force = false);
     
@@ -156,7 +162,7 @@ class AncesTreeBuilder{
     //build tree sequences that adapt whenever a recombination
     //event is detected.
 
-    void BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc);
+    void BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc, const int seed, const bool ancestral_state);
     void AssociateTrees(std::vector<AncesTree>& v_anc, const std::string& dirname = "./");
     //std::pair<int, int> OptimizeParameters(const int section_startpos, const int section_endpos, Data& data);
 
@@ -166,10 +172,15 @@ class AncesTreeBuilder{
     int IsSNPMapping(Tree& tree, Leaves& sequences_carrying_mutations, int snp){
       float min_value;
       if(MapMutation(tree, sequences_carrying_mutations, snp, min_value) > 2){
+        ForceMapMutation(tree, sequences_carrying_mutations, snp, true);
         return 2;
       }else{
         return 1;
       }
+    }
+
+    void ForceMap(Tree& tree, Leaves& sequences_carrying_mutations, int snp){
+      ForceMapMutation(tree, sequences_carrying_mutations, snp, true);
     }
 
 };

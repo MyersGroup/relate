@@ -31,6 +31,7 @@ int main(int argc, char* argv[]){
     ("first_section", "Optional. Index of first section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("last_section", "Optional. Index of last section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("coal", "Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN.", cxxopts::value<std::string>()) 
+    //("anc_allele_unknown", "Specify if ancestral allele is unknown.") 
     ("seed", "Optional. Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
 
   options.parse(argc, argv);
@@ -72,7 +73,8 @@ int main(int argc, char* argv[]){
     bool help = false;
     if(!options.count("chunk_index") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
-      std::cout << "Needed: chunk_index, output. Optional: first_section, last_section." << std::endl; 
+      //std::cout << "Needed: chunk_index, output. Optional: first_section, last_section, anc_allele_unknown, seed." << std::endl;
+      std::cout << "Needed: chunk_index, output. Optional: first_section, last_section, seed." << std::endl; 
       help = true;
     }
     if(options.count("help") || help){
@@ -170,6 +172,7 @@ int main(int argc, char* argv[]){
     bool help = false;
     if(!options.count("haps") || !options.count("sample") ||  !options.count("map") || popsize || !options.count("mutation_rate") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
+      //std::cout << "Needed: haps, sample, map, mutation_rate, effectiveN, output. Optional: seed, annot, dist, coal, max_memory, chunk_index, anc_allele_unknown." << std::endl;
       std::cout << "Needed: haps, sample, map, mutation_rate, effectiveN, output. Optional: seed, annot, dist, coal, max_memory, chunk_index." << std::endl;
       help = true;
     }

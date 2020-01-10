@@ -206,6 +206,80 @@ Tree::WriteNewick(const std::string& filename_newick, double factor, const bool 
 }
 
 void
+Tree::WriteNHX(const std::string& filename_nhx, std::vector<std::string>& property, const bool add) const{
+
+  if(property.size() != nodes.size()){
+    std::cerr << "Property vector has wrong size." << std::endl;
+    exit(1);
+  }
+
+  //maybe not the most efficient convertion algorithm but it works
+  int root = (int) nodes.size() - 1;
+  for(int i = 0; i < (int) nodes.size(); i++){
+    if(nodes[i].parent == NULL){
+      root = i; //root
+      break;
+    }
+  }
+
+  std::ofstream os_new;
+  if(!add){ 
+    os_new.open(filename_nhx);
+  }else{
+    os_new.open(filename_nhx, std::ofstream::app);
+  }
+
+  std::list<Node> todo_nodes; //stores node indices in newick string
+  float l1 = ((*nodes[root].child_left).branch_length);
+  float l2 = ((*nodes[root].child_right).branch_length);
+
+  std::string newick = "(" + std::to_string((*nodes[root].child_left).label) + ":" + std::to_string(l1) + "[&&NHX:S=" + property[(*nodes[root].child_left).label] + "]," + std::to_string((*nodes[root].child_right).label) + ":" + std::to_string(l2) + "[&&NHX:S=" + property[(*nodes[root].child_right).label] + "])";
+  todo_nodes.push_back(*nodes[root].child_left);
+  todo_nodes.push_back(*nodes[root].child_right);
+
+  while(todo_nodes.size() > 0){
+
+    std::list<Node>::iterator node = todo_nodes.begin();
+
+    if((*node).child_left == NULL){
+      todo_nodes.erase(node); //erase if it is a tip
+    }else{
+      int index = 0;
+      std::string node_index;
+      for(; index < (int) newick.size(); index++){
+        while( !isdigit(newick[index]) ){
+          index++;
+        }
+        node_index.clear();
+        while( newick[index] != ',' && newick[index] != ')' && newick[index] != ':'){
+          node_index = node_index + newick[index];
+          index++;
+        }
+        if((float)(*node).label == stof(node_index) && newick[index] == ':') break;
+      }
+      assert(index < (int) newick.size());
+
+      float l1 = ((*(*node).child_left).branch_length);
+      float l2 = ((*(*node).child_right).branch_length);
+
+      std::string new_brackets = "(" + std::to_string((*(*node).child_left).label) + ":" + std::to_string(l1) + "[&&NHX:S=" + property[(*(*node).child_left).label]  + "]," + std::to_string((*(*node).child_right).label) + ":" + std::to_string(l2) + "[&&NHX:S=" + property[(*(*node).child_right).label] + "])";
+      newick.replace(index-node_index.size(), node_index.size(), new_brackets); //replace node index by branching event
+      todo_nodes.push_back(*(*node).child_left);
+      todo_nodes.push_back(*(*node).child_right);
+      todo_nodes.erase(node);
+
+    }
+
+  }
+  newick += "[&&NHX:S=" + property[root] + "];";
+
+  os_new << newick << std::endl;
+
+  os_new.close();
+
+}
+
+void
 Tree::WriteOrientedTree(const std::string& filename, const bool add){
 
   //file format:
@@ -641,6 +715,51 @@ MarginalTree::Read(const std::string& line, int N){
 
   sscanf(line.c_str(), "%d: ", &pos);
   tree.ReadTree(&(line.c_str())[i], N);
+
+}
+
+void
+MarginalTree::Dump(std::ofstream& os){
+
+  int parent;
+  std::vector<Node>::iterator n_it;
+  //std::string line;
+  std::stringstream stream;
+
+  n_it = tree.nodes.begin();
+  stream << pos << ": ";
+  for(; n_it != tree.nodes.end(); n_it++){
+    if((*n_it).parent == NULL){
+      parent = -1;
+    }else{
+      parent = (*(*n_it).parent).label;
+    }
+    stream << parent << ":(" << std::setprecision(5) << (*n_it).branch_length << " "  << std::setprecision(2) << (*n_it).num_events << " " << (*n_it).SNP_begin << " " << (*n_it).SNP_end << ")";
+  }
+  stream << "\n";
+
+  os << stream.str();
+
+}
+
+void
+MarginalTree::Dump(FILE *pfile){
+
+  int parent;
+  std::vector<Node>::iterator n_it;
+
+  n_it = tree.nodes.begin();
+  fprintf(pfile, "%d: ", pos);
+  for(; n_it != tree.nodes.end(); n_it++){
+    if((*n_it).parent == NULL){
+      parent = -1;
+    }else{
+      parent = (*(*n_it).parent).label;
+    }
+    fprintf(pfile, "%d:(%.5f %.3f %d %d) ", parent, (*n_it).branch_length, (*n_it).num_events, (*n_it).SNP_begin, (*n_it).SNP_end);
+  }
+
+  fprintf(pfile, "\n");
 
 }
 
@@ -1238,7 +1357,6 @@ AncesTree::ReadArgweaverSMC(const std::string& filename){
 void
 AncesTree::ReadRent(const std::string& filename, float Ne){
 
-
   igzstream is(filename);
   std::string line;
 
@@ -1266,7 +1384,7 @@ AncesTree::ReadRent(const std::string& filename, float Ne){
 
     }
 
-    //std::cerr << line << std::endl;
+    //std::cerr << line << " " << N_total << std::endl;
     //exit(1);
 
     std::stringstream tree_stream(line); 
@@ -1375,4 +1493,143 @@ AncesTree::ReadRent(const std::string& filename, float Ne){
 
   //std::cerr << num_tree << " " << (*std::prev(seq.end(),1)).pos << std::endl;
 }
+
+void
+AncesTree::ReadNewick(const std::string& filename, float Ne){
+
+  igzstream is(filename);
+  std::string line;
+
+  std::string newick; 
+
+  int N = -1;
+  int N_total;
+  int i;
+
+  std::vector<float> coordinates;
+  int num_tree = 1;
+  seq.resize(1);
+  CorrTrees::iterator it_seq = seq.begin();
+  while(std::getline(is, line)){ 
+
+    i = 0;
+    if(N == -1){
+      N = 0;
+      while(i < line.size()){
+        if(line[i] == ',') N++;
+        i++;
+      }
+      N += 1;
+      N_total = 2*N-1;
+
+    }
+
+    //std::cerr << line << " " << N_total << std::endl;
+    //exit(1);
+
+    std::stringstream tree_stream(line); 
+    (*it_seq).tree.nodes.resize(N_total);
+    tree_stream >> (*it_seq).pos;
+    tree_stream >> newick; 
+
+    //need to convert newick into my tree data structure
+    i = 0;
+    int node = N;
+    int count_bracket = 0, count_comma = 0;
+    while(node < N_total){ 
+      int startpos, endpos;
+      std::string index_child1, index_child2, index_parent;
+      std::string branch_length1, branch_length2;
+
+      while(newick[i] == '(') i++;
+      startpos = i;
+
+      while(newick[i] != ':'){
+        index_child1 += newick[i];
+        i++;
+      }
+      i++;
+      while(newick[i] != ',' && i < newick.size()){
+        branch_length1 += newick[i];
+        i++;
+      }
+      i++;
+      if(newick[i] != '(' && i < newick.size()){
+        while(newick[i] != ':'){
+          index_child2 += newick[i];
+          i++;
+        } 
+        i++;
+        while(newick[i] != ')' && i < newick.size()){
+          branch_length2 += newick[i];
+          i++;
+        }
+        i++;
+        endpos = i;
+
+        //std::cerr << index_child1 << " " << index_child2 << " " << branch_length1 << " " << branch_length2 << std::endl;
+        int child_left = stoi(index_child1), child_right = stoi(index_child2), parent = node;
+
+        (*it_seq).tree.nodes[child_left].label  = child_left;
+        (*it_seq).tree.nodes[child_right].label = child_right;
+        (*it_seq).tree.nodes[parent].label      = parent;
+
+        (*it_seq).tree.nodes[child_left].parent  = &(*it_seq).tree.nodes[parent];
+        (*it_seq).tree.nodes[child_right].parent = &(*it_seq).tree.nodes[parent];
+        (*it_seq).tree.nodes[parent].child_left  = &(*it_seq).tree.nodes[child_left];
+        (*it_seq).tree.nodes[parent].child_right = &(*it_seq).tree.nodes[child_right];
+
+        (*it_seq).tree.nodes[child_left].branch_length  = stof(branch_length1) * Ne;
+        (*it_seq).tree.nodes[child_right].branch_length = stof(branch_length2) * Ne;
+
+        //std::cerr << newick << std::endl;
+        //std::cerr << newick.substr(startpos-1, endpos-startpos+1) << std::endl;
+        newick.replace(startpos-1, endpos - startpos + 1, std::to_string(node)); 
+        count_bracket = 0; 
+        count_comma = 0;
+        i = 0;
+        for(; i < newick.size(); i++){
+          if(newick[i] == '(') count_bracket++;
+          if(newick[i] == ',') count_comma++;
+        }
+        //assert(count_comma == count_bracket);
+        if(count_comma != count_bracket){
+          break;
+        }
+        //std::cerr << newick << std::endl; 
+        i = 0;
+        node++;
+      }
+    }
+
+    bool everyone_has_parent = true;
+    for(int i = 0; i < N_total - 1; i++){
+      if((*it_seq).tree.nodes[i].parent == NULL){
+        everyone_has_parent = false;
+        break;
+      } 
+    }
+    //std::cerr << everyone_has_parent << std::endl;
+    if(node != N_total || count_comma != count_bracket || !everyone_has_parent){
+      seq.pop_back();
+      num_tree--;
+      it_seq--;
+    }
+
+    /*
+       coordinates.resize(N_total); 
+       (*it_seq).tree.GetCoordinates(coordinates);
+       std::cerr << coordinates[N_total-1] << " " << coordinates[N_total-1]/Ne << std::endl; 
+       */
+
+    num_tree++;
+    seq.emplace_back();
+    it_seq = std::prev(seq.end(),1);
+    //it_seq++;
+  }
+
+  seq.pop_back();
+
+}
+
 

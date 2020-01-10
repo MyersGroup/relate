@@ -227,12 +227,15 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data){
 //////////// Members
 
 void 
-AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc){
+AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc, const int seed, const bool ancestral_state){
 
   /////////////////////////////////////////////
   //Tree Building
   //input:  Data and distance matrix
-  //output: AncesTree (tree sequence)
+  //output: AncesTree (tree sequence) 
+
+  rng.seed(seed);  
+  std::uniform_real_distribution<double> dist_unif(0,1);
 
   Leaves sequences_carrying_mutation;
   sequences_carrying_mutation.member.resize(N);
@@ -241,12 +244,22 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   DistanceMeasure d(data, section); //this will calculate the distance measure. Needed because we only painted derived sites, so need to recover d by averaging entries of topology
 
   float min_value, min_value_alt;
-  int is_mapping;
+  int is_mapping, is_mapping_alt;
 
   //build tree topology for snp = section_startpos
   anc.seq.emplace_back();
   CorrTrees::iterator it_seq = anc.seq.begin();
   d.GetMatrix(section_startpos); //calculate d
+
+  if(!ancestral_state){ 
+    //naive implementation for symmetrising matrix
+    for(int i_row = 0; i_row < data.N; i_row++){
+      for(int i_col = i_row+1; i_col < data.N; i_col++){
+        d.matrix[i_row][i_col] = (d.matrix[i_row][i_col] + d.matrix[i_col][i_row])/2.0;
+        d.matrix[i_col][i_row] = d.matrix[i_row][i_col];  
+      }
+    }  
+  }
 
   tb.QuickBuild(d.matrix, (*it_seq).tree); //build tree topology and store in (*it_seq).tree
   (*it_seq).pos = section_startpos; //record position for this tree along the genome
@@ -263,7 +276,13 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   }
 
   mutations.info[section_startpos].tree = 0;
-  if(MapMutation((*it_seq).tree, sequences_carrying_mutation, section_startpos, min_value) > 2){
+  
+  if(ancestral_state){
+    is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, section_startpos, min_value); 
+  }else{
+    is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, section_startpos, min_value);
+  } 
+  if(is_mapping > 2){
     ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, section_startpos, true);
   } 
 
@@ -286,24 +305,60 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
 
     mutations.info[snp].tree = num_tree-1;
     //if mutation does not fall on current tree, I need to build new tree
-    if(MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value) > 1){
+   
+    if(ancestral_state){
+      is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value);
+    }else{ 
+      is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, snp, min_value);
+    }
+    
+    if(is_mapping > 1){
+
+      //if SNP was flipped, it is mapped to current tree (branch prev_branch)
+      int prev_branch;
+      if(is_mapping == 2){
+        assert(mutations.info[snp].branch.size() == 1.0);
+        assert((*it_seq).tree.nodes[*mutations.info[snp].branch.begin()].num_events >= 1.0);
+        prev_branch = *mutations.info[snp].branch.begin();
+      }
 
       anc.seq.emplace_back();
       it_seq++;
       d.GetMatrix(snp); //calculates distance matrix d at snp 
 
+      if(!ancestral_state){ 
+        //naive implementation for symmetrising matrix
+        for(int i_row = 0; i_row < data.N; i_row++){
+          for(int i_col = i_row+1; i_col < data.N; i_col++){
+            d.matrix[i_row][i_col] = (d.matrix[i_row][i_col] + d.matrix[i_col][i_row])/2.0;
+            d.matrix[i_col][i_row] = d.matrix[i_row][i_col];  
+          }
+        }  
+      }
+
       tb.QuickBuild(d.matrix, (*it_seq).tree); //uses distance matrix d to build tree
       (*it_seq).pos = snp; //store position
 
-      is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value_alt);
-      if(is_mapping > 1 && min_value_alt >= min_value){ 
+      if(ancestral_state){
+        is_mapping_alt = MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value_alt);
+      }else{
+        is_mapping_alt = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, snp, min_value_alt);
+      } 
+      if(is_mapping_alt > 1 && min_value_alt >= min_value){ 
         //mutation not mapping to a unique branch and new tree is worse than old tree
         it_seq--;
         anc.seq.pop_back();
         if(is_mapping > 2) ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, snp, true); //otherwise, it was flipped and is already mapped to branch
 
       }else{
-        if(is_mapping > 2){
+
+        //is_mapping == 1 or (is_mapping > 1 and min_value_alt < min_value)
+        //in other words: mutation is mapping, or new tree is better than old tree
+        if(is_mapping == 2){
+          //need to subtract from prev tree
+          (*std::prev(it_seq)).tree.nodes[prev_branch].num_events -= 1.0;
+        }
+        if(is_mapping_alt > 2){
           ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, snp, true);
         }
 
@@ -642,7 +697,7 @@ AncesTreeBuilder::OptimizeParameters(const int section_startpos, const int secti
 
 //////////
 int 
-AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, float& min_value){
+AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, std::uniform_real_distribution<double>& dist_unif, const int snp, float& min_value){
 
   if(sequences_carrying_mutations.num_leaves == 0 || sequences_carrying_mutations.num_leaves == N) return 1;
 
@@ -654,7 +709,30 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
   PropagateStructGlobal report;
   PropagateMutationGlobal(tree.nodes[root], sequences_carrying_mutations, report);
  
-  if( report.min <= report.flipped_min ){
+  if(report.min == report.flipped_min && report.min <= thr){
+  
+    //bool flag = true; //default flag
+    bool flag = (dist_unif(rng) < 0.5); 
+
+    if(flag){// not flipped
+      min_value = report.min;
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_branch; 
+      mutations.info[snp].flipped = false;
+      tree.nodes[report.best_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 1;
+    }else{
+      min_value = report.flipped_min;
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_flipped_branch;
+      mutations.info[snp].flipped = true;
+      tree.nodes[report.best_flipped_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 2;
+    }
+
+  }else if( report.min <= report.flipped_min ){
 
     min_value = report.min;
     if( report.min <= thr ){
@@ -683,6 +761,73 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
   }
 
 }
+
+//////////
+//version without random flipping
+int 
+AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, float& min_value){
+
+  if(sequences_carrying_mutations.num_leaves == 0 || sequences_carrying_mutations.num_leaves == N) return 1;
+
+  //I want to place the mutation on all branches necessary for no loss of information
+  //start with all leaves
+  //propagate up and count number of nodes needed.
+  //choose flipped or non-flipped depending on which is less.
+
+  PropagateStructGlobal report;
+  PropagateMutationGlobal(tree.nodes[root], sequences_carrying_mutations, report);
+ 
+  if(report.min == report.flipped_min && report.min <= thr){
+  
+    bool flag = true; //default flag
+    if(flag){// not flipped
+      min_value = report.min;
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_branch; 
+      mutations.info[snp].flipped = false;
+      tree.nodes[report.best_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 1;
+    }else{
+      min_value = report.flipped_min;
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_flipped_branch;
+      mutations.info[snp].flipped = true;
+      tree.nodes[report.best_flipped_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 2;
+    }
+
+  }else if( report.min <= report.flipped_min ){
+
+    min_value = report.min;
+    if( report.min <= thr ){
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_branch; 
+      mutations.info[snp].flipped = false;
+      tree.nodes[report.best_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 1;
+    }
+    return 3;
+
+  }else{
+
+    min_value = report.flipped_min;
+    if( report.flipped_min <= thr ){
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_flipped_branch;
+      mutations.info[snp].flipped = true;
+      tree.nodes[report.best_flipped_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 2;
+    }
+    return 3;
+
+  }
+
+}
+
 
 int 
 AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, const bool force){

@@ -63,9 +63,9 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
   } 
 
   int bp1, bp2, bp3;
-  char rsid1[40], rsid2[40], rsid3[40];
-  char type1[40], type2[40], type3[40];
-  char ancestral1[40], alternative1[40], ancestral2[40], alternative2[40], ancestral3[40], alternative3[40];
+  char rsid1[1024], rsid2[1024], rsid3[1024];
+  char type1[1024], type2[1024], type3[1024];
+  char ancestral1[1024], alternative1[1024], ancestral2[1024], alternative2[1024], ancestral3[1024], alternative3[1024];
   int matches1, matches2, matches3;
   int snp = 1, snp_accepted = 1;
 
@@ -185,7 +185,7 @@ ConvertFromHapLegendSample(cxxopts::Options& options){
   os_sample << "0\t0\t0\n";
 
   std::string line;
-  char id[40];
+  char id[1024];
   getline(is_sample,line);
   while(getline(is_sample, line)){
     sscanf(line.c_str(), "%s", id);
@@ -249,11 +249,11 @@ ConvertFromVcf(cxxopts::Options& options){
   FILE* fp_haps = fopen((options["haps"].as<std::string>()).c_str(), "w");
   assert(fp_haps);
 
-  int chr;
+  char chr[1024];
   int bp;
-  char rsid[40];
-  char type[40];
-  char ancestral[40], alternative[40];
+  char rsid[1024];
+  char type[1024];
+  char ancestral[1024], alternative[1024];
 
   std::string line_id;
   getline(is_vcf, line);
@@ -277,7 +277,7 @@ ConvertFromVcf(cxxopts::Options& options){
   os_sample << "ID_1\tID_2\tmissing\n";
   os_sample << "0\t0\t0\n";
 
-  char id[40];
+  char id[1024];
   int N = 0;
   while(c < line_id.size()){
     N++;
@@ -296,7 +296,7 @@ ConvertFromVcf(cxxopts::Options& options){
   std::vector<char> sequence;
   do{
 
-    sscanf(line.c_str(), "%d %d %s %s %s", &chr, &bp, rsid, ancestral, alternative);
+    sscanf(line.c_str(), "%s %d %s %s %s", chr, &bp, rsid, ancestral, alternative);
     int c = 0;
     for(int k = 0; k < 9; k++){
       while(line[c] != '\t' && line[c] != ' '){
@@ -373,7 +373,7 @@ ConvertFromVcf(cxxopts::Options& options){
     }
 
     if(N == N_prev){
-      fprintf(fp_haps, "%d %s %d %s %s", chr, rsid, bp, ancestral, alternative);
+      fprintf(fp_haps, "%s %s %d %s %s", chr, rsid, bp, ancestral, alternative);
       for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
         fprintf(fp_haps, " %c", *it_seq);
       }
@@ -432,20 +432,20 @@ RemoveNonBiallelicSNPs(cxxopts::Options& options){
     exit(1);
   } 
 
-  int chr;
-  char rsid[40];
+  char chr[1024];
+  char rsid[1024];
   int bp1, bp2, bp3;
   std::string line1, line2, line3;
 
   assert(getline(is_haps,line1));
-  sscanf(line1.c_str(), "%d %s %d", &chr, rsid, &bp1);
+  sscanf(line1.c_str(), "%s %s %d", chr, rsid, &bp1);
   assert(getline(is_haps,line2));
-  sscanf(line2.c_str(), "%d %s %d", &chr, rsid, &bp2);
+  sscanf(line2.c_str(), "%s %s %d", chr, rsid, &bp2);
 
   int snp = 1, snp_accepted = 1;
   while(getline(is_haps, line3)){
 
-    sscanf(line3.c_str(), "%d %s %d", &chr, rsid, &bp3);
+    sscanf(line3.c_str(), "%s %s %d", chr, rsid, &bp3);
     if(snp == 1 && bp2 > bp1){
       os_haps << line1 << "\n";
       snp_accepted++;
@@ -523,7 +523,7 @@ RemoveSamples(cxxopts::Options& options){
   Data data(m_hap.GetN(), m_hap.GetL());
 
   // first read input file containing ids of individuals to remove
-  char id[40];
+  char id[1024];
   std::string line, line2;
   std::vector<std::string> id_remove;
   igzstream is_rem(options["input"].as<std::string>());
@@ -695,8 +695,8 @@ FilterHapsUsingMask(cxxopts::Options& options){
     exit(1);
   }
 
-  int chr;
-  char rsid[40];
+  char chr[1024];
+  char rsid[1024];
   int bp;
   int p_next, p_prev = 0;
   std::string line;
@@ -708,7 +708,7 @@ FilterHapsUsingMask(cxxopts::Options& options){
   for(int snp = 0; snp < data.L; snp++){
 
     assert(getline(is, line));
-    sscanf(line.c_str(), "%d %s %d", &chr, rsid, &bp);
+    sscanf(line.c_str(), "%s %s %d", chr, rsid, &bp);
 
     d_num_nonpass_vincity = 0; 
     if(mask.seq[bp-1] != 'P'){
@@ -842,9 +842,10 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
   }
   std::string line;
 
-  int bp, chr;
-  char rsid[40];
-  char ancestral[40], alternative[40];
+  int bp;
+  char chr[1024];
+  char rsid[1024];
+  char ancestral[1024], alternative[1024];
   char ancestral_allele;
   std::vector<char> sequence(data.N);
   std::string::iterator it_line;
@@ -853,13 +854,13 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
   for(int snp = 0; snp < data.L; snp++){
 
     assert(getline(is, line));
-    sscanf(line.c_str(), "%d %s %d %s %s", &chr, rsid, &bp, ancestral, alternative);
+    sscanf(line.c_str(), "%s %s %d %s %s", chr, rsid, &bp, ancestral, alternative);
     ancestral_allele = std::toupper(ancestor.seq[bp-1]);
 
-    if(strlen(ancestral) == 1 && strlen(alternative) == 1){
-      if(ancestral_allele == 'A' || ancestral_allele == 'C' || ancestral_allele == 'G' || ancestral_allele == 'T'){
+    if(strlen(ancestral) == 1 || strlen(alternative) == 1){
+      //if(ancestral_allele == 'A' || ancestral_allele == 'C' || ancestral_allele == 'G' || ancestral_allele == 'T'){
 
-        if(ancestral_allele == ancestral[0]){
+        if(ancestral_allele == ancestral[0] && strlen(ancestral) == 1){
 
           it_line = line.begin();
           //chr
@@ -892,7 +893,7 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
             removed_snps++;
           }
 
-        }else if(ancestral_allele == alternative[0]){
+        }else if(ancestral_allele == alternative[0] && strlen(alternative) == 1){
 
           number_flipped++;
           it_line = line.begin();
@@ -907,11 +908,15 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
           it_line++;
           //ancestral
           *it_line = alternative[0];
-          while(*it_line != ' ') it_line++;
+          it_line++;
+          *it_line=' ';
           it_line++;
           //alternative
-          *it_line = ancestral[0];
-          while(*it_line != ' ') it_line++;
+          for(int c = 0; c < strlen(ancestral); c++){
+            *it_line=ancestral[c];
+            it_line++;
+          }
+          assert(*it_line == ' ');
           it_line++;
 
           bool is_snp = false;
@@ -939,7 +944,7 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
         removed_snps++;
       }
 
-    }
+    //}
 
   }
   is.close();
@@ -1089,6 +1094,7 @@ GenerateSNPAnnotations(cxxopts::Options& options){
 
   if(options.count("mut")){
 
+    mut.header  = "snp;pos_of_snp;dist;rs-id;tree_index;branch_indices;is_not_mapping;is_flipped;age_begin;age_end;ancestral_allele/alternative_allele;"; 
     mut.header += "upstream_allele;downstream_allele;";
     for(std::vector<std::string>::iterator it_groups = sample.groups.begin(); it_groups != sample.groups.end(); it_groups++){
       mut.header += *it_groups + ";";
