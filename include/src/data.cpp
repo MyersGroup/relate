@@ -493,7 +493,7 @@ haps::ReadSNP(std::vector<char>& sequence, int& bp){
 
   //read a line, extract bp and fp_props
   //snp;pos_of_snp;rs-id;ancestral_allele/alternative_allele;downstream_allele;upstream_allele;All;
-  fscanf(fp, "%s %s %d %s %s", chr, rsid, &bp, &ancestral, &alternative);
+  fscanf(fp, "%s %s %d %s %s", chr, rsid, &bp, ancestral, alternative);
 
   assert(sequence.size() > 0);
   //read haplotypes into sequence

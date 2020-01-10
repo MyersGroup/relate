@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+.<!DOCTYPE html>
 <html lang="en">
 
 
@@ -778,8 +778,29 @@ gtag('config', 'UA-115753061-1');
 
                 </div>
               </div>
-            </div>
+              <div class="panel panel-info">
+								<div class="panel-heading"> <h4 id="TreeViewScriptMut">TreeViewMutation</h4></div>
+									<div class="panel-body">  
 
+										<p>Plots a tree of interest using R and highlights lineages carrying derived allele.<br> 
+											Requires libraries ggplot2, grid, gridExtra.<br>
+											Takes same arguments as the TreeView.sh script, however bp_of_interest has to specify a SNP in the input.
+										</p>
+
+										<pre><code> PATH_TO_RELATE/scripts/TreeView/TreeViewMutation.sh \
+									 --haps data/example.haps \
+									 --sample data/example.sample \
+									 --anc example.anc \
+									 --mut example.mut \
+									 --poplabels data/example.poplabels \
+									 --bp_of_interest 3000000 \
+									 --years_per_gen 28 \
+									 -o example </code></pre>
+										Output: example.pdf.
+
+							  </div>
+						  </div>
+            </div>
           </div>
 
 
