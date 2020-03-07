@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+  <head>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115753061-1"></script>
+    <script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'UA-115753061-1');
+    </script>
+
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Relate Documentation</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <!-- Scrollbar Custom CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
+    <link rel="stylesheet" href="documentation.css"> 
+
+    <script src="anchor.js"></script>
+
+  </head>
+
+
+  <body>
+
+    <nav id="myNavbar" class="navbar navbar-default navbar-inverse navbar-fixed-top" role="navigation">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbarCollapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html">Relate</a>
+        </div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="getting_started.html">Getting Started</a></li>
+            <li><a href="input_data.html">Input data</a></li>
+            <li class="active"><a href="modules.html">Add-on modules</a></li>
+            <li><a href="parallelise.html">Parallelise Relate</a></li>
+          </ul>
+        </div>
+      </div>
+
+    </nav>
+
+    <!-- CONTENT -->
+
+
+    <div class="wrapper">
+
+      <!-- Sidebar Holder -->
+      <nav id="sidebar">
+
+        <div class="sidebar-header">
+          <h3>Overview</h3>
+        </div>
+
+        <ul class="list-unstyled components">
+          <li>
+            <a href="#CoalescenceRate">Estimate population sizes</a>
+          </li>
+          <li>
+            <a href="#MutationRate">Estimate mutation rates</a>
+          </li>
+          <li>
+            <a href="#Selection">Detect positive selection</a>
+          </li>
+          <li> 
+            <a href="#SampleBranchLengths">Sample branch lengths<br>(e.g., for CLUES)</a>
+          </li>
+          <li>
+            <a href="#TreeView">Plot trees of Interest</a>
+          </li>
+          <li>
+            <a href="#Extract">Extract subtrees or trees of interest</a>
+          </li>
+
+        </ul>
+
+      </nav>
+
+      <!-- Page Content Holder -->
+      <div id="content">
+
+        <div class="container-fluid">
+
+
+          <!-- row -->
+          <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+              <h3 id="CoalescenceRate">Estimate coalescence rates and effective population sizes</h3>
+              <hr/>
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">          
+
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="PopulationSizeScript">Estimating effective population sizes</h4></div>
+                <div class="panel-body">  
+
+                  <p>
+                  You can find a bash script under <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh</code></pre>
+                  This script simultaneously
+                  <ol>
+                    <li>estimates population sizes</li>
+                    <li>re-estimates branch lengths using the estimated population sizes</li>
+                    <li>estimates an average mutation rate.</li>
+                  </ol>
+                  To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#.poplabels">here</a> for the file format).<br/> 
+                  You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small (in terms of sequence length, not sample size) to obtain reliable estimates.<br/>
+                  Do not move the script - we are extracting the path to the binaries from the location of the script!</p>
+
+                  <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
+              -i example \
+              -m 1.25e-8 \
+              --poplabels data/example.poplabels \
+              --seed 1 \
+              -o example_popsize</code></pre>
+
+                  <h5 id="PopulationSizeScript_Input">Input arguments</h5>
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of the .anc and .mut files, excluding the file extensions.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>Filename of output files without file extensions.</dd>
+                    <dt>-m,--mutation_rate</dt>
+                    <dd>Mutation rate per base per generation.</dd>                    
+                    <dt>--poplabels</dt>
+                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#.poplabels">here</a>. This file needs to always contain all samples.</dd>
+
+                  </dl>
+
+                  In addition, the following optional arguments can be specified:
+                  <dl class="dl-horizontal">
+                    <dt>--pop_of_interest</dt>
+                    <dd>Optional: Specifies populations for which population size is estimated. The second column of the .poplabels file is used for population labels. You can specify multiple populations separated by commas, e.g. pop1,pop2. When using this option, it is recommended (but NOT necessary), to run <b>Relate</b> with --annot. This can also be done after running <b>Relate</b> without --annot, see <a href = "input_data.html#GenerateSNPAnnotations">here</a>. </dd>
+                    <dt>--first_chr & --last_chr</dt>
+                    <dd>Optional: Allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
+                    Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
+                    <dt>--threads</dt>
+                    <dd>Optional: Maximum number of threads. Default is 1.</dd>
+                    <dt>--num_bins</dt>
+                    <dd>Optional: Specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Optional: Years per generation. Default: 28.0</dd>
+                    <dt>--num_iter</dt>
+                    <dd>Optional: Number of iterations of the algorithm. Default is 5.</dd>
+                    <dt>--coal</dt>
+                    <dd>Optional: Initial estimate of coalescence rates treating all haplotypes as one population. Ignored if num_bins is specified. Default: Estimated from input files.</dd>
+                    <dt>--threshold</dt>
+                    <dd>Optional: Integer which is the number of SNPs a tree needs to not be dropped. This option serves two purposes: First, it removes bad/uninformative trees. Second it speeds up the inference. As we increase this value, we remove more trees. Default: number of haplotypes.</dd>
+                    <dt>--seed</dt>
+                    <dd>Optional: Seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</dd>
+
+                  </dl>
+
+                  <h4 id="PopulationSizeScript_Output">Output</h4>
+                  <div class="table-responsive">
+                  <table class="table">
+                    <tbody>
+                      <tr>
+                        <td>example_popsize.pdf</td>
+                        <td>A plot showing the estimated population size.</td>
+                      </tr>
+
+                      <tr>
+                        <td>example_popsize.anc.gz, example_popsize.mut.gz</td>
+                        <td>Genealogy with updated branch lengths. By default, --threshold is set to a value larger than 0, such that these files will include only a part of the genealogy.<br>
+                          You can reestimate branch lengths for the entire genealogy using
+                          <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
+                -i example \
+                -m 1.25e-8 \
+                --poplabels data/example.poplabels \
+                --threshold 0 \
+                --coal example_popsize.coal \
+                --num_iter 1 \
+                -o example_whole_genome</code></pre>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>example_popsize.dist</td>
+                        <td>Contains distances between SNPs (see <a href="#.dist">here</a> for file format).</td>
+                      </tr>
+                      <tr>
+                        <td>example_popsize.coal</td>
+                        <td>Contains coalescence rates and cross-coalescence rates for populations specified in the .poplabels file.(see below for file format).</td>
+                      </tr>
+                      <tr>
+                        <td>example_popsize.bin</td>
+                        <td>Binary file containing coalescence rates. Can be used by <a href="#FinalizePopulationSize">RelateCoalescenceRates --mode FinalizePopulationSize</a> to extract coalescence rates (e.g., for a different .poplabels file).</td>
+                      </tr>
+                      <tr>
+                        <td>example_popsize_avg.rate</td>
+                        <td>Contains average mutation rate through time.</td>
+                      </tr>
+
+                    </tbody>
+                  </table>
+                  </div>
+
+                  <h4 id="PopulationSizeScript_FileFormats">File formats</h4>
+                  <div class="table-responsive">
+                  <table class="table">
+                    <tbody>
+                      <tr>
+                        <a class="anchor" name=".coal"></a>
+                        <td>.coal</td>
+                        <td>
+                          <ul>
+                            <li>The first line lists populations</li>
+                            <li>The second line lists the epochs (in generations).</li>
+                            <li>Each subsequent line contains the coalescence rates between two populations. Each line starts with two integers indicating the populations considered.</li>
+                            <li>These are "raw" coalescence rates - to obtain diploid effective population size estimates, use 0.5/(coalescence rate).</li>
+                          </ul>
+
+                          <pre><code>group1 group2
+0 35.7143 49.6248 ...
+0 0 8.62951e-05 0.000104302 7.33554e-05 ...
+0 1 8.62327e-05 0.000115472 9.85662e-05 ...
+1 0 8.62327e-05 0.000115472 9.85662e-05 ...
+1 1 0.000114249 8.37037e-05 7.23175e-05 ...</code></pre>
+                        </td>
+                      </tr>                       
+                      <tr>
+                        <a class="anchor" name=".rate"></a>
+                        <td>.rate</td>
+                        <td>
+                          <ul>
+                            <li>The first column lists the epochs (in generations).</li>
+                            <li>The second column lists the mutation rate in this epoch.</li>
+                          </ul>
+                          <pre><code>0 1.23894e-08
+35.7143 1.26274e-08
+49.6248 1.2925e-08
+68.9535 1.23841e-08</pre></code>
+                        </td>
+                      </tr>
+
+                    </tbody>
+                  </table>
+                  </div>
+
+                </div>
+              </div> 
+
+
+              <h4 id="PopulationSizeScript_MoreDetails">More details</h4>
+
+              Below, we describe details about the functions used in the script.<br\>
+              The general idea is to do the following until convergence:
+              <ol>
+                <li>Estimate average mutation rate</li>
+                <li>Estimate coalescence rate</li>
+                <li>Re-estimate branch lengths</li>
+              </ol>
+              If you have multiple chromosomes, you can parallelize step 3.
+                  </p>      
+
+                  <div class="panel panel-info">
+                    <div class="panel-heading"> <h4 id="CoalescenceRatesThroughTime">Calculate coalescence rates through time</h4></div>
+                    <div class="panel-body">  
+
+                      Calculates the average pairwise coalescence rate through time.
+                      <dl class="dl-horizontal">
+                        <dt>-i,--input</dt>
+                        <dd>Filename of the .anc and .mut files, excluding the file extensions.</dd>
+                        <dt>-o,--output</dt>
+                        <dd>Filename of output files without file extensions.</dd>
+                        <dt>-m,--mutation_rate</dt>
+                        <dd>Mutation rate per base per generation.</dd>                    
+                        <dt>--poplabels</dt>
+                        <dd>Optional: Filename of a .poplabels file. The file format is described <a href="input_data.html#.poplabels">here</a>.</dd>
+                        <dt>--first_chr & --last_chr</dt>
+                        <dd>Optional: Allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
+                        Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
+                        <dt>--num_bins</dt>
+                        <dd>Optional: Specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </dd>
+                        <dt>--years_per_gen</dt>
+                        <dd>Optional: Years per generation. Default: 28.0</dd>
+                      </dl>
+
+                      <pre><code> PATH_TO_RELATE/bin/RelateCoalescenceRate \
+                 --mode EstimatePopulationSize\
+                 -i example \
+                 -o example </code></pre>
+                      Output: example.coal, example.bin.<br/>
+                      <br/>
+                      <p>
+                      <a class="anchor" name="FinalizePopulationSize"></a> 
+                      Sometimes we want to obtain output with and without specifying the option --poplabels, or we want to specify different poplabels. For this, we can extract coalescence rates from example.bin using
+                      <pre><code> PATH_TO_RELATE/bin/RelateCoalescenceRate \
+                 --mode FinalizePopulationSize\
+                 --poplabels example.poplabels \
+                 -i example \
+                 -o example </code></pre>
+                      Here, --poplabels is optional. The .poplabels file needs to contain all samples.
+                      <p>
+                    </div>
+                  </div>
+            </div> 
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="ReEstimateBranchLengths">Reestimate branch lengths</h4></div>
+                <div class="panel-body">  
+
+                  <p>Once the average mutation rate and coalescence rates have been calculated, we can re-estimate the branch lengths. 
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file</dd>
+                    <dt>-o,--output</dt>
+                    <dd>Filename of output files without file extensions.</dd>
+                    <dt>-m,--mutation_rate</dt>
+                    <dd>Mutation rate per base per generation.</dd>                    
+                    <dt>--mrate</dt>
+                    <dd>Specifies the file containing the average mutation rate. Generated using <a href="modules.html#AvgMutationRate">this function</a>.</dd>
+                    <dt>--coal</dt>
+                    <dd>Specifies the file containing coalescent rates. Generated using <a href="modules.html#CoalescenceRate">this function</a> (do not specify option --poplabels for this).</dd>                    
+                    <dt>--dist</dt>
+                    <dd>Optional: Specifies distances between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>.
+                    </dd>
+                    <dt>--seed</dt>
+                    <dd>Optional: Specifies a seed for the random number generator used in the MCMC algorithm for estimating branch lengths.</dd>
+                  </dl>
+
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/bin/RelateCoalescenceRate \
+                 --mode ReEstimateBranchLengths\
+                 --anc example.anc \
+                 --mut example.mut \
+                 --mrate example_avg.rate \
+                 --coal example.coal \
+                 -m 1.25e-8 \
+                 -o example_updated </code></pre>
+                  Output: example_updated.anc, example_updated.mut.<br/>
+
+                  With the updated branch lengths, we can then re-estimate the average mutation and coalescence rates. We can iterate these steps until convergence to obtain an algorithm that simulatneously estimates mutation and coalescence rates and branch lengths.
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+
+              <h3 id="MutationRate">Estimate mutation rates</h3>
+              <hr/>
+
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="AvgMutationRate">Calculate the average mutation rate through time</h4></div>
+                <div class="panel-body">  
+
+                  Calculates the average mutation rate. 
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of the .anc and .mut files, excluding the file extensions.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>Filename of output files without file extensions.</dd>   
+                    <dt>--first_chr & --last_chr</dt>
+                    <dd>Optional: Allow for multiple input files, where filenames are assumed to be numbered by chromosome index.<br/>
+                    Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
+                    <dt>--num_bins</dt>
+                    <dd>Optional: Specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Optional: Years per generation. Default: 28.0</dd>
+                    <dt>--dist</dt>
+                    <dd>Optional: Specifies .dist file. The .dist file stores distances in bp between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>. <b>If specified together with --first_chr, --last_chr, please specify the filename without file extension.</b></dd>
+                  </dl>
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateMutationRate \
+                 --mode Avg\
+                 -i example \
+                 -o example </code></pre>
+                  Output: example_avg.rate.
+
+                </div>
+              </div>
+
+
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="TripletMutationRates">Calculate the mutation rates grouped by nucleotide in sequence</h4></div>
+                <div class="panel-body">  
+
+                  Calculates the mutation rate for 96 groups of mutations, where each group corresponds to a triplet mutation (e.g. TCC to TTC mutation).<br/>
+                  It is necessary to have appended SNP annotation with --annot to use this function (This can also be done after inferring .anc,.mut files, see <a href = "input_data.html#GenerateSNPAnnotations"></a>). 
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of the .anc and .mut files, excluding the file extensions.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>Filename of output files without file extensions.</dd>            
+                    <dt>--ancestor</dt>
+                    <dd>Fasta file containing ancestral genome. This is case insensitive.</dd>
+                    <dt>--mask</dt>
+                    <dd>Optional: Fasta file of same length as the ancestral genome contining a genomic mask. Loci passing the mask are denoted by P, loci not passing the mask are denoted by N. This is case insensitive.</dd>
+                    <dt>--num_bins</dt>
+                    <dd>Optional: Specifies the number of bins between 1,000ybp and 10,000,000 ybp. Default is 30. </dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Optional: Years per generation. Default: 28.0</dd>
+                    <dt>--dist</dt>
+                    <dd>Optional: Specifies .dist file. The .dist file stores distances in bp between SNPs. If unspecified, we use the distances given in the .mut file. This option is only needed if some SNPs (and trees) have been removed using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a>. The .dist file can be generated using <a href="modules.html#ExtractDistFromMut">this function</a>. <b>If specified together with --first_chr, --last_chr, please specify the filename without file extension.</b></dd>
+
+                    <dt>--first_chr & --last_chr</dt>
+                    <dd>Currently not supported for mode WithContextForChromosome (because we need to specify separate mask, ancestor files for each chromosome.)<br/>
+                    You can however apply mode WithContextForChromosome to each chromosome individually. You can then use mode Finalize (see below) with options --first_chr and --last_chr to obtain a genome-wide estimate. Filenames are assumed to be indexed by chromosome as before.<br/>
+                    Example: -i example --first_chr 1 --last_chr 2 assumes example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut as input.</dd>
+                  </dl>
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateMutationRate \
+                 --mode WithContextForChromosome \
+                 --mask genomic_mask.fa \
+                 --ancestor ancestor.fa \
+                 -i example_chr1 \
+                 -o example_chr1 </code></pre>
+                  Output: example_chr1.bin.<br/><br/>
+
+                  Next, to extract the rates from example.bin, use
+                  <pre><code> PATH_TO_RELATE/bin/RelateMutationRate \
+                 --mode Finalize \
+                 -i example_chr1 \
+                 -o example_chr1 </code></pre>
+                  Output: example_chr1.rate.<br/><br/>
+
+                  If you applied mode WithContextForChromosome to multiple chromosome, use the following to obtain a .bin file summarizing estimates genome-wide. Input filenames are assumed to be example_chr1.bin, example_chr2.bin, etc.
+                  <pre><code> PATH_TO_RELATE/bin/RelateMutationRate \
+                 --mode Finalize \
+                 --first_chr 1 \
+                 --last_chr 22 \
+                 -i example \
+                 -o example </code></pre>
+                  Output: example.bin, example.rate.<br/><br/>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+              <h3 id="Selection">Detect positive selection</h3>
+              <hr/>
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="SelectionPvaluesScript">Detect selection</h4></div>
+                <div class="panel-body">  
+
+                  <p>Calculates p-values for selection evidence from genealogy.<br> 
+
+                  <p>
+                  We recommend that you first estimate the population size history using <a href="modules.html#CoalescenceRate">this module</a>, with setting --threshold 0. This is so that the branch lengths in all trees are updated for the estimated population size history. Alternatively, if the region you are analysing is short, you can specify a .coal file in this module and the script reestimates branch lengths for the trees of interest before calculating selection p-values.</p> 
+                  
+                  <p>P-values can only be calculated for mutations with derived allele frequency of at least 3. Mutations with a smaller DAF are filtered out if the DAFs are appended to the .mut file using RelateFileFormats --mode GenerateSNPAnnotations, otherwise we set the -log10 p-value column to 1.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of .anc and .mut files without file extension. Needs to contain all SNPs in haps/sample input file.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                    <dt>-m,--mu</dt>
+                    <dd>Mutation rate, e.g., 1.25e-8.</dd>
+                    <dt>--first_bp</dt>
+                    <dd>Optional: First bp position.</dd>
+                    <dt>--last_bp</dt>
+                    <dd>Optional: Last bp position.</dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Optional: Years per generation. Default: 28.0</dd>
+                    <dt>--coal</dt>
+                    <dd>Optional: Estimate of coalescent rate, treating all haplotypes as one population. Not necessary if .anc/.mut files were obtained using EstimatePopulationSize.sh, otherwise strongly recommended.</dd>
+                    <dt>--seed</dt>
+                    <dd>Optional: Random seed for branch lengths estimation. Only used if --coal is specified.</dd>
+                  </dl>
+
+                  </p>
+
+                  <pre><code> PATH_TO_RELATE/scripts/DetectSelection/DetectSelection.sh \
+                 -i example \
+                 -o example_selection \
+                 -m 1.25e-8 \
+                 --first_bp 1000000 \
+                 --last_bp 1000000 \
+                 --years_per_gen 28 \
+                 --coal popsize.coal </code></pre>
+                  Output: example_selection.lin, example_selection.freq, example_selection.sele, (example_selection.anc, example_selection.mut, example_selection_dist if coal is specified).
+
+                </div>
+              </div>
+
+              <p>
+              <h4 id="SelectionPvaluesScript_FileFormats">File formats</h4>
+              </p> 
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <a class="anchor" name=".freq"></a>
+                    <td>.freq</td>
+                    <td>Records the frequency of the derived allele at generations genN .. gen1 (specified in the header)<br/><br/>
+                      Columns: pos rs_id genN genN-1 ... gen1 0
+                    </td>
+                  </tr>
+                  <tr>
+                    <a class="anchor" name=".lin"></a>
+                    <td>.lin</td>
+                    <td>Records the number of lineages in the tree at generations genN .. gen1 (specified in the header), as well as the number of lineages when the mutation had frequency 2<br/><br/>
+                      Columns: pos rs_id genN genN-1 ... gen1 0 when_mutation_has_freq2
+                    </td>
+                  </tr>
+                  <tr>
+                    <a class="anchor" name=".sele"></a>
+                    <td>.sele</td>
+                    <td>Records the log10 p-value for selection evidence at generations genN .. gen1 (specified in the header), as well as the log10 p-value when the mutation had frequency 2. Log10 p-value is set to 1 if mutation had frequency <= 1 at a generation. <br/>
+                        The "when_mutation_has_freq2" column contains the p-value for selection evidence over the lifetime of this mutation. All other p-values condition on the frequency at the specified time.<br><br>
+                      Columns: pos rs_id genN genN-1 ... gen1 0 when_mutation_has_freq2<br/><br/>
+
+                      
+
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+
+            </div>
+
+          </div>
+
+  
+
+
+          <!-- row -->
+          <div class="row"> 
+            <div class="col-md-10 col-md-offset-1">
+
+              <h4 id="SelectionPvalues_MoreDetails">More details</h4>
+              Below, we describe details about the functions used to calculate the selection p-value.<br\>
+
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="SelectionPvalues_functions">Get selection pvalues</h4></div>
+                <div class="panel-body">  
+
+                  <p>
+                  We first calculate, for each SNP, its frequency through time. This information is stored in two files: the .freq file and the .lin file. The former stores the frequency of a SNP through time, the latter stores the number of lineages in the corresponding tree through time. 
+                  </p> 
+                  <pre><code> PATH_TO_RELATE/bin/RelateSelection \
+                 --mode Frequency \
+                 -i example \
+                 -o example </code></pre>
+                  Output: example.freq, example.lin.<br/>
+
+                  <p>We then use these two files to calculate a p-value for selection evidence for each SNP.</p> 
+                  <pre><code> PATH_TO_RELATE/bin/RelateSelection \
+                 --mode Selection \
+                 -i example \
+                 -o example </code></pre>
+                  Output: example.sele.<br/>
+
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+
+              <h3 id="SampleBranchLengths">Sample branch lengths (e.g., for <a href="https://github.com/35ajstern/clues">CLUES</a>)</h3>
+              <hr/>
+
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="SampleBranchLengthsScript">Sample branch lengths</h4></div>
+                <div class="panel-body">  
+
+                  <p>Samples branch lengths using MCMC.<br> 
+                     The output file format resembles that of <a href="https://github.com/mdrasmus/argweaver">ARGweaver</a>, which is the input file format required by <a href="https://github.com/35ajstern/clues">CLUES</a> for inference of selection and inferring allele frequency trajectories.
+                  <p>
+
+                  <p>
+                  <b>Documentation for using Relate with CLUES is under construction.</b>
+                  </p>
+                  
+                  <p>In Relate, we map mutations to branches with approximately the same descendants as carriers of the derived allele to be robust to errors. Therefore, we output an additional .sites file in which only the descendants of the branch to which the mutation is mapped are marked as derived, the rest are ancestral. Please also note that some SNPs don't map to a unique branch in the tree and such SNPs are left out of this .sites file.</p>
+
+
+                  <dl class="dl-horizontal">
+                    <dt>-i,--input</dt>
+                    <dd>Filename of .anc and .mut files without file extension. Needs to contain all SNPs in input haps/sample files. If not, see --dist option.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                    <dt>-m,--mu</dt>
+                    <dd>Mutation rate, e.g., 1.25e-8.</dd>
+                    <dt>--coal</dt>
+                    <dd>Estimated coalescent rate, treating all haplotypes as one population.</dd>
+                    <dt>--num_samples</dt>
+                    <dd>Number of times branch lengths are sampled.</dd>
+                    <dt>--num_proposals</dt>
+                    <dd>Optional: Number of MCMC proposals between samples. Default is max(10*N, 1000), where N is the number of haplotypes. If num_proposals=0, all samples will be identical to the input.</dd>
+                    <dt>--first_bp</dt>
+                    <dd>Optional: First bp position.</dd>
+                    <dt>--last_bp</dt>
+                    <dd>Optional: Last bp position.</dd>
+                    <dt>--dist</dt>
+                    <dd>Optional: Filename containing bp positions of SNPs and distances between adjacent SNPs (<a href="#.dist">file format</a>). E.g., obtained using <a href="#AncMutForSubregion">RelateExtract --mode AncMutForSubregion</a>. Required if anc/mut file only covers a subregion of input haps/sample files.</dd>
+                    <dt>--seed</dt>
+                    <dd>Optional: Random seed for branch lengths estimation.</dd>
+                  </dl>
+
+                  </p>
+
+                  <pre><code> PATH_TO_RELATE/scripts/SampleBranchLengths/SampleBranchLengths.sh \
+                 -i example \
+                 -o example_sub \
+                 -m 1.25e-8 \
+                 --coal popsize.coal \
+                 --num_samples 5 \
+                 --first_bp 100000 \
+                 --last_bp 200000 \
+                 --seed 1 </code></pre>
+                  Output: example_sub.newick, example_sub.sites. 
+
+                </div>
+              </div>
+
+              <p>
+              <h4 id="SampleBranchLengths_FileFormats">File formats</h4>
+              </p> 
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <a class="anchor" name=".freq"></a>
+                    <td>.newick</td>
+                    <td>A tab-delimited file with columns<br>
+                      chrom chromStart chromEnd MCMC_sample tree<br>
+                      <ul>
+                        <li>chrom: Chromosome id.</li>
+                        <li>chromStart: bp position at which tree starts.</li>
+                        <li>chromEnd: bp position at which tree ends.</li>
+                        <li>MCMC_sample: integer specifying the MCMC sample.</li>
+                        <li>tree: Newick string of the tree.</li>
+                      </ul>
+                    </td>
+                  </tr>
+                  <tr>
+                    <a class="anchor" name=".lin"></a>
+                    <td>.sites</td>
+                    <td>A tab-delimited file with<ul>
+                        <li>First line: Lists names of haplotypes.</li>
+                        <li>Second line: Shows genomic region covered by this file.</li>
+                        <li>Remaining lines: bp position followed by haplotype pattern at this site.</li>
+                        </ul>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+
+              <h3 id="TreeView">Plot trees of interest</h3>
+              <hr/>
+
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="TreeViewScript">TreeView</h4></div>
+                <div class="panel-body">  
+
+                  <p>Plots a tree of interest using R.<br> 
+                  Requires libraries ggplot2, grid, gridExtra.
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--haps</dt>
+                    <dd>Filename of haps file.</dd>
+                    <dt>--sample</dt>
+                    <dd>Filename of sample file.</dd>
+                    <dt>--poplabels</dt>
+                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#.poplabels">here</a>. This file needs to always contain all samples.</dd>
+                    <dt>--bp_of_interest</dt>
+                    <dd>Integer specfifying the BP position of the SNP of interest</dd>
+                    <dt>--years_per_gen</dt>
+                    <dd>Years per generation. Default: 28.0</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
+                  </p>
+
+                  <pre><code> PATH_TO_RELATE/scripts/TreeView/TreeView.sh \
+                 --haps data/example.haps \
+                 --sample data/example.sample \
+                 --anc example.anc \
+                 --mut example.mut \
+                 --poplabels data/example.poplabels \
+                 --bp_of_interest 3000000 \
+                 --years_per_gen 28 \
+                 -o example </code></pre>
+                  Output: example.pdf.
+
+                  <p>
+                  You can change plotting parameters by editing <b>PATH_TO_RELATE/scripts/TreeView/treeview.R</b>.
+                  Specifically, lines 9 - 22 directly influence the plotting parameters.</p>
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+
+              <h3 id="Extract">Extract subtrees, trees in region of interest, and trees in newick format.</h3>
+              <hr/>
+
+            </div>
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="ExtractSubtree">Extract subtrees corresponding to a subpopulation</h4></div>
+                <div class="panel-body">  
+
+                  <p>Extracts subtrees such that all tips belong to the populations of interest.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--poplabels</dt>
+                    <dd>Filename of a .poplabels file. The file format is described <a href="input_data.html#poplabels">here</a>. This file needs to always contain all samples.</dd>
+                    <dt>--pop_of_interest</dt>
+                    <dd>Specifies populations for which population size is estimated. The second column of the .poplabels file is used for population labels. You can specify multiple populations separated by commas, e.g. pop1,pop2.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                 --mode SubTreesForSubpopulation\
+                 --anc example.anc \
+                 --mut example.mut \
+                 --poplabels example.poplabels \
+                 --pop_of_interest group1 \
+                 -o example_subpop </code></pre>
+                  Output: example_subpop.anc, example_subpop.mut, example_subpop.poplabels.
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="AncMutForSubregion">Extract trees corresponding to a subregion</h4></div>
+                <div class="panel-body">  
+
+                  <p>Extracts trees in region of interest.</p>
+                  <p>Please always apply this on the anc/mut files inferred using Relate (from haps/sample files), i.e., do not apply repeatedly to get "subregions of subregions". If you do, ignore the output .dist file and use the .dist file obtained from the original anc/mut files instead.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--first_bp</dt>
+                    <dd>BP of start of region.</dd>
+                    <dt>--last_bp</dt>
+                    <dd>BP of end of region.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                 --mode AncMutForSubregion\
+                 --anc example.anc \
+                 --mut example.mut \
+                 --first_bp 0 \
+                 --last_bp 10000 \
+                 -o example_subregion </code></pre>
+                  Output: example_subregion.anc, example_subregion.mut, example_subregion.dist.
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="TreeAtSNPAsNewick">Extract tree at a SNP of interest in newick format</h4></div>
+                <div class="panel-body">  
+
+                  <p>Extracts a tree at a SNP of interest in newick format.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--bp_of_interest</dt>
+                    <dd>Integer specfifying the BP position of interest</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                 --mode TreeAtSNPAsNewick \
+                 --anc example.anc \
+                 --mut example.mut \
+                 --bp_of_interest 3000000 \
+                 -o example </code></pre>
+                  Output: example_at_.newick.
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="RemoveTreesWithFewMutations">Remove trees with few mutations</h4></div>
+                <div class="panel-body">  
+
+
+                  <p>Removes trees and associated SNPs from the .anc/.mut files onto which less than a given number of SNPs are mapped.</p>
+
+                  <dl class="dl-horizontal">
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>--threshold</dt>
+                    <dd>Integer which is the number of SNPs a tree needs to not be dropped. This option serves two purposes: First, it removes bad/uninformative trees. Second it speeds up the inference. As we increase this value, we remove more trees. Default: number of haplotypes.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                 --mode RemoveTreesWithFewMutations \
+                 --anc example.anc \
+                 --mut example.mut \
+                 --threshold 100 \
+                 -o example_subset </code></pre>
+                  Output: example_subset.anc, example_subset.mut, example.dist.
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="ExtractDistFromMut">Extract .dist file from .mut file.</h4></div>
+                <div class="panel-body">  
+
+                  <p>Extracts distances between SNPs from the .mut file (3rd and 4th column). The .dist file is needed in some applications, when the .anc/.mut files have been subsetted using, e.g., <a href="modules.html#RemoveTreesWithFewMutations">this function</a> In these cases, the .dist file needs to be generated using the <b>not</b> subsetted .mut file.
+                  </p>
+
+
+                  <dl class="dl-horizontal">
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                 --mode ExtractDistFromMut \
+                 --mut example.mut \
+                 -o example </code></pre>
+                  Output: example.dist.
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="DivideAncMut">Divide the .anc/.mut files into smaller files to allow multi-threading.</h4></div>
+                <div class="panel-body">  
+
+                  <p>Dividing the .anc/.mut files into smaller files to allow for multi-threading.
+                  </p>
+
+
+                  <dl class="dl-horizontal">
+                    <dt>threads</dt>
+                    <dd>Number of threads that will be used. This slightly varies the number of chunks into which the .anc/.mut files will get divided into.</dd>
+                    <dt>--anc</dt>
+                    <dd>Filename of the .anc file.</dd>
+                    <dt>--mut</dt>
+                    <dd>Filename of the .mut file.</dd>
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                 --mode DivideAncMut \
+                 --threads 5 \
+                 --anc example.anc \
+                 --mut example.mut \
+                 -o example </code></pre>
+                  Output: example.param, example_chr1.anc, example_chr1.mut, example_chr2.anc, example_chr2.mut, etc.
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="CombineAncMut">Combine the .anc/.mut files into one file.</h4></div>
+                <div class="panel-body">  
+
+                  <p>Combining the .anc/.mut files into one file. This should be used after dividing .anc/.mut files using <a href="modules.html#DivideAncMut">this</a> function.
+                  </p>
+
+
+                  <dl class="dl-horizontal">
+                    <dt>-o,--output</dt>
+                    <dd>File of the output files without file extensions.</dd>
+                  </dl>
+                  <p>In addition, we assume that the corresponding .param file is in the same directory. You can also manually create this file, which has the header "NUM_HAPLOTYPES NUM_SNPS NUM_TREES NUM_CHUNKS", followed by the corresponding entries on the next line.</p>
+
+                  <pre><code> PATH_TO_RELATE/bin/RelateExtract\
+                 --mode CombineAncMut \
+                 -o example </code></pre>
+                  Output: example.anc.gz, example.mut.gz.
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+
+          <!-- row -->
+          <div class="row">
+
+            <div class="col-md-10 col-md-offset-1">
+
+              <p>
+              <h4 id="Extract_FileFormats">File formats</h4>
+              </p> 
+              <table class="table">
+                <tbody>
+                  <tr>
+                    <a class="anchor" name=".dist"></a>
+                    <td>.dist</td>
+                    <td>
+
+                      <ul>    
+                        <li>The first line is a header</li>
+                        <li>Each subsequent line contains the base pair position of the SNP and the distance (in bp) to the next SNP.</li>
+                      </ul>
+
+                      <pre><code>#pos dist
+51479 22
+51675 20
+51872 42
+51914 21</code></pre>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+            </div>
+          </div>
+
+
+        </div>
+
+
+      </div>
+    </div>
+ 
+    <script>
+      anchors.add();  
+    </script>
+
+  </body>
+</html>     

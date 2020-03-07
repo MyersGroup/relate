@@ -8,7 +8,7 @@
 #include "cxxopts.hpp"
 #include "data.hpp"
 #include "anc.hpp"
-//#include "branch_length_estimator.hpp"
+#include "branch_length_estimator.hpp"
 #include "anc_builder.hpp"
 
 int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_section, int last_section){
@@ -18,7 +18,7 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
   bool help = false;
   if(popsize || !options.count("mutation_rate") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: effectiveN, mutation_rate, first_section, last_section, output. Optional: coal." << std::endl;
+    std::cout << "Needed: effectiveN, mutation_rate, first_section, last_section, output. Optional: coal, sample_ages." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -99,54 +99,119 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
   }
 
 
-
   //////////////////////////////////
   //Parse Data
   if(first_section >= num_windows) return 1;
 
+  std::vector<double> sample_ages(N);
+  if(options.count("sample_ages")){
+    igzstream is_ages(options["sample_ages"].as<std::string>());
+    int i = 0; 
+    while(is_ages >> sample_ages[i]){
+      i++;
+      sample_ages[i] = sample_ages[i-1];
+      i++;
+      if(i == N) break;
+    }
+    if(i < N) sample_ages.clear();
+  }else{
+    sample_ages.clear(); 
+  }
+
   ///////////////////////////////////////// TMRCA Inference /////////////////////////
   //Infer Branchlengths
 
-  last_section = std::min(num_windows-1, last_section);
-  for(int section = first_section; section <= last_section; section++){
+  if(sample_ages.size() == 0){
 
-    std::cerr << "[" << section << "/" << last_section << "]\r";
-    std::cerr.flush(); 
+    last_section = std::min(num_windows-1, last_section);
+    for(int section = first_section; section <= last_section; section++){
 
-    //Read anc
-    AncesTree anc;
-    std::string filename; 
-    filename = dirname + options["output"].as<std::string>() + "_" + std::to_string(section) + ".anc";
-    anc.ReadBin(filename);
+      std::cerr << "[" << section << "/" << last_section << "]\r";
+      std::cerr.flush(); 
 
-    //Infer branch lengths
-    InferBranchLengths bl(data);
-    //EstimateBranchLengths bl2(data);
+      //Read anc
+      AncesTree anc;
+      std::string filename; 
+      filename = dirname + options["output"].as<std::string>() + "_" + std::to_string(section) + ".anc";
+      anc.ReadBin(filename);
 
-    int num_sec = (int) anc.seq.size()/100.0 + 1;
+      //Infer branch lengths
+      InferBranchLengths bl(data);
+      //EstimateBranchLengths bl2(data);
+      //EstimateBranchLengthsWithSampleAge bl2(data, sample_ages);
 
-    if(is_coal){
-      for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
-        bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
-      }
-    }else{
-      int count = 0;
-      CorrTrees::iterator it_seq = anc.seq.begin();
-      for(; it_seq != anc.seq.end(); it_seq++){
-        if(count % num_sec == 0){
-          std::cerr << "[" << section << "/" << last_section << "] " << "[" << count << "/" << anc.seq.size() << "]\r";
-          std::cerr.flush(); 
+      int num_sec = (int) anc.seq.size()/100.0 + 1;
+
+      if(is_coal){
+        for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
+          //bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
+          bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
         }
-        count++;
-        bl.MCMC(data, (*it_seq).tree, seed); //this is estimating times
-        //bl2.MCMC(data, (*it_seq).tree, seed); //this is estimating times
+      }else{
+        int count = 0;
+        CorrTrees::iterator it_seq = anc.seq.begin();
+        for(; it_seq != anc.seq.end(); it_seq++){
+          if(count % num_sec == 0){
+            std::cerr << "[" << section << "/" << last_section << "] " << "[" << count << "/" << anc.seq.size() << "]\r";
+            std::cerr.flush(); 
+          }
+          count++;
+          //bl.MCMC(data, (*it_seq).tree, seed); //this is estimating times
+          bl.MCMC(data, (*it_seq).tree, seed); //this is estimating times
+        }
+        std::cerr << "[" << section << "/" << last_section << "] " << "[" << count << "/" << anc.seq.size() << "]\r";
       }
-      std::cerr << "[" << section << "/" << last_section << "] " << "[" << count << "/" << anc.seq.size() << "]\r";
+
+      //Dump to file
+      anc.DumpBin(filename);
+
     }
 
-    //Dump to file
-    anc.DumpBin(filename);
+  }else{
 
+    last_section = std::min(num_windows-1, last_section);
+    for(int section = first_section; section <= last_section; section++){
+
+      std::cerr << "[" << section << "/" << last_section << "]\r";
+      std::cerr.flush(); 
+
+      //Read anc
+      AncesTree anc;
+      std::string filename; 
+      filename = dirname + options["output"].as<std::string>() + "_" + std::to_string(section) + ".anc";
+      anc.ReadBin(filename);
+      anc.sample_ages = sample_ages;
+
+      //Infer branch lengths
+      EstimateBranchLengthsWithSampleAge bl(data, anc.sample_ages);
+
+      int num_sec = (int) anc.seq.size()/100.0 + 1;
+
+      if(is_coal){
+        for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
+          bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
+        }
+      }else{
+        int count = 0;
+        CorrTrees::iterator it_seq = anc.seq.begin();
+        for(; it_seq != anc.seq.end(); it_seq++){
+          if(count % num_sec == 0){
+            std::cerr << "[" << section << "/" << last_section << "] " << "[" << count << "/" << anc.seq.size() << "]\r";
+            std::cerr.flush(); 
+          }
+          count++;
+          bl.MCMC(data, (*it_seq).tree, seed); //this is estimating times
+        }
+        std::cerr << "[" << section << "/" << last_section << "] " << "[" << count << "/" << anc.seq.size() << "]\r";
+      }
+
+      //Dump to file
+      anc.DumpBin(filename);
+
+    }
+
+  
+  
   }
 
   /////////////////////////////////////////////

@@ -20,7 +20,8 @@ then
   echo "--last_bp:         Optional: Last bp position."
   echo "--dist:            Optional: File containing bp and dist between SNPs. Obtained e.g., from RelateExtract --mode AncMutForSubregion. Required if anc/mut file is for subregion."
   echo "--num_proposals:   Optional: Number of MCMC proposals between samples. Default is max(10*N, 1000), where N is the number of haplotypes. If num_proposals=0, all samples will be identical to the input."
-  echo "--seed:            Optional: Random seed for branch lengths estimation."
+	echo "--format:          Optional: Output file format when sampling branches. 0: Newick, 1: anc. Default 0."
+	echo "--seed:            Optional: Random seed for branch lengths estimation."
   echo ""
   exit 1;
 fi
@@ -31,6 +32,8 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/SampleBranchLengths/Sam
 ######################################################################################################
 
 ######################## Read arguments from command line ###########################
+
+format=0
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -83,6 +86,11 @@ do
       shift # past argument
       shift # past value
       ;;
+		--format)
+			format="$2"
+			shift # past argument
+			shift # past value
+			;;
     --seed)
       seed="$2"
       shift # past argument
@@ -191,6 +199,7 @@ then
         -o ${output} \
         --num_proposals ${num_proposals} \
         --dist ${output}.dist \
+				--format ${format} \
         --seed ${seed}
 
     else
@@ -203,6 +212,7 @@ then
         --num_proposals ${num_proposals} \
         -i ${output} \
         -o ${output} \
+				--format ${format} \
         --dist ${output}.dist 
 
     fi
@@ -218,6 +228,7 @@ then
         -i ${output} \
         -o ${output} \
         --dist ${output}.dist \
+				--format ${format} \
         --seed ${seed}
 
     else
@@ -229,6 +240,7 @@ then
         --num_samples ${num_samples} \
         -i ${output} \
         -o ${output} \
+				--format ${format} \
         --dist ${output}.dist 
 
     fi
@@ -253,6 +265,7 @@ then
         --dist ${dist} \
         -i ${filename} \
         -o ${output} \
+				--format ${format} \
         --seed ${seed}
 
     else
@@ -264,6 +277,7 @@ then
         --num_samples ${num_samples} \
         --num_proposals ${num_proposals} \
         --dist ${dist} \
+				--format ${format} \
         -i ${filename} \
         -o ${output} 
 
@@ -278,6 +292,7 @@ then
         --coal ${coal} \
         --num_samples ${num_samples} \
         --dist ${dist} \
+				--format ${format} \
         -i ${filename} \
         -o ${output} \
         --seed ${seed}
@@ -290,6 +305,7 @@ then
         --coal ${coal} \
         --num_samples ${num_samples} \
         --dist ${dist} \
+				--format ${format} \
         -i ${filename} \
         -o ${output} 
 
@@ -311,6 +327,7 @@ else
         --coal ${coal} \
         --num_samples ${num_samples} \
         --num_proposals ${num_proposals} \
+				--format ${format} \
         -i ${filename} \
         -o ${output} \
         --seed ${seed}
@@ -323,6 +340,7 @@ else
         --coal ${coal} \
         --num_samples ${num_samples} \
         --num_proposals ${num_proposals} \
+				--format ${format} \
         -i ${filename} \
         -o ${output} 
 
@@ -336,6 +354,7 @@ else
         -m ${mu} \
         --coal ${coal} \
         --num_samples ${num_samples} \
+				--format ${format} \
         -i ${filename} \
         -o ${output} \
         --seed ${seed}
@@ -347,6 +366,7 @@ else
         -m ${mu} \
         --coal ${coal} \
         --num_samples ${num_samples} \
+				--format ${format} \
         -i ${filename} \
         -o ${output} 
 
@@ -354,3 +374,4 @@ else
   fi
 
 fi
+

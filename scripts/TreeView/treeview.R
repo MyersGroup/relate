@@ -53,7 +53,7 @@ TreeView <- function(filename_plot, years_per_gen, ...){
                                   legend.key.height= unit(1.5, "line"),
                                   legend.text=element_text(size=35),
                                   strip.text = element_text(face="bold"), plot.margin = margin(t = 0, r = 20, b = 60, l = 30, unit = "pt")) + 
-                             scale_x_continuous(limits = c(0, max(plotcoords$x_begin)+1))
+                             scale_x_continuous(limits = c(0, max(plotcoords$x_begin)+1)) + scale_y_continuous(limits = c(0, max(plotcoords$y_end)))
 
   return(p)
 
@@ -110,7 +110,7 @@ PopLabels <- function(filename_plot, filename_poplabels, text_size = 100, ...){
   plotcoords <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
   poplabels  <- read.table(filename_poplabels, header = T)[,2:3]
 
-  tips <- subset(plotcoords, y_begin == 0)
+  tips <- subset(plotcoords, seg_type == "t")
   tips <- cbind(tips, population = poplabels[ceiling((tips$branchID+1)/2),1], region = poplabels[ceiling((tips$branchID+1)/2),2])
   unique_region <- unique(poplabels[,2])
   p <- ggplot() + geom_point(data = tips, aes(x = x_begin, y = population, color = population), ...) +
@@ -152,7 +152,7 @@ system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --
 
 # plot tree
 p1 <- TreeView(filename_plot, years_per_gen, lwd = tree_lwd) + 
-      AddMutations(filename_plot, years_per_gen, size = mut_size) #+ scale_y_continuous(trans = "log10") 
+      AddMutations(filename_plot, years_per_gen, size = mut_size) + scale_y_continuous(trans = "log10") 
       
 # some modifications to theme
 p1 <- p1 + theme(axis.text.y = element_text(size = rel(2.3)), 
@@ -160,7 +160,7 @@ p1 <- p1 + theme(axis.text.y = element_text(size = rel(2.3)),
                  legend.text = element_text(size = rel(1)))  +  
            scale_color_manual(labels = c("unflipped", "flipped"), values = c("red", "blue"), drop = FALSE) +
            guides(color = guide_legend(nrow = 2, title = "")) 
-           
+
 # plot population labels
 p2 <- PopLabels(filename_plot, filename_poplabels, text_size = poplabels_textsize, size = poplabels_shapesize, shape = "|")
 
@@ -171,5 +171,5 @@ plot_grid(p1,p2, rel_heights = ratio, labels = "", align = "v", ncol = 1)
 dev.off()
 
 # delete tmp files for plotting tree
-system(paste("rm ",filename_plot, ".plotcoords", sep = ""))
-system(paste("rm ",filename_plot, ".plotcoords.mut", sep = ""))
+#system(paste("rm ",filename_plot, ".plotcoords", sep = ""))
+#system(paste("rm ",filename_plot, ".plotcoords.mut", sep = ""))

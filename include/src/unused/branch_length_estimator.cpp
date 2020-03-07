@@ -1834,8 +1834,8 @@ EstimateBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
 
   float p1 = std::min(10.0/data.N, 0.1);
   float p2 = p1 + 0.2;  
-  p1 = 0.1;
-  p2 = 0.3;
+  p1 = 0.8;
+  p2 = 0.8;
 
   ////////// Initialize MCMC ///////////
 
@@ -1991,8 +1991,8 @@ EstimateBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, 
 
   float p1 = std::min(10.0/data.N, 0.1);
   float p2 = p1 + 0.2;
-  p1 = 0.1;
-  p2 = 0.3;
+  p1 = 0.8;
+  p2 = 0.8;
   //std::cerr << p1 << " " << p2 << std::endl;
 
   int delta = std::max(data.N/10.0, 10.0);
@@ -2177,6 +2177,8 @@ EstimateBranchLengths::MCMCVariablePopulationSizeForRelate(const Data& data, Tre
 
   float p1 = std::min(10.0/data.N, 0.1);
   float p2 = p1 + 0.2;  
+  p1 = 0.8;
+  p2 = 0.8;
 
   int delta = std::max(data.N/10.0, 10.0);
   root = N_total - 1;

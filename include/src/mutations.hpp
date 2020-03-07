@@ -74,14 +74,15 @@ class AncMutIterators{
     int N, num_trees;
     int tree_index_in_anc, tree_index_in_mut;
     double num_bases_tree_persists;
-    std::string line;
+    std::string line, filename_anc, filename_mut;
 
   public:
 
+    std::vector<double> sample_ages;
     AncMutIterators(){};
-    AncMutIterators(std::string filename_anc, std::string filename_mut);
+    AncMutIterators(const std::string& filename_anc, const std::string& filename_mut);
 
-    void OpenFiles(std::string filename_anc, std::string filename_mut);
+    void OpenFiles(const std::string& i_filename_anc, const std::string& i_filename_mut);
     void CloseFiles(){
       if(is.rdbuf() -> is_open()) is.close(); //close if stream is still open
     }

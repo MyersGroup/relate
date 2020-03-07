@@ -305,34 +305,13 @@ AncMutForSubregion(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Extracting .anc/.mut files for subregion " << options["first_bp"].as<int>() << " - " << options["last_bp"].as<int>() << "..." << std::endl;
 
-  int N, num_trees;
-
-  igzstream is_N(options["anc"].as<std::string>());
-  if(is_N.fail()) is_N.open(options["anc"].as<std::string>() + ".gz");
-  if(is_N.fail()){
-    std::cerr << "Error opening .anc file" << std::endl;
-    exit(1);
-  }
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.ignore(256, ' ');
-  is_N >> num_trees;
-  is_N.close();
-  const int num_trees_check = num_trees;
-    
-  int L = 0;
-  igzstream is_L(options["mut"].as<std::string>());
-  if(is_L.fail()) is_L.open(options["mut"].as<std::string>() + ".gz");
-  if(is_L.fail()){
-    std::cerr << "Error opening .mut file" << std::endl;
-    exit(1);
-  }
-  std::string unused;
-  std::getline(is_L, unused); 
-  while ( std::getline(is_L, unused) ){
-    ++L;
-  }
-  is_L.close();
+	AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+	int N = ancmut.NumTips();
+	int num_trees = ancmut.NumTrees();
+	int L = ancmut.NumSnps();
+	MarginalTree mtr;
+	Muts::iterator it_mut;
+	float num_bases_tree_persists = 0.0;
 
   Data data(N,L);
 
@@ -392,6 +371,7 @@ AncMutForSubregion(cxxopts::Options& options){
       tree_index_end = (*it_mut).tree;
       break;
     }else if( (*it_mut).pos <= last_bp && (*std::next(it_mut,1)).pos > last_bp ){
+			if(tree_index_begin == -1) tree_index_begin = (*it_mut).tree;
       tree_index_end = (*it_mut).tree;
       break;
     }
@@ -402,7 +382,11 @@ AncMutForSubregion(cxxopts::Options& options){
   int tree_index = mut.info[0].tree;
   assert(tree_index == 0);
 
-  os << "NUM_HAPLOTYPES " << data.N << "\n";
+	os << "NUM_HAPLOTYPES " << data.N << " ";
+	for(std::vector<double>::iterator it_sample_ages = ancmut.sample_ages.begin(); it_sample_ages != ancmut.sample_ages.end(); it_sample_ages++){
+		os << *it_sample_ages << " ";
+	}
+	os << "\n";
   os << "NUM_TREES " << tree_index_end - tree_index_begin + 1 << "\n";
   while(getline(is, line)){
     if(tree_index >= tree_index_begin && tree_index <= tree_index_end){

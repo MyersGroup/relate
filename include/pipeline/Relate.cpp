@@ -27,6 +27,7 @@ int main(int argc, char* argv[]){
     ("dist", "Optional but recommended. Distance in BP between SNPs. Can be generated using RelateFileFormats. If unspecified, distances in haps are used.", cxxopts::value<std::string>())
     ("annot", "Optional. Filename of file containing additional annotation of snps. Can be generated using RelateFileFormats.", cxxopts::value<std::string>()) 
     ("memory", "Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB.", cxxopts::value<float>())
+    ("sample_ages", "Optional. Filename of file containing sample ages (one per line).", cxxopts::value<std::string>()) 
     ("chunk_index", "Optional. Index of chunk. (Use when running parts of the algorithm on an individual chunk.)", cxxopts::value<int>())
     ("first_section", "Optional. Index of first section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("last_section", "Optional. Index of last section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
@@ -118,7 +119,7 @@ int main(int argc, char* argv[]){
     bool help = false;
     if(!options.count("chunk_index")){
       std::cout << "Not enough arguments supplied." << std::endl;
-      std::cout << "Needed: effectiveN, mutation_rate, chunk_index, output. Optional: first_section, last_section." << std::endl; 
+      std::cout << "Needed: effectiveN, mutation_rate, chunk_index, output. Optional: first_section, last_section, sample_ages." << std::endl; 
       help = true;
     }
     if(options.count("help") || help){
@@ -172,8 +173,8 @@ int main(int argc, char* argv[]){
     bool help = false;
     if(!options.count("haps") || !options.count("sample") ||  !options.count("map") || popsize || !options.count("mutation_rate") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
-      //std::cout << "Needed: haps, sample, map, mutation_rate, effectiveN, output. Optional: seed, annot, dist, coal, max_memory, chunk_index, anc_allele_unknown." << std::endl;
-      std::cout << "Needed: haps, sample, map, mutation_rate, effectiveN, output. Optional: seed, annot, dist, coal, max_memory, chunk_index." << std::endl;
+      //std::cout << "Needed: haps, sample, map, mutation_rate, effectiveN, output. Optional: seed, annot, dist, coal, max_memory, sample_ages, chunk_index, anc_allele_unknown." << std::endl;
+      std::cout << "Needed: haps, sample, map, mutation_rate, effectiveN, output. Optional: seed, annot, dist, coal, max_memory, sample_ages, chunk_index." << std::endl;
       help = true;
     }
     if(options.count("help") || help){
@@ -213,7 +214,12 @@ int main(int argc, char* argv[]){
       std::cerr << "  " << options["haps"].as<std::string>() << std::endl;    
       std::cerr << "  " << options["sample"].as<std::string>() << std::endl;
       std::cerr << "  " << options["map"].as<std::string>() << std::endl;
-      std::cerr << "with mu = " << options["mutation_rate"].as<float>() << " and 2Ne = " << options["effectiveN"].as<float>() << "." << std::endl;
+      if(!options.count("coal")){
+        std::cerr << "with mu = " << options["mutation_rate"].as<float>() << " and 2Ne = " << options["effectiveN"].as<float>() << "." << std::endl;
+      }else{
+        std::cerr << "with mu = " << options["mutation_rate"].as<float>() << " and coal = " << options["coal"].as<std::string>() << "." << std::endl;
+      }
+      
       std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
       MakeChunks(options);

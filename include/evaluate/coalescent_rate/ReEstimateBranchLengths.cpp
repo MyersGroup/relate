@@ -10,868 +10,1066 @@
 #include "cxxopts.hpp"
 #include "data.hpp"
 #include "anc.hpp"
-//#include "branch_length_estimator.hpp"
+#include "branch_length_estimator.hpp"
 #include "anc_builder.hpp"
 
 void ShowProgress(int progress){
 
-  std::cerr << "[" << progress << "%]\r";
-  std::cerr.flush();
-  /*
-     int p = 0;
-     std::cerr << "[";
-     for(; p < progress; p++){
-     std::cerr << "*";
-     }
-     for(; p < 100; p++){
-     std::cerr << " ";
-     }
-     std::cerr << "]" << progress << "%\r";
-     std::cerr.flush();
-     */
+	std::cerr << "[" << progress << "%]\r";
+	std::cerr.flush();
+	/*
+		 int p = 0;
+		 std::cerr << "[";
+		 for(; p < progress; p++){
+		 std::cerr << "*";
+		 }
+		 for(; p < 100; p++){
+		 std::cerr << " ";
+		 }
+		 std::cerr << "]" << progress << "%\r";
+		 std::cerr.flush();
+		 */
 
 }
 
 int ReEstimateBranchLengths(cxxopts::Options& options){
 
-  int seed;
-  if(!options.count("seed")){
-    seed = std::time(0) + getpid();
-  }else{
-    seed = options["seed"].as<int>();
-  }
+	int seed;
+	if(!options.count("seed")){
+		seed = std::time(0) + getpid();
+	}else{
+		seed = options["seed"].as<int>();
+	}
 
-  int Ne = 3e4;
-  double mutation_rate = options["mutation_rate"].as<float>();
-  std::string line;
-  double tmp;
+	int Ne = 3e4;
+	double mutation_rate = options["mutation_rate"].as<float>();
+	std::string line;
+	double tmp;
 
-  //parse data
-  int N;
-  igzstream is_N(options["input"].as<std::string>() + ".anc");
-  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  } 
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
+	//parse data
+	int N;
+	igzstream is_N(options["input"].as<std::string>() + ".anc");
+	if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
+	if(is_N.fail()){
+		std::cerr << "Error while opening .anc file." << std::endl;
+		exit(1);
+	} 
+	is_N.ignore(256, ' ');
+	is_N >> N;
+	is_N.close();
 
-  //make this more efficient
-  int L = 0;
-  igzstream is_L;
-  
-  if(options.count("dist")){
-    is_L.open(options["dist"].as<std::string>());
-    if(is_L.fail()){
-      std::cerr << "Error while opening .dist file." << std::endl;
-      exit(1);
-    } 
-  }else{
-    is_L.open(options["input"].as<std::string>() + ".mut");
-    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".gz");
-    if(is_L.fail()){
-      std::cerr << "Error while opening .mut file." << std::endl;
-      exit(1);
-    } 
-  }
-  
-  while(std::getline(is_L, line)){
-    ++L;
-  }
-  L--;
-  is_L.close();
+	//make this more efficient
+	int L = 0;
+	igzstream is_L;
 
-  Data data(N, L, Ne, mutation_rate);
+	if(options.count("dist")){
+		is_L.open(options["dist"].as<std::string>());
+		if(is_L.fail()){
+			std::cerr << "Error while opening .dist file." << std::endl;
+			exit(1);
+		} 
+	}else{
+		is_L.open(options["input"].as<std::string>() + ".mut");
+		if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".gz");
+		if(is_L.fail()){
+			std::cerr << "Error while opening .mut file." << std::endl;
+			exit(1);
+		} 
+	}
 
-  Mutations mut(data);
-  mut.Read(options["input"].as<std::string>() + ".mut");
+	while(std::getline(is_L, line)){
+		++L;
+	}
+	L--;
+	is_L.close();
 
-  data.pos.resize(L);
-  if(options.count("dist")){
-    igzstream is_dist(options["dist"].as<std::string>());
-    if(is_dist.fail()){
-      std::cerr << "Error while opening " << options["dist"].as<std::string>() << std::endl;
-      exit(1);
-    }
-    getline(is_dist, line); 
-    int dtmp, snp = 0;
-    while(std::getline(is_dist, line)){
-      sscanf(line.c_str(), "%d %d", &dtmp, &data.pos[snp]);
-      snp++;
-    }
-    is_dist.close();
-  }else{
-    std::vector<int>::iterator it_pos = data.pos.begin();
-    for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
-      *it_pos = (*it_mut).dist;
-      it_pos++;
-    }
-  }
+	Data data(N, L, Ne, mutation_rate);
 
+	Mutations mut(data);
+	mut.Read(options["input"].as<std::string>() + ".mut");
 
-  std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Reinferring branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
+	data.pos.resize(L);
+	if(options.count("dist")){
+		igzstream is_dist(options["dist"].as<std::string>());
+		if(is_dist.fail()){
+			std::cerr << "Error while opening " << options["dist"].as<std::string>() << std::endl;
+			exit(1);
+		}
+		getline(is_dist, line); 
+		int dtmp, snp = 0;
+		while(std::getline(is_dist, line)){
+			sscanf(line.c_str(), "%d %d", &dtmp, &data.pos[snp]);
+			snp++;
+		}
+		is_dist.close();
+	}else{
+		std::vector<int>::iterator it_pos = data.pos.begin();
+		for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
+			*it_pos = (*it_mut).dist;
+			it_pos++;
+		}
+	}
 
 
-  // read epochs and population size 
-  igzstream is(options["coal"].as<std::string>()); 
-  if(is.fail()){
-    is.open(options["coal"].as<std::string>() + ".gz");
-    if(is.fail()){ 
-      std::cerr << "Error while opening " << options["coal"].as<std::string>() << "(.gz)." << std::endl;
-      exit(1);
-    }
-  } 
+	std::cerr << "---------------------------------------------------------" << std::endl;
+	std::cerr << "Reinferring branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
 
-  std::vector<double> epoch, coalescent_rate;
-  getline(is, line);
-  getline(is, line);
-  std::istringstream is_epoch(line);
-  while(is_epoch){
-    is_epoch >> tmp;
-    epoch.push_back(tmp/data.Ne);
-  }
-  getline(is, line);
-  is.close();
 
-  std::istringstream is_pop_size(line);
-  is_pop_size >> tmp >> tmp;
-  while(is_pop_size){
-    is_pop_size >> tmp;
-    //tmp = 1.0/data.Ne; 
-    if(tmp == 0.0 && coalescent_rate.size() > 0){
-      if(*std::prev(coalescent_rate.end(),1) > 0.0){
-        coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
-      }
-      //coalescent_rate.push_back(1);
-    }else{
-      coalescent_rate.push_back(tmp * data.Ne);
-    }
-  }
+	// read epochs and population size 
+	igzstream is(options["coal"].as<std::string>()); 
+	if(is.fail()){
+		is.open(options["coal"].as<std::string>() + ".gz");
+		if(is.fail()){ 
+			std::cerr << "Error while opening " << options["coal"].as<std::string>() << "(.gz)." << std::endl;
+			exit(1);
+		}
+	} 
 
-  for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
-    if(coalescent_rate[i-1] == 0){
-      if(coalescent_rate[i] > 0.0){
-        coalescent_rate[i-1] = coalescent_rate[i];
-      }else{
-        coalescent_rate[i-1] = 1.0;
-      }
-    } 
-  } 
+	std::vector<double> epoch, coalescent_rate;
+	getline(is, line);
+	getline(is, line);
+	std::istringstream is_epoch(line);
+	while(is_epoch){
+		is_epoch >> tmp;
+		epoch.push_back(tmp/data.Ne);
+	}
+	getline(is, line);
+	is.close();
 
-  //multiply by mutation rate
-  is.open(options["mrate"].as<std::string>());
-  double mepoch, mrate;
-  int e = 0;
-  while(getline(is, line)){
-    sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
-    assert(mepoch/data.Ne == epoch[e]);
-    if(mrate > 0){
-      coalescent_rate[e] *= data.mu/mrate;
-    }
-    e++;
-  }
+	std::istringstream is_pop_size(line);
+	is_pop_size >> tmp >> tmp;
+	while(is_pop_size){
+		is_pop_size >> tmp;
+		//tmp = 1.0/data.Ne; 
+		if(tmp == 0.0 && coalescent_rate.size() > 0){
+			if(*std::prev(coalescent_rate.end(),1) > 0.0){
+				coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
+			}
+			//coalescent_rate.push_back(1);
+		}else{
+			coalescent_rate.push_back(tmp * data.Ne);
+		}
+	}
 
-  /* 
-     for(int i = 0; i < (int)coalescent_rate.size(); i++){
-     std::cerr << coalescent_rate[i] << " ";
-     }
-     std::cerr << std::endl;
-     */
+	for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
+		if(coalescent_rate[i-1] == 0){
+			if(coalescent_rate[i] > 0.0){
+				coalescent_rate[i-1] = coalescent_rate[i];
+			}else{
+				coalescent_rate[i-1] = 1.0;
+			}
+		} 
+	} 
 
-  ///////////////////////////////////////// TMRCA Inference /////////////////////////
-  //Infer Branchlengths
+	//multiply by mutation rate
+	is.open(options["mrate"].as<std::string>());
+	double mepoch, mrate;
+	int e = 0;
+	while(getline(is, line)){
+		sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
+		assert(mepoch/data.Ne == epoch[e]);
+		if(mrate > 0){
+			coalescent_rate[e] *= data.mu/mrate;
+		}
+		e++;
+	}
 
-  AncesTree anc;
-  anc.Read(options["input"].as<std::string>() + ".anc");
+	/* 
+		 for(int i = 0; i < (int)coalescent_rate.size(); i++){
+		 std::cerr << coalescent_rate[i] << " ";
+		 }
+		 std::cerr << std::endl;
+		 */
 
-  //////////////////////////////////////////// Read Tree ///////////////////////////////////
+	///////////////////////////////////////// TMRCA Inference /////////////////////////
+	//Infer Branchlengths
 
-  //Infer branch lengths
-  InferBranchLengths bl(data);
-  //EstimateBranchLengths bl2(data);
+	AncesTree anc;
+	anc.Read(options["input"].as<std::string>() + ".anc");
 
-  int num_trees = anc.seq.size();
-  int progress_interval = (int)(num_trees/100.0) + 1;
-  int count_trees = 0, progress = 0, progress_step = 1;
-  if(num_trees < 100){
-    progress_step = 100/num_trees;
-  }
+	int num_trees = anc.seq.size();
+	int progress_interval = (int)(num_trees/100.0) + 1;
+	int count_trees = 0, progress = 0, progress_step = 1;
+	if(num_trees < 100){
+		progress_step = 100/num_trees;
+	}
 
-  CorrTrees::iterator it_seq   = anc.seq.begin();
-  for(; it_seq != anc.seq.end(); it_seq++){
 
-    if(count_trees % progress_interval == 0){
-      progress += progress_step;
-      ShowProgress(progress); 
-    }
-    count_trees++; 
-    //for(std::vector<Node>::iterator it_node = (*it_seq).tree.nodes.begin(); it_node != (*it_seq).tree.nodes.end(); it_node++){
-    //  (*it_node).num_events = 0.0;
-    //}
-    
-    bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
-    //bl2.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
-    //bl2.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
-    //bl2.MCMC(data, (*it_seq).tree, seed);
-  }
-  ShowProgress(100);
-  std::cerr << std::endl;
-  //Dump to file
-  anc.Dump(options["output"].as<std::string>() + ".anc");
+	//////////////////////////////////////////// Read Tree ///////////////////////////////////
 
-  ////////////////////////// Update mutation file
+	CorrTrees::iterator it_seq   = anc.seq.begin();
+	//Infer branch lengths
+	if(anc.sample_ages.size() == 0){
+		InferBranchLengths bl(data);
+		for(; it_seq != anc.seq.end(); it_seq++){
+			if(count_trees % progress_interval == 0){
+				progress += progress_step;
+				ShowProgress(progress); 
+			}
+			count_trees++; 
+			bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
+		}
+	}else{
+		EstimateBranchLengthsWithSampleAge bl(data, anc.sample_ages);
+		for(; it_seq != anc.seq.end(); it_seq++){
+			if(count_trees % progress_interval == 0){
+				progress += progress_step;
+				ShowProgress(progress); 
+			}
+			count_trees++; 
+			bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
+		}
+	}
 
-  CorrTrees::iterator it_anc = anc.seq.begin();
-  std::vector<float> coordinates(2*data.N-1);
-  int num_tree = mut.info[0].tree;
-  int root = 2*data.N-2;
+	ShowProgress(100);
+	std::cerr << std::endl;
+	//Dump to file
+	anc.Dump(options["output"].as<std::string>() + ".anc");
 
-  (*it_anc).tree.GetCoordinates(coordinates);
+	////////////////////////// Update mutation file
 
-  std::vector<SNPInfo>::iterator it_mut = mut.info.begin();
-  for(; it_mut != mut.info.end(); it_mut++){
-    //need the tree such that snp_of_next_tree > (*it_mut).snp_id
-    //and snp_of_current_tree <= (*it_mut).snp_id
-    if((*it_mut).tree > num_tree){
-      while((*it_mut).tree > num_tree){
-        it_anc++;
-        if(it_anc == anc.seq.end()){
-          it_anc--;
-          break;
-        }
-        num_tree++;
-      }
-      (*it_anc).tree.GetCoordinates(coordinates);
-    }
-    if((*it_mut).tree != num_tree) std::cerr << (*it_mut).tree << " " << num_tree << std::endl;
-    if((*it_mut).branch.size() == 1){
-      int branch = *(*it_mut).branch.begin();
-      (*it_mut).age_begin = coordinates[branch];
-      (*it_mut).age_end   = coordinates[(*(*it_anc).tree.nodes[branch].parent).label]; 
-    }
-  }
-  mut.Dump(options["output"].as<std::string>() + ".mut"); 
+	CorrTrees::iterator it_anc = anc.seq.begin();
+	std::vector<float> coordinates(2*data.N-1);
+	int num_tree = mut.info[0].tree;
+	int root = 2*data.N-2;
 
-  /////////////////////////////////////////////
-  //Resource Usage
+	(*it_anc).tree.GetCoordinates(coordinates);
 
-  rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
+	std::vector<SNPInfo>::iterator it_mut = mut.info.begin();
+	for(; it_mut != mut.info.end(); it_mut++){
+		//need the tree such that snp_of_next_tree > (*it_mut).snp_id
+		//and snp_of_current_tree <= (*it_mut).snp_id
+		if((*it_mut).tree > num_tree){
+			while((*it_mut).tree > num_tree){
+				it_anc++;
+				if(it_anc == anc.seq.end()){
+					it_anc--;
+					break;
+				}
+				num_tree++;
+			}
+			(*it_anc).tree.GetCoordinates(coordinates);
+		}
+		if((*it_mut).tree != num_tree) std::cerr << (*it_mut).tree << " " << num_tree << std::endl;
+		if((*it_mut).branch.size() == 1){
+			int branch = *(*it_mut).branch.begin();
+			(*it_mut).age_begin = coordinates[branch];
+			(*it_mut).age_end   = coordinates[(*(*it_anc).tree.nodes[branch].parent).label]; 
+		}
+	}
+	mut.Dump(options["output"].as<std::string>() + ".mut"); 
 
-  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+	/////////////////////////////////////////////
+	//Resource Usage
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
 #ifdef __APPLE__
-  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
 #else
-  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
 #endif
-  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
-  return 0;
+	return 0;
 }
 
 int SampleBranchLengths(cxxopts::Options& options){
 
-  int seed;
-  if(!options.count("seed")){
-    seed = std::time(0) + getpid();
-  }else{
-    seed = options["seed"].as<int>();
-  }
+	int seed;
+	if(!options.count("seed")){
+		seed = std::time(0) + getpid();
+	}else{
+		seed = options["seed"].as<int>();
+	}
 
-  int Ne = 3e4;
-  double mutation_rate = options["mutation_rate"].as<float>();
-  std::string line;
-  double tmp;
+	int Ne = 3e4;
+	double mutation_rate = options["mutation_rate"].as<float>();
+	std::string line;
+	double tmp;
 
-  //parse data
-  int N;
-  igzstream is_N(options["input"].as<std::string>() + ".anc");
-  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  } 
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
+	//parse data
+	int N;
+	igzstream is_N(options["input"].as<std::string>() + ".anc");
+	if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
+	if(is_N.fail()){
+		std::cerr << "Error while opening .anc file." << std::endl;
+		exit(1);
+	} 
+	is_N.ignore(256, ' ');
+	is_N >> N;
+	is_N.close();
 
-  //make this more efficient
-  int L = 0;
-  igzstream is_L;
-  
-  if(options.count("dist")){
-    is_L.open(options["dist"].as<std::string>());
-    if(is_L.fail()){
-      std::cerr << "Error while opening .dist file." << std::endl;
-      exit(1);
-    } 
-  }else{
-    is_L.open(options["input"].as<std::string>() + ".mut");
-    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".gz");
-    if(is_L.fail()){
-      std::cerr << "Error while opening .mut file." << std::endl;
-      exit(1);
-    } 
-  }
-  
-  while(std::getline(is_L, line)){
-    ++L;
-  }
-  L--;
-  is_L.close();
+	//make this more efficient
+	int L = 0;
+	igzstream is_L;
 
-  Data data(N, L, Ne, mutation_rate);
+	if(options.count("dist")){
+		is_L.open(options["dist"].as<std::string>());
+		if(is_L.fail()){
+			std::cerr << "Error while opening .dist file." << std::endl;
+			exit(1);
+		} 
+	}else{
+		is_L.open(options["input"].as<std::string>() + ".mut");
+		if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".gz");
+		if(is_L.fail()){
+			std::cerr << "Error while opening .mut file." << std::endl;
+			exit(1);
+		} 
+	}
 
-  Mutations mut(data);
-  mut.Read(options["input"].as<std::string>() + ".mut");
+	while(std::getline(is_L, line)){
+		++L;
+	}
+	L--;
+	is_L.close();
 
-  data.pos.resize(L);
-  std::vector<int> bp(L);
-  if(options.count("dist")){
-    igzstream is_dist(options["dist"].as<std::string>());
-    if(is_dist.fail()){
-      std::cerr << "Error while opening " << options["dist"].as<std::string>() << std::endl;
-      exit(1);
-    }
-    getline(is_dist, line); 
-    int dtmp, snp = 0;
-    while(std::getline(is_dist, line)){
-      sscanf(line.c_str(), "%d %d", &bp[snp], &data.pos[snp]);
-      snp++;
-    }
-    is_dist.close();
-  }else{
-    std::vector<int>::iterator it_pos = data.pos.begin();
-    std::vector<int>::iterator it_bp  = bp.begin();
-    for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
-      *it_pos = (*it_mut).dist;
-      *it_bp  = (*it_mut).pos;
-      it_bp++;
-      it_pos++;
-    }
-  }
+	Data data(N, L, Ne, mutation_rate);
+	Mutations mut(data);
+	mut.Read(options["input"].as<std::string>() + ".mut");
+	data.pos.resize(L);
+	std::vector<int> bp(L);
+	if(options.count("dist")){
+		igzstream is_dist(options["dist"].as<std::string>());
+		if(is_dist.fail()){
+			std::cerr << "Error while opening " << options["dist"].as<std::string>() << std::endl;
+			exit(1);
+		}
+		getline(is_dist, line); 
+		int dtmp, snp = 0;
+		while(std::getline(is_dist, line)){
+			sscanf(line.c_str(), "%d %d", &bp[snp], &data.pos[snp]);
+			snp++;
+		}
+		is_dist.close();
+	}else{
+		std::vector<int>::iterator it_pos = data.pos.begin();
+		std::vector<int>::iterator it_bp  = bp.begin();
+		for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
+			*it_pos = (*it_mut).dist;
+			*it_bp  = (*it_mut).pos;
+			it_bp++;
+			it_pos++;
+		}
+	}
 
 
-  std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Sampling branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
+	std::cerr << "---------------------------------------------------------" << std::endl;
+	std::cerr << "Sampling branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
 
 
-  // read epochs and population size 
-  igzstream is(options["coal"].as<std::string>()); 
-  if(is.fail()){
-    is.open(options["coal"].as<std::string>() + ".gz");
-    if(is.fail()){ 
-      std::cerr << "Error while opening " << options["coal"].as<std::string>() << "(.gz)." << std::endl;
-      exit(1);
-    }
-  } 
+	// read epochs and population size 
+	igzstream is(options["coal"].as<std::string>()); 
+	if(is.fail()){
+		is.open(options["coal"].as<std::string>() + ".gz");
+		if(is.fail()){ 
+			std::cerr << "Error while opening " << options["coal"].as<std::string>() << "(.gz)." << std::endl;
+			exit(1);
+		}
+	} 
 
-  std::vector<double> epoch, coalescent_rate;
-  getline(is, line);
-  getline(is, line);
-  std::istringstream is_epoch(line);
-  while(is_epoch){
-    is_epoch >> tmp;
-    epoch.push_back(tmp/data.Ne);
-  }
-  getline(is, line);
-  is.close();
+	std::vector<double> epoch, coalescent_rate;
+	getline(is, line);
+	getline(is, line);
+	std::istringstream is_epoch(line);
+	while(is_epoch){
+		is_epoch >> tmp;
+		epoch.push_back(tmp/data.Ne);
+	}
+	getline(is, line);
+	is.close();
 
-  std::istringstream is_pop_size(line);
-  is_pop_size >> tmp >> tmp;
-  while(is_pop_size){
-    is_pop_size >> tmp;
-    //tmp = 1.0/data.Ne; 
-    if(tmp == 0.0 && coalescent_rate.size() > 0){
-      if(*std::prev(coalescent_rate.end(),1) > 0.0){
-        coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
-      }
-      //coalescent_rate.push_back(1);
-    }else{
-      coalescent_rate.push_back(tmp * data.Ne);
-    }
-  }
+	std::istringstream is_pop_size(line);
+	is_pop_size >> tmp >> tmp;
+	while(is_pop_size){
+		is_pop_size >> tmp;
+		//tmp = 1.0/data.Ne; 
+		if(tmp == 0.0 && coalescent_rate.size() > 0){
+			if(*std::prev(coalescent_rate.end(),1) > 0.0){
+				coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
+			}
+			//coalescent_rate.push_back(1);
+		}else{
+			coalescent_rate.push_back(tmp * data.Ne);
+		}
+	}
 
-  for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
-    if(coalescent_rate[i-1] == 0){
-      if(coalescent_rate[i] > 0.0){
-        coalescent_rate[i-1] = coalescent_rate[i];
-      }else{
-        coalescent_rate[i-1] = 1.0;
-      }
-    } 
-  } 
+	for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
+		if(coalescent_rate[i-1] == 0){
+			if(coalescent_rate[i] > 0.0){
+				coalescent_rate[i-1] = coalescent_rate[i];
+			}else{
+				coalescent_rate[i-1] = 1.0;
+			}
+		} 
+	} 
 
-  ///////////////////////////////////////// TMRCA Inference /////////////////////////
-  //Infer Branchlengths
+	///////////////////////////////////////// TMRCA Inference /////////////////////////
+	//Infer Branchlengths
 
-  AncesTree anc;
-  anc.Read(options["input"].as<std::string>() + ".anc");
+	AncesTree anc;
+	anc.Read(options["input"].as<std::string>() + ".anc");
 
-  //////////////////////////////////////////// Read Tree ///////////////////////////////////
+	//////////////////////////////////////////// Read Tree ///////////////////////////////////
 
-  //Infer branch lengths
-  InferBranchLengths bl(data);
-  //EstimateBranchLengths bl2(data);
+	int num_trees = anc.seq.size();
+	int progress_interval = (int)(num_trees/100.0) + 1;
+	int count_trees = 0, progress = 0, progress_step = 1;
+	if(num_trees < 100){
+		progress_step = 100/num_trees;
+	}
 
-  int num_trees = anc.seq.size();
-  int progress_interval = (int)(num_trees/100.0) + 1;
-  int count_trees = 0, progress = 0, progress_step = 1;
-  if(num_trees < 100){
-    progress_step = 100/num_trees;
-  }
+	//need to make these three variables to arguments
+	int num_proposals = 100*std::max(data.N/10.0, 10.0);
+	if(options.count("num_proposals")){
+		num_proposals = options["num_proposals"].as<int>();
+	}
+	int num_samples   = options["num_samples"].as<int>();
+	std::string chrid = "chr";
 
-  //need to make these three variables to arguments
-  int num_proposals = 100*std::max(data.N/10.0, 10.0);
-  if(options.count("num_proposals")){
-    num_proposals = options["num_proposals"].as<int>();
-  }
-  int num_samples   = options["num_samples"].as<int>();
-  std::string chrid = "chr";
+	if(num_samples < 1){
+		std::cerr << "Error: num_samples value < 1" << std::endl;
+		exit(1);
+	}
+	if(num_proposals < 0){
+		std::cerr << "Error: num_proposals value < 0" << std::endl;
+		exit(1);
+	}
 
-  std::string filename = options["output"].as<std::string>() + ".newick";
-  std::ofstream os(filename);
-  os << "#chrom\tchromStart\tchromEnd\tMCMC_sample\ttree" << std::endl;
-  os.close();
-  std::ofstream os_sites(options["output"].as<std::string>() + ".sites");
+	//////////output files
 
-  os_sites << "NAMES\t";
-  for(int i = 0; i < data.N; i++){
-    os_sites << i << "\t";
-  }
-  os_sites << "\n";
-  os_sites << "REGION\t" << chrid << "\t" << mut.info[0].pos << "\t" << mut.info[mut.info.size()-1].pos + 1 << "\n";
+	int format = 0;
+	if(options.count("format")){
+		format = options["format"].as<int>();
+		if(format != 0 && format != 1){
+			std::cerr << "Error: output format doesn't exist." << std::endl;
+			exit(1);
+		}
+	}
 
-  std::vector<Leaves> leaves;
-  CorrTrees::iterator it_seq   = anc.seq.begin();
-  std::vector<SNPInfo>::iterator it_mut = mut.info.begin();
-  for(; it_seq != anc.seq.end(); it_seq++){
+	std::vector<Node>::iterator n_it;
+	std::vector<std::vector<float>> branch_lengths(2*data.N-1);
+	for(std::vector<std::vector<float>>::iterator it_branch_lengths = branch_lengths.begin(); it_branch_lengths != branch_lengths.end(); it_branch_lengths++){
+		(*it_branch_lengths).resize(num_samples);
+		std::fill((*it_branch_lengths).begin(), (*it_branch_lengths).end(), 0.0);
+	}
 
-    if(count_trees % progress_interval == 0){
-      progress += progress_step;
-      ShowProgress(progress); 
-    }
+	std::ofstream os, os_sites;
+	std::string filename;
+	if(format == 0){
+		filename = options["output"].as<std::string>() + ".newick";
+		os.open(filename);
+		os << "#chrom\tchromStart\tchromEnd\tMCMC_sample\ttree" << std::endl;
+		os.close();
+		os_sites.open(options["output"].as<std::string>() + ".sites");
 
-    for(std::vector<Node>::iterator it_node = (*it_seq).tree.nodes.begin(); it_node != (*it_seq).tree.nodes.end(); it_node++){
-      (*it_node).branch_length /= (double) data.Ne;
-    }
+		os_sites << "NAMES\t";
+		for(int i = 0; i < data.N; i++){
+			os_sites << i << "\t";
+		}
+		os_sites << "\n";
+		if(mut.info.size() > 0){
+			os_sites << "REGION\t" << chrid << "\t" << mut.info[0].pos << "\t" << mut.info[mut.info.size()-1].pos + 1 << "\n";
+		}
+	}else{
+		filename = options["output"].as<std::string>() + ".anc";
+		os.open(filename);
+		os << "NUM_HAPLOTYPES " << ((*anc.seq.begin()).tree.nodes.size() + 1)/2 << " ";
+		for(std::vector<double>::iterator it_sample_ages = anc.sample_ages.begin(); it_sample_ages != anc.sample_ages.end(); it_sample_ages++){
+			os << *it_sample_ages << " ";
+		}
+		os << "\n";
+		os << "NUM_TREES " << anc.seq.size() << "\n";
+		os << "NUM_SAMPLES_PER_TREE " << num_samples << "\n";
+	}
 
-    int count = 0;
-    if(count < num_samples){
-      bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
+	std::vector<Leaves> leaves;
+	CorrTrees::iterator it_seq   = anc.seq.begin();
+	std::vector<SNPInfo>::iterator it_mut = mut.info.begin();
 
-      os.open(filename, std::ofstream::app);
-      if(it_seq != std::prev(anc.seq.end(),1)){
-        os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << bp[(*std::next(it_seq,1)).pos] << "\t" << count << "\t";
-      }else{
-        os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << (*std::prev(mut.info.end(),1)).pos + 1 << "\t" << count << "\t";
-      } 
-      os.close();
-      (*it_seq).tree.WriteNewick( options["output"].as<std::string>() + ".newick", (double) data.Ne, 1);
-    }
-    count++;
-    for(;count < num_samples; count++){
-      bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
+	//Infer branch lengths
 
-      os.open(filename, std::ofstream::app);
-      if(it_seq != std::prev(anc.seq.end(),1)){
-        os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << bp[(*std::next(it_seq,1)).pos] << "\t" << count << "\t";
-      }else{
-        os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << (*std::prev(mut.info.end(),1)).pos + 1 << "\t" << count << "\t";
-      } 
-      os.close();
-      (*it_seq).tree.WriteNewick( options["output"].as<std::string>() + ".newick", (double) data.Ne, 1);
-    }
+	if(anc.sample_ages.size() == 0){
+		InferBranchLengths bl(data);
+		for(; it_seq != anc.seq.end(); it_seq++){
 
-    (*it_seq).tree.FindAllLeaves(leaves);
+			if(count_trees % progress_interval == 0){
+				progress += progress_step;
+				ShowProgress(progress); 
+			}
 
-    if(it_mut != mut.info.end()){
-      while((*it_mut).tree == count_trees){
-      
-        if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false){
+			for(std::vector<Node>::iterator it_node = (*it_seq).tree.nodes.begin(); it_node != (*it_seq).tree.nodes.end(); it_node++){
+				(*it_node).branch_length /= (double) data.Ne;
+			}
 
-          //.sites file
-          //get ancestral and derived allele
-          char ancestral = (*it_mut).mutation_type[0];
-          char derived   = (*it_mut).mutation_type[2]; 
-          //get list of descendants and output string
+			int count = 0;
+			if(count < num_samples){
+				bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
 
-          std::sort(leaves[*(*it_mut).branch.begin()].member.begin(), leaves[*(*it_mut).branch.begin()].member.end());
+				if(format == 0){
+					os.open(filename, std::ofstream::app);
+					if(it_seq != std::prev(anc.seq.end(),1)){
+						os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << bp[(*std::next(it_seq,1)).pos] << "\t" << count << "\t";
+					}else{
+						os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << (*std::prev(mut.info.end(),1)).pos + 1 << "\t" << count << "\t";
+					} 
+					os.close();
+					(*it_seq).tree.WriteNewick( options["output"].as<std::string>() + ".newick", (double) data.Ne, 1);
+				}else{
+					for(n_it = (*it_seq).tree.nodes.begin(); n_it != (*it_seq).tree.nodes.end(); n_it++){
+						branch_lengths[(*n_it).label][count] = (*n_it).branch_length;
+					}	
+				}
+			}
+			count++;
+			for(;count < num_samples; count++){
+				bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
 
-          std::vector<int>::iterator it_member = leaves[*(*it_mut).branch.begin()].member.begin();
-          os_sites << (*it_mut).pos << "\t";
-          for(int node = 0; node < data.N; node++){
-            if(it_member == leaves[*(*it_mut).branch.begin()].member.end()){
-              os_sites << ancestral;           
-            }else if(node == *it_member){
-              os_sites << derived;
-              it_member++;
-            }else{
-              os_sites << ancestral;
-            }
-          }
-          os_sites << "\n";
+				if(format == 0){
+					os.open(filename, std::ofstream::app);
+					if(it_seq != std::prev(anc.seq.end(),1)){
+						os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << bp[(*std::next(it_seq,1)).pos] << "\t" << count << "\t";
+					}else{
+						os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << (*std::prev(mut.info.end(),1)).pos + 1 << "\t" << count << "\t";
+					} 
+					os.close();
+					(*it_seq).tree.WriteNewick( options["output"].as<std::string>() + ".newick", (double) data.Ne, 1);
+				}else{
+					for(n_it = (*it_seq).tree.nodes.begin(); n_it != (*it_seq).tree.nodes.end(); n_it++){
+						branch_lengths[(*n_it).label][count] = (*n_it).branch_length;
+					}	
+				}
+			}
 
-        }
+			if(format == 0){
+				(*it_seq).tree.FindAllLeaves(leaves);
 
-        it_mut++;
-        if(it_mut == mut.info.end()) break;
+				if(it_mut != mut.info.end()){
+					while((*it_mut).tree == count_trees){
 
-      }
-    }
+						if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false){
 
-    count_trees++; 
+							//.sites file
+							//get ancestral and derived allele
+							char ancestral = (*it_mut).mutation_type[0];
+							char derived   = (*it_mut).mutation_type[2]; 
+							//get list of descendants and output string
 
-  }
-  ShowProgress(100);
-  std::cerr << std::endl;
+							std::sort(leaves[*(*it_mut).branch.begin()].member.begin(), leaves[*(*it_mut).branch.begin()].member.end());
 
-  os_sites.close(); 
+							std::vector<int>::iterator it_member = leaves[*(*it_mut).branch.begin()].member.begin();
+							os_sites << (*it_mut).pos << "\t";
+							for(int node = 0; node < data.N; node++){
+								if(it_member == leaves[*(*it_mut).branch.begin()].member.end()){
+									os_sites << ancestral;           
+								}else if(node == *it_member){
+									os_sites << derived;
+									it_member++;
+								}else{
+									os_sites << ancestral;
+								}
+							}
+							os_sites << "\n";
 
-  /////////////////////////////////////////////
-  //Resource Usage
+						}
 
-  rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
+						it_mut++;
+						if(it_mut == mut.info.end()) break;
 
-  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+					}
+				}
+			}else{
+
+				int parent;
+				n_it = (*it_seq).tree.nodes.begin();
+				os << (*it_seq).pos << ": ";
+				for(; n_it != (*it_seq).tree.nodes.end(); n_it++){
+					if((*n_it).parent == NULL){
+						parent = -1;
+					}else{
+						parent = (*(*n_it).parent).label;
+					}
+					os << parent << ":(";
+					for(std::vector<float>::iterator it_branch_length = branch_lengths[(*n_it).label].begin(); it_branch_length != branch_lengths[(*n_it).label].end(); it_branch_length++){
+						os << std::fixed << std::setprecision(5) << (*it_branch_length * data.Ne) << " ";
+					}
+					os << std::setprecision(2) << (*n_it).num_events << " " << (*n_it).SNP_begin << " " << (*n_it).SNP_end << ")";
+				}
+
+				os << "\n";
+
+			}
+
+			count_trees++; 
+
+		}
+	}else{
+		//has sample ages
+		EstimateBranchLengthsWithSampleAge bl(data, anc.sample_ages);
+		for(; it_seq != anc.seq.end(); it_seq++){
+
+			if(count_trees % progress_interval == 0){
+				progress += progress_step;
+				ShowProgress(progress); 
+			}
+
+			for(std::vector<Node>::iterator it_node = (*it_seq).tree.nodes.begin(); it_node != (*it_seq).tree.nodes.end(); it_node++){
+				(*it_node).branch_length /= (double) data.Ne;
+			}
+
+			int count = 0;
+			if(count < num_samples){
+				bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
+
+				if(format == 0){
+					os.open(filename, std::ofstream::app);
+					if(it_seq != std::prev(anc.seq.end(),1)){
+						os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << bp[(*std::next(it_seq,1)).pos] << "\t" << count << "\t";
+					}else{
+						os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << (*std::prev(mut.info.end(),1)).pos + 1 << "\t" << count << "\t";
+					} 
+					os.close();
+					(*it_seq).tree.WriteNewick( options["output"].as<std::string>() + ".newick", (double) data.Ne, 1);
+				}else{
+					for(n_it = (*it_seq).tree.nodes.begin(); n_it != (*it_seq).tree.nodes.end(); n_it++){
+						branch_lengths[(*n_it).label][count] = (*n_it).branch_length;
+					}	
+				}
+			}
+			count++;
+			for(;count < num_samples; count++){
+				bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
+
+				if(format == 0){
+					os.open(filename, std::ofstream::app);
+					if(it_seq != std::prev(anc.seq.end(),1)){
+						os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << bp[(*std::next(it_seq,1)).pos] << "\t" << count << "\t";
+					}else{
+						os << chrid << "\t" << bp[(*it_seq).pos] << "\t" << (*std::prev(mut.info.end(),1)).pos + 1 << "\t" << count << "\t";
+					} 
+					os.close();
+					(*it_seq).tree.WriteNewick( options["output"].as<std::string>() + ".newick", (double) data.Ne, 1);
+				}else{
+					for(n_it = (*it_seq).tree.nodes.begin(); n_it != (*it_seq).tree.nodes.end(); n_it++){
+						branch_lengths[(*n_it).label][count] = (*n_it).branch_length;
+					}	
+				}
+			}
+
+			if(format == 0){
+				(*it_seq).tree.FindAllLeaves(leaves);
+
+				if(it_mut != mut.info.end()){
+					while((*it_mut).tree == count_trees){
+
+						if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false){
+
+							//.sites file
+							//get ancestral and derived allele
+							char ancestral = (*it_mut).mutation_type[0];
+							char derived   = (*it_mut).mutation_type[2]; 
+							//get list of descendants and output string
+
+							std::sort(leaves[*(*it_mut).branch.begin()].member.begin(), leaves[*(*it_mut).branch.begin()].member.end());
+
+							std::vector<int>::iterator it_member = leaves[*(*it_mut).branch.begin()].member.begin();
+							os_sites << (*it_mut).pos << "\t";
+							for(int node = 0; node < data.N; node++){
+								if(it_member == leaves[*(*it_mut).branch.begin()].member.end()){
+									os_sites << ancestral;           
+								}else if(node == *it_member){
+									os_sites << derived;
+									it_member++;
+								}else{
+									os_sites << ancestral;
+								}
+							}
+							os_sites << "\n";
+
+						}
+
+						it_mut++;
+						if(it_mut == mut.info.end()) break;
+
+					}
+				}
+			}else{
+
+				int parent;
+				n_it = (*it_seq).tree.nodes.begin();
+				os << (*it_seq).pos << ": ";
+				for(; n_it != (*it_seq).tree.nodes.end(); n_it++){
+					if((*n_it).parent == NULL){
+						parent = -1;
+					}else{
+						parent = (*(*n_it).parent).label;
+					}
+					os << parent << ":(";
+					for(std::vector<float>::iterator it_branch_length = branch_lengths[(*n_it).label].begin(); it_branch_length != branch_lengths[(*n_it).label].end(); it_branch_length++){
+						os << std::fixed << std::setprecision(5) << (*it_branch_length * data.Ne) << " ";
+					}
+					os << std::setprecision(2) << (*n_it).num_events << " " << (*n_it).SNP_begin << " " << (*n_it).SNP_end << ")";
+				}
+
+				os << "\n";
+
+			}
+
+			count_trees++; 
+
+		}
+	}
+
+	ShowProgress(100);
+	std::cerr << std::endl;
+
+	os_sites.close(); 
+
+	/////////////////////////////////////////////
+	//Resource Usage
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
 #ifdef __APPLE__
-  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
 #else
-  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
 #endif
-  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
-  return 0;
+	return 0;
 }
+
 
 /////////////////////////////////
 float           
 GetCoords(int node, Tree& tree, int branch, float Ne, char m, std::vector<float>::iterator& it_dertimes, std::vector<float>::iterator& it_anctimes){
 
-  float coordinate = 0.0;
-  if(tree.nodes[node].child_left != NULL){
-  
-    int child_left  = (*tree.nodes[node].child_left).label;
-    int child_right = (*tree.nodes[node].child_right).label;
+	float coordinate = 0.0;
+	if(tree.nodes[node].child_left != NULL){
 
-    if(child_left == branch || m == 'd'){
-      coordinate = GetCoords(child_left, tree, branch, Ne, 'd', it_dertimes, it_anctimes);
-    }else{
-      coordinate = GetCoords(child_left, tree, branch, Ne, 'a', it_dertimes, it_anctimes);
-    }
+		int child_left  = (*tree.nodes[node].child_left).label;
+		int child_right = (*tree.nodes[node].child_right).label;
 
-    if(child_right == branch || m == 'd'){
-      coordinate = GetCoords(child_right, tree, branch, Ne, 'd', it_dertimes, it_anctimes);
-    }else{
-      coordinate = GetCoords(child_right, tree, branch, Ne, 'a', it_dertimes, it_anctimes);
-    }
-    coordinate += tree.nodes[child_right].branch_length;
+		if(child_left == branch || m == 'd'){
+			coordinate = GetCoords(child_left, tree, branch, Ne, 'd', it_dertimes, it_anctimes);
+		}else{
+			coordinate = GetCoords(child_left, tree, branch, Ne, 'a', it_dertimes, it_anctimes);
+		}
 
-    if(child_left != branch && child_right != branch){
-      if(m == 'a'){
-        *it_anctimes = Ne*coordinate;
-        it_anctimes++;
-      }else{
-        *it_dertimes = Ne*coordinate;
-        it_dertimes++;
-      }
-    }
-  
-  }
+		if(child_right == branch || m == 'd'){
+			coordinate = GetCoords(child_right, tree, branch, Ne, 'd', it_dertimes, it_anctimes);
+		}else{
+			coordinate = GetCoords(child_right, tree, branch, Ne, 'a', it_dertimes, it_anctimes);
+		}
+		coordinate += tree.nodes[child_right].branch_length;
 
-  return coordinate;
+		if(child_left != branch && child_right != branch){
+			if(m == 'a'){
+				*it_anctimes = Ne*coordinate;
+				it_anctimes++;
+			}else{
+				*it_dertimes = Ne*coordinate;
+				it_dertimes++;
+			}
+		}
+
+	}
+
+	return coordinate;
 
 }
 
 int SampleBranchLengthsBinary(cxxopts::Options& options){
 
-  int seed;
-  if(!options.count("seed")){
-    seed = std::time(0) + getpid();
-  }else{
-    seed = options["seed"].as<int>();
-  }
+	int seed;
+	if(!options.count("seed")){
+		seed = std::time(0) + getpid();
+	}else{
+		seed = options["seed"].as<int>();
+	}
 
-  int Ne = 3e4;
-  double mutation_rate = options["mutation_rate"].as<float>();
-  std::string line;
-  double tmp;
+	int Ne = 3e4;
+	double mutation_rate = options["mutation_rate"].as<float>();
+	std::string line;
+	double tmp;
 
-  //parse data
-  int N;
-  igzstream is_N(options["input"].as<std::string>() + ".anc");
-  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  } 
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
+	//parse data
+	int N;
+	igzstream is_N(options["input"].as<std::string>() + ".anc");
+	if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
+	if(is_N.fail()){
+		std::cerr << "Error while opening .anc file." << std::endl;
+		exit(1);
+	} 
+	is_N.ignore(256, ' ');
+	is_N >> N;
+	is_N.close();
 
-  //make this more efficient
-  int L = 0;
-  igzstream is_L;
-  
-  if(options.count("dist")){
-    is_L.open(options["dist"].as<std::string>());
-    if(is_L.fail()){
-      std::cerr << "Error while opening .dist file." << std::endl;
-      exit(1);
-    } 
-  }else{
-    is_L.open(options["input"].as<std::string>() + ".mut");
-    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".gz");
-    if(is_L.fail()){
-      std::cerr << "Error while opening .mut file." << std::endl;
-      exit(1);
-    } 
-  }
-  
-  while(std::getline(is_L, line)){
-    ++L;
-  }
-  L--;
-  is_L.close();
+	//make this more efficient
+	int L = 0;
+	igzstream is_L;
 
-  Data data(N, L, Ne, mutation_rate);
+	if(options.count("dist")){
+		is_L.open(options["dist"].as<std::string>());
+		if(is_L.fail()){
+			std::cerr << "Error while opening .dist file." << std::endl;
+			exit(1);
+		} 
+	}else{
+		is_L.open(options["input"].as<std::string>() + ".mut");
+		if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".gz");
+		if(is_L.fail()){
+			std::cerr << "Error while opening .mut file." << std::endl;
+			exit(1);
+		} 
+	}
 
-  Mutations mut(data);
-  mut.Read(options["input"].as<std::string>() + ".mut");
-  int num_mapping_SNPs = 0;
-  for(Muts::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
-    if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false) num_mapping_SNPs++;
-  }
+	while(std::getline(is_L, line)){
+		++L;
+	}
+	L--;
+	is_L.close();
 
-  data.pos.resize(L);
-  std::vector<int> bp(L);
-  if(options.count("dist")){
-    igzstream is_dist(options["dist"].as<std::string>());
-    if(is_dist.fail()){
-      std::cerr << "Error while opening " << options["dist"].as<std::string>() << std::endl;
-      exit(1);
-    }
-    getline(is_dist, line); 
-    int dtmp, snp = 0;
-    while(std::getline(is_dist, line)){
-      sscanf(line.c_str(), "%d %d", &bp[snp], &data.pos[snp]);
-      snp++;
-    }
-    is_dist.close();
-  }else{
-    std::vector<int>::iterator it_pos = data.pos.begin();
-    std::vector<int>::iterator it_bp  = bp.begin();
-    for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
-      *it_pos = (*it_mut).dist;
-      *it_bp  = (*it_mut).pos;
-      it_bp++;
-      it_pos++;
-    }
-  }
+	Data data(N, L, Ne, mutation_rate);
 
+	Mutations mut(data);
+	mut.Read(options["input"].as<std::string>() + ".mut");
+	int num_mapping_SNPs = 0;
+	for(Muts::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
+		if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false) num_mapping_SNPs++;
+	}
 
-  std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Sampling branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
+	data.pos.resize(L);
+	std::vector<int> bp(L);
+	if(options.count("dist")){
+		igzstream is_dist(options["dist"].as<std::string>());
+		if(is_dist.fail()){
+			std::cerr << "Error while opening " << options["dist"].as<std::string>() << std::endl;
+			exit(1);
+		}
+		getline(is_dist, line); 
+		int dtmp, snp = 0;
+		while(std::getline(is_dist, line)){
+			sscanf(line.c_str(), "%d %d", &bp[snp], &data.pos[snp]);
+			snp++;
+		}
+		is_dist.close();
+	}else{
+		std::vector<int>::iterator it_pos = data.pos.begin();
+		std::vector<int>::iterator it_bp  = bp.begin();
+		for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
+			*it_pos = (*it_mut).dist;
+			*it_bp  = (*it_mut).pos;
+			it_bp++;
+			it_pos++;
+		}
+	}
 
 
-  // read epochs and population size 
-  igzstream is(options["coal"].as<std::string>()); 
-  if(is.fail()){
-    is.open(options["coal"].as<std::string>() + ".gz");
-    if(is.fail()){ 
-      std::cerr << "Error while opening " << options["coal"].as<std::string>() << "(.gz)." << std::endl;
-      exit(1);
-    }
-  } 
+	std::cerr << "---------------------------------------------------------" << std::endl;
+	std::cerr << "Sampling branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
 
-  std::vector<double> epoch, coalescent_rate;
-  getline(is, line);
-  getline(is, line);
-  std::istringstream is_epoch(line);
-  while(is_epoch){
-    is_epoch >> tmp;
-    epoch.push_back(tmp/data.Ne);
-  }
-  getline(is, line);
-  is.close();
 
-  std::istringstream is_pop_size(line);
-  is_pop_size >> tmp >> tmp;
-  while(is_pop_size){
-    is_pop_size >> tmp;
-    //tmp = 1.0/data.Ne; 
-    if(tmp == 0.0 && coalescent_rate.size() > 0){
-      if(*std::prev(coalescent_rate.end(),1) > 0.0){
-        coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
-      }
-      //coalescent_rate.push_back(1);
-    }else{
-      coalescent_rate.push_back(tmp * data.Ne);
-    }
-  }
+	// read epochs and population size 
+	igzstream is(options["coal"].as<std::string>()); 
+	if(is.fail()){
+		is.open(options["coal"].as<std::string>() + ".gz");
+		if(is.fail()){ 
+			std::cerr << "Error while opening " << options["coal"].as<std::string>() << "(.gz)." << std::endl;
+			exit(1);
+		}
+	} 
 
-  for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
-    if(coalescent_rate[i-1] == 0){
-      if(coalescent_rate[i] > 0.0){
-        coalescent_rate[i-1] = coalescent_rate[i];
-      }else{
-        coalescent_rate[i-1] = 1.0;
-      }
-    } 
-  } 
+	std::vector<double> epoch, coalescent_rate;
+	getline(is, line);
+	getline(is, line);
+	std::istringstream is_epoch(line);
+	while(is_epoch){
+		is_epoch >> tmp;
+		epoch.push_back(tmp/data.Ne);
+	}
+	getline(is, line);
+	is.close();
 
-  ///////////////////////////////////////// TMRCA Inference /////////////////////////
-  //Infer Branchlengths
+	std::istringstream is_pop_size(line);
+	is_pop_size >> tmp >> tmp;
+	while(is_pop_size){
+		is_pop_size >> tmp;
+		//tmp = 1.0/data.Ne; 
+		if(tmp == 0.0 && coalescent_rate.size() > 0){
+			if(*std::prev(coalescent_rate.end(),1) > 0.0){
+				coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
+			}
+			//coalescent_rate.push_back(1);
+		}else{
+			coalescent_rate.push_back(tmp * data.Ne);
+		}
+	}
 
-  MarginalTree mtr; //stores marginal trees. mtr.pos is SNP position at which tree starts, mtr.tree stores the tree
-  Muts::iterator it_mut; //iterator for mut file
-  float num_bases_tree_persists = 0.0;
+	for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
+		if(coalescent_rate[i-1] == 0){
+			if(coalescent_rate[i] > 0.0){
+				coalescent_rate[i-1] = coalescent_rate[i];
+			}else{
+				coalescent_rate[i-1] = 1.0;
+			}
+		} 
+	} 
 
-  AncMutIterators ancmut(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
-  int num_trees = ancmut.NumTrees();
+	///////////////////////////////////////// TMRCA Inference /////////////////////////
+	//Infer Branchlengths
 
-  //////////////////////////////////////////// Read Tree ///////////////////////////////////
+	MarginalTree mtr; //stores marginal trees. mtr.pos is SNP position at which tree starts, mtr.tree stores the tree
+	Muts::iterator it_mut; //iterator for mut file
+	float num_bases_tree_persists = 0.0;
 
-  //Infer branch lengths
-  InferBranchLengths bl(data);
-  //EstimateBranchLengths bl2(data);
+	AncMutIterators ancmut(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
+	int num_trees = ancmut.NumTrees();
 
-  int progress_interval = (int)(num_mapping_SNPs/100.0) + 1;
-  int count_trees = 0, count_snps = 0, progress = 0, progress_step = 1;
-  if(num_mapping_SNPs < 100){
-    progress_step = 100/num_mapping_SNPs;
-  }
+	//////////////////////////////////////////// Read Tree ///////////////////////////////////
 
-  //need to make these three variables to arguments
-  int num_proposals = 100*std::max(data.N/10.0, 10.0);
-  if(options.count("num_proposals")){
-    num_proposals = options["num_proposals"].as<int>();
-  }
-  int num_samples   = options["num_samples"].as<int>();
-  std::string chrid = "chr";
+	//Infer branch lengths
+	InferBranchLengths bl(data);
+	//EstimateBranchLengths bl2(data);
 
-  //prepare files for output
-  std::string filename = options["output"].as<std::string>() + ".clues";
-  FILE* fp = fopen(filename.c_str(), "wb");
-  //write number of trees and number of proposals per SNP
-  //std::cerr << num_mapping_SNPs << " " << sizeof(int) << std::endl;
-  //std::cerr << num_samples << " " << sizeof(int) << std::endl;
-  fwrite(&num_mapping_SNPs, sizeof(int), 1, fp);
-  fwrite(&num_samples, sizeof(int), 1, fp);
+	int progress_interval = (int)(num_mapping_SNPs/100.0) + 1;
+	int count_trees = 0, count_snps = 0, progress = 0, progress_step = 1;
+	if(num_mapping_SNPs < 100){
+		progress_step = 100/num_mapping_SNPs;
+	}
 
-  std::vector<Leaves> leaves;
-  //iterate through whole file
-  while(num_bases_tree_persists >= 0.0){
+	//need to make these three variables to arguments
+	int num_proposals = 100*std::max(data.N/10.0, 10.0);
+	if(options.count("num_proposals")){
+		num_proposals = options["num_proposals"].as<int>();
+	}
+	int num_samples   = options["num_samples"].as<int>();
+	std::string chrid = "chr";
 
-    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+	//prepare files for output
+	std::string filename = options["output"].as<std::string>() + ".clues";
+	FILE* fp = fopen(filename.c_str(), "wb");
+	//write number of trees and number of proposals per SNP
+	//std::cerr << num_mapping_SNPs << " " << sizeof(int) << std::endl;
+	//std::cerr << num_samples << " " << sizeof(int) << std::endl;
+	fwrite(&num_mapping_SNPs, sizeof(int), 1, fp);
+	fwrite(&num_samples, sizeof(int), 1, fp);
 
-    for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
-      (*it_node).branch_length /= (double) data.Ne;
-    }
+	std::vector<Leaves> leaves;
+	//iterate through whole file
+	while(num_bases_tree_persists >= 0.0){
 
-    if(it_mut != ancmut.mut_end()){
-      while((*it_mut).tree == count_trees){
-      
-        if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false){
+		num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
 
-          if(count_snps % progress_interval == 0){
-            progress += progress_step;
-            ShowProgress(progress); 
-          }
+		for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
+			(*it_node).branch_length /= (double) data.Ne;
+		}
 
-          mtr.tree.FindAllLeaves(leaves);
+		if(it_mut != ancmut.mut_end()){
+			while((*it_mut).tree == count_trees){
 
-          //store matrix with
-          //num_snps x anc_times x num_samples
-          //num_snps x der_times x num_samples
+				if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false){
 
-          int branch = *(*it_mut).branch.begin();
-          int DAF    = leaves[branch].num_leaves;
-          std::vector<float> anctimes(num_samples*(data.N-DAF-1), 0.0);
-          std::vector<float> dertimes(num_samples*(DAF-1), 0.0);
-          std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
+					if(count_snps % progress_interval == 0){
+						progress += progress_step;
+						ShowProgress(progress); 
+					}
 
-          int count = 0;
-          if(count < num_samples){
-            bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
- 
-            //store anc and dertimes
-            std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-            GetCoords(2*data.N-2, mtr.tree, branch, data.Ne, 'a', it_dertimes, it_anctimes);
-            assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
-            assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
-            std::sort(it_anctimes_s, it_anctimes);
-            std::sort(it_dertimes_s, it_dertimes);
+					mtr.tree.FindAllLeaves(leaves);
 
-          }
-          count++;
-          for(;count < num_samples; count++){
-            bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
-           
-            //store anc and dertimes
-            std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-            GetCoords(2*data.N-2, mtr.tree, branch, data.Ne, 'a', it_dertimes, it_anctimes);
-            assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
-            assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
-            std::sort(it_anctimes_s, it_anctimes);
-            std::sort(it_dertimes_s, it_dertimes);
+					//store matrix with
+					//num_snps x anc_times x num_samples
+					//num_snps x der_times x num_samples
 
-          }
+					int branch = *(*it_mut).branch.begin();
+					int DAF    = leaves[branch].num_leaves;
+					std::vector<float> anctimes(num_samples*(data.N-DAF-1), 0.0);
+					std::vector<float> dertimes(num_samples*(DAF-1), 0.0);
+					std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
 
-          //for(std::vector<float>::iterator it = dertimes.begin(); it != dertimes.end(); it++){
-          //  std::cerr << *it << " ";
-          //}
-          //std::cerr << std::endl;
+					int count = 0;
+					if(count < num_samples){
+						bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
 
-          //for(std::vector<float>::iterator it = anctimes.begin(); it != anctimes.end(); it++){
-          //  std::cerr << *it << " ";
-          //}
-          //std::cerr << std::endl;
+						//store anc and dertimes
+						std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+						GetCoords(2*data.N-2, mtr.tree, branch, data.Ne, 'a', it_dertimes, it_anctimes);
+						assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
+						assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
+						std::sort(it_anctimes_s, it_anctimes);
+						std::sort(it_dertimes_s, it_dertimes);
 
-          //WriteBinary(anctimes, dertimes, fp);
-          //BP, DAF, N, 
-          //dump
-          int BP = (*it_mut).pos;
-          fwrite(&BP, sizeof(int), 1, fp);
-          fwrite(&DAF, sizeof(int), 1, fp);
-          fwrite(&data.N, sizeof(int), 1, fp);
-          fwrite(&anctimes[0], sizeof(float), num_samples*(data.N-DAF-1), fp);
-          fwrite(&dertimes[0], sizeof(float), num_samples*(DAF-1), fp);
+					}
+					count++;
+					for(;count < num_samples; count++){
+						bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
 
-          count_snps++;
-        }
+						//store anc and dertimes
+						std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+						GetCoords(2*data.N-2, mtr.tree, branch, data.Ne, 'a', it_dertimes, it_anctimes);
+						assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
+						assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
+						std::sort(it_anctimes_s, it_anctimes);
+						std::sort(it_dertimes_s, it_dertimes);
 
-        it_mut++;
-        if(it_mut == ancmut.mut_end()) break;
-      }
-    }
+					}
 
-    if(it_mut == ancmut.mut_end()) break;
-    count_trees++; 
+					//for(std::vector<float>::iterator it = dertimes.begin(); it != dertimes.end(); it++){
+					//  std::cerr << *it << " ";
+					//}
+					//std::cerr << std::endl;
 
-  }
-  ShowProgress(100);
-  std::cerr << std::endl;
+					//for(std::vector<float>::iterator it = anctimes.begin(); it != anctimes.end(); it++){
+					//  std::cerr << *it << " ";
+					//}
+					//std::cerr << std::endl;
 
-  fclose(fp);
+					//WriteBinary(anctimes, dertimes, fp);
+					//BP, DAF, N, 
+					//dump
+					int BP = (*it_mut).pos;
+					fwrite(&BP, sizeof(int), 1, fp);
+					fwrite(&DAF, sizeof(int), 1, fp);
+					fwrite(&data.N, sizeof(int), 1, fp);
+					fwrite(&anctimes[0], sizeof(float), num_samples*(data.N-DAF-1), fp);
+					fwrite(&dertimes[0], sizeof(float), num_samples*(DAF-1), fp);
 
-  //Resource Usage
-  /////////////////////////////////////////////
+					count_snps++;
+				}
 
-  rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
+				it_mut++;
+				if(it_mut == ancmut.mut_end()) break;
+			}
+		}
 
-  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+		if(it_mut == ancmut.mut_end()) break;
+		count_trees++; 
+
+	}
+	ShowProgress(100);
+	std::cerr << std::endl;
+
+	fclose(fp);
+
+	//Resource Usage
+	/////////////////////////////////////////////
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
 #ifdef __APPLE__
-  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
 #else
-  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
 #endif
-  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
-  return 0;
+	return 0;
 }

@@ -85,6 +85,142 @@ GetCoalescentRate(Node n, float factor, std::vector<float>& epoch, std::vector<C
 
 }
 
+float
+GetCoalescentRate(Node n, float factor, std::vector<float>& epoch, std::vector<double>& sample_ages, std::vector<CollapsedMatrix<float>>& coalescence_rate_data, std::vector<int>& leaves){
+
+  //go through tree and fill in the matrix
+  if(n.child_left != NULL){
+
+    std::vector<int> leaves_child_left, leaves_child_right;
+
+    Node child_left  = *n.child_left;
+    Node child_right = *n.child_right;
+
+    int num_children_left, num_children_right;
+
+    float coalescent_time = GetCoalescentRate(child_left, factor, epoch, sample_ages, coalescence_rate_data, leaves_child_left) + child_left.branch_length;
+    GetCoalescentRate(child_right, factor, epoch, sample_ages, coalescence_rate_data, leaves_child_right);
+
+    leaves.resize(leaves_child_left.size() + leaves_child_right.size());
+    std::vector<int>::iterator it_leaves = leaves.begin();
+
+    for(std::vector<int>::iterator it_leaves_child_left = leaves_child_left.begin(); it_leaves_child_left != leaves_child_left.end(); it_leaves_child_left++){
+      *it_leaves = *it_leaves_child_left;
+      it_leaves++;
+    }
+    for(std::vector<int>::iterator it_leaves_child_right = leaves_child_right.begin(); it_leaves_child_right != leaves_child_right.end(); it_leaves_child_right++){
+      *it_leaves = *it_leaves_child_right;
+      it_leaves++;
+    }
+
+    double max_sample_age = 0.0;
+    for(std::vector<int>::iterator it_leaves_child_left = leaves_child_left.begin(); it_leaves_child_left != leaves_child_left.end(); it_leaves_child_left++){
+      for(std::vector<int>::iterator it_leaves_child_right = leaves_child_right.begin(); it_leaves_child_right != leaves_child_right.end(); it_leaves_child_right++){
+
+        assert(*it_leaves_child_left != *it_leaves_child_right);
+
+        max_sample_age = sample_ages[*it_leaves_child_left];
+        if(max_sample_age < sample_ages[*it_leaves_child_right]){
+          max_sample_age = sample_ages[*it_leaves_child_right];
+        }
+
+        if(max_sample_age == 0.0){
+          if(*it_leaves_child_left < *it_leaves_child_right){
+            for(int e = 0; e < (int) epoch.size() - 2; e++){
+              if(coalescent_time < epoch[e+1]){
+                assert(coalescent_time >= epoch[e]);
+                coalescence_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor;
+                coalescence_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (coalescent_time - epoch[e]);
+                break;
+              }else{
+                assert(coalescent_time >= epoch[e+1]);
+                coalescence_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (epoch[e+1] - epoch[e]);
+              }
+            }
+          }else{
+            for(int e = 0; e < (int) epoch.size() - 2; e++){
+              if(coalescent_time < epoch[e+1]){
+                assert(coalescent_time >= epoch[e]);
+                coalescence_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor;
+                coalescence_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (coalescent_time - epoch[e]);
+                break;
+              }else{
+                assert(coalescent_time >= epoch[e+1]);
+                coalescence_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (epoch[e+1] - epoch[e]);
+              }
+            } 
+          }
+        }else{        
+          if(*it_leaves_child_left < *it_leaves_child_right){
+            for(int e = 0; e < (int) epoch.size() - 2; e++){
+              if(max_sample_age < epoch[e+1]){
+                if(max_sample_age >= epoch[e]){                
+                  if(coalescent_time < epoch[e+1]){
+                    assert(coalescent_time >= epoch[e]);
+                    coalescence_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor;
+                    coalescence_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (coalescent_time - max_sample_age);
+                    break;
+                  }else{
+                    assert(coalescent_time >= epoch[e+1]);
+                    coalescence_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (epoch[e+1] - max_sample_age);
+                  }
+                }else{
+                  if(coalescent_time < epoch[e+1]){
+                    assert(coalescent_time >= epoch[e]);
+                    coalescence_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor;
+                    coalescence_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (coalescent_time - epoch[e]);
+                    break;
+                  }else{
+                    assert(coalescent_time >= epoch[e+1]);
+                    coalescence_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor * (epoch[e+1] - epoch[e]);
+                  }
+                }
+              }
+            }
+          }else{
+            for(int e = 0; e < (int) epoch.size() - 2; e++){
+              if(max_sample_age < epoch[e+1]){
+                if(max_sample_age >= epoch[e]){                
+                  if(coalescent_time < epoch[e+1]){
+                    assert(coalescent_time >= epoch[e]);
+                    coalescence_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor;
+                    coalescence_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (coalescent_time - max_sample_age);
+                    break;
+                  }else{
+                    assert(coalescent_time >= epoch[e+1]);
+                    coalescence_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (epoch[e+1] - max_sample_age);
+                  }
+                }else{
+                  if(coalescent_time < epoch[e+1]){
+                    assert(coalescent_time >= epoch[e]);
+                    coalescence_rate_data[e][*it_leaves_child_right][*it_leaves_child_left] += factor;
+                    coalescence_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (coalescent_time - epoch[e]);
+                    break;
+                  }else{
+                    assert(coalescent_time >= epoch[e+1]);
+                    coalescence_rate_data[e][*it_leaves_child_left][*it_leaves_child_right] += factor * (epoch[e+1] - epoch[e]);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+      }
+    }
+
+    return coalescent_time;
+
+  }else{
+
+    leaves.push_back(n.label);
+    return sample_ages[n.label];
+
+  }
+
+
+}
+
 int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
 
   //////////////////////////////////
@@ -112,54 +248,26 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   ////////////////////////
   //read in anc file
 
-  int N;
-  igzstream is_N;
+  AncMutIterators ancmut;
   if(chr == -1){
-    is_N.open(options["input"].as<std::string>() + ".anc");
-    if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
+    ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
   }else{
-    is_N.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc");
-    if(is_N.fail()) is_N.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc.gz");
-  }
-  if(is_N.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  } 
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
-
-  int L = 0;
-  igzstream is_L;
-  if(chr == -1){
-    is_L.open(options["input"].as<std::string>() + ".mut");
-    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
-  }else{
-    is_L.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
-    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut.gz");
-  }
-  if(is_L.fail()){
-    std::cerr << "Error while opening .mut file." << std::endl;
-    exit(1);
-  } 
-
-  std::string unused;
-  std::getline(is_L, unused); 
-  while ( std::getline(is_L, unused) ){
-    ++L;
-  }
-  is_L.close();
+    ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc", options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+  }   
+  
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0; 
   Data data(N,L);
 
-  //Read anc
-  AncesTree anc;
+  //Read mut
   Mutations mut;
 
   if(chr == -1){
-    anc.Read(options["input"].as<std::string>() + ".anc");
     mut.Read(options["input"].as<std::string>() + ".mut");
   }else{
-    anc.Read(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc");
     mut.Read(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
   }
 
@@ -201,16 +309,25 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   //Pairwise coalescence rate
   //In each tree, find the coalescent time. Then update count_per_epoch and coalescent_time_in_epoch. 
 
-  float factor = 0.0;
-  CorrTrees::iterator it_anc = anc.seq.begin();
-  for(; it_anc != std::prev(anc.seq.end(),1); it_anc++){
-
-    std::vector<int> leaves;
-    factor = 1.0;
-    GetCoalescentRate(*std::prev((*it_anc).tree.nodes.end(),1), factor, epoch, coalescence_rate_data, leaves);
-
+  if(ancmut.sample_ages.size() > 0){
+    float factor = 0.0;
+    num_bases_tree_persists = 0.0;
+    while(num_bases_tree_persists >= 0.0){
+      num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+      std::vector<int> leaves;
+      factor = 1.0;
+      GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epoch, ancmut.sample_ages, coalescence_rate_data, leaves);
+    }  
+  }else{
+    float factor = 0.0;
+    num_bases_tree_persists = 0.0;
+    while(num_bases_tree_persists >= 0.0){
+      num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+      std::vector<int> leaves;
+      factor = 1.0;
+      GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epoch, coalescence_rate_data, leaves);
+    }  
   }
-
 
   //output as bin
   FILE* fp;
@@ -247,6 +364,7 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
 
 }
 
+//TODO: the functions below need to be debugged and adapted to ancient samples
 //////// functions for estimating directional migration /////////
 
 int 

@@ -32,34 +32,13 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
     exit(0);
   }  
 
-
-  int N, num_trees;
-
-  igzstream is_N(options["anc"].as<std::string>());
-  if(is_N.fail()) is_N.open(options["anc"].as<std::string>() + ".gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening file " << options["anc"].as<std::string>() << std::endl;
-    exit(1);
-  } 
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.ignore(256, ' ');
-  is_N >> num_trees;
-  is_N.close();
-
-  int L = 0;
-  igzstream is_L(options["mut"].as<std::string>());
-  if(is_L.fail()) is_L.open(options["mut"].as<std::string>() + ".gz");
-  if(is_L.fail()){
-    std::cerr << "Error while opening file " << options["mut"].as<std::string>() << std::endl;
-    exit(1);
-  } 
-  std::string unused;
-  std::getline(is_L, unused); 
-  while ( std::getline(is_L, unused) ){
-    ++L;
-  }
-  is_L.close();
+  AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  int num_trees = ancmut.NumTrees();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0;
 
   int i;
   std::string line, read;
@@ -98,36 +77,54 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
   std::vector<int> convert_index, number_in_subpop;
   std::vector<float> coordinates(N_total, 0.0);
 
-  MarginalTree mtr;
   Tree subtree;
   std::vector<AncesTree> v_anc(1);
   v_anc[0].seq.resize(num_trees);
-
   CorrTrees::iterator it_subseq = v_anc[0].seq.begin();
-  igzstream is(options["anc"].as<std::string>());
-  if(is.fail()){
-    is.open(options["anc"].as<std::string>() + ".gz");
+
+  if(ancmut.sample_ages.size() > 0){
+    v_anc[0].sample_ages.resize(data.N);
+    int hap = 0, hap_sub = 0;
+    for(std::vector<int>::iterator it_group_of_haplotype = sample.group_of_haplotype.begin(); it_group_of_haplotype != sample.group_of_haplotype.end(); it_group_of_haplotype++){
+      bool exists = false;
+      for(std::vector<int>::iterator it_group_of_interest = sample.group_of_interest.begin(); it_group_of_interest != sample.group_of_interest.end(); it_group_of_interest++){
+        if(*it_group_of_haplotype == *it_group_of_interest){
+          exists = true;
+          break;
+        }
+      }
+      if(exists){
+        v_anc[0].sample_ages[hap_sub] = ancmut.sample_ages[hap];
+        hap_sub++;
+      }
+      hap++;
+    }
+    if(hap_sub < data.N){
+      v_anc[0].sample_ages.resize(0);
+    }
+  }else{
+    v_anc[0].sample_ages.clear();
   }
-  if(is.fail()){
-    std::cerr << "Error while opening file " << options["anc"].as<std::string>() << std::endl;
-    exit(1);
-  } 
-  getline(is, line);
-  getline(is, line);
+  for(it_subseq = v_anc[0].seq.begin(); it_subseq != v_anc[0].seq.end(); it_subseq++){
+    (*it_subseq).tree.sample_ages = &v_anc[0].sample_ages;
+  }
+
+  it_subseq = v_anc[0].seq.begin();
+
 
   int count_tree = 0, count_included_tree = 0;
   int snp = 0;
   int branch;
   float freq;
   int num_snps_mapped_onto_tree = 0;
-  while(getline(is, line)){
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  while(num_bases_tree_persists >= 0.0){
 
     //read tree
-    mtr.Read(line, N);    
     mtr.tree.GetSubTree(sample, (*it_subseq).tree, convert_index, number_in_subpop);
     (*it_subseq).pos = include_snp.size();
     (*it_subseq).tree.GetCoordinates(coordinates);
-    
+
     //set branch lengths lifespan to lifespan of tree (will be extended later)
     for(std::vector<Node>::iterator it_node = (*it_subseq).tree.nodes.begin(); it_node != (*it_subseq).tree.nodes.end(); it_node++){
       //(*it_node).SNP_begin = (*it_subseq).pos;
@@ -225,9 +222,9 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
       it_subseq++;
     }
     count_tree++;
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
     if(snp == (int)mut.info.size()) break; 
   }
-  is.close();
 
   it_subseq--;
   for(std::vector<Node>::iterator it_node = (*it_subseq).tree.nodes.begin(); it_node != (*it_subseq).tree.nodes.end(); it_node++){

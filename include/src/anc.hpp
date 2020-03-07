@@ -73,10 +73,12 @@ class Tree{
   private:
 
     void TraverseTreeToGetCoordinates(Node& n, std::vector<float>& coordinates);
+    void TraverseTreeToGetCoordinates_sample_age(Node& n, std::vector<float>& coordinates);
     void GetSubTree(std::vector<int>& subpop, Tree& subtree, std::vector<int>& convert_index, std::vector<int>& number_in_subpop) const;
 
   public:
 
+    std::vector<double>* sample_ages = NULL;
     std::vector<Node> nodes;
 
     //construct tree
@@ -96,6 +98,23 @@ class Tree{
         nodes[i].SNP_begin     = tr.nodes[i].SNP_begin;
         nodes[i].SNP_end       = tr.nodes[i].SNP_end;
       }
+    };
+    Tree(const Tree& tr, std::vector<double>& i_sample_ages){
+      nodes.resize(tr.nodes.size());
+      for(int i = 0; i < (int) nodes.size(); i++){
+        if(tr.nodes[i].parent != NULL) nodes[i].parent = &nodes[(*tr.nodes[i].parent).label];
+        else nodes[i].parent = NULL;
+        if(tr.nodes[i].child_left != NULL) nodes[i].child_left = &nodes[(*tr.nodes[i].child_left).label];
+        else nodes[i].child_left = NULL;
+        if(tr.nodes[i].child_right != NULL) nodes[i].child_right = &nodes[(*tr.nodes[i].child_right).label];
+        else nodes[i].child_right = NULL;
+        nodes[i].label = tr.nodes[i].label;
+        nodes[i].num_events = tr.nodes[i].num_events;
+        nodes[i].branch_length = tr.nodes[i].branch_length;
+        nodes[i].SNP_begin     = tr.nodes[i].SNP_begin;
+        nodes[i].SNP_end       = tr.nodes[i].SNP_end;
+      }
+      sample_ages = &i_sample_ages;
     };
  
     void GetMsPrime(igzstream& is, int num_nodes);
@@ -151,6 +170,7 @@ struct MarginalTree{
   MarginalTree(int pos, Tree tree): pos(pos), tree(tree){}
   
   void Read(const std::string& line, int N);
+  void Read(const std::string& line, int N, std::vector<double>& sample_ages);
   void Dump(std::ofstream& os);
   void Dump(FILE *pfile);
   void operator=(const MarginalTree& mtr){
@@ -169,6 +189,7 @@ class AncesTree{
 
   public:
 
+    std::vector<double> sample_ages;
     CorrTrees seq; //starting position on the genome 
     int N, L;
 

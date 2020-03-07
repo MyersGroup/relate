@@ -27,6 +27,7 @@ then
   echo "--dist:   Optional but recommended. Distance in BP between SNPs. Can be generated using RelateFileFormats. If unspecified, distances in haps are used."
   echo "--annot:  Optional. Filename of file containing additional annotation of snps. Can be generated using RelateFileFormats."
   echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB."
+  echo "sample_ages: Optional. Filename of file containing sample ages (one per line)." 
   echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
   echo "--threads:Optional. Maximum number of threads."
@@ -103,6 +104,11 @@ do
       shift # past argument
       shift # past value
       ;;
+    --sample_ages)
+      sample_ages="$2"
+      shift # past argument
+      shift # past value
+      ;;
     --coal)
       coal="$2"
       shift # past argument
@@ -139,6 +145,10 @@ fi
 if [ ! -z "${memory-}" ];
 then
   echo "memory = $memory"
+fi
+if [ ! -z "${sample_ages-}" ];
+then
+  echo "sample_ages = $sample_ages"
 fi
 if [ ! -z "${seed-}" ];
 then
@@ -202,24 +212,52 @@ RelateForChunk (){
       jobcnt=(`jobs -p`)
       if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
 
-        if [ ! -z "${coal-}" ]; then
-          ${PATH_TO_RELATE}/bin/Relate \
-            --mode InferBranchLengths \
-            -m $mu \
-            --coal $coal \
-            --chunk_index ${chunk_index} \
-            --first_section $1 \
-            --last_section $1 \
-            -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+        if [ ! -z "${sample_ages-}" ]; then
+
+          if [ ! -z "${coal-}" ]; then
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode InferBranchLengths \
+              -m $mu \
+              --coal $coal \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --sample_ages ${sample_ages} \
+              -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+          else
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode InferBranchLengths \
+              -m $mu \
+              -N $Ne \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --sample_ages ${sample_ages} \
+              -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+          fi
+
         else
-          ${PATH_TO_RELATE}/bin/Relate \
-            --mode InferBranchLengths \
-            -m $mu \
-            -N $Ne \
-            --chunk_index ${chunk_index} \
-            --first_section $1 \
-            --last_section $1 \
-            -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+
+          if [ ! -z "${coal-}" ]; then
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode InferBranchLengths \
+              -m $mu \
+              --coal $coal \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+          else
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode InferBranchLengths \
+              -m $mu \
+              -N $Ne \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+          fi
+
         fi
 
         shift
@@ -394,21 +432,44 @@ done
 ############################# Finalize ###########################
 
 #if statement to include annot if specified
-if [ -z "${annot-}" ];
+
+if [ -z "${sample_ages-}" ];
 then
+  if [ -z "${annot-}" ];
+  then
 
-  #annot not set
-  ${PATH_TO_RELATE}/bin/Relate \
-    --mode "Finalize" \
-    -o ${output} 
+    #annot not set
+    ${PATH_TO_RELATE}/bin/Relate \
+      --mode "Finalize" \
+      -o ${output} 
 
+  else
+
+    #annot is set
+    ${PATH_TO_RELATE}/bin/Relate \
+      --mode "Finalize" \
+      --annot ${annot} \
+      -o ${output} 
+
+  fi
 else
+  if [ -z "${annot-}" ];
+  then
 
-  #annot is set
-  ${PATH_TO_RELATE}/bin/Relate \
-    --mode "Finalize" \
-    --annot ${annot} \
-    -o ${output} 
+    #annot not set
+    ${PATH_TO_RELATE}/bin/Relate \
+      --mode "Finalize" \
+      --sample_ages ${sample_ages} \
+      -o ${output} 
 
+  else
+
+    #annot is set
+    ${PATH_TO_RELATE}/bin/Relate \
+      --mode "Finalize" \
+      --annot ${annot} \
+      --sample_ages ${sample_ages} \
+      -o ${output} 
+
+  fi
 fi
-

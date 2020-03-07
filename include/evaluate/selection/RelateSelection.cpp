@@ -321,32 +321,14 @@ Frequency(cxxopts::Options& options){
 
   ////////// PARSE DATA //////////
 
-  int N;
-  igzstream is_N;
-  is_N.open(options["input"].as<std::string>() + ".anc");
-  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  } 
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
-
-  int L = 0;
-  igzstream is_L;
-  is_L.open(options["input"].as<std::string>() + ".mut");
-  if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz"); 
-  if(is_L.fail()){
-    std::cerr << "Error while opening .mut file." << std::endl;
-    exit(1);
-  } 
+  AncMutIterators ancmut;
+  ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
   
-  std::string unused;
-  std::getline(is_L, unused); 
-  while ( std::getline(is_L, unused) ){
-    ++L;
-  }
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0; 
  
   Data data(N,L);
   int N_total = 2*data.N-1;
@@ -397,19 +379,12 @@ Frequency(cxxopts::Options& options){
   //2. From branch on which mutation sits, record time of all coalescent events below.
   //3. Count.
 
-  MarginalTree mtr;
   std::vector<float> coordinates_tree(N_total), coordinates_tree_unsrt(N_total), coordinates_mutation(N_total);
   std::vector<int> convert_index;
   int root = N_total-1;
   int i = 0;
   int snp_of_next_tree;
 
-  igzstream is_anc(options["input"].as<std::string>() + ".anc");
-  if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_anc.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  }
   std::ofstream os_freq(options["output"].as<std::string>() + ".freq");
   if(os_freq.fail()){
     std::cerr << "Error while opening file." << std::endl;
@@ -436,12 +411,9 @@ Frequency(cxxopts::Options& options){
   //os_lin << "when_mutation_has_freq2 when_mutation_has_freq3 when_mutation_has_freq4 when_mutation_has_freq5 when_mutation_has_freq6 when_mutation_has_freq7\n";
   os_lin << "when_mutation_has_freq2\n";
 
-  getline(is_anc,line);
-  getline(is_anc,line);
-  getline(is_anc,line);
 
   //read tree
-  mtr.Read(line, N);
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
   mtr.tree.GetCoordinates(coordinates_tree);
   coordinates_tree_unsrt = coordinates_tree;
   std::sort(coordinates_tree.begin(), coordinates_tree.end());
@@ -450,13 +422,13 @@ Frequency(cxxopts::Options& options){
   //mtr.tree.FindAllLeaves(leaves);
   //std::cerr << leaves[*mutations.info[0].branch.begin()].num_leaves << std::endl;
 
-
+  int current_tree = (*it_mut).tree;
   SNPInfo snp_info;
   int freq;
   float rec;
   for(int snp = first_snp; snp <= last_snp; snp++){
 
-    snp_info = mutations.info[snp];
+    snp_info = (*it_mut);
 
     int freq = 3;
     if(snp_info.freq.size() > 0){
@@ -466,24 +438,16 @@ Frequency(cxxopts::Options& options){
         if(freq > 2) break;
       }
     }
- 
+
     if(snp_info.branch.size() == 1 && freq > 2 && !snp_info.flipped){
 
-      if(count_tree < snp_info.tree){
-        while(count_tree < snp_info.tree){
-          if(!getline(is_anc,line)){
-            break; 
-          };
-          count_tree++;
-        } 
-        assert(count_tree == snp_info.tree);
-
-        //read tree
-        mtr.Read(line, N);
+      if((*it_mut).tree != current_tree){
+        current_tree = (*it_mut).tree;
         mtr.tree.GetCoordinates(coordinates_tree);
         coordinates_tree_unsrt = coordinates_tree; //unsorted coordinates of tree
         std::sort(coordinates_tree.begin(), coordinates_tree.end()); //sorted coordinates of tree
       }
+      assert(current_tree == snp_info.tree);
 
       if(snp_info.age_begin <= coordinates_tree[root]){
 
@@ -639,9 +603,9 @@ Frequency(cxxopts::Options& options){
       }
 
     }
+    ancmut.NextSNP(mtr, it_mut);
   }
 
-  is_anc.close();
   os_freq.close();
   os_lin.close();
 

@@ -536,16 +536,51 @@ Tree::TraverseTreeToGetCoordinates(Node& n, std::vector<float>& coordinates){
 
 }
 
+void
+Tree::TraverseTreeToGetCoordinates_sample_age(Node& n, std::vector<float>& coordinates){
+
+  if(n.child_left != NULL){
+
+    TraverseTreeToGetCoordinates_sample_age(*n.child_left, coordinates);
+    TraverseTreeToGetCoordinates_sample_age(*n.child_right, coordinates);
+    coordinates[n.label] = coordinates[(*n.child_left).label] + (*n.child_left).branch_length;  
+
+    if(coordinates[n.label] < coordinates[(*n.child_right).label]){
+      coordinates[n.label] = coordinates[(*n.child_right).label];
+    }
+
+  }else{
+    coordinates[n.label] = (*sample_ages)[n.label];
+  }
+
+}
+
 void 
 Tree::GetCoordinates(std::vector<float>& coordinates){
   coordinates.resize(nodes.size());
-  TraverseTreeToGetCoordinates(nodes[nodes.size() - 1], coordinates);
+  if(sample_ages == NULL){
+    TraverseTreeToGetCoordinates(nodes[nodes.size() - 1], coordinates);
+  }else if((*sample_ages).size() > 0){
+    assert(2*(*sample_ages).size() - 1 == coordinates.size());
+    TraverseTreeToGetCoordinates_sample_age(nodes[nodes.size() - 1], coordinates);
+  }else{
+    TraverseTreeToGetCoordinates(nodes[nodes.size() - 1], coordinates);
+  }
 }
 
 void 
 Tree::GetCoordinates(int node, std::vector<float>& coordinates){
-  TraverseTreeToGetCoordinates(nodes[node], coordinates);
+  coordinates.resize(nodes.size());
+  if(sample_ages == NULL){
+    TraverseTreeToGetCoordinates(nodes[node], coordinates);
+  }else if((*sample_ages).size() > 0){
+    assert(2*(*sample_ages).size() - 1 == coordinates.size());
+    TraverseTreeToGetCoordinates_sample_age(nodes[node], coordinates);
+  }else{ 
+    TraverseTreeToGetCoordinates(nodes[node], coordinates);
+  }
 }
+
 
 /////////////////////////////////
 
@@ -719,6 +754,22 @@ MarginalTree::Read(const std::string& line, int N){
 }
 
 void
+MarginalTree::Read(const std::string& line, int N, std::vector<double>& sample_ages){
+
+  int i = 0;
+  while(line[i] != ':'){
+    i++;
+  }
+  i += 2;
+
+  sscanf(line.c_str(), "%d: ", &pos);
+  tree.ReadTree(&(line.c_str())[i], N);
+  tree.sample_ages = &sample_ages;
+
+}
+
+
+void
 MarginalTree::Dump(std::ofstream& os){
 
   int parent;
@@ -787,6 +838,7 @@ AncesTree::Read(igzstream& is){
     i += 2;
     sscanf(line.c_str(), "%d: ", &(*it_seq).pos);
     (*it_seq).tree.ReadTree(&(line.c_str())[i], N);
+    (*it_seq).tree.sample_ages = &sample_ages;
 
     seq.emplace_back();
     it_seq++;
@@ -810,15 +862,31 @@ AncesTree::Read(const std::string& filename){
     exit(1);
   }
 
+  std::istringstream is_header;
+
   char sdummy[30];
-  std::string line;
+  std::string line, tmp;
+  //read num_haplotypes
   getline(is, line);
-  sscanf(line.c_str(), "%s %d", sdummy, &N);
+  //sscanf(line.c_str(), "%s %d", sdummy, &N);
+  is_header.str(line);
+  is_header >> tmp;
+  is_header >> N;
+
+  sample_ages.resize(N);
+  std::vector<double>::iterator it_sample_ages = sample_ages.begin();
+  int i = 0;
+  while(is_header >> *it_sample_ages){
+    it_sample_ages++;
+    i++;
+    if(it_sample_ages == sample_ages.end()) break;
+  }
+  if(i != N) sample_ages.clear();
   getline(is, line);
   sscanf(line.c_str(), "%s %d", sdummy, &L);
 
   Read(is);
-
+  
   clock_t end = clock();
   double end_time = time(NULL);
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -829,7 +897,13 @@ AncesTree::Read(const std::string& filename){
 void 
 AncesTree::ReadBin(FILE* pfile){
 
+  bool has_sample_ages;
+  fread(&has_sample_ages, sizeof(bool), 1, pfile);
   fread(&N, sizeof(unsigned int), 1, pfile);
+  if(has_sample_ages){
+    sample_ages.resize(N);
+    fread(&sample_ages[0], sizeof(double), N, pfile);
+  }
   fread(&L, sizeof(unsigned int), 1, pfile);
 
   seq.clear();
@@ -940,7 +1014,11 @@ AncesTree::Dump(const std::string& filename){
 
   }else{
 
-    fprintf(pfile, "NUM_HAPLOTYPES %ld\n", ((*seq.begin()).tree.nodes.size() + 1)/2);
+    fprintf(pfile, "NUM_HAPLOTYPES %ld ", ((*seq.begin()).tree.nodes.size() + 1)/2);
+    for(std::vector<double>::iterator it_sample_ages = sample_ages.begin(); it_sample_ages != sample_ages.end(); it_sample_ages++){
+      fprintf(pfile, "%f ", *it_sample_ages);
+    }
+    fprintf(pfile, "\n");
     fprintf(pfile, "NUM_TREES %ld\n", seq.size());
 
     Dump(pfile);
@@ -963,7 +1041,11 @@ AncesTree::DumpStream(const std::string& filename){
 
   }else{
 
-    os << "NUM_HAPLOTYPES " << ((*seq.begin()).tree.nodes.size() + 1)/2 << "\n";
+    os << "NUM_HAPLOTYPES " << ((*seq.begin()).tree.nodes.size() + 1)/2 << " ";
+    for(std::vector<double>::iterator it_sample_ages = sample_ages.begin(); it_sample_ages != sample_ages.end(); it_sample_ages++){
+      os << *it_sample_ages << " ";
+    }
+    os << "\n";
     os << "NUM_TREES " << seq.size() << "\n";
 
     Dump(os);
@@ -1021,9 +1103,15 @@ AncesTree::DumpBin(const std::string& filename){
 
   }else{
 
-    unsigned int num_leaves = ((*seq.begin()).tree.nodes.size() + 1)/2;
+    unsigned int N = ((*seq.begin()).tree.nodes.size() + 1)/2;
     unsigned int num_trees = seq.size();
-    fwrite(&num_leaves, sizeof(unsigned int), 1, pfile);
+
+    bool has_sample_ages = (sample_ages.size() > 0);
+    fwrite(&has_sample_ages, sizeof(bool), 1, pfile);
+    fwrite(&N, sizeof(unsigned int), 1, pfile);
+    if(has_sample_ages){
+      fwrite(&sample_ages[0], sizeof(double), N, pfile);
+    }
     fwrite(&num_trees, sizeof(unsigned int), 1, pfile);
 
     DumpBin(pfile);

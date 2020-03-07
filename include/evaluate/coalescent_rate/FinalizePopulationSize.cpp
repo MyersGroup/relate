@@ -72,7 +72,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
         if((*it_coalescent_rate_data)[i][j] > 0.0){
           (*it_coalescent_rate)[0][0] += (*it_coalescent_rate_data)[i][j]/(*it_coalescent_rate_data)[j][i];
         }
-        
+
         it_coalescent_rate++;
         it_coalescent_rate_data++;
       }    
@@ -151,7 +151,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   int N = sample.group_of_haplotype.size();
 
   /////////////////// INITIALIZE EPOCHES //////////////////////
-  
+
   int num_epochs;
   std::vector<float> epoch;
 
@@ -162,7 +162,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   epoch.resize(num_epochs);
   fread(&epoch[0], sizeof(float), num_epochs, fp);
   std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epochs);
-  
+
   for(int e = 0; e < num_epochs; e++){
     coalescent_rate_data[e].ReadFromFile(fp);
     if(coalescent_rate_data[e].size() != N || coalescent_rate_data[e].subVectorSize(0) != N){
@@ -288,7 +288,7 @@ int FinalizePopulationSizeByHaplotype(cxxopts::Options& options){
   ////////// read labels of sequences //////////
 
   /////////////////// INITIALIZE //////////////////////
-  
+
   int num_epochs;
   std::vector<float> epoch;
 
@@ -381,6 +381,143 @@ int FinalizePopulationSizeByHaplotype(cxxopts::Options& options){
 
 }
 
+int FinalizeCoalescenceCount(cxxopts::Options& options){
+
+  //////////////////////////////////
+  //Program options
+
+  bool help = false;
+  if(!options.count("output")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: output." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Estimate population size using coalescence rate." << std::endl;
+    exit(0);
+  }  
+
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  std::cerr << "Finalizing coalescence count..." << std::endl;
+
+
+
+  ////////// read labels of sequences //////////
+
+  /////////////////// INITIALIZE //////////////////////
+
+  int num_epochs;
+  std::vector<float> epoch;
+
+  FILE* fp = fopen((options["output"].as<std::string>() + ".bin").c_str(),"rb");
+  assert(fp != NULL);
+
+  fread(&num_epochs, sizeof(int), 1, fp);
+  epoch.resize(num_epochs);
+  fread(&epoch[0], sizeof(float), num_epochs, fp);
+  std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epochs);
+  for(int e = 0; e < num_epochs; e++){
+    coalescent_rate_data[e].ReadFromFile(fp);
+  }
+  fclose(fp);
+
+  int N = coalescent_rate_data[0].size();
+
+  std::vector<CollapsedMatrix<float>> coalescent_rate(num_epochs);
+  for(std::vector<CollapsedMatrix<float>>::iterator it_c = coalescent_rate.begin(); it_c != coalescent_rate.end(); it_c++){
+    (*it_c).resize(N, N);
+    std::fill((*it_c).vbegin(), (*it_c).vend(), 0.0);
+  }
+
+  std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_data = coalescent_rate_data.begin();
+  std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate      = coalescent_rate.begin();
+
+  int tree_index = 0;
+  int snp = 0;
+  int block_size = 1e6;
+  int chr = 1;
+  Mutations mut;
+  mut.Read(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+
+  for(; it_coalescent_rate_data != std::prev(coalescent_rate_data.end(),1);){
+   
+   //TODO: fix 
+    //get proportion of 1Mv that each tree is persisting for
+    float prop = 0.0;
+    while(mut.info[snp].tree == tree_index){
+      prop += mut.info[snp].dist;
+      snp++;
+      if(snp == mut.info.size()) break;
+    }
+    prop /= block_size;
+    if(prop > 1) std::cerr << prop << std::endl;
+
+    for(int i = 0; i < N; i++){
+      for(int j = 0; j < N; j++){ 
+        (*it_coalescent_rate)[i][j] += (*it_coalescent_rate_data)[i][j] * prop;
+      }
+    }
+    tree_index++;
+    it_coalescent_rate++;
+    it_coalescent_rate_data++;
+
+    if(chr <= 22 && mut.info.size()== snp){
+      chr++;
+      snp = 0;
+      tree_index = 0;
+      mut.Read(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+    }
+  }    
+
+
+  std::ofstream os(options["output"].as<std::string>() + ".coal");
+  if(os.fail()){
+    std::cerr << "Error while opening file." << std::endl;
+    exit(1);
+  } 
+
+  for(int i = 0; i < N; i++){
+    os << i << " ";
+  }
+  os << "\n";
+
+  for(int e = 0; e < num_epochs; e++){
+    os << epoch[e]  << " "; 
+  }
+  os << "\n";
+
+  for(int i = 0; i < N; i++){
+    for(int j = i+1; j < N; j++){
+      os << i << " " << j << " ";
+      for(int e = 0; e < num_epochs; e++){
+        os << coalescent_rate[e][i][j] << " ";
+      }
+      os << "\n"; 
+    }
+  }
+
+  os.close();
+
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+  return 0;
+
+
+}
+
 int FinalizePopulationSizeDir(cxxopts::Options& options){
 
   //////////////////////////////////
@@ -408,7 +545,7 @@ int FinalizePopulationSizeDir(cxxopts::Options& options){
   int N = sample.group_of_haplotype.size();
 
   /////////////////// INITIALIZE EPOCHES //////////////////////
-  
+
   int num_epochs;
   std::vector<float> epoch;
 
@@ -442,7 +579,7 @@ int FinalizePopulationSizeDir(cxxopts::Options& options){
 
   std::vector<std::vector<int>> group_haplotype(sample.groups.size());
   for(int i = 0; i < sample.groups.size(); i++){
-  
+
     group_haplotype[i].resize(sample.group_sizes[i]);
     int j = 0, k = 0;
     for(std::vector<int>::iterator it_hap = sample.group_of_haplotype.begin(); it_hap != sample.group_of_haplotype.end(); it_hap++){
@@ -457,7 +594,7 @@ int FinalizePopulationSizeDir(cxxopts::Options& options){
 
   for(int i = 0; i < sample.groups.size(); i++){
     for(int j = i+1; j < sample.groups.size(); j++){
-   
+
       if(i != j){
 
         int m = i * sample.groups.size() - (i*(i+1.0))/2.0 + j - i - 1;
@@ -567,7 +704,7 @@ int FinalizePopulationSizeDir(cxxopts::Options& options){
         }
 
       }
-    
+
     }
   }
 
@@ -588,7 +725,7 @@ int FinalizePopulationSizeDir(cxxopts::Options& options){
 
   for(int i = 0; i < sample.groups.size(); i++){
     for(int j = i+1; j < sample.groups.size(); j++){
-   
+
       if(i != j){
         int m = i * sample.groups.size() - (i*(i+1.0))/2.0 + j - i - 1;
         float size1 = sample.group_sizes[i] * (sample.group_sizes[i]-1) * sample.group_sizes[j];

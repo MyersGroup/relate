@@ -12,19 +12,20 @@
 
 void TraverseTree(Node& node, Tree& tree, double& x_coordinate, std::vector<float>& coordinates, std::vector<Leaves>& leaves, std::ofstream& os, int& counter){
 
+  int N = (tree.nodes.size() + 1)/2;
   if(node.child_left != NULL){
-  
+
     Node child_left, child_right;
-      child_left = *node.child_left;
-      child_right = *node.child_right;
+    child_left = *node.child_left;
+    child_right = *node.child_right;
     if(0){
-    if(leaves[(*node.child_left).label].num_leaves > leaves[(*node.child_right).label].num_leaves){
-      child_left = *node.child_left;
-      child_right = *node.child_right;
-    }else{
-      child_left = *node.child_right;
-      child_right = *node.child_left;
-    }
+      if(leaves[(*node.child_left).label].num_leaves > leaves[(*node.child_right).label].num_leaves){
+        child_left = *node.child_left;
+        child_right = *node.child_right;
+      }else{
+        child_left = *node.child_right;
+        child_right = *node.child_left;
+      }
     }
 
     int num_grandchildren_left = 0, num_grandchildren_right = 0;
@@ -41,9 +42,13 @@ void TraverseTree(Node& node, Tree& tree, double& x_coordinate, std::vector<floa
     TraverseTree(child_right, tree, x_coord_child_right, coordinates, leaves, os, counter);
 
     x_coordinate = (x_coord_child_left + x_coord_child_right)/2;
-     
+
     os << x_coord_child_left << " " << x_coordinate << " " << coordinates[node.label] << " " << coordinates[node.label] << " " << child_left.label << " " << "h" << "\n"; //horizontal line
-    os << x_coord_child_left << " " << x_coord_child_left << " " << coordinates[child_left.label] << " " << coordinates[node.label] << " " << child_left.label << " " << "v" << "\n"; //vertical line
+    if(child_left.label < N){
+      os << x_coord_child_left << " " << x_coord_child_left << " " << coordinates[child_left.label] << " " << coordinates[node.label] << " " << child_left.label << " " << "t" << "\n"; //vertical line
+    }else{
+      os << x_coord_child_left << " " << x_coord_child_left << " " << coordinates[child_left.label] << " " << coordinates[node.label] << " " << child_left.label << " " << "v" << "\n"; //vertical line
+    }
 
     int num_events = child_left.num_events;
     for(int i = 0; i < num_events; i++){
@@ -52,7 +57,11 @@ void TraverseTree(Node& node, Tree& tree, double& x_coordinate, std::vector<floa
     }
 
     os << x_coord_child_right << " " << x_coordinate << " " << coordinates[node.label] << " " << coordinates[node.label] << " " << child_right.label << " " << "h" << "\n"; //horizontal line
-    os << x_coord_child_right << " " << x_coord_child_right << " " << coordinates[child_right.label] << " " << coordinates[node.label] << " " << child_right.label << " " << "v" << "\n"; //vertical line
+    if(child_right.label < N){
+      os << x_coord_child_right << " " << x_coord_child_right << " " << coordinates[child_right.label] << " " << coordinates[node.label] << " " << child_right.label << " " << "t" << "\n"; //vertical line   
+    }else{
+      os << x_coord_child_right << " " << x_coord_child_right << " " << coordinates[child_right.label] << " " << coordinates[node.label] << " " << child_right.label << " " << "v" << "\n"; //vertical line
+    }
 
     num_events = child_right.num_events;
     for(int i = 0; i < num_events; i++){
@@ -68,10 +77,6 @@ void TraverseTree(Node& node, Tree& tree, double& x_coordinate, std::vector<floa
 
 
 }
-
-
-
-
 
 void ExtractPlotCoordinates(Tree& tree, std::ofstream& os){
 
@@ -97,14 +102,12 @@ void ExtractPlotCoordinates(Tree& tree, std::ofstream& os){
 
 }
 
-
-
 void
 TreeView(cxxopts::Options& options){
-  
+
   //////////////////////////////////
   //Program options
-  
+
   bool help = false;
   if(!options.count("anc") || !options.count("mut") || !options.count("snp_of_interest") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
@@ -116,7 +119,7 @@ TreeView(cxxopts::Options& options){
     std::cout << "Outputs tree of interest as .newick file." << std::endl;
     exit(0);
   }  
-  
+
   int snp_of_interest = options["snp_of_interest"].as<int>();
   int index_of_snp_of_interest;
 
@@ -126,16 +129,11 @@ TreeView(cxxopts::Options& options){
 
   //////////////////////////////////
   //Parse Data
-  int N;
-  igzstream is_N(options["anc"].as<std::string>());
-  if(is_N.fail()) is_N.open(options["anc"].as<std::string>() + ".gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening file " << options["anc"].as<std::string>() << "(.gz)" << std::endl;
-    exit(1);
-  }
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
+  AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+  int N = ancmut.NumTips();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0;
 
   int i; 
   std::string line, line2, read;
@@ -151,36 +149,22 @@ TreeView(cxxopts::Options& options){
   }
   int tree_index_of_interest = mut.info[index_of_snp_of_interest].tree;
 
-  igzstream is_anc(options["anc"].as<std::string>());
-  if(is_anc.fail()) is_anc.open(options["anc"].as<std::string>() + ".gz");
-  if(is_anc.fail()){
-    std::cerr << "Error while reading anc." << std::endl;
-    exit(1);
-  }
-
-  getline(is_anc,line);
-  getline(is_anc,line);
-
-  MarginalTree mtr;
-
   //getline(is_anc, line2);
   int count_trees = 0;
-  while(getline(is_anc,line)){
- 
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  while(num_bases_tree_persists >= 0.0){
+
     if(count_trees == tree_index_of_interest){
-      //tree is in line2
-      mtr.Read(line, N);
- 
       //output plot coordinates
       std::ofstream os(options["output"].as<std::string>() + ".plotcoords");
       ExtractPlotCoordinates(mtr.tree, os);
       os.close();
 
       break; 
-
     }
     count_trees++;
-   
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+
   }
 
   /////////////////////////////////////////////
@@ -201,10 +185,10 @@ TreeView(cxxopts::Options& options){
 
 void
 MutationsOnBranches(cxxopts::Options& options){
-  
+
   //////////////////////////////////
   //Program options
-  
+
   bool help = false;
   if(!options.count("anc") || !options.count("mut") || !options.count("haps") || !options.count("sample") || !options.count("snp_of_interest") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
@@ -216,7 +200,7 @@ MutationsOnBranches(cxxopts::Options& options){
     std::cout << "Outputs tree of interest as .newick file." << std::endl;
     exit(0);
   }  
-  
+
   int snp_of_interest = options["snp_of_interest"].as<int>();
   int index_of_snp_of_interest;
 
@@ -233,16 +217,11 @@ MutationsOnBranches(cxxopts::Options& options){
 
   //////////////////////////////////
   //Parse Data
-  int N;
-  igzstream is_N(options["anc"].as<std::string>());
-  if(is_N.fail()) is_N.open(options["anc"].as<std::string>() + ".gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening file " << options["anc"].as<std::string>() << "(.gz)" << std::endl;
-    exit(1);
-  }
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
+  AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+  int N = ancmut.NumTips();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0;
 
   int i; 
   std::string line, line2, read;
@@ -279,7 +258,7 @@ MutationsOnBranches(cxxopts::Options& options){
       exit(1);
     } 
   }
-  
+
   while(std::getline(is_L, line)){
     ++L;
   }
@@ -313,31 +292,17 @@ MutationsOnBranches(cxxopts::Options& options){
 
   /////
 
-  igzstream is_anc(options["anc"].as<std::string>());
-  if(is_anc.fail()) is_anc.open(options["anc"].as<std::string>() + ".gz");
-  if(is_anc.fail()){
-    std::cerr << "Error while reading anc." << std::endl;
-    exit(1);
-  }
-
-  getline(is_anc,line);
-  getline(is_anc,line);
-
-  MarginalTree mtr;
-
   int count_trees = 0;
-  while(getline(is_anc,line)){
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  while(num_bases_tree_persists >= 0.0){
 
     if(count_trees == tree_index_of_interest){
 
-      //tree is in line
-      mtr.Read(line, N);
-
       //output list of SNPs mapping to each branch
-      
+
       //get min_snp and max_snp, read in all sites between these two.
       //then try to map each of then and record which branch they mapped to (use assertions)
-    
+
       std::vector<std::vector<int>> mut_on_branches(mtr.tree.nodes.size());
 
       int min_snp = mtr.tree.nodes[0].SNP_begin, max_snp = mtr.tree.nodes[0].SNP_end;
@@ -362,12 +327,12 @@ MutationsOnBranches(cxxopts::Options& options){
         snp++;
       }while(bp < min_bp && snp < data.L);
       /*
-      if(bp != min_bp){
-        std::cerr << bp << " " << min_bp << std::endl;
-        std::cerr << "SNP is not in haps file" << std::endl;
-        exit(1);
-      } 
-      */
+         if(bp != min_bp){
+         std::cerr << bp << " " << min_bp << std::endl;
+         std::cerr << "SNP is not in haps file" << std::endl;
+         exit(1);
+         } 
+         */
 
       while(bp <= max_bp && snp < data.L){
 
@@ -385,7 +350,7 @@ MutationsOnBranches(cxxopts::Options& options){
         if(sequences_carrying_mutation.num_leaves > 0 && sequences_carrying_mutation.num_leaves < data.N){
           //if(bp == 236591955) std::cerr << "SNP exists" << std::endl; 
           if(ancbuilder.IsSNPMapping(tr, sequences_carrying_mutation, snp) == 1){
-     
+
             if(is_mask){
               if(std::toupper(mask.seq[bp-1]) == 'P'){           
                 int branch = ancbuilder.mutations.info[snp].branch[0];
@@ -408,8 +373,8 @@ MutationsOnBranches(cxxopts::Options& options){
       }
       m_hap.CloseFile();
 
-     std::ofstream os(options["output"].as<std::string>() + ".plotcoords.mut");
-    
+      std::ofstream os(options["output"].as<std::string>() + ".plotcoords.mut");
+
       os << "pos branchID\n";
 
       i = 0;
@@ -426,7 +391,8 @@ MutationsOnBranches(cxxopts::Options& options){
 
     }
     count_trees++;
-   
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+
   }
 
   /////////////////////////////////////////////
@@ -449,7 +415,7 @@ void TraverseTree(Node& node, Tree& tree, std::ofstream& os){
 
   os << node.label << "\n";
   if(node.child_left != NULL){
-  
+
     TraverseTree((*node.child_left), tree, os);
     TraverseTree((*node.child_right), tree, os);
 
@@ -459,10 +425,10 @@ void TraverseTree(Node& node, Tree& tree, std::ofstream& os){
 
 void
 BranchesBelowMutation(cxxopts::Options& options){
-  
+
   //////////////////////////////////
   //Program options
-  
+
   bool help = false;
   if(!options.count("anc") || !options.count("mut") || !options.count("snp_of_interest") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
@@ -474,7 +440,7 @@ BranchesBelowMutation(cxxopts::Options& options){
     std::cout << "Outputs tree of interest as .newick file." << std::endl;
     exit(0);
   }  
- 
+
   int snp_of_interest    = options["snp_of_interest"].as<int>();
   int index_of_snp_of_interest;
   int branch_of_interest;
@@ -485,16 +451,11 @@ BranchesBelowMutation(cxxopts::Options& options){
 
   //////////////////////////////////
   //Parse Data
-  int N;
-  igzstream is_N(options["anc"].as<std::string>());
-  if(is_N.fail()) is_N.open(options["anc"].as<std::string>() + ".gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening file " << options["anc"].as<std::string>() << "(.gz)" << std::endl;
-    exit(1);
-  }
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
+  AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+  int N = ancmut.NumTips();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0;
 
   int i; 
   std::string line, line2, read;
@@ -517,25 +478,11 @@ BranchesBelowMutation(cxxopts::Options& options){
     exit(1);
   }
 
-  igzstream is_anc(options["anc"].as<std::string>());
-  if(is_anc.fail()) is_anc.open(options["anc"].as<std::string>() + ".gz");
-  if(is_anc.fail()){
-    std::cerr << "Error while reading anc " << options["anc"].as<std::string>() << std::endl;
-    exit(1);
-  }
-
-  getline(is_anc,line);
-  getline(is_anc,line);
-
-  MarginalTree mtr;
-
   int count_trees = 0;
-  while(getline(is_anc,line)){
- 
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  while(num_bases_tree_persists >= 0.0){
+
     if(count_trees == tree_index_of_interest){
-      
-      //tree is in line
-      mtr.Read(line, N);
 
       //output list of SNPs mapping to each branch
       std::ofstream os(options["output"].as<std::string>() + ".plotcoords.mut");
@@ -546,9 +493,10 @@ BranchesBelowMutation(cxxopts::Options& options){
       break; 
 
     }
- 
+
     count_trees++; 
-  
+    ancmut.NextTree(mtr, it_mut);
+
   }
 
   /////////////////////////////////////////////

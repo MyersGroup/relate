@@ -37,11 +37,13 @@ GetTreeOfInterest(cxxopts::Options& options){
 
   //////////////////////////////////
   //Parse Data
-  int N;
-  igzstream is_N(options["anc"].as<std::string>());
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
+  AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0;
+  Data data(N,L);
 
   int i; 
   std::string line, read;
@@ -61,32 +63,21 @@ GetTreeOfInterest(cxxopts::Options& options){
   }
   int tree_index_of_interest = mut.info[index_of_bp_of_interest].tree;
 
-  igzstream is_anc(options["anc"].as<std::string>());
-  if(is_anc.fail()){
-    std::cerr << "Error while reading anc." << std::endl;
-    exit(1);
-  }
-
-  getline(is_anc,line);
-  getline(is_anc,line);
-
-  MarginalTree mtr;
-
   int count_trees = 0;
-  while(getline(is_anc,line)){
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  while(num_bases_tree_persists >= 0.0){
  
     if(count_trees == tree_index_of_interest){
       
       //tree is in line
-      mtr.Read(line, N); 
       mtr.tree.WriteNewick( options["output"].as<std::string>() + "_at_" + std::to_string(bp_of_interest) + ".newick", 28.0);
-
       break; 
 
     }
   
     count_trees++;
-  
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+
   }
 
   /////////////////////////////////////////////

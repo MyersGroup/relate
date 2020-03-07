@@ -273,7 +273,7 @@ void FinalizeAvg(cxxopts::Options& options){
   std::cerr << "Finalizing mutation rate..." << std::endl;
 
   int num_epochs;
-  std::vector<float> epoch;
+  std::vector<double> epoch;
 
   CollapsedMatrix<double> mutation_by_type_and_epoch, opportunity_by_type_and_epoch;
   FILE* fp; 
@@ -354,7 +354,7 @@ void FinalizeMutationRate(cxxopts::Options& options){
 
   int num_epochs;
   int num_categories = 0;
-  std::vector<float> epoch;
+  std::vector<double> epoch;
 
   CollapsedMatrix<double> mutation_by_type_and_epoch, opportunity_by_type_and_epoch;
   FILE* fp; 
@@ -468,7 +468,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
   assert(fp != NULL);  
 
   int num_epochs;
-  std::vector<float> epochs;
+  std::vector<double> epochs;
   fread(&num_epochs, sizeof(int), 1, fp);
   epochs.resize(num_epochs);
   fread(&epochs[0], sizeof(float), num_epochs, fp);
@@ -566,30 +566,18 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
 
   //////////// PARSE DATA ///////////
 
-  int N;
-  igzstream is_N(options["input"].as<std::string>() + ".anc");
-  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl;
-    exit(1);
-  }
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
-
-  int L = 0;
-  igzstream is_L(options["input"].as<std::string>() + ".mut");
-  if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
-  if(is_L.fail()){
-    std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
-    exit(1);
-  }
-  std::string unused;
-  std::getline(is_L, unused); 
-  while ( std::getline(is_L, unused) ){
-    ++L;
-  }
-  is_L.close();
+  AncMutIterators ancmut;
+  if(chr == -1){
+    ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
+  }else{
+    ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc", options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+  }   
+  
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0; 
 
   Data data(N,L);
   int N_total = 2*data.N-1;
@@ -610,7 +598,7 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   if(options.count("dist")){
 
     int L_allsnps = 0;
-    is_L.open(options["dist"].as<std::string>());
+    igzstream is_L(options["dist"].as<std::string>());
     std::string unused;
     std::getline(is_L, unused); 
     while ( std::getline(is_L, unused) ){
@@ -654,7 +642,7 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
     num_epochs = options["num_bins"].as<int>();
   }
   num_epochs++;
-  std::vector<float> epoch(num_epochs);
+  std::vector<double> epoch(num_epochs);
   epoch[0] = 0.0;
   epoch[1] = 1e3/years_per_gen;
   float log_10 = std::log(10);
@@ -728,61 +716,35 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
   opportunity_by_type_and_epoch.resize(num_epochs, num_mutation_cathegories);
   std::vector<double> branch_lengths_in_epoch(num_epochs);
 
-  MarginalTree mtr;
   //Tree subtr;
   std::vector<float> coordinates_tree(N_total);
+  std::vector<int> num_lineages(N_total);
   int root = N_total-1;
   int i = 0;
 
-  igzstream is_anc;
-  if(chr == -1){
-    is_anc.open(options["input"].as<std::string>() + ".anc");
-    if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + ".anc.gz");
-  }else{
-    is_anc.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc");
-    if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc.gz");
-  }
-  if(is_anc.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  }
-
-  getline(is_anc,line);
-  getline(is_anc,line);
-  getline(is_anc,line);
-
   //read tree
-  mtr.Read(line, N);
-  mtr.tree.GetCoordinates(coordinates_tree);
-  std::sort(coordinates_tree.begin(), coordinates_tree.end());
-  GetBranchLengthsInEpoche(data, epoch, coordinates_tree, branch_lengths_in_epoch);
+  ancmut.FirstSNP(mtr, it_mut);
+
+  GetCoordsAndLineages(mtr, coordinates_tree, num_lineages);
+  GetBranchLengthsInEpoch(data, epoch, coordinates_tree, num_lineages, branch_lengths_in_epoch);
 
   SNPInfo snp_info;
   float rec;
-  int num_tree = 0;
+  int current_tree = (*it_mut).tree;
   double total_branch_length = 0.0;
   int count_snps = 0;
   for(int snp = 0; snp < data.L; snp++){
 
-    snp_info = mutations.info[snp];
+    snp_info = (*it_mut);
     if(snp_info.branch.size() == 1){
-
-      if(num_tree < snp_info.tree){
-        while(num_tree < snp_info.tree){
-          if(!getline(is_anc,line)){
-            break; 
-          };
-          num_tree++;
-        }
-
-        //read tree
-        mtr.Read(line, N);
+     
+      if((*it_mut).tree != current_tree){
+        current_tree = (*it_mut).tree;
         mtr.tree.GetCoordinates(coordinates_tree);
-        std::sort(coordinates_tree.begin(), coordinates_tree.end());
-        GetBranchLengthsInEpoche(data, epoch, coordinates_tree, branch_lengths_in_epoch);
+        GetCoordsAndLineages(mtr, coordinates_tree, num_lineages);
+        GetBranchLengthsInEpoch(data, epoch, coordinates_tree, num_lineages, branch_lengths_in_epoch);
       }
-      assert(num_tree == snp_info.tree);
-
+      assert(current_tree == snp_info.tree);
 
       if(snp_info.upstream_base != "NA" && snp_info.downstream_base != "NA" && snp_info.mutation_type[0] != snp_info.mutation_type[2]){
 
@@ -852,8 +814,6 @@ void MutationRateWithContext(cxxopts::Options& options, int chr = -1){
     }
 
   }
-
-  is_anc.close();
 
   //output mutation_by_type_and_epoch
   //       opportunity_by_type_and_epoch 
@@ -998,7 +958,7 @@ void MutationRateForCategory(cxxopts::Options& options, int chr = -1){
     num_epochs = options["num_bins"].as<int>();
   }
   num_epochs++;
-  std::vector<float> epoch(num_epochs);
+  std::vector<double> epoch(num_epochs);
   epoch[0] = 0.0;
   epoch[1] = 1e4/years_per_gen;
   float log_10 = std::log(10);
@@ -1125,6 +1085,7 @@ void MutationRateForCategory(cxxopts::Options& options, int chr = -1){
 
   //Tree subtr;
   std::vector<float> coordinates_tree(N_total);
+  std::vector<int> num_lineages(N_total);
   int root = N_total-1;
   int i = 0;
 
@@ -1139,8 +1100,8 @@ void MutationRateForCategory(cxxopts::Options& options, int chr = -1){
   while(num_bases_tree_persists >= 0){
 
     mtr.tree.GetCoordinates(coordinates_tree);
-    std::sort(coordinates_tree.begin(), coordinates_tree.end());
-    GetBranchLengthsInEpoche(data, epoch, coordinates_tree, branch_lengths_in_epoch);
+    GetCoordsAndLineages(mtr, coordinates_tree, num_lineages);
+    GetBranchLengthsInEpoch(data, epoch, coordinates_tree, num_lineages, branch_lengths_in_epoch);
     num_tree = mutations.info[snp].tree;
 
     while(num_tree == mutations.info[snp].tree){
@@ -1359,7 +1320,7 @@ void SummarizeWholeGenomeForCategory(cxxopts::Options& options){
   assert(fp != NULL);  
 
   int num_epochs;
-  std::vector<float> epochs;
+  std::vector<double> epochs;
   fread(&num_epochs, sizeof(int), 1, fp);
   epochs.resize(num_epochs);
   fread(&epochs[0], sizeof(float), num_epochs, fp);
@@ -1477,7 +1438,7 @@ void FinalizeMutationRateForCategory(cxxopts::Options& options){
 
   int num_epochs;
   int num_categories = 0;
-  std::vector<float> epoch;
+  std::vector<double> epoch;
 
 
   int n_boot = 1000;
@@ -1663,7 +1624,7 @@ void MutationRateForPattern(cxxopts::Options& options, int chr = -1){
     num_epochs = options["num_bins"].as<int>();
   }
   num_epochs++;
-  std::vector<float> epoch(num_epochs);
+  std::vector<double> epoch(num_epochs);
   epoch[0] = 0.0;
   epoch[1] = 1e4/years_per_gen;
   float log_10 = std::log(10);
@@ -1788,6 +1749,7 @@ void MutationRateForPattern(cxxopts::Options& options, int chr = -1){
 
   //Tree subtr;
   std::vector<float> coordinates_tree(N_total);
+  std::vector<int> num_lineages(N_total);
   int root = N_total-1;
   int i = 0;
 
@@ -1802,8 +1764,8 @@ void MutationRateForPattern(cxxopts::Options& options, int chr = -1){
   while(num_bases_tree_persists >= 0){
 
     mtr.tree.GetCoordinates(coordinates_tree);
-    std::sort(coordinates_tree.begin(), coordinates_tree.end());
-    GetBranchLengthsInEpoche(data, epoch, coordinates_tree, branch_lengths_in_epoch);
+    GetCoordsAndLineages(mtr, coordinates_tree, num_lineages);
+    GetBranchLengthsInEpoch(data, epoch, coordinates_tree, num_lineages, branch_lengths_in_epoch);
     num_tree = mutations.info[snp].tree;
 
     while(num_tree == mutations.info[snp].tree){
@@ -2023,7 +1985,7 @@ void SummarizeWholeGenomeForPattern(cxxopts::Options& options){
   assert(fp != NULL);  
 
   int num_epochs;
-  std::vector<float> epochs;
+  std::vector<double> epochs;
   fread(&num_epochs, sizeof(int), 1, fp);
   epochs.resize(num_epochs);
   fread(&epochs[0], sizeof(float), num_epochs, fp);
@@ -2141,7 +2103,7 @@ void FinalizeMutationRateForPattern(cxxopts::Options& options){
 
   int num_epochs;
   int num_categories = 0;
-  std::vector<float> epoch;
+  std::vector<double> epoch;
 
 
   int n_boot = 1000;
@@ -2245,29 +2207,14 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   std::string line, read;
 
   //parse data
-  int N;
-  igzstream is_N(options["input"].as<std::string>() + ".anc");
-  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening " << options["input"].as<std::string>() << ".anc(.gz)" << std::endl;
-    exit(1);
-  }
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
-
-  int L = 0;
-  igzstream is_L(options["input"].as<std::string>() + ".mut");
-  if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
-  if(is_L.fail()){
-    std::cerr << "Error while opening " << options["input"].as<std::string>() << ".mut(.gz)" << std::endl;
-    exit(1);
-  }
-  std::string unused;
-  std::getline(is_L, unused); 
-  while ( std::getline(is_L, unused) ){
-    ++L;
-  }
+  AncMutIterators ancmut;
+  ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
+  
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0; 
 
   Data data(N,L);
   //data.ReadPosition(options["pos"].as<std::string>());
@@ -2280,7 +2227,7 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   }
 
   int num_epochs = 40;
-  std::vector<float> epoch(num_epochs);
+  std::vector<double> epoch(num_epochs);
   epoch[0] = 0.0;
   for(int e = 1; e < num_epochs; e++){
     epoch[e] = std::exp(5.0*(e+9)/15.0);
@@ -2296,7 +2243,7 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   std::vector<double> count_bases(mutations.info.size(), 0.0);
   std::vector<double>::iterator it_count_bases   = count_bases.begin();
 
-  std::vector<SNPInfo>::iterator it_mut = mutations.info.begin();
+  it_mut = mutations.info.begin();
   *it_count_bases = (0.5*(*it_mut).dist)/total_num_bases;
   it_count_bases++;
   while(it_count_bases != count_bases.end()){
@@ -2310,34 +2257,20 @@ void BranchLengthVsMutations(cxxopts::Options& options){
   it_mut++;
   assert(it_mut == mutations.info.end());
 
-
-
   ////////////////////
   // Branch lengths vs opportunity 
 
   std::vector<double> num_mutations_in_epoch(num_epochs);
   std::vector<double> branch_lengths_in_epoch(num_epochs);
 
-  MarginalTree mtr;
   std::vector<float> coordinates(N_total);
   int root = N_total-1;
   int i = 0;
   int snp_of_next_tree, snp;
 
 
-  igzstream is_anc(options["input"].as<std::string>() + ".anc");
-  if(is_anc.fail()) is_anc.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_anc.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  }
-
-  getline(is_anc,line);
-  getline(is_anc,line);
-  getline(is_anc,line);
-
   //read tree
-  mtr.Read(line, N);
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
   mtr.tree.GetCoordinates(coordinates);
 
   std::ofstream os(options["output"].as<std::string>() + ".xy");
@@ -2379,11 +2312,7 @@ void BranchLengthVsMutations(cxxopts::Options& options){
     os << mtr.pos << " " << (int) years_per_gen * (epoch[ep] + epoch[ep+1])/2.0 << " " << data.mu * branch_lengths_in_epoch[ep] << " " << num_mutations_in_epoch[ep] << "\n"; 
   }
 
-  while(getline(is_anc, line)){
-
-    //read tree
-    mtr.Read(line, N);
-    mtr.tree.GetCoordinates(coordinates);
+  while(num_bases_tree_persists >= 0.0){
 
     std::fill(num_mutations_in_epoch.begin(), num_mutations_in_epoch.end(), 0.0);
     std::fill(branch_lengths_in_epoch.begin(), branch_lengths_in_epoch.end(), 0.0);
@@ -2426,6 +2355,9 @@ void BranchLengthVsMutations(cxxopts::Options& options){
     for(int ep = 0; ep < epoch.size()-1; ep++){
       os << mtr.pos << " " << (int) years_per_gen * (epoch[ep] + epoch[ep+1])/2.0 << " " << data.mu * branch_lengths_in_epoch[ep] << " " << num_mutations_in_epoch[ep] << "\n"; 
     }
+
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+    mtr.tree.GetCoordinates(coordinates);
 
   }
 
@@ -2471,7 +2403,7 @@ void FinalizeMutationCount(cxxopts::Options& options){
 
 
   int num_epochs;
-  std::vector<float> epoch;
+  std::vector<double> epoch;
 
   CollapsedMatrix<double> mutation_by_type_and_epoch, opportunity_by_type_and_epoch;
   FILE* fp; 

@@ -1,5 +1,3 @@
-//Finalizing
-
 #include <iomanip>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -18,7 +16,7 @@ int Finalize(cxxopts::Options& options){
   bool help = false;
   if(!options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: output. Optional: annot." << std::endl;
+    std::cout << "Needed: output. Optional: annot, sample_ages." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -33,6 +31,12 @@ int Finalize(cxxopts::Options& options){
 
   int N, L, num_chunks;
   double tmp;
+  int overlap_chunk_size = 10000;
+  int delta_chunk;
+ 
+  int i, j; 
+  std::string line, line2, read;
+
   std::vector<int> section_boundary_start, section_boundary_end;
   FILE* fp = fopen("parameters.bin", "r");
   assert(fp != NULL);
@@ -46,11 +50,20 @@ int Finalize(cxxopts::Options& options){
   fread(&section_boundary_end[0], sizeof(int), num_chunks, fp);
   fclose(fp); 
 
-  int overlap_chunk_size = 10000;
-  int delta_chunk;
- 
-  int i, j; 
-  std::string line, line2, read;
+  std::vector<double> sample_ages(N);
+  if(options.count("sample_ages")){
+    igzstream is_ages(options["sample_ages"].as<std::string>());
+    int i = 0; 
+    while(is_ages >> sample_ages[i]){
+      i++;
+      sample_ages[i] = sample_ages[i-1];
+      i++;
+      if(i == N) break;
+    }
+    if(i < N) sample_ages.clear();
+  }else{
+    sample_ages.clear(); 
+  }
 
   ///////////////////////////////////////// Combine AncesTrees /////////////////////////
 
@@ -181,7 +194,15 @@ int Finalize(cxxopts::Options& options){
 
   }else{
 
-    fprintf(pfile, "NUM_HAPLOTYPES %d\n", N);
+    if(sample_ages.size() == 0){
+      fprintf(pfile, "NUM_HAPLOTYPES %d\n", N);
+    }else{
+      fprintf(pfile, "NUM_HAPLOTYPES %d ", N);
+      for(std::vector<double>::iterator it_ages = sample_ages.begin(); it_ages != sample_ages.end(); it_ages++){
+        fprintf(pfile, "%f ", *it_ages);
+      }     
+      fprintf(pfile, "\n");
+    }
     fprintf(pfile, "NUM_TREES %d\n", num_trees_cum);
 
   }

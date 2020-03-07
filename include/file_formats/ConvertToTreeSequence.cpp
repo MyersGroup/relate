@@ -44,34 +44,12 @@ ConvertToTreeSequenceTxt(cxxopts::Options& options){
 
   ////////////////////////
   //read in anc file
-
-  int N;
-  igzstream is_N;
-  is_N.open(options["input"].as<std::string>() + ".anc");
-  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  } 
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
-
-  int L = 0;
-  igzstream is_L;
-  is_L.open(options["input"].as<std::string>() + ".mut");
-  if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
-  if(is_L.fail()){
-    std::cerr << "Error while opening .mut file." << std::endl;
-    exit(1);
-  } 
-
-  std::string unused, line;
-  std::getline(is_L, unused); 
-  while ( std::getline(is_L, unused) ){
-    ++L;
-  }
-  is_L.close();
+  AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0;
   Data data(N,L);
 
   Mutations mut;
@@ -145,20 +123,11 @@ ConvertToTreeSequenceTxt(cxxopts::Options& options){
   //If I treat trees separately, I can need to change labels of nodes, record edges, and a new mutation in the sites file
 
   std::vector<float> coordinates(2*data.N-1,0.0);
-  MarginalTree mtr;
-  igzstream is(options["input"].as<std::string>() + ".anc");
-  if(is.fail()) is.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is.fail()){
-    std::cerr << "Error while opening file " << options["anc"].as<std::string>() + ".anc" << "." << std::endl;
-    exit(1);
-  }
-  getline(is, line);
-  getline(is, line); 
-
+ 
   int pos, snp, pos_end, snp_end, tree_count = 0, node, node_const, site_count = 0;
-  while(getline(is, line)){
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  while(num_bases_tree_persists >= 0.0){
 
-    mtr.Read(line, data.N);
     mtr.tree.GetCoordinates(coordinates);
     pos = mut.info[mtr.pos].pos;
     if(mtr.pos == 0) pos = 0;
@@ -204,6 +173,8 @@ ConvertToTreeSequenceTxt(cxxopts::Options& options){
       os_edge_table << pos << "\t" << pos_end << "\t" << (*(*it_node).parent).label + node_const << "\t" << node << "\n";
     }
 
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+
   } 
   os_mut_table.close();
   os_node_table.close();
@@ -248,40 +219,17 @@ ConvertToTreeSequence(cxxopts::Options& options){
 
   ////////////////////////
   //read in anc file
-
-  int N, root;
-  igzstream is_N;
-  is_N.open(options["input"].as<std::string>() + ".anc");
-  if(is_N.fail()) is_N.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is_N.fail()){
-    std::cerr << "Error while opening .anc file." << std::endl;
-    exit(1);
-  } 
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
-
-  int L = 0;
-  igzstream is_L;
-  is_L.open(options["input"].as<std::string>() + ".mut");
-  if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
-  if(is_L.fail()){
-    std::cerr << "Error while opening .mut file." << std::endl;
-    exit(1);
-  } 
-
-  std::string unused, line;
-  std::getline(is_L, unused); 
-  while ( std::getline(is_L, unused) ){
-    ++L;
-  }
-  is_L.close();
+  AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0;
   Data data(N,L);
-  root = 2*data.N - 2;
+  int root = 2*data.N - 2;
 
   Mutations mut;
   mut.Read(options["input"].as<std::string>() + ".mut");
-
 
   //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -315,25 +263,13 @@ ConvertToTreeSequence(cxxopts::Options& options){
   ///////////////////////////////////////////////////////////////////////////// 
 
   std::vector<float> coordinates(2*data.N-1,0.0);
-  MarginalTree mtr;
-  igzstream is(options["input"].as<std::string>() + ".anc");
-  if(is.fail()) is.open(options["input"].as<std::string>() + ".anc.gz");
-  if(is.fail()){
-    std::cerr << "Error while opening file " << options["anc"].as<std::string>() + ".anc" << "." << std::endl;
-    exit(1);
-  }
-  getline(is, line);
-  getline(is, line); 
-
   int pos, snp, pos_end, snp_end, tree_count = 0, node, node_const, site_count = 0;
 
   char derived_allele[1];
-  while(getline(is, line)){
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  while(num_bases_tree_persists >= 0.0){
 
-    mtr.Read(line, data.N);
     mtr.tree.GetCoordinates(coordinates);
-    //std::vector<Leaves> leaves;
-    //mtr.tree.FindAllLeaves(leaves);
     pos = mut.info[mtr.pos].pos;
     if(mtr.pos == 0) pos = 0;
     snp = mtr.pos;
@@ -385,6 +321,8 @@ ConvertToTreeSequence(cxxopts::Options& options){
       ret = tsk_edge_table_add_row(&tables.edges, pos, pos_end, (*(*it_node).parent).label + node_const, node);    
       check_tsk_error(ret);
     }
+
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
 
   } 
 

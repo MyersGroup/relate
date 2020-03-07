@@ -27,6 +27,7 @@ int main(int argc, char* argv[]){
     ("last_chr", "Optional: Index of last chr", cxxopts::value<int>())
     ("num_proposals", "Optional: Number of proposals between samples in SampleBranchLengths", cxxopts::value<int>())
     ("num_samples", "Optional: Number of samples in SampleBranchLengths", cxxopts::value<int>())
+		("format", "Optional: Output file format when sampling branches. 0: Newick, 1: anc. Default: 0.", cxxopts::value<int>())
     ("seed", "Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
   
   options.parse(argc, argv);
@@ -140,6 +141,22 @@ int main(int argc, char* argv[]){
     }else{
       FinalizePopulationSize(options);
     }
+
+  }else if(!mode.compare("FinalizeCoalescenceCount")){
+
+    bool help = false;
+    if(!options.count("output")){
+      std::cout << "Not enough arguments supplied." << std::endl;
+      std::cout << "Needed:input, output." << std::endl;
+      help = true;
+    }
+    if(options.count("help") || help){
+      std::cout << options.help({""}) << std::endl;
+      std::cout << "Count number of coalescences in epoch." << std::endl;
+      exit(0);
+    }  
+
+    FinalizeCoalescenceCount(options);
 
   }else if(!mode.compare("ReEstimateBranchLengths")){
  
