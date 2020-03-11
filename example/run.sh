@@ -25,5 +25,5 @@
 	--num_samples 3 \
 	--first_bp 10000 \
 	--last_bp 10000 \
-	--format 1 \
+	--format 0 \
 	--coal example_bypop.coal

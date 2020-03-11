@@ -596,7 +596,7 @@ int SampleBranchLengths(cxxopts::Options& options){
 					for(std::vector<float>::iterator it_branch_length = branch_lengths[(*n_it).label].begin(); it_branch_length != branch_lengths[(*n_it).label].end(); it_branch_length++){
 						os << std::fixed << std::setprecision(5) << (*it_branch_length * data.Ne) << " ";
 					}
-					os << std::setprecision(2) << (*n_it).num_events << " " << (*n_it).SNP_begin << " " << (*n_it).SNP_end << ")";
+					os << std::setprecision(2) << (*n_it).num_events << " " << (*n_it).SNP_begin << " " << (*n_it).SNP_end << ") ";
 				}
 
 				os << "\n";
