@@ -61,6 +61,7 @@ TreeView <- function(filename_plot, years_per_gen, ...){
 
 AddMutations <- function(filename_plot, years_per_gen, ...){
 
+
   plotcoords      <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
   plotcoords[3:4] <- plotcoords[3:4] * years_per_gen
 
@@ -89,7 +90,7 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
   #}else{
     #mutation_file <- as.data.frame(fread(paste("zcat",filename_mut), sep = ";"))
   #}
-  mutation_file <- read.table(filename_mut, header = T, sep = ";")  
+  mutation_file <- read.table(filename_mut, header = T, sep = ";", fill = T)  
   colnames(mutation_file)[2] <- "pos"
 
   muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos")
@@ -152,8 +153,8 @@ system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --
 
 # plot tree
 p1 <- TreeView(filename_plot, years_per_gen, lwd = tree_lwd) + 
-      AddMutations(filename_plot, years_per_gen, size = mut_size) + scale_y_continuous(trans = "log10") 
-      
+      AddMutations(filename_plot, years_per_gen, size = mut_size) #+ scale_y_continuous(trans = "log10") 
+
 # some modifications to theme
 p1 <- p1 + theme(axis.text.y = element_text(size = rel(2.3)), 
                  legend.title = element_text(size = rel(1)), 
@@ -161,7 +162,7 @@ p1 <- p1 + theme(axis.text.y = element_text(size = rel(2.3)),
            scale_color_manual(labels = c("unflipped", "flipped"), values = c("red", "blue"), drop = FALSE) +
            guides(color = guide_legend(nrow = 2, title = "")) 
 
-# plot population labels
+				 # plot population labels
 p2 <- PopLabels(filename_plot, filename_poplabels, text_size = poplabels_textsize, size = poplabels_shapesize, shape = "|")
 
 ##################################################################################
@@ -171,5 +172,5 @@ plot_grid(p1,p2, rel_heights = ratio, labels = "", align = "v", ncol = 1)
 dev.off()
 
 # delete tmp files for plotting tree
-#system(paste("rm ",filename_plot, ".plotcoords", sep = ""))
-#system(paste("rm ",filename_plot, ".plotcoords.mut", sep = ""))
+system(paste("rm ",filename_plot, ".plotcoords", sep = ""))
+system(paste("rm ",filename_plot, ".plotcoords.mut", sep = ""))

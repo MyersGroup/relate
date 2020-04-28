@@ -314,6 +314,10 @@ MutationsOnBranches(cxxopts::Options& options){
 
       haps m_hap(options["haps"].as<std::string>().c_str(), options["sample"].as<std::string>().c_str());
       Data data(m_hap.GetN(), m_hap.GetL());
+			if(data.N != ancmut.NumTips()){
+        std::cerr << "Haps file and anc/mut have different number of samples" << std::endl;
+				exit(1);
+			}
       Leaves sequences_carrying_mutation;
       sequences_carrying_mutation.member.resize(data.N);
       AncesTreeBuilder ancbuilder(data);

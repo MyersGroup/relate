@@ -1,5 +1,13 @@
 #!/bin/bash
 
+../scripts/RelateParallel/RelateParallelTopoOnly.sh \
+	--haps ./data/example.haps.gz \
+	--sample ./data/example.sample.gz \
+	--map ./data/genetic_map.txt \
+	-N 30000 \
+	-m 1.25e-8 \
+	-o example2
+
 ../bin/Relate --mode All \
 	--haps ./data/example.haps.gz \
 	--sample ./data/example.sample.gz \
@@ -23,7 +31,17 @@
 	-o example_bypop_sampled \
 	-m 1.25e-8 \
 	--num_samples 3 \
-	--first_bp 10000 \
-	--last_bp 10000 \
+	--first_bp 900000 \
+	--last_bp 1000000 \
+	--format 0 \
+	--coal example_bypop.coal
+
+../scripts/SampleBranchLengths/SampleBranchLengths.sh \
+	-i example2 \
+	-o example2_sampled \
+	-m 1.25e-8 \
+	--num_samples 1 \
+	--first_bp 900000 \
+	--last_bp 1000000 \
 	--format 0 \
 	--coal example_bypop.coal

@@ -92,7 +92,7 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
   #}else{
     #mutation_file <- as.data.frame(fread(paste("zcat",filename_mut), sep = ";"))
   #}
-  mutation_file <- read.table(filename_mut, header = T, sep = ";")  
+  mutation_file <- read.table(filename_mut, header = T, sep = ";", fill = T)  
   colnames(mutation_file)[2] <- "pos"
 
   muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos")

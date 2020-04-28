@@ -219,7 +219,7 @@ ConvertToTreeSequence(cxxopts::Options& options){
 
   ////////////////////////
   //read in anc file
-  AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+  AncMutIterators ancmut(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
   int N = ancmut.NumTips();
   int L = ancmut.NumSnps();
   MarginalTree mtr;
