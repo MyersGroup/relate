@@ -92,7 +92,7 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
   #}else{
     #mutation_file <- as.data.frame(fread(paste("zcat",filename_mut), sep = ";"))
   #}
-  mutation_file <- read.table(filename_mut, header = T, sep = ";", fill = T)  
+  mutation_file <- read.table(filename_mut, header = T, sep = ";")  
   colnames(mutation_file)[2] <- "pos"
 
   muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos")
@@ -111,10 +111,14 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
 PopLabels <- function(filename_plot, filename_poplabels, text_size = 100, ...){
 
   plotcoords <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
-  poplabels  <- read.table(filename_poplabels, header = T)[,2:3]
+	poplabels  <- read.table(filename_poplabels, header = T)[,2:4]
 
-  tips <- subset(plotcoords, y_begin == 0)
-  tips <- cbind(tips, population = poplabels[ceiling((tips$branchID+1)/2),1], region = poplabels[ceiling((tips$branchID+1)/2),2])
+	tips <- subset(plotcoords, seg_type == "t")
+	if(all(is.na(poplabels[,3])) || any(poplabels[,3] != 1)){
+		tips <- cbind(tips, population = poplabels[ceiling((tips$branchID+1)/2),1], region = poplabels[ceiling((tips$branchID+1)/2),2])
+	}else{
+		tips <- cbind(tips, population = poplabels[tips$branchID+1,1], region = poplabels[tips$branchID+1,2])
+	}
   unique_region <- unique(poplabels[,2])
   p <- ggplot() + geom_point(data = tips, aes(x = x_begin, y = population, color = population), ...) +
                    theme(text = element_text(size=text_size),

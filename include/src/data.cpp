@@ -113,7 +113,7 @@ Data::Data(const char* filename_pos, const char* filename_param, int Ne, double 
 /////////////////////////////////////
 
 void 
-Data::MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist, float min_memory){
+Data::MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist, const std::string& file_out, float min_memory){
 
   haps m_haps(filename_haps.c_str(), filename_sample.c_str());
   N = m_haps.GetN();
@@ -156,7 +156,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   double window_memory_size = 0.0;
   while(snp < L){ 
 
-    FILE* fp_haps_chunk = fopen(("chunk_" + std::to_string(chunk_index) + ".hap").c_str(), "wb");
+    FILE* fp_haps_chunk = fopen((file_out + "/chunk_" + std::to_string(chunk_index) + ".hap").c_str(), "wb");
     assert(fp_haps_chunk);
     //output chunk bed into fp_haps_chunk and chunk pos, rpos into fp_pos
 
@@ -253,7 +253,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
       fwrite(&uN, sizeof(std::vector<char>::size_type), 1, fp_haps_chunk);
 
       /////////////////// Output program parameters into file ///////////////
-      FILE* fp = fopen(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "w");
+      FILE* fp = fopen((file_out + "/parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "w");
       int num_windows_in_section = num_windows + 1;
       assert(fp);
       fwrite(&N, sizeof(int), 1, fp);
@@ -280,7 +280,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
       //std::cerr << window_boundaries_overlap[0] << " " << window_boundaries[0] << " " << num_windows_overlap << std::endl;
 
       /////////////////// Output program parameters into file ///////////////
-      FILE* fp = fopen(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "w");
+      FILE* fp = fopen((file_out + "/parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "w");
       int num_windows_in_section = num_windows + num_windows_overlap + 1;
       assert(fp);
       fwrite(&N, sizeof(int), 1, fp);
@@ -323,7 +323,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   //std::cerr << "Warning: Will open max " << max_windows_per_section << " files." << std::endl;
 
   /////////////////// Output program parameters into file ///////////////
-  FILE* fp = fopen("parameters.bin", "w");
+  FILE* fp = fopen((file_out + "/parameters.bin").c_str(), "w");
   actual_min_memory_size += (2*N*N + 3*N);
   actual_min_memory_size *= 4.0/1e9;
   assert(fp);
@@ -348,6 +348,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
     for(; it_pos != std::prev(pos.end(),1);){
       *it_pos = *it_bppos_next - *it_bppos;
       if(*it_pos <= 0){
+        std::cerr << "Failed at BP " << *it_bppos << std::endl;
         std::cerr << "SNPs are not sorted by bp or more than one SNP at same position." << std::endl;
         exit(1);
       }
@@ -378,7 +379,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   }
 
   //output props
-  FILE* fp_props = fopen("props.bin", "wb"); //storing rsid and other info in this file
+  FILE* fp_props = fopen((file_out + "/props.bin").c_str(), "wb"); //storing rsid and other info in this file
   assert(fp_props);
 
   for(snp = 0; snp < L; snp++){
@@ -439,11 +440,11 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   unsigned int L_chunk, L_chunk_plus_one;
   for(int chunk = 0; chunk < num_chunks; chunk++){
 
-    FILE* fp_pos   = fopen(("chunk_" + std::to_string(chunk) + ".bp").c_str(), "wb");
+    FILE* fp_pos   = fopen((file_out + "/chunk_" + std::to_string(chunk) + ".bp").c_str(), "wb");
     assert(fp_pos);
-    FILE* fp_rpos  = fopen(("chunk_" + std::to_string(chunk) + ".rpos").c_str(), "wb");
+    FILE* fp_rpos  = fopen((file_out + "/chunk_" + std::to_string(chunk) + ".rpos").c_str(), "wb");
     assert(fp_rpos);
-    FILE* fp_r     = fopen(("chunk_" + std::to_string(chunk) + ".r").c_str(), "wb");
+    FILE* fp_r     = fopen((file_out + "/chunk_" + std::to_string(chunk) + ".r").c_str(), "wb");
     assert(fp_r);
     //output chunk bed into fp_haps_chunk and chunk pos, rpos into fp_pos
 

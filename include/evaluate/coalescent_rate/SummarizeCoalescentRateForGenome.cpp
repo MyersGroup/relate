@@ -11,9 +11,9 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
   //Program options
 
   bool help = false;
-  if(!options.count("first_chr") || !options.count("last_chr") || !options.count("output")){
+  if( ((!options.count("first_chr") || !options.count("last_chr")) && !options.count("chr")) || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: first_chr, last_chr, output." << std::endl;
+    std::cout << "Needed: chr or (first_chr, last_chr), output." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -26,14 +26,29 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
   std::cerr << "Summarizing over chromosomes..." << std::endl;  
 
   //calculate epoch times
-  int start     = options["first_chr"].as<int>(); 
-  int end       = options["last_chr"].as<int>();
-  std::vector<std::string> filenames;
-  std::string filename_base = options["output"].as<std::string>();
+	std::vector<std::string> filenames;
+	std::string filename_base = options["output"].as<std::string>();
+	if(options.count("chr")){
 
-  for(int chr = start; chr <= end; chr++){
-    filenames.push_back(filename_base + "_chr" + std::to_string(chr) + ".bin");
-  }
+		igzstream is_chr(options["chr"].as<std::string>());
+		if(is_chr.fail()){
+			std::cerr << "Error while opening file " << options["chr"].as<std::string>() << std::endl;
+		}
+		std::string line;
+		while(getline(is_chr, line)){
+			filenames.push_back(filename_base + "_chr" + line + ".bin");
+		}
+		is_chr.close();
+
+	}else{
+
+    int start     = options["first_chr"].as<int>(); 
+    int end       = options["last_chr"].as<int>();
+		for(int chr = start; chr <= end; chr++){
+			filenames.push_back(filename_base + "_chr" + std::to_string(chr) + ".bin");
+		}
+
+	}
 
   //populate coalescent_rate_data
   FILE* fp = fopen(filenames[0].c_str(),"rb");
@@ -101,6 +116,5 @@ int SummarizeCoalescentRateForGenome(cxxopts::Options& options){
 
 
   return 0;
-
 
 }

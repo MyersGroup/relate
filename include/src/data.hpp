@@ -65,7 +65,7 @@ struct Data{
  
   ///////////
 
-  void MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist, float max_memory = 5);
+  void MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist, const std::string& file_out, float max_memory = 5);
   //void MakeChunks2(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist);
 
   ///////////
@@ -127,16 +127,19 @@ class haps{
       fp = g.open(filename_sample, "r");
       assert(fp);
       N = 0;
-      while(!feof(fp)){
-        if(fgetc(fp) == '\n'){
+			char id1[1024], id2[1024], dummy[1024];
+			assert(fscanf(fp, "%s %s %s", id1, id2, dummy) == 3); //header
+			assert(fscanf(fp, "%s %s %s", id1, id2, dummy) == 3); //header
+			while(fscanf(fp, "%s %s %s", id1, id2, dummy) == 3){
+        if(strcmp(id1, id2) == 0){
+          N += 2;
+				}else{
           N++;
-        }
-      }
-      N -= 2;
-      N *= 2;
+				}
+			}
       g.close(fp);
 
-      //fp = fopen(filename_haps, "r");
+			//fp = fopen(filename_haps, "r");
       fp = g.open(filename_haps, "r");
       assert(fp);
       L = 0;

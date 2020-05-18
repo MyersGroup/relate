@@ -52,8 +52,8 @@ DistanceMeasure::GetTopologyWithRepaint(const int snp){
 
   FastPainting painter(*data);
 
-  char filename[32];
-  snprintf(filename, sizeof(char) * 32, "%s_%i.bin", (*data).name.c_str(), section);
+  char filename[1024];
+  snprintf(filename, sizeof(char) * 1024, "%s_%i.bin", (*data).name.c_str(), section);
   FILE* pFile = fopen(filename, "rb");
   assert(pFile != NULL);
   for(int n = 0; n < N; n++){

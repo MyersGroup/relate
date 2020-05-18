@@ -2355,15 +2355,42 @@ EstimateBranchLengthsWithSampleAge::InitializeBranchLengths(Tree& tree){
   int node_i, num_lins;
   //initialize using coalescent prior
   coordinates.resize(N_total);
-  for(int i = 0; i < N_total; i++){
+  std::fill(coordinates.begin(), coordinates.end(), 0.0);
+  for(int i = 0; i < N; i++){
+    coordinates[i] = sample_age[i];
+  }
 
+  //for each node determine upper limit of age
+  int j = 1;
+  double age_upper = coordinates[sorted_indices[0]];
+  for(int i = 1; i < N_total; i++){
+    if(sorted_indices[i] < N){
+      age_upper = coordinates[sorted_indices[i]];
+      for(; j < i; j++){
+        assert(sorted_indices[j] >= N);
+        coordinates[sorted_indices[j]] = age_upper;
+      }
+      j = i+1;
+    }
+  }
+
+
+  for(int i = 0; i < N_total; i++){
     node_i = sorted_indices[i];
-    if(node_i < N){
-      coordinates[node_i] = sample_age[node_i];
-    }else{
+    if(node_i >= N){
       num_lins = num_lineages[sorted_indices[i-1]];
       assert(num_lins > 0);
-      coordinates[node_i] = coordinates[sorted_indices[i-1]] + 2.0/( num_lins * (num_lins - 1.0) ); // determined by the prior
+      if(coordinates[node_i] > 0){
+        double tmp = coordinates[node_i];
+        if(!(tmp >= coordinates[sorted_indices[i-1]])){
+          std::cerr << tmp << " " << coordinates[sorted_indices[i-1]];
+        }
+        assert(tmp >= coordinates[sorted_indices[i-1]]);
+        coordinates[node_i] = (tmp + coordinates[sorted_indices[i-1]])/2.0;
+        assert(coordinates[node_i] <= tmp);
+      }else{
+        coordinates[node_i] = coordinates[sorted_indices[i-1]] + 2.0/( num_lins * (num_lins - 1.0) ); // determined by the prior
+      }
       (*tree.nodes[node_i].child_left).branch_length  = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_left).label];
       (*tree.nodes[node_i].child_right).branch_length = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_right).label];
     }
@@ -2405,13 +2432,39 @@ EstimateBranchLengthsWithSampleAge::InitializeMCMC(const Data& data, Tree& tree)
   order.resize(N_total);
   sorted_indices.resize(N_total);
 
-  std::size_t m1(0);
-  std::generate(std::begin(sorted_indices), std::begin(sorted_indices)+N, [&]{ return m1++; });
-  std::sort(std::begin(sorted_indices), std::begin(sorted_indices)+N, [&](int i1, int i2) {
-      return std::tie(sample_age[i1],i1) < std::tie(sample_age[i2],i2); } );
-  for(int i = N; i < N_total; i++){
-    sorted_indices[i] = i;
+  //strategy:
+  //assign pseudo coordinates to nodes, by giving them a lower bound on age + epsilon
+  //then use code as if coordinates are given
+  std::vector<double> pseudo_coords(N_total, 0.0);
+  double epsilon = 0.001;
+  for(int i = 0; i < N; i++){
+    pseudo_coords[i] = sample_age[i];
+    int k1 = i, k2 = i;
+    while(k2 < root){
+      k1 = k2;
+      k2 = (*tree.nodes[k2].parent).label;
+      if(pseudo_coords[k2] < pseudo_coords[k1] + epsilon){
+        pseudo_coords[k2] = pseudo_coords[k1] + epsilon;
+      }
+    }
   }
+
+  /*
+     for(int i = 0; i < N; i++){
+     int k = i;
+     std::cerr << pseudo_coords[i] << " ";
+     while(k < root){
+     k = (*tree.nodes[k].parent).label;
+     std::cerr << pseudo_coords[k] << " ";
+     }
+     std::cerr << std::endl;
+     }
+     */
+
+  std::size_t m1(0);
+  std::generate(std::begin(sorted_indices), std::end(sorted_indices), [&]{ return m1++; });
+  std::sort(std::begin(sorted_indices), std::end(sorted_indices), [&](int i1, int i2) {
+      return std::tie(pseudo_coords[i1],i1) < std::tie(pseudo_coords[i2],i2); } );
 
   //obtain order of coalescent events
   std::fill(order.begin(), order.end(), 0);
@@ -2419,25 +2472,28 @@ EstimateBranchLengthsWithSampleAge::InitializeMCMC(const Data& data, Tree& tree)
   std::generate(std::begin(order), std::end(order), [&]{ return m2++; });
   std::sort(std::begin(order), std::end(order), [&](int i1, int i2) { return sorted_indices[i1] < sorted_indices[i2]; } );
 
-  int i_start = 0;
+  ////////////////////////////////
+
   int num_lins = 0;
-  double age = sample_age[sorted_indices[i_start]];
-  for(int i = 0; i < N; i++){
-    age = sample_age[sorted_indices[i]];
-    while(age == sample_age[sorted_indices[i]]){
+  double age = pseudo_coords[*sorted_indices.begin()];
+  std::vector<int>::iterator it_sorted_indices_start = sorted_indices.begin();
+  for(it_sorted_indices = sorted_indices.begin(); it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
+    if(pseudo_coords[*it_sorted_indices] > age){
+      for(; it_sorted_indices_start != it_sorted_indices; it_sorted_indices_start++){
+        num_lineages[*it_sorted_indices_start] = num_lins;          
+      }
+      age = pseudo_coords[*it_sorted_indices_start];
+    }
+    if(*it_sorted_indices < N){
       num_lins++;
-      i++;
-      if(i == N) break;
+    }else{
+      num_lins--;
     }
-    for(int j = i_start; j < i; j++){
-      num_lineages[sorted_indices[j]] = num_lins;
+    assert(num_lins >= 1);
+
+    if(it_sorted_indices != sorted_indices.begin()){
+      assert(pseudo_coords[*it_sorted_indices] >= pseudo_coords[*std::prev(it_sorted_indices,1)]);
     }
-    i_start = i;
-    num_lins++;
-  }
-  assert(num_lins == N+1);
-  for(int i = N; i < N_total; i++){
-    num_lineages[i] = N_total - i;
   }
 
   sorted_indices_new = sorted_indices;
@@ -2445,18 +2501,19 @@ EstimateBranchLengthsWithSampleAge::InitializeMCMC(const Data& data, Tree& tree)
   num_lineages_new   = num_lineages;
 
   /*
-  for(int i = 0; i < N; i++){
-    std::cerr << sample_age[sorted_indices[i]] << " ";
-  }
-  std::cerr << std::endl; 
-  for(int i = 0; i < N_total; i++){
-    std::cerr << num_lineages[sorted_indices[i]] << " ";
-  }
-  std::cerr << std::endl;
-  */ 
+     for(int i = 0; i < N; i++){
+     std::cerr << sample_age[sorted_indices[i]] << " ";
+     }
+     std::cerr << std::endl; 
+     for(int i = 0; i < N_total; i++){
+     std::cerr << num_lineages[sorted_indices[i]] << " ";
+     }
+     std::cerr << std::endl;
+     */ 
 
   //debug
   for(int i = 0; i < N_total-1; i++){
+    assert(order[sorted_indices[i]] == i);
     assert(order[i] < order[(*tree.nodes[i].parent).label]);
   }
 
@@ -2561,7 +2618,7 @@ EstimateBranchLengthsWithSampleAge::RandomSwitchOrder(Tree& tree, int node_k, st
     int child_order     = order[(*tree.nodes[node_k].child_left).label];
     int child_order_alt = order[(*tree.nodes[node_k].child_right).label];
     if(child_order < child_order_alt) child_order = child_order_alt;
-    if(child_order < N) child_order = N-1;
+    //if(child_order < N) child_order = N-1;
     assert(child_order < parent_order);
 
     if( parent_order - child_order > 2 ){
@@ -3515,6 +3572,7 @@ EstimateBranchLengthsWithSampleAge::CalculatePrior(std::vector<double>& p_coordi
     if(is_sample == true){
       tmp_tau = p_coordinates[p_sorted_indices[k_tmp]] - lower_coord;
       lower_coord   = p_coordinates[p_sorted_indices[k_tmp]];
+      if(!(tmp_tau >= 0.0)) std::cerr << tmp_tau << std::endl;
       assert(tmp_tau >= 0.0);
     }else{
       tmp_tau       = p_coordinates[p_sorted_indices[k_tmp]] - lower_coord;
@@ -3889,192 +3947,193 @@ EstimateBranchLengthsWithSampleAge::ChangeTimeWhilekAncestors_new(Tree& tree, in
     }
   }
 
-  if(tau_old > 0.0){
+  if(min_tip > 0 && tau_old > 0){
 
-    if(tau_old <= min_tip){
-      tau_new   = -log(dist_unif(rng)) * tau_old;
-      delta_tau = tau_new - tau_old;
-      //calculate ratio of proposals
-      log_likelihood_ratio = log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);   
+    if(tau_old > 0.0){
+
+      if(tau_old <= min_tip){
+        tau_new   = -log(dist_unif(rng)) * tau_old;
+        delta_tau = tau_new - tau_old;
+        //calculate ratio of proposals
+        log_likelihood_ratio = log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);   
+      }else{
+        tau_new   = -log(dist_unif(rng)) * (min_tip) + tau_old - min_tip;
+        delta_tau = tau_new - tau_old;
+        assert(min_tip+delta_tau >= 0.0);
+        //calculate ratio of proposals
+        log_likelihood_ratio = log(min_tip/(min_tip+delta_tau)) + ((min_tip + delta_tau)/min_tip) - (min_tip/(min_tip+delta_tau));
+      }
+      assert(tau_new > 0.0);
+
     }else{
-      tau_new   = -log(dist_unif(rng)) * (min_tip) + tau_old - min_tip;
-      delta_tau = tau_new - tau_old;
-      assert(min_tip+delta_tau >= 0.0);
-      //calculate ratio of proposals
-      log_likelihood_ratio = log(min_tip/(min_tip+delta_tau)) + ((min_tip + delta_tau)/min_tip) - (min_tip/(min_tip+delta_tau));
+      assert(0);
     }
-    assert(tau_new > 0.0);
+
+    ////////////////////////////////////////////////
+    //coalescent prior  
+
+    //calculate new coordinates, order, sorted_indices, num_lineages
+
+    double log_likelihood;
+
+    std::vector<int> sorted_indices_new = sorted_indices, order_new = order, num_lineages_new = num_lineages;
+    std::vector<double> coordinates_new = coordinates;
+
+    for(it_sorted_indices = std::next(sorted_indices_new.begin(), k+1); it_sorted_indices != sorted_indices_new.end(); it_sorted_indices++){
+      if(*it_sorted_indices >= N){
+        coordinates_new[*it_sorted_indices] += delta_tau;
+      }
+    }
+
+    std::size_t m1(0);
+    std::generate(std::begin(sorted_indices_new), std::end(sorted_indices_new), [&]{ return m1++; });
+    std::sort(std::begin(sorted_indices_new), std::end(sorted_indices_new), [&](int i1, int i2) {
+        return std::tie(coordinates_new[i1],i1) < std::tie(coordinates_new[i2],i2); } );
+
+    //obtain order of coalescent events
+    std::fill(order_new.begin(), order_new.end(), 0);
+    std::size_t m2(0);
+    std::generate(std::begin(order_new), std::end(order_new), [&]{ return m2++; });
+    std::sort(std::begin(order_new), std::end(order_new), [&](int i1, int i2) { return sorted_indices_new[i1] < sorted_indices_new[i2]; } );
+
+    int num_lins = 0;
+    age = coordinates_new[*sorted_indices_new.begin()];
+    std::vector<int>::iterator it_sorted_indices_start = sorted_indices_new.begin();
+    for(it_sorted_indices = sorted_indices_new.begin(); it_sorted_indices != sorted_indices_new.end(); it_sorted_indices++){
+      if(coordinates_new[*it_sorted_indices] > age){
+        for(; it_sorted_indices_start != it_sorted_indices; it_sorted_indices_start++){
+          num_lineages_new[*it_sorted_indices_start] = num_lins;          
+        }
+        age = coordinates_new[*it_sorted_indices_start];
+      }
+      if(*it_sorted_indices < N){
+        num_lins++;
+      }else{
+        num_lins--;
+      }
+      assert(num_lins >= 1);
+    }
+
+    log_likelihood = CalculatePrior(coordinates_new, sorted_indices_new, num_lineages_new);
+    if(log_likelihood != -std::numeric_limits<float>::infinity()){
+      log_likelihood_ratio += log_likelihood;
+      log_likelihood = CalculatePrior(coordinates, sorted_indices, num_lineages);
+      if(log_likelihood != -std::numeric_limits<float>::infinity()) log_likelihood_ratio -= log_likelihood;
+    }
+
+
+    if(log_likelihood_ratio != -std::numeric_limits<float>::infinity()){
+
+      ////////////////////////////////////////////
+      //likelihood P(Data | tb)
+
+      if(log_likelihood_ratio != std::numeric_limits<float>::infinity()){
+        //assert(order[node_k] == k);
+        int count_number_of_spanning_branches = 0;
+        age = coordinates[node];
+        it_sorted_indices = std::next(sorted_indices.begin(), k+1);
+        for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
+
+          if(*it_sorted_indices < N){
+            n = tree.nodes[*it_sorted_indices];
+            tb     = n.branch_length;
+            tb_new = tb + delta_tau;
+
+            if(tb == 0.0){
+              log_likelihood_ratio  = std::numeric_limits<float>::infinity();
+              break;
+            }else if(tb_new <= 0.0){
+              log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+              break;
+            }else{
+              log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
+              log_likelihood_ratio += n.num_events * log(tb_new/tb);
+            }
+          }else{
+            if(coordinates[(*tree.nodes[*it_sorted_indices].child_left).label] < age){
+              count_number_of_spanning_branches++;
+
+              n = *tree.nodes[*it_sorted_indices].child_left;
+              assert(order[n.label] < k+1);
+              tb     = n.branch_length;
+              tb_new = tb + delta_tau;
+
+              if(tb == 0.0){
+                log_likelihood_ratio  = std::numeric_limits<float>::infinity();
+                break;
+              }else if(tb_new <= 0.0){
+                log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+                break;
+              }else{
+                log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
+                log_likelihood_ratio += n.num_events * log(tb_new/tb);
+              }
+            }
+
+            if(coordinates[(*tree.nodes[*it_sorted_indices].child_right).label] < age){
+              count_number_of_spanning_branches++;
+
+              n = *tree.nodes[*it_sorted_indices].child_right;
+              assert(order[n.label] < k+1);
+              tb     = n.branch_length;
+              tb_new = tb + delta_tau;
+              //assert(tb_new >= 0.0);
+
+              if(tb == 0.0){
+                log_likelihood_ratio  = std::numeric_limits<float>::infinity();
+                break;
+              }else if(tb_new <= 0.0){
+                log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+                break;
+              }else{
+                log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
+                log_likelihood_ratio += n.num_events * log(tb_new/tb);
+              }
+            }
+
+          }
+          if(count_number_of_spanning_branches == num_lineages[node]) break;
+        }
+        //assert(count_number_of_spanning_branches == num_lineages);
+      }
+    }
+
+    //decide whether to accept proposal or not.
+    accept = true;
+    if(log_likelihood_ratio < 0.0){
+      //accept with probability exp(log_p)
+      if(dist_unif(rng) > exp(log_likelihood_ratio)){
+        accept = false;
+      }
+    }
+
+    //update coordinates and sorted_indices
+    if(accept){
+      //calculate new branch lengths
+      int k_init = k;
+      k++;  
+      update_node1 = k;
+      coordinates = coordinates_new;
+
+      //sorted_indices, order, num_lineages will change here
+      for(it_sorted_indices = std::next(sorted_indices.begin(), k); it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
+        if(*it_sorted_indices >= N){
+          child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
+          tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
+          child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
+          tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
+          assert(tree.nodes[child_left_label].branch_length >= 0.0);
+          assert(tree.nodes[child_right_label].branch_length >= 0.0);
+        }
+      }
+
+      sorted_indices = sorted_indices_new;
+      order = order_new;
+      num_lineages = num_lineages_new;
+    }
 
   }else{
-    tau_new   = -log(dist_unif(rng)) * 1.0/k_choose_2;
-    tau_old   = 0.0;
-    delta_tau = tau_new;
-    //calculate ratio of proposals
-    log_likelihood_ratio = log(1.0/(tau_new*k_choose_2)) + tau_new*k_choose_2;
-    assert(tau_new > 0.0);
-  }
-
-  ////////////////////////////////////////////////
-  //coalescent prior  
-
-  //calculate new coordinates, order, sorted_indices, num_lineages
-
-  double log_likelihood;
-
-  std::vector<int> sorted_indices_new = sorted_indices, order_new = order, num_lineages_new = num_lineages;
-  std::vector<double> coordinates_new = coordinates;
-
-  for(it_sorted_indices = std::next(sorted_indices_new.begin(), k+1); it_sorted_indices != sorted_indices_new.end(); it_sorted_indices++){
-    if(*it_sorted_indices >= N){
-      coordinates_new[*it_sorted_indices] += delta_tau;
-    }
-  }
-
-  std::size_t m1(0);
-  std::generate(std::begin(sorted_indices_new), std::end(sorted_indices_new), [&]{ return m1++; });
-  std::sort(std::begin(sorted_indices_new), std::end(sorted_indices_new), [&](int i1, int i2) {
-      return std::tie(coordinates_new[i1],i1) < std::tie(coordinates_new[i2],i2); } );
-
-  //obtain order of coalescent events
-  std::fill(order_new.begin(), order_new.end(), 0);
-  std::size_t m2(0);
-  std::generate(std::begin(order_new), std::end(order_new), [&]{ return m2++; });
-  std::sort(std::begin(order_new), std::end(order_new), [&](int i1, int i2) { return sorted_indices_new[i1] < sorted_indices_new[i2]; } );
-
-  int num_lins = 0;
-  age = coordinates_new[*sorted_indices_new.begin()];
-  std::vector<int>::iterator it_sorted_indices_start = sorted_indices_new.begin();
-  for(it_sorted_indices = sorted_indices_new.begin(); it_sorted_indices != sorted_indices_new.end(); it_sorted_indices++){
-    if(coordinates_new[*it_sorted_indices] > age){
-      for(; it_sorted_indices_start != it_sorted_indices; it_sorted_indices_start++){
-        num_lineages_new[*it_sorted_indices_start] = num_lins;          
-      }
-      age = coordinates_new[*it_sorted_indices_start];
-    }
-    if(*it_sorted_indices < N){
-      num_lins++;
-    }else{
-      num_lins--;
-    }
-    assert(num_lins >= 1);
-  }
-
-  log_likelihood = CalculatePrior(coordinates_new, sorted_indices_new, num_lineages_new);
-  if(log_likelihood != -std::numeric_limits<float>::infinity()){
-    log_likelihood_ratio += log_likelihood;
-    log_likelihood = CalculatePrior(coordinates, sorted_indices, num_lineages);
-    if(log_likelihood != -std::numeric_limits<float>::infinity()) log_likelihood_ratio -= log_likelihood;
-  }
-
-
-  if(log_likelihood_ratio != -std::numeric_limits<float>::infinity()){
-
-    ////////////////////////////////////////////
-    //likelihood P(Data | tb)
-
-    if(log_likelihood_ratio != std::numeric_limits<float>::infinity()){
-      //assert(order[node_k] == k);
-      int count_number_of_spanning_branches = 0;
-      age = coordinates[node];
-      it_sorted_indices = std::next(sorted_indices.begin(), k+1);
-      for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-
-        if(*it_sorted_indices < N){
-          n = tree.nodes[*it_sorted_indices];
-          tb     = n.branch_length;
-          tb_new = tb + delta_tau;
-
-          if(tb == 0.0){
-            log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-            break;
-          }else if(tb_new <= 0.0){
-            log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-            break;
-          }else{
-            log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-            log_likelihood_ratio += n.num_events * log(tb_new/tb);
-          }
-        }else{
-          if(coordinates[(*tree.nodes[*it_sorted_indices].child_left).label] < age){
-            count_number_of_spanning_branches++;
-
-            n = *tree.nodes[*it_sorted_indices].child_left;
-            assert(order[n.label] < k+1);
-            tb     = n.branch_length;
-            tb_new = tb + delta_tau;
-
-            if(tb == 0.0){
-              log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-              break;
-            }else if(tb_new <= 0.0){
-              log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-              break;
-            }else{
-              log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-              log_likelihood_ratio += n.num_events * log(tb_new/tb);
-            }
-          }
-
-          if(coordinates[(*tree.nodes[*it_sorted_indices].child_right).label] < age){
-            count_number_of_spanning_branches++;
-
-            n = *tree.nodes[*it_sorted_indices].child_right;
-            assert(order[n.label] < k+1);
-            tb     = n.branch_length;
-            tb_new = tb + delta_tau;
-            //assert(tb_new >= 0.0);
-
-            if(tb == 0.0){
-              log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-              break;
-            }else if(tb_new <= 0.0){
-              log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-              break;
-            }else{
-              log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-              log_likelihood_ratio += n.num_events * log(tb_new/tb);
-            }
-          }
-
-        }
-        if(count_number_of_spanning_branches == num_lineages[node]) break;
-      }
-      //assert(count_number_of_spanning_branches == num_lineages);
-    }
-  }
-
-  //decide whether to accept proposal or not.
-  accept = true;
-  if(log_likelihood_ratio < 0.0){
-    //accept with probability exp(log_p)
-    if(dist_unif(rng) > exp(log_likelihood_ratio)){
-      accept = false;
-    }
-  }
-
-  //update coordinates and sorted_indices
-  if(accept){
-    //calculate new branch lengths
-    int k_init = k;
-    k++;  
     update_node1 = k;
-    coordinates = coordinates_new;
-
-    //sorted_indices, order, num_lineages will change here
-    for(it_sorted_indices = std::next(sorted_indices.begin(), k); it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-      if(*it_sorted_indices >= N){
-        child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
-        tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
-        child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
-        tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
-        assert(tree.nodes[child_left_label].branch_length >= 0.0);
-        assert(tree.nodes[child_right_label].branch_length >= 0.0);
-      }
-    }
-
-    sorted_indices = sorted_indices_new;
-    order = order_new;
-    num_lineages = num_lineages_new;
   }
 
 }
@@ -4087,7 +4146,7 @@ EstimateBranchLengthsWithSampleAge::UpdateOneEvent(Tree& tree, int node_k, std::
   log_likelihood_ratio = 0.0;
 
   //propose to change time of node_k between time of older daughter and parent
-  
+
   if(tree.nodes[node_k].parent == NULL){
     //propose with exponential distribution  
 
@@ -4106,7 +4165,7 @@ EstimateBranchLengthsWithSampleAge::UpdateOneEvent(Tree& tree, int node_k, std::
     log_likelihood_ratio = fast_log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);
 
     //coalescent prior
-   
+
     //this case is unaffected by ancient DNA
     log_likelihood_ratio -= delta_tau;
 
@@ -4179,223 +4238,229 @@ EstimateBranchLengthsWithSampleAge::UpdateOneEvent(Tree& tree, int node_k, std::
     tau_above    = tb;
     T            = tau_below + tau_above;
 
-    //sample a new tau_below
-    x2 = tau_above/tau_below;
-    std::gamma_distribution<double> dist_gamma2(2.0 * x2,1.0);
+    int k_start, k_end, k = order[node_k];
+    if(tau_below > 0 && tau_above > 0){
 
-    tau_new_below        = dist_gamma(rng);
-    tau_new_below        = tau_new_below/(tau_new_below + dist_gamma2(rng));
-    double tmp = tau_new_below;
-    assert(tau_new_below <= 1.0);
-    tau_new_below       *= T; 
+      //sample a new tau_below
+      x2 = tau_above/tau_below;
+      std::gamma_distribution<double> dist_gamma2(2.0 * x2,1.0);
 
-    delta_tau            = tau_new_below - tau_below;
-    tau_new_above        = T - tau_new_below;
+      tau_new_below        = dist_gamma(rng);
+      tau_new_below        = tau_new_below/(tau_new_below + dist_gamma2(rng));
+      double tmp = tau_new_below;
+      assert(tau_new_below <= 1.0);
+      tau_new_below       *= T; 
 
-    if(tau_new_above > 0.0 && tau_new_below > 0.0){
+      delta_tau            = tau_new_below - tau_below;
+      tau_new_above        = T - tau_new_below;
 
-      //now decide whether to accept delta_tau:
+      if(tau_new_above > 0.0 && tau_new_below > 0.0){
 
-      //calculate likelihood ratio
-      //proposal likelihood ratio
-      x1 = tau_new_above/tau_new_below;
-      log_likelihood_ratio = fast_log( x1/x2*(2.0*x1+1.0)/(2.0*x2+1.0)*(tau_below/tau_new_below)) + (2.0*x1 - 1.0) * fast_log(1.0 - 1.0/(1.0+x2)) - (2.0*x2 - 1.0) * fast_log(1.0 - 1.0/(1.0+x1));
+        //now decide whether to accept delta_tau:
 
-      //calculate new coordinates, order, sorted_indices, num_lineages
-      double log_likelihood;
+        //calculate likelihood ratio
+        //proposal likelihood ratio
+        x1 = tau_new_above/tau_new_below;
+        log_likelihood_ratio = fast_log( x1/x2*(2.0*x1+1.0)/(2.0*x2+1.0)*(tau_below/tau_new_below)) + (2.0*x1 - 1.0) * fast_log(1.0 - 1.0/(1.0+x2)) - (2.0*x2 - 1.0) * fast_log(1.0 - 1.0/(1.0+x1));
 
-      int k_start, k_end, k;
-      k     = order[node_k];
-      k_end = order[parent_label];
+        //calculate new coordinates, order, sorted_indices, num_lineages
+        double log_likelihood;
+        k_end = order[parent_label];
 
-      double coords = coordinates[node_k];
-      double coords_new = coords + delta_tau;
-      if(coords_new > coordinates[parent_label]) coords_new = coordinates[parent_label];
+        double coords = coordinates[node_k];
+        double coords_new = coords + delta_tau;
+        if(coords_new > coordinates[parent_label]) coords_new = coordinates[parent_label];
 
-      //anything outside k_start and k_end is identical, so only need to update this bit
-      if(delta_tau > 0){
-        k_start = k;
-        
-        /*
-        for(int k_foo = k_start; k_foo < k_end; k_foo++){
-          std::cerr << sorted_indices[k_foo] << " ";
-        }
-        std::cerr << std::endl;
-        for(int k_foo = k_start; k_foo < k_end; k_foo++){
-          std::cerr << coordinates[sorted_indices[k_foo]] << " ";
-        }
-        std::cerr << std::endl;
-        */
+        //anything outside k_start and k_end is identical, so only need to update this bit
+        if(delta_tau > 0){
+          k_start = k;
 
-        int node_tmp;
-        double age = coords_new;
-        for(int k_tmp = k_start; k_tmp < k_end; k_tmp++){
-          node_tmp = sorted_indices[k_tmp + 1];
-          if(age > coordinates[node_tmp]){
-            sorted_indices_new[k_tmp]  = node_tmp;
-            order_new[node_tmp]        = k_tmp;
-            num_lineages_new[node_tmp] = num_lineages[node_tmp] + 1;
-          }else{
-            sorted_indices_new[k_tmp] = node_k;
-            order_new[node_k]         = k_tmp;
-            num_lineages_new[node_k]  = num_lineages[sorted_indices[k_tmp]]; 
-            k_start = k - 1;
-            k_end   = k_tmp + 1;
-            num_lineages_new[sorted_indices[k_start]] = num_lineages[sorted_indices[k_start]];
-            sorted_indices_new[k_start]               = sorted_indices[k_start];
-            order_new[sorted_indices[k_start]]        = k_start;
-            num_lineages_new[sorted_indices[k_end]] = num_lineages[sorted_indices[k_end]];
-            sorted_indices_new[k_end]               = sorted_indices[k_end];
-            order_new[sorted_indices[k_end]]        = k_end;
-            break;
-          }
-        }
+          /*
+             for(int k_foo = k_start; k_foo < k_end; k_foo++){
+             std::cerr << sorted_indices[k_foo] << " ";
+             }
+             std::cerr << std::endl;
+             for(int k_foo = k_start; k_foo < k_end; k_foo++){
+             std::cerr << coordinates[sorted_indices[k_foo]] << " ";
+             }
+             std::cerr << std::endl;
+             */
 
-        /*
-        std::cerr << std::endl;
-        for(int k_foo = k_start; k_foo < k_end; k_foo++){
-          std::cerr << sorted_indices_new[k_foo] << " ";
-        }
-        std::cerr << std::endl;
-        for(int k_foo = k_start; k_foo < k_end; k_foo++){
-          std::cerr << coordinates[sorted_indices_new[k_foo]] << " ";
-        }
-        std::cerr << std::endl;
-        std::cerr << std::endl;
-        */
-      }else{      
-        k_end = k;
-        k_start = order[child_left_label];
-        if(k_start < order[child_right_label]) k_start = order[child_right_label];
-
-        int node_tmp;
-        double age = coords_new;
-        for(int k_tmp = k_end; k_tmp > k_start; k_tmp--){
-          node_tmp = sorted_indices[k_tmp - 1];
-          if(age < coordinates[node_tmp]){
-            sorted_indices_new[k_tmp]  = node_tmp;
-            order_new[node_tmp]        = k_tmp;
-            num_lineages_new[node_tmp] = num_lineages[node_tmp] - 1;
-          }else{
-            sorted_indices_new[k_tmp] = node_k;
-            order_new[node_k]         = k_tmp;
-            num_lineages_new[node_k]  = num_lineages[sorted_indices[k_tmp]];
-            k_start = k_tmp - 1;
-            k_end   = k + 1;
-            num_lineages_new[sorted_indices[k_start]] = num_lineages[sorted_indices[k_start]];
-            sorted_indices_new[k_start]               = sorted_indices[k_start];
-            order_new[sorted_indices[k_start]]        = k_start;
-            num_lineages_new[sorted_indices[k_end]] = num_lineages[sorted_indices[k_end]];
-            sorted_indices_new[k_end]               = sorted_indices[k_end];
-            order_new[sorted_indices[k_end]]        = k_end;
-            break;
-          }
-        }
-      
-      }
-
-      //for debugging
-      if(0){
-     
-        std::vector<double> coordinates_new = coordinates;
-        coordinates_new[node_k] += delta_tau; 
-        std::vector<int> sorted_indices_new2 = sorted_indices, order_new2 = order, num_lineages_new2 = num_lineages;
-        
-        std::size_t m1(0);
-        std::generate(std::begin(sorted_indices_new2), std::end(sorted_indices_new2), [&]{ return m1++; });
-        std::sort(std::begin(sorted_indices_new2), std::end(sorted_indices_new2), [&](int i1, int i2) {
-            return std::tie(coordinates_new[i1],i1) < std::tie(coordinates_new[i2],i2); } );
-
-        //obtain order of coalescent events
-        std::fill(order_new2.begin(), order_new2.end(), 0);
-        std::size_t m2(0);
-        std::generate(std::begin(order_new2), std::end(order_new2), [&]{ return m2++; });
-        std::sort(std::begin(order_new2), std::end(order_new2), [&](int i1, int i2) { return sorted_indices_new2[i1] < sorted_indices_new2[i2]; } );
-
-        int num_lins = 0;
-        double age = coordinates_new[*sorted_indices_new2.begin()];
-        std::vector<int>::iterator it_sorted_indices_start = sorted_indices_new2.begin();
-        for(it_sorted_indices = sorted_indices_new2.begin(); it_sorted_indices != sorted_indices_new2.end(); it_sorted_indices++){
-          if(coordinates_new[*it_sorted_indices] > age){
-            for(; it_sorted_indices_start != it_sorted_indices; it_sorted_indices_start++){
-              num_lineages_new2[*it_sorted_indices_start] = num_lins;          
+          int node_tmp;
+          double age = coords_new;
+          for(int k_tmp = k_start; k_tmp < k_end; k_tmp++){
+            node_tmp = sorted_indices[k_tmp + 1];
+            if(age > coordinates[node_tmp]){
+              sorted_indices_new[k_tmp]  = node_tmp;
+              order_new[node_tmp]        = k_tmp;
+              num_lineages_new[node_tmp] = num_lineages[node_tmp] + 1;
+            }else{
+              sorted_indices_new[k_tmp] = node_k;
+              order_new[node_k]         = k_tmp;
+              num_lineages_new[node_k]  = num_lineages[sorted_indices[k_tmp]]; 
+              k_start = k - 1;
+              k_end   = k_tmp + 1;
+              num_lineages_new[sorted_indices[k_start]] = num_lineages[sorted_indices[k_start]];
+              sorted_indices_new[k_start]               = sorted_indices[k_start];
+              order_new[sorted_indices[k_start]]        = k_start;
+              num_lineages_new[sorted_indices[k_end]] = num_lineages[sorted_indices[k_end]];
+              sorted_indices_new[k_end]               = sorted_indices[k_end];
+              order_new[sorted_indices[k_end]]        = k_end;
+              break;
             }
-            age = coordinates_new[*it_sorted_indices_start];
           }
-          if(*it_sorted_indices < N){
-            num_lins++;
-          }else{
-            num_lins--;
+
+          /*
+             std::cerr << std::endl;
+             for(int k_foo = k_start; k_foo < k_end; k_foo++){
+             std::cerr << sorted_indices_new[k_foo] << " ";
+             }
+             std::cerr << std::endl;
+             for(int k_foo = k_start; k_foo < k_end; k_foo++){
+             std::cerr << coordinates[sorted_indices_new[k_foo]] << " ";
+             }
+             std::cerr << std::endl;
+             std::cerr << std::endl;
+             */
+        }else{      
+          k_end = k;
+          k_start = order[child_left_label];
+          if(k_start < order[child_right_label]) k_start = order[child_right_label];
+
+          int node_tmp;
+          double age = coords_new;
+          for(int k_tmp = k_end; k_tmp > k_start; k_tmp--){
+            node_tmp = sorted_indices[k_tmp - 1];
+            if(age < coordinates[node_tmp]){
+              sorted_indices_new[k_tmp]  = node_tmp;
+              order_new[node_tmp]        = k_tmp;
+              num_lineages_new[node_tmp] = num_lineages[node_tmp] - 1;
+            }else{
+              sorted_indices_new[k_tmp] = node_k;
+              order_new[node_k]         = k_tmp;
+              num_lineages_new[node_k]  = num_lineages[sorted_indices[k_tmp]];
+              k_start = k_tmp - 1;
+              k_end   = k + 1;
+              num_lineages_new[sorted_indices[k_start]] = num_lineages[sorted_indices[k_start]];
+              sorted_indices_new[k_start]               = sorted_indices[k_start];
+              order_new[sorted_indices[k_start]]        = k_start;
+              num_lineages_new[sorted_indices[k_end]] = num_lineages[sorted_indices[k_end]];
+              sorted_indices_new[k_end]               = sorted_indices[k_end];
+              order_new[sorted_indices[k_end]]        = k_end;
+              break;
+            }
           }
-          assert(num_lins >= 1);
+
         }
-    
-        for(int i = k_start; i <= k_end; i++){
-          assert(sorted_indices_new[i] == sorted_indices_new2[i]);
-          int node_tmp = sorted_indices_new[i];
-          assert(order_new[node_tmp] == order_new2[node_tmp]);
-          if(0){
-          if(num_lineages_new[node_tmp] != num_lineages_new2[node_tmp]){
-            std::cerr << tmp << " " << delta_tau << " " << tau_above << " " << tau_new_above << std::endl;
-            std::cerr << node_k << " " << k << " " << parent_label << " " << order[parent_label] << std::endl;
-            std::cerr << coordinates[parent_label] << " " << coordinates[sorted_indices[k+1]];
 
-            std::cerr << node_k << " " << node_tmp << " " << num_lineages_new[node_tmp] << " " << num_lineages_new2[node_tmp] << std::endl; 
-            std::cerr << order_new[node_k] << " " << order[node_k] << " " << order_new[node_tmp] << " " << order[node_tmp] << std::endl;
-            std::cerr << num_lineages[sorted_indices[k]] << std::endl;
-            std::cerr << coordinates[node_k] << " " << coordinates[sorted_indices[k+1]] << " " << coordinates_new[node_k] << " " << (coordinates[sorted_indices[k+1]] == coordinates_new[node_k]) << std::endl;
+        //for debugging
+        if(0){
+
+          std::vector<double> coordinates_new = coordinates;
+          coordinates_new[node_k] += delta_tau; 
+          std::vector<int> sorted_indices_new2 = sorted_indices, order_new2 = order, num_lineages_new2 = num_lineages;
+
+          std::size_t m1(0);
+          std::generate(std::begin(sorted_indices_new2), std::end(sorted_indices_new2), [&]{ return m1++; });
+          std::sort(std::begin(sorted_indices_new2), std::end(sorted_indices_new2), [&](int i1, int i2) {
+              return std::tie(coordinates_new[i1],i1) < std::tie(coordinates_new[i2],i2); } );
+
+          //obtain order of coalescent events
+          std::fill(order_new2.begin(), order_new2.end(), 0);
+          std::size_t m2(0);
+          std::generate(std::begin(order_new2), std::end(order_new2), [&]{ return m2++; });
+          std::sort(std::begin(order_new2), std::end(order_new2), [&](int i1, int i2) { return sorted_indices_new2[i1] < sorted_indices_new2[i2]; } );
+
+          int num_lins = 0;
+          double age = coordinates_new[*sorted_indices_new2.begin()];
+          std::vector<int>::iterator it_sorted_indices_start = sorted_indices_new2.begin();
+          for(it_sorted_indices = sorted_indices_new2.begin(); it_sorted_indices != sorted_indices_new2.end(); it_sorted_indices++){
+            if(coordinates_new[*it_sorted_indices] > age){
+              for(; it_sorted_indices_start != it_sorted_indices; it_sorted_indices_start++){
+                num_lineages_new2[*it_sorted_indices_start] = num_lins;          
+              }
+              age = coordinates_new[*it_sorted_indices_start];
+            }
+            if(*it_sorted_indices < N){
+              num_lins++;
+            }else{
+              num_lins--;
+            }
+            assert(num_lins >= 1);
           }
-          assert(num_lineages_new[node_tmp] == num_lineages_new2[node_tmp]);
-          }
-        } 
 
-      }
+          for(int i = k_start; i <= k_end; i++){
+            assert(sorted_indices_new[i] == sorted_indices_new2[i]);
+            int node_tmp = sorted_indices_new[i];
+            assert(order_new[node_tmp] == order_new2[node_tmp]);
+            if(0){
+              if(num_lineages_new[node_tmp] != num_lineages_new2[node_tmp]){
+                std::cerr << tmp << " " << delta_tau << " " << tau_above << " " << tau_new_above << std::endl;
+                std::cerr << node_k << " " << k << " " << parent_label << " " << order[parent_label] << std::endl;
+                std::cerr << coordinates[parent_label] << " " << coordinates[sorted_indices[k+1]];
 
-      coordinates[node_k] = coords_new;
-      log_likelihood = CalculatePrior(k_start, k_end, coordinates, sorted_indices_new, num_lineages_new);
-      coordinates[node_k] = coords;
-      if(log_likelihood != -std::numeric_limits<float>::infinity()){
-        //log_likelihood_ratio += log_likelihood;
-        log_likelihood -= CalculatePrior(k_start, k_end, coordinates, sorted_indices, num_lineages);
-        if(log_likelihood != -std::numeric_limits<float>::infinity()) log_likelihood_ratio += log_likelihood;
-      }
+                std::cerr << node_k << " " << node_tmp << " " << num_lineages_new[node_tmp] << " " << num_lineages_new2[node_tmp] << std::endl; 
+                std::cerr << order_new[node_k] << " " << order[node_k] << " " << order_new[node_tmp] << " " << order[node_tmp] << std::endl;
+                std::cerr << num_lineages[sorted_indices[k]] << std::endl;
+                std::cerr << coordinates[node_k] << " " << coordinates[sorted_indices[k+1]] << " " << coordinates_new[node_k] << " " << (coordinates[sorted_indices[k+1]] == coordinates_new[node_k]) << std::endl;
+              }
+              assert(num_lineages_new[node_tmp] == num_lineages_new2[node_tmp]);
+            }
+          } 
 
-      ///////////////////////////
+        }
 
-      //likelihood function, likelihood ratio  
-      n_num_events           = tree.nodes[node_k].num_events;
-      child_left_num_events  = tree.nodes[child_left_label].num_events;
-      child_right_num_events = tree.nodes[child_right_label].num_events;
+        coordinates[node_k] = coords_new;
+        log_likelihood = CalculatePrior(k_start, k_end, coordinates, sorted_indices_new, num_lineages_new);
+        coordinates[node_k] = coords;
+        if(log_likelihood != -std::numeric_limits<float>::infinity()){
+          //log_likelihood_ratio += log_likelihood;
+          log_likelihood -= CalculatePrior(k_start, k_end, coordinates, sorted_indices, num_lineages);
+          if(log_likelihood != -std::numeric_limits<float>::infinity()) log_likelihood_ratio += log_likelihood;
+        }
 
-      tb_child_left      = tree.nodes[child_left_label].branch_length;
-      tb_child_right     = tree.nodes[child_right_label].branch_length;
+        ///////////////////////////
 
-      //mutation and recombination part
-      if(tb == 0.0){
-        log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-      }else if(tb <= delta_tau){
-        log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-      }else{
+        //likelihood function, likelihood ratio  
+        n_num_events           = tree.nodes[node_k].num_events;
+        child_left_num_events  = tree.nodes[child_left_label].num_events;
+        child_right_num_events = tree.nodes[child_right_label].num_events;
 
-        if(tb_child_left == 0.0){
+        tb_child_left      = tree.nodes[child_left_label].branch_length;
+        tb_child_right     = tree.nodes[child_right_label].branch_length;
+
+        //mutation and recombination part
+        if(tb == 0.0){
           log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-        }else if(tb_child_left <= -delta_tau){
-          log_likelihood_ratio  = -std::numeric_limits<float>::infinity(); 
+        }else if(tb <= delta_tau){
+          log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
         }else{
 
-          if(tb_child_right == 0.0){
+          if(tb_child_left == 0.0){
             log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-          }else if(tb_child_right <= -delta_tau){
-            log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+          }else if(tb_child_left <= -delta_tau){
+            log_likelihood_ratio  = -std::numeric_limits<float>::infinity(); 
           }else{
 
-            log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-            if(n_num_events >= 1.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
-            if(child_right_num_events >= 1.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
-            if(child_left_num_events >= 1.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+            if(tb_child_right == 0.0){
+              log_likelihood_ratio  = std::numeric_limits<float>::infinity();
+            }else if(tb_child_right <= -delta_tau){
+              log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+            }else{
 
+              log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
+              if(n_num_events >= 1.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
+              if(child_right_num_events >= 1.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
+              if(child_left_num_events >= 1.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+
+            }
           }
         }
+      }else{
+        log_likelihood_ratio = 0.0;
+        k_start = k;
+        k_end = k_start;
+        delta_tau = 0.0;
       }
 
       //decide whether to accept proposal or not.
@@ -4427,7 +4492,6 @@ EstimateBranchLengthsWithSampleAge::UpdateOneEvent(Tree& tree, int node_k, std::
     }
 
   }
-
 
 }
 
@@ -4470,192 +4534,191 @@ EstimateBranchLengthsWithSampleAge::ChangeTimeWhilekAncestorsVP_new(Tree& tree, 
     }
   }
 
-  if(tau_old > 0.0){
+  if(min_tip > 0 && tau_old > 0.0){
 
-    if(tau_old <= min_tip){
-      tau_new   = -log(dist_unif(rng)) * tau_old;
-      delta_tau = tau_new - tau_old;
-      //calculate ratio of proposals
-      log_likelihood_ratio = log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);   
-    }else{
-      tau_new   = -log(dist_unif(rng)) * (min_tip) + tau_old - min_tip;
-      delta_tau = tau_new - tau_old;
-      assert(min_tip+delta_tau >= 0.0);
-      //calculate ratio of proposals
-      log_likelihood_ratio = log(min_tip/(min_tip+delta_tau)) + ((min_tip + delta_tau)/min_tip) - (min_tip/(min_tip+delta_tau));
+    if(tau_old > 0.0){
+
+      if(tau_old <= min_tip){
+        tau_new   = -log(dist_unif(rng)) * tau_old;
+        delta_tau = tau_new - tau_old;
+        //calculate ratio of proposals
+        log_likelihood_ratio = log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);   
+      }else{
+        tau_new   = -log(dist_unif(rng)) * (min_tip) + tau_old - min_tip;
+        delta_tau = tau_new - tau_old;
+        assert(min_tip+delta_tau >= 0.0);
+        //calculate ratio of proposals
+        log_likelihood_ratio = log(min_tip/(min_tip+delta_tau)) + ((min_tip + delta_tau)/min_tip) - (min_tip/(min_tip+delta_tau));
+      }
+      assert(tau_new > 0.0);
+
     }
-    assert(tau_new > 0.0);
+
+    ////////////////////////////////////////////////
+    //coalescent prior  
+
+    //calculate new coordinates, order, sorted_indices, num_lineages
+
+    double log_likelihood;
+
+    std::vector<int> sorted_indices_new = sorted_indices, order_new = order, num_lineages_new = num_lineages;
+    std::vector<double> coordinates_new = coordinates;
+
+    for(it_sorted_indices = std::next(sorted_indices_new.begin(), k+1); it_sorted_indices != sorted_indices_new.end(); it_sorted_indices++){
+      if(*it_sorted_indices >= N){
+        coordinates_new[*it_sorted_indices] += delta_tau;
+      }
+    }
+
+    std::size_t m1(0);
+    std::generate(std::begin(sorted_indices_new), std::end(sorted_indices_new), [&]{ return m1++; });
+    std::sort(std::begin(sorted_indices_new), std::end(sorted_indices_new), [&](int i1, int i2) {
+        return std::tie(coordinates_new[i1],i1) < std::tie(coordinates_new[i2],i2); } );
+
+    //obtain order of coalescent events
+    std::fill(order_new.begin(), order_new.end(), 0);
+    std::size_t m2(0);
+    std::generate(std::begin(order_new), std::end(order_new), [&]{ return m2++; });
+    std::sort(std::begin(order_new), std::end(order_new), [&](int i1, int i2) { return sorted_indices_new[i1] < sorted_indices_new[i2]; } );
+
+    int num_lins = 0;
+    age = coordinates_new[*sorted_indices_new.begin()];
+    std::vector<int>::iterator it_sorted_indices_start = sorted_indices_new.begin();
+    for(it_sorted_indices = sorted_indices_new.begin(); it_sorted_indices != sorted_indices_new.end(); it_sorted_indices++){
+      if(coordinates_new[*it_sorted_indices] > age){
+        for(; it_sorted_indices_start != it_sorted_indices; it_sorted_indices_start++){
+          num_lineages_new[*it_sorted_indices_start] = num_lins;          
+        }
+        age = coordinates_new[*it_sorted_indices_start];
+      }
+      if(*it_sorted_indices < N){
+        num_lins++;
+      }else{
+        num_lins--;
+      }
+      assert(num_lins >= 1);
+    }
+
+    log_likelihood = CalculatePrior(epoch, coal_rate, coordinates_new, sorted_indices_new, num_lineages_new);
+    if(log_likelihood != -std::numeric_limits<float>::infinity()){
+      log_likelihood_ratio += log_likelihood;
+      log_likelihood = CalculatePrior(epoch, coal_rate, coordinates, sorted_indices, num_lineages);
+      if(log_likelihood != -std::numeric_limits<float>::infinity()) log_likelihood_ratio -= log_likelihood;
+    }
+
+
+    if(log_likelihood_ratio != -std::numeric_limits<float>::infinity()){
+
+      ////////////////////////////////////////////
+      //likelihood P(Data | tb)
+
+      if(log_likelihood_ratio != std::numeric_limits<float>::infinity()){
+        //assert(order[node_k] == k);
+        int count_number_of_spanning_branches = 0;
+        age = coordinates[node];
+        it_sorted_indices = std::next(sorted_indices.begin(), k+1);
+        for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
+
+          if(*it_sorted_indices < N){
+            n = tree.nodes[*it_sorted_indices];
+            tb     = n.branch_length;
+            tb_new = tb + delta_tau;
+
+            if(tb == 0.0){
+              log_likelihood_ratio  = std::numeric_limits<float>::infinity();
+              break;
+            }else if(tb_new <= 0.0){
+              log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+              break;
+            }else{
+              log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
+              log_likelihood_ratio += n.num_events * log(tb_new/tb);
+            }
+          }else{
+            if(coordinates[(*tree.nodes[*it_sorted_indices].child_left).label] < age){
+              count_number_of_spanning_branches++;
+
+              n = *tree.nodes[*it_sorted_indices].child_left;
+              assert(order[n.label] < k+1);
+              tb     = n.branch_length;
+              tb_new = tb + delta_tau;
+
+              if(tb == 0.0){
+                log_likelihood_ratio  = std::numeric_limits<float>::infinity();
+                break;
+              }else if(tb_new <= 0.0){
+                log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+                break;
+              }else{
+                log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
+                log_likelihood_ratio += n.num_events * log(tb_new/tb);
+              }
+            }
+
+            if(coordinates[(*tree.nodes[*it_sorted_indices].child_right).label] < age){
+              count_number_of_spanning_branches++;
+
+              n = *tree.nodes[*it_sorted_indices].child_right;
+              assert(order[n.label] < k+1);
+              tb     = n.branch_length;
+              tb_new = tb + delta_tau;
+              //assert(tb_new >= 0.0);
+
+              if(tb == 0.0){
+                log_likelihood_ratio  = std::numeric_limits<float>::infinity();
+                break;
+              }else if(tb_new <= 0.0){
+                log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+                break;
+              }else{
+                log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
+                log_likelihood_ratio += n.num_events * log(tb_new/tb);
+              }
+            }
+
+          }
+          if(count_number_of_spanning_branches == num_lineages[node]) break;
+        }
+        //assert(count_number_of_spanning_branches == num_lineages);
+      }
+    }
+
+    //decide whether to accept proposal or not.
+    accept = true;
+    if(log_likelihood_ratio < 0.0){
+      //accept with probability exp(log_p)
+      if(dist_unif(rng) > exp(log_likelihood_ratio)){
+        accept = false;
+      }
+    }
+
+    //update coordinates and sorted_indices
+    if(accept){
+      //calculate new branch lengths
+      int k_init = k;
+      k++;  
+      update_node1 = k;
+      coordinates = coordinates_new;
+
+      //sorted_indices, order, num_lineages will change here
+      for(it_sorted_indices = std::next(sorted_indices.begin(), k); it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
+        if(*it_sorted_indices >= N){
+          child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
+          tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
+          child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
+          tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
+          assert(tree.nodes[child_left_label].branch_length >= 0.0);
+          assert(tree.nodes[child_right_label].branch_length >= 0.0);
+        }
+      }
+
+      sorted_indices = sorted_indices_new;
+      order = order_new;
+      num_lineages = num_lineages_new;
+    }
 
   }else{
-    tau_new   = -log(dist_unif(rng)) * 1.0/k_choose_2;
-    tau_old   = 0.0;
-    delta_tau = tau_new;
-    //calculate ratio of proposals
-    log_likelihood_ratio = log(1.0/(tau_new*k_choose_2)) + tau_new*k_choose_2;
-    assert(tau_new > 0.0);
-  }
-
-  ////////////////////////////////////////////////
-  //coalescent prior  
-
-  //calculate new coordinates, order, sorted_indices, num_lineages
-
-  double log_likelihood;
-
-  std::vector<int> sorted_indices_new = sorted_indices, order_new = order, num_lineages_new = num_lineages;
-  std::vector<double> coordinates_new = coordinates;
-
-  for(it_sorted_indices = std::next(sorted_indices_new.begin(), k+1); it_sorted_indices != sorted_indices_new.end(); it_sorted_indices++){
-    if(*it_sorted_indices >= N){
-      coordinates_new[*it_sorted_indices] += delta_tau;
-    }
-  }
-
-  std::size_t m1(0);
-  std::generate(std::begin(sorted_indices_new), std::end(sorted_indices_new), [&]{ return m1++; });
-  std::sort(std::begin(sorted_indices_new), std::end(sorted_indices_new), [&](int i1, int i2) {
-      return std::tie(coordinates_new[i1],i1) < std::tie(coordinates_new[i2],i2); } );
-
-  //obtain order of coalescent events
-  std::fill(order_new.begin(), order_new.end(), 0);
-  std::size_t m2(0);
-  std::generate(std::begin(order_new), std::end(order_new), [&]{ return m2++; });
-  std::sort(std::begin(order_new), std::end(order_new), [&](int i1, int i2) { return sorted_indices_new[i1] < sorted_indices_new[i2]; } );
-
-  int num_lins = 0;
-  age = coordinates_new[*sorted_indices_new.begin()];
-  std::vector<int>::iterator it_sorted_indices_start = sorted_indices_new.begin();
-  for(it_sorted_indices = sorted_indices_new.begin(); it_sorted_indices != sorted_indices_new.end(); it_sorted_indices++){
-    if(coordinates_new[*it_sorted_indices] > age){
-      for(; it_sorted_indices_start != it_sorted_indices; it_sorted_indices_start++){
-        num_lineages_new[*it_sorted_indices_start] = num_lins;          
-      }
-      age = coordinates_new[*it_sorted_indices_start];
-    }
-    if(*it_sorted_indices < N){
-      num_lins++;
-    }else{
-      num_lins--;
-    }
-    assert(num_lins >= 1);
-  }
-
-  log_likelihood = CalculatePrior(epoch, coal_rate, coordinates_new, sorted_indices_new, num_lineages_new);
-  if(log_likelihood != -std::numeric_limits<float>::infinity()){
-    log_likelihood_ratio += log_likelihood;
-    log_likelihood = CalculatePrior(epoch, coal_rate, coordinates, sorted_indices, num_lineages);
-    if(log_likelihood != -std::numeric_limits<float>::infinity()) log_likelihood_ratio -= log_likelihood;
-  }
-
-
-  if(log_likelihood_ratio != -std::numeric_limits<float>::infinity()){
-
-    ////////////////////////////////////////////
-    //likelihood P(Data | tb)
-
-    if(log_likelihood_ratio != std::numeric_limits<float>::infinity()){
-      //assert(order[node_k] == k);
-      int count_number_of_spanning_branches = 0;
-      age = coordinates[node];
-      it_sorted_indices = std::next(sorted_indices.begin(), k+1);
-      for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-
-        if(*it_sorted_indices < N){
-          n = tree.nodes[*it_sorted_indices];
-          tb     = n.branch_length;
-          tb_new = tb + delta_tau;
-
-          if(tb == 0.0){
-            log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-            break;
-          }else if(tb_new <= 0.0){
-            log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-            break;
-          }else{
-            log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-            log_likelihood_ratio += n.num_events * log(tb_new/tb);
-          }
-        }else{
-          if(coordinates[(*tree.nodes[*it_sorted_indices].child_left).label] < age){
-            count_number_of_spanning_branches++;
-
-            n = *tree.nodes[*it_sorted_indices].child_left;
-            assert(order[n.label] < k+1);
-            tb     = n.branch_length;
-            tb_new = tb + delta_tau;
-
-            if(tb == 0.0){
-              log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-              break;
-            }else if(tb_new <= 0.0){
-              log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-              break;
-            }else{
-              log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-              log_likelihood_ratio += n.num_events * log(tb_new/tb);
-            }
-          }
-
-          if(coordinates[(*tree.nodes[*it_sorted_indices].child_right).label] < age){
-            count_number_of_spanning_branches++;
-
-            n = *tree.nodes[*it_sorted_indices].child_right;
-            assert(order[n.label] < k+1);
-            tb     = n.branch_length;
-            tb_new = tb + delta_tau;
-            //assert(tb_new >= 0.0);
-
-            if(tb == 0.0){
-              log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-              break;
-            }else if(tb_new <= 0.0){
-              log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-              break;
-            }else{
-              log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-              log_likelihood_ratio += n.num_events * log(tb_new/tb);
-            }
-          }
-
-        }
-        if(count_number_of_spanning_branches == num_lineages[node]) break;
-      }
-      //assert(count_number_of_spanning_branches == num_lineages);
-    }
-  }
-
-  //decide whether to accept proposal or not.
-  accept = true;
-  if(log_likelihood_ratio < 0.0){
-    //accept with probability exp(log_p)
-    if(dist_unif(rng) > exp(log_likelihood_ratio)){
-      accept = false;
-    }
-  }
-
-  //update coordinates and sorted_indices
-  if(accept){
-    //calculate new branch lengths
-    int k_init = k;
-    k++;  
     update_node1 = k;
-    coordinates = coordinates_new;
-
-    //sorted_indices, order, num_lineages will change here
-    for(it_sorted_indices = std::next(sorted_indices.begin(), k); it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-      if(*it_sorted_indices >= N){
-        child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
-        tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
-        child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
-        tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
-        assert(tree.nodes[child_left_label].branch_length >= 0.0);
-        assert(tree.nodes[child_right_label].branch_length >= 0.0);
-      }
-    }
-
-    sorted_indices = sorted_indices_new;
-    order = order_new;
-    num_lineages = num_lineages_new;
   }
 
 }
@@ -4668,7 +4731,7 @@ EstimateBranchLengthsWithSampleAge::UpdateOneEventVP(Tree& tree, int node_k, con
   log_likelihood_ratio = 0.0;
 
   //propose to change time of node_k between time of older daughter and parent
-  
+
   if(tree.nodes[node_k].parent == NULL){
     //propose with exponential distribution  
 
@@ -4687,7 +4750,7 @@ EstimateBranchLengthsWithSampleAge::UpdateOneEventVP(Tree& tree, int node_k, con
     log_likelihood_ratio = fast_log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);
 
     //coalescent prior
-   
+
     //this case is unaffected by ancient DNA
     coordinates[node_k] += delta_tau;
     assert(order[node_k] == order.size() - 1);
@@ -4770,142 +4833,149 @@ EstimateBranchLengthsWithSampleAge::UpdateOneEventVP(Tree& tree, int node_k, con
     tau_above    = tb;
     T            = tau_below + tau_above;
 
-    //sample a new tau_below
-    x2 = tau_above/tau_below;
-    std::gamma_distribution<double> dist_gamma2(2.0 * x2,1.0);
+    int k_start, k_end, k = order[node_k];
+    if(tau_above > 0.0 && tau_below > 0.0){
 
-    tau_new_below        = dist_gamma(rng);
-    tau_new_below        = tau_new_below/(tau_new_below + dist_gamma2(rng));
-    double tmp = tau_new_below;
-    assert(tau_new_below <= 1.0);
-    tau_new_below       *= T; 
+      //sample a new tau_below
+      x2 = tau_above/tau_below;
+      std::gamma_distribution<double> dist_gamma2(2.0 * x2,1.0);
 
-    delta_tau            = tau_new_below - tau_below;
-    tau_new_above        = T - tau_new_below;
+      tau_new_below        = dist_gamma(rng);
+      tau_new_below        = tau_new_below/(tau_new_below + dist_gamma2(rng));
+      double tmp = tau_new_below;
+      assert(tau_new_below <= 1.0);
+      tau_new_below       *= T; 
 
-    if(tau_new_above > 0.0 && tau_new_below > 0.0){
+      delta_tau            = tau_new_below - tau_below;
+      tau_new_above        = T - tau_new_below;
 
-      //now decide whether to accept delta_tau:
+      if(tau_new_above > 0.0 && tau_new_below > 0.0){
 
-      //calculate likelihood ratio
-      //proposal likelihood ratio
-      x1 = tau_new_above/tau_new_below;
-      log_likelihood_ratio = fast_log( x1/x2*(2.0*x1+1.0)/(2.0*x2+1.0)*(tau_below/tau_new_below)) + (2.0*x1 - 1.0) * fast_log(1.0 - 1.0/(1.0+x2)) - (2.0*x2 - 1.0) * fast_log(1.0 - 1.0/(1.0+x1));
+        //now decide whether to accept delta_tau:
 
-      //calculate new coordinates, order, sorted_indices, num_lineages
-      double log_likelihood;
+        //calculate likelihood ratio
+        //proposal likelihood ratio
+        x1 = tau_new_above/tau_new_below;
+        log_likelihood_ratio = fast_log( x1/x2*(2.0*x1+1.0)/(2.0*x2+1.0)*(tau_below/tau_new_below)) + (2.0*x1 - 1.0) * fast_log(1.0 - 1.0/(1.0+x2)) - (2.0*x2 - 1.0) * fast_log(1.0 - 1.0/(1.0+x1));
 
-      int k_start, k_end, k;
-      k     = order[node_k];
-      k_end = order[parent_label];
+        //calculate new coordinates, order, sorted_indices, num_lineages
+        double log_likelihood;
+        k_end = order[parent_label];
 
-      double coords = coordinates[node_k];
-      double coords_new = coords + delta_tau;
-      if(coords_new > coordinates[parent_label]) coords_new = coordinates[parent_label];
+        double coords = coordinates[node_k];
+        double coords_new = coords + delta_tau;
+        if(coords_new > coordinates[parent_label]) coords_new = coordinates[parent_label];
 
-      //anything outside k_start and k_end is identical, so only need to update this bit
-      if(delta_tau > 0){
-        k_start = k;
-        
-        int node_tmp;
-        double age = coords_new;
-        for(int k_tmp = k_start; k_tmp < k_end; k_tmp++){
-          node_tmp = sorted_indices[k_tmp + 1];
-          if(age > coordinates[node_tmp]){
-            sorted_indices_new[k_tmp]  = node_tmp;
-            order_new[node_tmp]        = k_tmp;
-            num_lineages_new[node_tmp] = num_lineages[node_tmp] + 1;
-          }else{
-            sorted_indices_new[k_tmp] = node_k;
-            order_new[node_k]         = k_tmp;
-            num_lineages_new[node_k]  = num_lineages[sorted_indices[k_tmp]]; 
-            k_start = k - 1;
-            k_end   = k_tmp + 1;
-            num_lineages_new[sorted_indices[k_start]] = num_lineages[sorted_indices[k_start]];
-            sorted_indices_new[k_start]               = sorted_indices[k_start];
-            order_new[sorted_indices[k_start]]        = k_start;
-            num_lineages_new[sorted_indices[k_end]] = num_lineages[sorted_indices[k_end]];
-            sorted_indices_new[k_end]               = sorted_indices[k_end];
-            order_new[sorted_indices[k_end]]        = k_end;
-            break;
+        //anything outside k_start and k_end is identical, so only need to update this bit
+        if(delta_tau > 0){
+          k_start = k;
+
+          int node_tmp;
+          double age = coords_new;
+          for(int k_tmp = k_start; k_tmp < k_end; k_tmp++){
+            node_tmp = sorted_indices[k_tmp + 1];
+            if(age > coordinates[node_tmp]){
+              sorted_indices_new[k_tmp]  = node_tmp;
+              order_new[node_tmp]        = k_tmp;
+              num_lineages_new[node_tmp] = num_lineages[node_tmp] + 1;
+            }else{
+              sorted_indices_new[k_tmp] = node_k;
+              order_new[node_k]         = k_tmp;
+              num_lineages_new[node_k]  = num_lineages[sorted_indices[k_tmp]]; 
+              k_start = k - 1;
+              k_end   = k_tmp + 1;
+              num_lineages_new[sorted_indices[k_start]] = num_lineages[sorted_indices[k_start]];
+              sorted_indices_new[k_start]               = sorted_indices[k_start];
+              order_new[sorted_indices[k_start]]        = k_start;
+              num_lineages_new[sorted_indices[k_end]] = num_lineages[sorted_indices[k_end]];
+              sorted_indices_new[k_end]               = sorted_indices[k_end];
+              order_new[sorted_indices[k_end]]        = k_end;
+              break;
+            }
           }
-        }
-      }else{      
-        k_end = k;
-        k_start = order[child_left_label];
-        if(k_start < order[child_right_label]) k_start = order[child_right_label];
+        }else{      
+          k_end = k;
+          k_start = order[child_left_label];
+          if(k_start < order[child_right_label]) k_start = order[child_right_label];
 
-        int node_tmp;
-        double age = coords_new;
-        for(int k_tmp = k_end; k_tmp > k_start; k_tmp--){
-          node_tmp = sorted_indices[k_tmp - 1];
-          if(age < coordinates[node_tmp]){
-            sorted_indices_new[k_tmp]  = node_tmp;
-            order_new[node_tmp]        = k_tmp;
-            num_lineages_new[node_tmp] = num_lineages[node_tmp] - 1;
-          }else{
-            sorted_indices_new[k_tmp] = node_k;
-            order_new[node_k]         = k_tmp;
-            num_lineages_new[node_k]  = num_lineages[sorted_indices[k_tmp]];
-            k_start = k_tmp - 1;
-            k_end   = k + 1;
-            num_lineages_new[sorted_indices[k_start]] = num_lineages[sorted_indices[k_start]];
-            sorted_indices_new[k_start]               = sorted_indices[k_start];
-            order_new[sorted_indices[k_start]]        = k_start;
-            num_lineages_new[sorted_indices[k_end]] = num_lineages[sorted_indices[k_end]];
-            sorted_indices_new[k_end]               = sorted_indices[k_end];
-            order_new[sorted_indices[k_end]]        = k_end;
-            break;
+          int node_tmp;
+          double age = coords_new;
+          for(int k_tmp = k_end; k_tmp > k_start; k_tmp--){
+            node_tmp = sorted_indices[k_tmp - 1];
+            if(age < coordinates[node_tmp]){
+              sorted_indices_new[k_tmp]  = node_tmp;
+              order_new[node_tmp]        = k_tmp;
+              num_lineages_new[node_tmp] = num_lineages[node_tmp] - 1;
+            }else{
+              sorted_indices_new[k_tmp] = node_k;
+              order_new[node_k]         = k_tmp;
+              num_lineages_new[node_k]  = num_lineages[sorted_indices[k_tmp]];
+              k_start = k_tmp - 1;
+              k_end   = k + 1;
+              num_lineages_new[sorted_indices[k_start]] = num_lineages[sorted_indices[k_start]];
+              sorted_indices_new[k_start]               = sorted_indices[k_start];
+              order_new[sorted_indices[k_start]]        = k_start;
+              num_lineages_new[sorted_indices[k_end]] = num_lineages[sorted_indices[k_end]];
+              sorted_indices_new[k_end]               = sorted_indices[k_end];
+              order_new[sorted_indices[k_end]]        = k_end;
+              break;
+            }
           }
+
         }
-      
-      }
 
-      coordinates[node_k] = coords_new;
-      log_likelihood = CalculatePrior(k_start, k_end, epoch, coal_rate, coordinates, sorted_indices_new, num_lineages_new);
-      coordinates[node_k] = coords;
-      if(log_likelihood != -std::numeric_limits<float>::infinity()){
-        //log_likelihood_ratio += log_likelihood;
-        log_likelihood -= CalculatePrior(k_start, k_end, epoch, coal_rate, coordinates, sorted_indices, num_lineages);
-        if(log_likelihood != -std::numeric_limits<float>::infinity()) log_likelihood_ratio += log_likelihood;
-      }
+        coordinates[node_k] = coords_new;
+        log_likelihood = CalculatePrior(k_start, k_end, epoch, coal_rate, coordinates, sorted_indices_new, num_lineages_new);
+        coordinates[node_k] = coords;
+        if(log_likelihood != -std::numeric_limits<float>::infinity()){
+          //log_likelihood_ratio += log_likelihood;
+          log_likelihood -= CalculatePrior(k_start, k_end, epoch, coal_rate, coordinates, sorted_indices, num_lineages);
+          if(log_likelihood != -std::numeric_limits<float>::infinity()) log_likelihood_ratio += log_likelihood;
+        }
 
-      ///////////////////////////
+        ///////////////////////////
 
-      //likelihood function, likelihood ratio  
-      n_num_events           = tree.nodes[node_k].num_events;
-      child_left_num_events  = tree.nodes[child_left_label].num_events;
-      child_right_num_events = tree.nodes[child_right_label].num_events;
+        //likelihood function, likelihood ratio  
+        n_num_events           = tree.nodes[node_k].num_events;
+        child_left_num_events  = tree.nodes[child_left_label].num_events;
+        child_right_num_events = tree.nodes[child_right_label].num_events;
 
-      tb_child_left      = tree.nodes[child_left_label].branch_length;
-      tb_child_right     = tree.nodes[child_right_label].branch_length;
+        tb_child_left      = tree.nodes[child_left_label].branch_length;
+        tb_child_right     = tree.nodes[child_right_label].branch_length;
 
-      //mutation and recombination part
-      if(tb == 0.0){
-        log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-      }else if(tb <= delta_tau){
-        log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-      }else{
-
-        if(tb_child_left == 0.0){
+        //mutation and recombination part
+        if(tb == 0.0){
           log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-        }else if(tb_child_left <= -delta_tau){
-          log_likelihood_ratio  = -std::numeric_limits<float>::infinity(); 
+        }else if(tb <= delta_tau){
+          log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
         }else{
 
-          if(tb_child_right == 0.0){
+          if(tb_child_left == 0.0){
             log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-          }else if(tb_child_right <= -delta_tau){
-            log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+          }else if(tb_child_left <= -delta_tau){
+            log_likelihood_ratio  = -std::numeric_limits<float>::infinity(); 
           }else{
 
-            log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-            if(n_num_events >= 1.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
-            if(child_right_num_events >= 1.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
-            if(child_left_num_events >= 1.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+            if(tb_child_right == 0.0){
+              log_likelihood_ratio  = std::numeric_limits<float>::infinity();
+            }else if(tb_child_right <= -delta_tau){
+              log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
+            }else{
 
+              log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
+              if(n_num_events >= 1.0) log_likelihood_ratio += n_num_events * log_deltat(-delta_tau/tb);
+              if(child_right_num_events >= 1.0) log_likelihood_ratio += child_right_num_events * log_deltat(delta_tau/tb_child_right);
+              if(child_left_num_events >= 1.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
+
+            }
           }
         }
+
+      }else{
+        log_likelihood_ratio = 0.0;
+        k_start = k;
+        k_end = k_start;
+        delta_tau = 0.0;
       }
 
       //decide whether to accept proposal or not.
@@ -4973,7 +5043,7 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
 
   float p1 = std::min(10.0/data.N, 0.1), p2;
   p1 = 0.05;
-  p2 = 0.4;
+  p2 = 0.6;
   //std::cerr << p1 << " " << p2 << std::endl;
 
   int delta = std::max(data.N/10.0, 10.0);
@@ -4988,10 +5058,24 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
   //Initialise branch lengths
   InitializeBranchLengths(tree);
 
+  for(int i = 0; i < N_total-1; i++){
+    assert(tree.nodes[i].branch_length >= 0.0);
+    assert(order[sorted_indices[i]] == i);
+    assert(order[i] < order[(*tree.nodes[i].parent).label]);
+    assert(coordinates[sorted_indices[i]] <= coordinates[sorted_indices[i+1]]);
+  }
+
   ////////////////// Transient /////////////////
 
   count = 0;
   for(; count < 100*delta; count++){
+
+    for(int i = 0; i < N_total-1; i++){
+      assert(tree.nodes[i].branch_length >= 0.0);
+      assert(order[sorted_indices[i]] == i);
+      assert(order[i] < order[(*tree.nodes[i].parent).label]);
+      assert(coordinates[sorted_indices[i]] <= coordinates[sorted_indices[i+1]]);
+    }
 
     //Either switch order of coalescent event or extent time while k ancestors 
     uniform_rng = dist_unif(rng);
@@ -5014,8 +5098,8 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
     }
 
     for(int k = N; k < N_total; k++){
-      assert((coordinates[k] > coordinates[(*tree.nodes[k].child_left).label]));
-      assert((coordinates[k] > coordinates[(*tree.nodes[k].child_right).label]));
+      assert((coordinates[k] >= coordinates[(*tree.nodes[k].child_left).label]));
+      assert((coordinates[k] >= coordinates[(*tree.nodes[k].child_right).label]));
       assert(sorted_indices[order[k]] == k);
     }
   }
@@ -5066,13 +5150,14 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
       }
 
       for(int k = N; k < N_total; k++){
-        assert((coordinates[k] > coordinates[(*tree.nodes[k].child_left).label]));
-        assert((coordinates[k] > coordinates[(*tree.nodes[k].child_right).label]));
+        assert((coordinates[k] >= coordinates[(*tree.nodes[k].child_left).label]));
+        assert((coordinates[k] >= coordinates[(*tree.nodes[k].child_right).label]));
         assert(sorted_indices[order[k]] == k);
       }
 
     }while(count % delta != 0 );
 
+    //std::cerr << num_iterations << std::endl;
     num_iterations++;
 
     //MCMC is allowed to terminate if is_count_threshold == true and is_avg_increasing == true.
@@ -5080,22 +5165,23 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
     //then is_avg_increasing will be set to true eventually.
 
     if(1){
-    is_avg_increasing = true;
-    if(!is_count_threshold){
-      //assert(is_avg_increasing);
-      for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-        if(*it_count < 50){
-          is_avg_increasing = false;
-          break;
+      is_avg_increasing = true;
+      if(!is_count_threshold){
+        //assert(is_avg_increasing);
+        for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
+          if(*it_count < 100){
+            is_avg_increasing = false;
+            break;
+          }
         }
+        if(is_avg_increasing) is_count_threshold = true;
       }
-      if(is_avg_increasing) is_count_threshold = true;
-    }
     }else{
-    is_avg_increasing = true; 
-    if(num_iterations < iterations_threshold) is_avg_increasing = false;     
+      is_avg_increasing = true; 
+      if(num_iterations < iterations_threshold) is_avg_increasing = false;     
     }
 
+    //std::cerr << num_iterations << " " << is_avg_increasing << std::endl;
 
     if(is_avg_increasing){
       //update all nodes in avg 
@@ -5137,7 +5223,6 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
      (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
      }
      */
-
 
 }  
 
@@ -5332,20 +5417,20 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSize(const Data& data,
     //then is_avg_increasing will be set to true eventually.
 
     if(1){
-    is_avg_increasing = true;
-    if(!is_count_threshold){
-      //assert(is_avg_increasing);
-      for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-        if(*it_count < 50){
-          is_avg_increasing = false;
-          break;
+      is_avg_increasing = true;
+      if(!is_count_threshold){
+        //assert(is_avg_increasing);
+        for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
+          if(*it_count < 100){
+            is_avg_increasing = false;
+            break;
+          }
         }
+        if(is_avg_increasing) is_count_threshold = true;
       }
-      if(is_avg_increasing) is_count_threshold = true;
-    }
     }else{
-    is_avg_increasing = true; 
-    if(num_iterations < iterations_threshold) is_avg_increasing = false;     
+      is_avg_increasing = true; 
+      if(num_iterations < iterations_threshold) is_avg_increasing = false;     
     }
 
     if(is_avg_increasing){
@@ -5388,7 +5473,6 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSize(const Data& data,
      (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
      }
      */
-
 
 }  
 
@@ -5514,20 +5598,20 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
     //then is_avg_increasing will be set to true eventually.
 
     if(1){
-    is_avg_increasing = true;
-    if(!is_count_threshold){
-      //assert(is_avg_increasing);
-      for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-        if(*it_count < 50){
-          is_avg_increasing = false;
-          break;
+      is_avg_increasing = true;
+      if(!is_count_threshold){
+        //assert(is_avg_increasing);
+        for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
+          if(*it_count < 100){
+            is_avg_increasing = false;
+            break;
+          }
         }
+        if(is_avg_increasing) is_count_threshold = true;
       }
-      if(is_avg_increasing) is_count_threshold = true;
-    }
     }else{
-    is_avg_increasing = true; 
-    if(num_iterations < iterations_threshold) is_avg_increasing = false;     
+      is_avg_increasing = true; 
+      if(num_iterations < iterations_threshold) is_avg_increasing = false;     
     }
 
 
@@ -5585,16 +5669,16 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
   std::uniform_int_distribution<int> dist_oneevent(N,N_total-1);
   std::gamma_distribution<double> dist_gamma(2.0,1.0);
 
-	float p1 = std::min(10.0/data.N, 0.1), p2;
-	p1 = 0.05;
-	p2 = 0.4;
+  float p1 = std::min(10.0/data.N, 0.1), p2;
+  p1 = 0.05;
+  p2 = 0.4;
 
-	if(init == 1){
+  if(init == 1){
 
-		rng.seed(seed);
-		root = N_total - 1;
+    rng.seed(seed);
+    root = N_total - 1;
 
-		InitializeMCMC(data, tree); //Initialize using coalescent prior 
+    InitializeMCMC(data, tree); 
 
     coordinates.resize(N_total);
     GetCoordinates(tree.nodes[root], coordinates);
@@ -5653,26 +5737,26 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
 
     }
 
-	}
+  }
 
-	////////////////// Sample branch lengths /////////////////
+  ////////////////// Sample branch lengths /////////////////
 
-	count = 0;
-	for(; count < num_proposals; count++){
+  count = 0;
+  for(; count < num_proposals; count++){
 
-		//Either switch order of coalescent event or extent time while k ancestors 
-		uniform_rng = dist_unif(rng);
-		if(uniform_rng <= p1/N){
-			ChangeTimeWhilekAncestorsVP_new(tree, dist_tip(rng), epoch, coal_rate, dist_unif);
-		}else if(uniform_rng <= p1){
-			ChangeTimeWhilekAncestorsVP_new(tree, dist_n(rng), epoch, coal_rate, dist_unif);
-		}else if(uniform_rng <= p2){
-			UpdateOneEventVP(tree, dist_oneevent(rng), epoch, coal_rate, dist_gamma, dist_unif);
-		}else{ 
-			SwitchOrder(tree, dist_n(rng), dist_unif);
-		}
+    //Either switch order of coalescent event or extent time while k ancestors 
+    uniform_rng = dist_unif(rng);
+    if(uniform_rng <= p1/N){
+      ChangeTimeWhilekAncestorsVP_new(tree, dist_tip(rng), epoch, coal_rate, dist_unif);
+    }else if(uniform_rng <= p1){
+      ChangeTimeWhilekAncestorsVP_new(tree, dist_n(rng), epoch, coal_rate, dist_unif);
+    }else if(uniform_rng <= p2){
+      UpdateOneEventVP(tree, dist_oneevent(rng), epoch, coal_rate, dist_gamma, dist_unif);
+    }else{ 
+      SwitchOrder(tree, dist_n(rng), dist_unif);
+    }
 
-	}
+  }
 
 }  
 

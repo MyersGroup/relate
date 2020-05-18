@@ -24,8 +24,10 @@ int FindEquivalentBranches(cxxopts::Options& options, int chunk_index){
     exit(0);
   }
 
+  std::string file_out = options["output"].as<std::string>() + "/";
+
   int N, L, num_windows;
-  FILE* fp = fopen(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
+  FILE* fp = fopen((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
   assert(fp != NULL);
   fread(&N, sizeof(int), 1, fp);
   fread(&L, sizeof(int), 1, fp);
@@ -40,24 +42,24 @@ int FindEquivalentBranches(cxxopts::Options& options, int chunk_index){
   //Parse Data
 
   Data data(N, L); //struct data is defined in data.hpp
-  data.name = ("chunk_" + std::to_string(chunk_index) + "/paint/relate");
-  const std::string dirname = "chunk_" + std::to_string(chunk_index) + "/";
+  data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
+  const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
  
   /////////////////////////////
   //delete painting and data binaries
   struct stat info;
   //check if directory exists
-  if( stat( ("chunk_" + std::to_string(chunk_index) + "/paint/").c_str(), &info ) == 0 ){
+  if( stat( (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/").c_str(), &info ) == 0 ){
     //paint/ exists so delete it.  
-    char painting_filename[32];
+    char painting_filename[1024];
     for(int w = 0; w < num_windows; w++){
-      snprintf(painting_filename, sizeof(char) * 32, "%s_%i.bin", data.name.c_str(), w);
+      snprintf(painting_filename, sizeof(char) * 1024, "%s_%i.bin", data.name.c_str(), w);
       std::remove(painting_filename);
     }
   }
-  std::remove(("chunk_" + std::to_string(chunk_index) + ".hap").c_str());
-  std::remove(("chunk_" + std::to_string(chunk_index) + ".r").c_str());
-  std::remove(("chunk_" + std::to_string(chunk_index) + ".rpos").c_str());
+  std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str());
+  std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str());
+  std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str());
   //////////////////
 
 

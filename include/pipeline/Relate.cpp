@@ -55,9 +55,9 @@ int main(int argc, char* argv[]){
   }else if(!mode.compare("Paint")){
   
     bool help = false;
-    if(!options.count("chunk_index")){
+    if(!options.count("chunk_index") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
-      std::cout << "Needed: chunk_index." << std::endl; 
+      std::cout << "Needed: chunk_index, output." << std::endl; 
       help = true;
     }
     if(options.count("help") || help){
@@ -107,10 +107,10 @@ int main(int argc, char* argv[]){
   
   }else if(!mode.compare("FindEquivalentBranches")){
  
-    if(options.count("chunk_index")){
+    if(options.count("chunk_index") || options.count("output")){
       FindEquivalentBranches(options, options["chunk_index"].as<int>());
     }else{
-      std::cerr << "Please specify the chunk_index" << std::endl;
+      std::cerr << "Please specify the chunk_index, and output" << std::endl;
       exit(1);
     }
  
@@ -137,7 +137,7 @@ int main(int argc, char* argv[]){
     }else{
     
       int N, L, num_sections;
-      FILE* fp = fopen(("parameters_c" + std::to_string(options["chunk_index"].as<int>()) + ".bin").c_str(), "r");
+      FILE* fp = fopen((options["output"].as<std::string>() + "/parameters_c" + std::to_string(options["chunk_index"].as<int>()) + ".bin").c_str(), "r");
       assert(fp != NULL);
       fread(&N, sizeof(int), 1, fp);
       fread(&L, sizeof(int), 1, fp);
@@ -194,12 +194,13 @@ int main(int argc, char* argv[]){
     int N, L;
     double memory_size;
     int start_chunk, end_chunk;
+    std::string file_out = options["output"].as<std::string>() + "/";
 
     if(options.count("chunk_index")){
 
       std::cerr << "  chunk " << options["chunk_index"].as<int>() << std::endl;
 
-      FILE* fp = fopen(("parameters_c" + std::to_string(options["chunk_index"].as<int>()) + ".bin").c_str(), "r");
+      FILE* fp = fopen((file_out + "parameters_c" + std::to_string(options["chunk_index"].as<int>()) + ".bin").c_str(), "r");
       assert(fp != NULL);
       fread(&N, sizeof(int), 1, fp);
       fread(&L, sizeof(int), 1, fp);
@@ -224,7 +225,7 @@ int main(int argc, char* argv[]){
 
       MakeChunks(options);
 
-      FILE* fp = fopen("parameters.bin", "r");
+      FILE* fp = fopen((file_out + "parameters.bin").c_str(), "r");
       assert(fp != NULL);
       fread(&N, sizeof(int), 1, fp);
       fread(&L, sizeof(int), 1, fp);
@@ -252,7 +253,7 @@ int main(int argc, char* argv[]){
 
 
       int N, L, num_sections;
-      FILE* fp = fopen(("parameters_c" + std::to_string(c) + ".bin").c_str(), "r");
+      FILE* fp = fopen((file_out + "parameters_c" + std::to_string(c) + ".bin").c_str(), "r");
       assert(fp != NULL);
       fread(&N, sizeof(int), 1, fp);
       fread(&L, sizeof(int), 1, fp);

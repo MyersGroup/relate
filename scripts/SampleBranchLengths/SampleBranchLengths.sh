@@ -20,7 +20,7 @@ then
   echo "--last_bp:         Optional: Last bp position."
   echo "--dist:            Optional: File containing bp and dist between SNPs. Obtained e.g., from RelateExtract --mode AncMutForSubregion. Required if anc/mut file is for subregion."
   echo "--num_proposals:   Optional: Number of MCMC proposals between samples. Default is max(10*N, 1000), where N is the number of haplotypes. If num_proposals=0, all samples will be identical to the input."
-	echo "--format:          Optional: Output file format when sampling branches. 0: Newick, 1: anc. Default 0."
+	echo "--format:          Optional: Output file format when sampling branches. a: anc/mut, n: newick, b: binary. Default a."
 	echo "--seed:            Optional: Random seed for branch lengths estimation."
   echo ""
   exit 1;
@@ -33,7 +33,7 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/SampleBranchLengths/Sam
 
 ######################## Read arguments from command line ###########################
 
-format=0
+format=a
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]

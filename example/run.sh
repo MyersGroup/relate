@@ -33,7 +33,7 @@
 	--num_samples 3 \
 	--first_bp 900000 \
 	--last_bp 1000000 \
-	--format 0 \
+	--format a \
 	--coal example_bypop.coal
 
 ../scripts/SampleBranchLengths/SampleBranchLengths.sh \
@@ -43,5 +43,15 @@
 	--num_samples 1 \
 	--first_bp 900000 \
 	--last_bp 1000000 \
-	--format 0 \
+	--format n \
+	--coal example_bypop.coal
+
+../scripts/SampleBranchLengths/SampleBranchLengths.sh \
+	-i example2 \
+	-o example2_sampled \
+	-m 1.25e-8 \
+	--num_samples 1 \
+	--first_bp 900000 \
+	--last_bp 1000000 \
+	--format b \
 	--coal example_bypop.coal

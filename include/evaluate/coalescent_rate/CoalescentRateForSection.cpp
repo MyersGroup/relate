@@ -9,6 +9,9 @@
 #include "tree_comparer.hpp"
 #include "cxxopts.hpp"
 
+#include "mutations.hpp"
+#include "coal_tree.hpp"
+
 //////// functions for estimating pairwise coalescence rate /////////
 
 float
@@ -221,7 +224,8 @@ GetCoalescentRate(Node n, float factor, std::vector<float>& epoch, std::vector<d
 
 }
 
-int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
+int 
+CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
 
   //////////////////////////////////
   //Program options
@@ -229,7 +233,7 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   bool help = false;
   if(!options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output. Optional: years_per_gen, num_bins." << std::endl;
+    std::cout << "Needed: input, output. Optional: years_per_gen, bins." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -239,7 +243,7 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   }  
 
   std::cerr << "---------------------------------------------------------" << std::endl;
-  if(chr == -1){
+  if(chr == "NA"){
     std::cerr << "Calculating coalescence rate for " << options["input"].as<std::string>() << " ..." << std::endl;
   }else{
     std::cerr << "Calculating coalescence rate for " << options["input"].as<std::string>() << "_chr" << chr << " ..." << std::endl;
@@ -249,10 +253,10 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   //read in anc file
 
   AncMutIterators ancmut;
-  if(chr == -1){
+  if(chr == "NA"){
     ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
   }else{
-    ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc", options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+    ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + chr + ".anc", options["input"].as<std::string>() + "_chr" + chr + ".mut");
   }   
   
   int N = ancmut.NumTips();
@@ -265,10 +269,10 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   //Read mut
   Mutations mut;
 
-  if(chr == -1){
+  if(chr == "NA"){
     mut.Read(options["input"].as<std::string>() + ".mut");
   }else{
-    mut.Read(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+    mut.Read(options["input"].as<std::string>() + "_chr" + chr + ".mut");
   }
 
   //calculate epoch times
@@ -278,32 +282,92 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
     years_per_gen = options["years_per_gen"].as<float>();
   }
 
-  int num_epochs = 30;
-  if(options.count("num_bins") > 0){
-    num_epochs = options["num_bins"].as<int>();
+  int num_epochs;
+  std::vector<float> epochs;
+  float log_10 = std::log(10);
+  if(options.count("bins")){
+
+    double log_age = std::log(0);
+    double age = 0;
+
+    double epoch_lower, epoch_upper, epoch_step;
+    std::string str_epochs = options["bins"].as<std::string>();
+    std::string tmp;
+    int i = 0;
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_lower = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_upper = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_step = std::stof(tmp);
+
+    int ep = 0;
+    epochs.resize(1);
+    epochs[ep] = 0.0;
+    ep++; 
+    double epoch_boundary = 0.0;
+    if(log_age < epoch_lower && age != 0.0){
+      epochs.push_back(age);
+      ep++;
+    }
+    epoch_boundary = epoch_lower;
+    while(epoch_boundary < epoch_upper){
+      if(log_age < epoch_boundary){
+        if(ep == 1 && age != 0.0) epochs.push_back(age);
+        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        ep++;
+      }
+      epoch_boundary += epoch_step;
+    }
+    epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
+		num_epochs = epochs.size();
+
+  }else{
+
+    num_epochs = 31;
+    epochs.resize(num_epochs);
+    epochs[0] = 0.0;
+    epochs[1] = 1e3/years_per_gen;
+    for(int e = 2; e < num_epochs-1; e++){
+      epochs[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+    }
+    epochs[num_epochs-1] = 1e8/years_per_gen;
+
   }
-  num_epochs++;
-  std::vector<float> epoch(num_epochs);
+
   std::vector<CollapsedMatrix<float>> coalescence_rate_data(num_epochs);
-  epoch[0] = 0.0;
   coalescence_rate_data[0].resize(data.N, data.N);
   std::fill(coalescence_rate_data[0].vbegin(), coalescence_rate_data[0].vend(), 0.0);
-  epoch[1] = 1e3/years_per_gen;
-  coalescence_rate_data[1].resize(data.N, data.N);
-  std::fill(coalescence_rate_data[1].vbegin(), coalescence_rate_data[1].vend(), 0.0);
-
-  float log_10 = std::log(10);
-  for(int e = 2; e < num_epochs-1; e++){
-
-    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+  for(int e = 1; e < num_epochs; e++){
     coalescence_rate_data[e].resize(data.N, data.N);
     std::fill(coalescence_rate_data[e].vbegin(), coalescence_rate_data[e].vend(), 0.0);
-
   }
-  epoch[num_epochs-1] = 1e8/years_per_gen;
-  coalescence_rate_data[num_epochs-1].resize(data.N, data.N);
-  std::fill(coalescence_rate_data[num_epochs-1].vbegin(), coalescence_rate_data[num_epochs-1].vend(), 0.0);
-
 
   ////////////////////////////////
   //Pairwise coalescence rate
@@ -316,7 +380,7 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
       num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
       std::vector<int> leaves;
       factor = 1.0;
-      GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epoch, ancmut.sample_ages, coalescence_rate_data, leaves);
+      GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epochs, ancmut.sample_ages, coalescence_rate_data, leaves);
     }  
   }else{
     float factor = 0.0;
@@ -325,20 +389,20 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
       num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
       std::vector<int> leaves;
       factor = 1.0;
-      GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epoch, coalescence_rate_data, leaves);
+      GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epochs, coalescence_rate_data, leaves);
     }  
   }
 
   //output as bin
   FILE* fp;
-  if(chr == -1){
+  if(chr == "NA"){
     fp = fopen((options["output"].as<std::string>() + ".bin" ).c_str(), "wb");  
   }else{
-    fp = fopen((options["output"].as<std::string>() + "_chr" + std::to_string(chr) + ".bin" ).c_str(), "wb");  
+    fp = fopen((options["output"].as<std::string>() + "_chr" + chr + ".bin" ).c_str(), "wb");  
   }
 
   fwrite(&num_epochs, sizeof(int), 1, fp);
-  fwrite(&epoch[0], sizeof(float), epoch.size(), fp);
+  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
   for(std::vector<CollapsedMatrix<float>>::iterator it_coalescence_rate_data = coalescence_rate_data.begin(); it_coalescence_rate_data != coalescence_rate_data.end();){
     (*it_coalescence_rate_data).DumpToFile(fp);
     it_coalescence_rate_data++;
@@ -363,6 +427,194 @@ int CoalescentRateForSection(cxxopts::Options& options, int chr = -1){
   return 0;
 
 }
+
+////// function for estimating coalescence rates in tree /////////
+void
+CoalescenceRateForTree(cxxopts::Options& options){
+
+	//Program options
+
+	bool help = false;
+	if(!options.count("input") || !options.count("output")){
+		std::cout << "Not enough arguments supplied." << std::endl;
+		std::cout << "Needed: input, output. Optional: bins, chr." << std::endl;
+		help = true;
+	}
+	if(options.count("help") || help){
+		std::cout << options.help({""}) << std::endl;
+		std::cout << "Calculate coalescence rates for sample." << std::endl;
+		exit(0);
+	}  
+
+	std::cerr << "---------------------------------------------------------" << std::endl;
+	std::cerr << "Calculating coalescence rates for " << options["input"].as<std::string>() << "..." << std::endl;
+
+	/////////////////////////////////
+	//get TMRCA at each SNP
+
+	////////////////////////////////////////
+
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
+
+	//decide on epochs 
+  int num_epochs;
+  std::vector<double> epochs;
+  float log_10 = std::log(10);
+  if(options.count("bins")){
+
+    double log_age = std::log(0);
+    double age = 0;
+
+    double epoch_lower, epoch_upper, epoch_step;
+    std::string str_epochs = options["bins"].as<std::string>();
+    std::string tmp;
+    int i = 0;
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_lower = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_upper = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_step = std::stof(tmp);
+
+    int ep = 0;
+    epochs.resize(1);
+    epochs[ep] = 0.0;
+    ep++; 
+    double epoch_boundary = 0.0;
+    if(log_age < epoch_lower && age != 0.0){
+      epochs.push_back(age);
+      ep++;
+    }
+    epoch_boundary = epoch_lower;
+    while(epoch_boundary < epoch_upper){
+      if(log_age < epoch_boundary){
+        if(ep == 1 && age != 0.0) epochs.push_back(age);
+        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        ep++;
+      }
+      epoch_boundary += epoch_step;
+    }
+    epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
+		num_epochs = epochs.size();
+
+  }else{
+
+    num_epochs = 31;
+    epochs.resize(num_epochs);
+    epochs[0] = 0.0;
+    epochs[1] = 1e3/years_per_gen;
+    for(int e = 2; e < num_epochs-1; e++){
+      epochs[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+    }
+    epochs[num_epochs-1] = 1e8/years_per_gen;
+
+  }
+
+	int num_bootstrap = 1;
+	int block_size = 1000;
+
+	coal_tree ct(epochs, num_bootstrap, block_size);
+
+	MarginalTree mtr; //stores marginal trees. mtr.pos is SNP position at which tree starts, mtr.tree stores the tree
+	Muts::iterator it_mut; //iterator for mut file
+
+  std::string line;
+	std::vector<std::string> chromosomes;
+	std::vector<std::string> filename_mut, filename_anc;
+	if(options.count("chr") > 0){
+
+		igzstream is_chr(options["chr"].as<std::string>());
+		if(is_chr.fail()){
+			std::cerr << "Error while opening file " << options["chr"].as<std::string>() << std::endl;
+		}
+		while(getline(is_chr, line)){
+			chromosomes.push_back(line);
+      filename_anc.push_back(options["input"].as<std::string>() + "_chr" + line + ".anc");
+      filename_mut.push_back(options["input"].as<std::string>() + "_chr" + line + ".mut");
+		}
+		is_chr.close();
+
+	}else{
+    chromosomes.resize(1);
+    chromosomes[0] = options["input"].as<std::string>(); 
+    filename_anc.push_back(options["input"].as<std::string>() + ".anc");
+    filename_mut.push_back(options["input"].as<std::string>() + ".mut");
+	}
+
+	for(int chr = 0; chr < chromosomes.size(); chr++){
+
+		AncMutIterators ancmut(filename_anc[chr], filename_mut[chr]);
+		float num_bases_tree_persists = 0.0;
+
+		ct.update_ancmut(ancmut);
+
+		int tree_count = 0, perc = -1;
+		num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+		while(num_bases_tree_persists >= 0.0){
+			if( (int) (((double)tree_count)/ancmut.NumTrees() * 100.0) > perc ){
+				perc = (int) (((double)tree_count)/ancmut.NumTrees() * 100.0);
+				std::cerr << "[" << perc << "%]\r";
+			}
+			tree_count++;
+			ct.populate(mtr.tree);	
+			num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+		}
+
+		std::cerr << std::endl;
+
+	}
+
+	ct.Dump(options["output"].as<std::string>() + ".coal");
+
+	/////////////////////////////////////////////
+	//Resource Usage
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+
+
+
+}
+
+
 
 //TODO: the functions below need to be debugged and adapted to ancient samples
 //////// functions for estimating directional migration /////////

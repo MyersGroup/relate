@@ -18,7 +18,7 @@ then
 fi
 
 ## paint all sequences against each other
-${PATH_TO_RELATE}/bin/Relate --mode "Paint" --chunk_index ${chunk_index} 2>> log/paint_c${chunk_index}.log
+${PATH_TO_RELATE}/bin/Relate --mode "Paint" --chunk_index ${chunk_index} --output ${output} 2>> log/paint_c${chunk_index}.log
 
 echo "***********************************************"
 echo "Finished at: "`date`

@@ -23,6 +23,7 @@ struct Candidate{
   int lin1 = -1;
   int lin2 = -1;
   double dist = std::numeric_limits<float>::infinity();
+  double dist2 = std::numeric_limits<float>::infinity();
 
   Candidate(){};
   Candidate(int lin1, int lin2, double dist): lin1(lin1), lin2(lin2), dist(dist){};
@@ -49,7 +50,7 @@ class MinMatch{
     int candidates_to_check_size = 0;
 
     CollapsedMatrix<float> sym_d;
-    float sym_dist;
+    float sym_dist, dist_random;
     Candidate best_candidate, best_sym_candidate;
 
     std::vector<float> min_values, min_values_sym;  //Stores the min values of each row of the distance matrix
@@ -70,9 +71,9 @@ class MinMatch{
 
     std::vector<int> updated_cluster;
 
-    void Initialize(CollapsedMatrix<float>& d);
+		void Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif);
     void InitializeSym(CollapsedMatrix<float>& sym_d, CollapsedMatrix<float>& d);
-    void Coalesce(const int i, const int j, CollapsedMatrix<float>& d);
+		void Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif);
     void CoalesceSym(const int i, const int j, CollapsedMatrix<float>& sym_d); 
 
   public:

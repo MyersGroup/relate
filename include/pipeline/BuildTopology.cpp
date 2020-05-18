@@ -16,9 +16,11 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   //////////////////////////////////
   //Parse Data
 
+  std::string file_out = options["output"].as<std::string>() + "/";
+
   int N, L, num_windows;
   std::vector<int> window_boundaries;
-  FILE* fp = fopen(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
+  FILE* fp = fopen((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
   assert(fp != NULL);
   fread(&N, sizeof(int), 1, fp);
   fread(&L, sizeof(int), 1, fp);
@@ -28,9 +30,9 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   fclose(fp);
   num_windows--;
 
-  Data data(("chunk_" + std::to_string(chunk_index) + ".hap").c_str(), ("chunk_" + std::to_string(chunk_index) + ".bp").c_str(), ("chunk_" + std::to_string(chunk_index) + ".r").c_str(), ("chunk_" + std::to_string(chunk_index) + ".rpos").c_str()); //struct data is defined in data.hpp
-  data.name = ("chunk_" + std::to_string(chunk_index) + "/paint/relate");
-  const std::string dirname = "chunk_" + std::to_string(chunk_index) + "/";
+  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str()); //struct data is defined in data.hpp
+  data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
+  const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
   if(first_section >= num_windows) return 1;
 
   int seed;

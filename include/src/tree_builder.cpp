@@ -23,10 +23,11 @@ MinMatch::MinMatch(Data& data){
   mcandidates.resize(N);
   mcandidates_sym.resize(N);
   updated_cluster.resize(N);
+
 };
 
 void
-MinMatch::Initialize(CollapsedMatrix<float>& d){
+MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif){
 
   //I have to go thourgh every pair of clusters and check if they are matching mins.
   //I am also filling in the vector min_values.
@@ -36,6 +37,7 @@ MinMatch::Initialize(CollapsedMatrix<float>& d){
   for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
 
     mcandidates[*it].dist = std::numeric_limits<float>::infinity();
+		mcandidates[*it].dist2 = std::numeric_limits<float>::infinity();
     d_it = d.rowbegin(*it);
     for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
       if(*it_min_values_it > *d_it && *l != *it){
@@ -62,20 +64,24 @@ MinMatch::Initialize(CollapsedMatrix<float>& d){
         if( *it_min_values_jt >= d[*jt][*it]){ //it, jt is a candidate
 
           sym_dist = *it_d_it_jt + d[*jt][*it];
-          if(mcandidates[*it].dist > sym_dist){
+					dist_random = dist_unif(rng);
+          if(mcandidates[*it].dist > sym_dist || (mcandidates[*it].dist == sym_dist && mcandidates[*it].dist2 > dist_random)){
             mcandidates[*it].lin1 = *it;
             mcandidates[*it].lin2 = *jt;
             mcandidates[*it].dist = sym_dist;
+						mcandidates[*it].dist2 = dist_random;
           }
-          if(mcandidates[*jt].dist > sym_dist){
+					if(mcandidates[*jt].dist > sym_dist || (mcandidates[*jt].dist == sym_dist && mcandidates[*jt].dist2 > dist_random)){
             mcandidates[*jt].lin1 = *it;
             mcandidates[*jt].lin2 = *jt;
             mcandidates[*jt].dist = sym_dist;
+						mcandidates[*jt].dist2 = dist_random;
           }
-          if(best_candidate.dist > mcandidates[*jt].dist){ //only need to check for *jt because if it is the absolute minimum, it would also be *it's candidate
+          if(best_candidate.dist > mcandidates[*jt].dist || (best_candidate.dist == mcandidates[*jt].dist && best_candidate.dist2 > mcandidates[*jt].dist2)){ //only need to check for *jt because if it is the absolute minimum, it would also be *it's candidate
             best_candidate.lin1 = *it;
             best_candidate.lin2 = *jt;
             best_candidate.dist = sym_dist;
+						best_candidate.dist2 = mcandidates[*jt].dist2;
           }
 
         }
@@ -133,7 +139,7 @@ MinMatch::InitializeSym(CollapsedMatrix<float>& sym_d, CollapsedMatrix<float>& d
 }
 
 void
-MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d){
+MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif){
 
   /////////////
   //now I have to update the distance matrix. I am simultaneously updating min_values[j], where j is the new cluster     
@@ -144,6 +150,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d){
   dj_it = d.rowbegin(j);
   di_it = d.rowbegin(i);
   best_candidate.dist = std::numeric_limits<float>::infinity();
+  best_candidate.dist2 = std::numeric_limits<float>::infinity();
   for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
     if(j != *k && i != *k){
       dk_it = d.rowbegin(*k);
@@ -196,6 +203,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d){
 
           //count2++;
           mcandidates[*k].dist = std::numeric_limits<float>::infinity();
+          mcandidates[*k].dist2 = std::numeric_limits<float>::infinity();
 
           for(std::deque<int>::iterator l = cluster_index.begin(); l != k; l++){ //only need *l < *k to avoid going through the same pair twice
             if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
@@ -205,15 +213,18 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d){
                 //add potential candidates
                 if(d[*l][*k] <= min_value_l){ 
                   sym_dist = d[*l][*k] + d[*k][*l];
-                  if(mcandidates[*k].dist > sym_dist){
+                  dist_random = dist_unif(rng);
+                  if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
                     mcandidates[*k].lin1 = *k;
                     mcandidates[*k].lin2 = *l;
                     mcandidates[*k].dist = sym_dist;
+                    mcandidates[*k].dist2 = dist_random;
                   }
-                  if(mcandidates[*l].dist > sym_dist){
+                  if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
                     mcandidates[*l].lin1 = *k;
                     mcandidates[*l].lin2 = *l;
                     mcandidates[*l].dist = sym_dist;
+                    mcandidates[*l].dist2 = dist_random;
                   }
                 }
 
@@ -231,15 +242,18 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d){
               //add potential candidates
               if(d[*l][*k] <= min_value_l){ 
                 sym_dist = d[*l][*k] + d[*k][*l]; 
-                if(mcandidates[*l].dist > sym_dist){
+                dist_random = dist_unif(rng);
+                if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
                   mcandidates[*l].lin1 = *k;
                   mcandidates[*l].lin2 = *l;
                   mcandidates[*l].dist = sym_dist;
+                  mcandidates[*l].dist2 = dist_random;
                 }
-                if(mcandidates[*k].dist > sym_dist){
+                if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
                   mcandidates[*k].lin1 = *k;
                   mcandidates[*k].lin2 = *l;
                   mcandidates[*k].dist = sym_dist;
+                  mcandidates[*k].dist2 = dist_random;
                 }
               }
 
@@ -265,15 +279,18 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d){
             //add potential candidates
             if(d[*l][*k] <= min_value_l){ 
               sym_dist = d[*l][*k] + d[*k][*l]; 
-              if(mcandidates[*l].dist > sym_dist){
+              dist_random = dist_unif(rng);
+              if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
                 mcandidates[*l].lin1 = *k;
                 mcandidates[*l].lin2 = *l;
                 mcandidates[*l].dist = sym_dist;
+                mcandidates[*l].dist2 = dist_random;
               }
-              if(mcandidates[*k].dist > sym_dist){
+              if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
                 mcandidates[*k].lin1 = *k;
                 mcandidates[*k].lin2 = *l;
                 mcandidates[*k].dist = sym_dist;
+                mcandidates[*k].dist2 = dist_random;
               }
             }
 
@@ -283,7 +300,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d){
       }
 
       //I might have updated mcandidates[*l] for *l < *k, but if it was the absolute minimum, it has also updated mcandidates[*k]
-      if(best_candidate.dist > mcandidates[*k].dist){ 
+      if(best_candidate.dist > mcandidates[*k].dist || (best_candidate.dist == mcandidates[*k].dist && best_candidate.dist2 > mcandidates[*k].dist2)){ 
         best_candidate   = mcandidates[*k];
       }
 
@@ -303,15 +320,18 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d){
         if(*k != i && *k != j){
 
           sym_dist = d[j][*k] + d[*k][j];
-          if(mcandidates[*k].dist > sym_dist){
+          dist_random = dist_unif(rng);
+          if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
             mcandidates[*k].lin1 = *k;
             mcandidates[*k].lin2 = j;
             mcandidates[*k].dist = sym_dist;
+            mcandidates[*k].dist2 = dist_random;
           }
-          if(mcandidates[j].dist > sym_dist){
+          if(mcandidates[j].dist > sym_dist || (mcandidates[j].dist == sym_dist && mcandidates[j].dist2 > dist_random)){
             mcandidates[j].lin1 = *k;
             mcandidates[j].lin2 = j;
             mcandidates[j].dist = sym_dist;
+            mcandidates[j].dist2 = dist_random;
           }
 
         }
@@ -319,7 +339,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d){
     }
   }
 
-  if(best_candidate.dist > mcandidates[j].dist){
+  if(best_candidate.dist > mcandidates[j].dist || (best_candidate.dist == mcandidates[j].dist && best_candidate.dist2 > mcandidates[j].dist2)){
     best_candidate   = mcandidates[j];
   }
 
@@ -421,6 +441,9 @@ MinMatch::CoalesceSym(const int i, const int j, CollapsedMatrix<float>& sym_d){
 void
 MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
 
+	rng.seed(1);
+	std::uniform_real_distribution<double> dist_unif(0,1);
+
   int root = N_total-1;
   tree.nodes.resize(N_total);
   tree.nodes[root].label  = root;
@@ -453,9 +476,10 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
   std::fill(min_values_sym.begin(), min_values_sym.end(), std::numeric_limits<float>::infinity());  //Stores the min values of each row of the distance matrix
 
   best_candidate.dist = std::numeric_limits<float>::infinity();
+	best_candidate.dist2 = std::numeric_limits<float>::infinity();
   best_sym_candidate.dist = std::numeric_limits<float>::infinity();
 
-  Initialize(d);
+  Initialize(d, dist_unif);
 
   //////////////////////////
 
@@ -496,7 +520,7 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
     tree.nodes[num_nodes].child_right    = &tree.nodes[conv_j];
     tree.nodes[num_nodes].label          = num_nodes; 
 
-    Coalesce(i, j, d);
+    Coalesce(i, j, d, dist_unif);
     if(use_sym) CoalesceSym(i, j, sym_d);
 
     //if(best_candidate.dist == std::numeric_limits<float>::infinity() && no_candidate == 0) no_candidate = num_nodes;
@@ -1411,9 +1435,16 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
 
       for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
         coordinates[*it_sorted_indices]                 += delta_tau;
+        if(coordinates[*it_sorted_indices] < coordinates[*std::prev(it_sorted_indices,1)]){
+          coordinates[*it_sorted_indices] = coordinates[*std::prev(it_sorted_indices,1)]; 
+        }
         if(!(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)])){
           std::cerr << *it_sorted_indices << " " << *std::next(sorted_indices.begin(), k) << std::endl;
           std::cerr << coordinates[*it_sorted_indices] << " " << coordinates[*std::prev(it_sorted_indices,1)] << std::endl;
+          for(int i = 0; i < sorted_indices.size(); i++){
+            std::cerr << coordinates[sorted_indices[i]] << " ";
+          }
+          std::cerr << std::endl;
           std::cerr << delta_tau << std::endl;
         }
         assert(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)]);
@@ -1785,17 +1816,15 @@ InferBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, con
 
   }
 
+  if(1){
   for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
     (*it_n).branch_length = ((double) Ne) * (avg[(*(*it_n).parent).label] - avg[(*it_n).label]);
   }
-
-
-  /*
-     for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-     (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
-     }
-     */
-
+  }else{
+  for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
+    (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
+  }
+  }
 
 }  
 

@@ -1,4 +1,4 @@
-add_executable(RelateCoalescentRate coalescent_rate/RelateCoalescentRate.cpp)
+add_executable(RelateCoalescentRate coalescent_rate/coal_tree.hpp coalescent_rate/coal_tree.cpp coalescent_rate/RelateCoalescentRate.cpp)
 target_link_libraries(RelateCoalescentRate relateStatic)
 
 add_executable(RelateSelection selection/RelateSelection.cpp)

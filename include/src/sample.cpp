@@ -3,7 +3,9 @@
 void
 Sample::Read(const std::string& filename){
 
-  std::string line, read;
+	bool diploid = true;
+
+  std::string line, read, ploidy;
   bool exists;
 
   //Read all possible labels
@@ -20,6 +22,29 @@ Sample::Read(const std::string& filename){
       i++;
     }
     i++;
+		ploidy.clear();
+		while(line[i] != ' ' && line[i] != '\t'){
+			i++;
+		}
+		i++;
+		ploidy.clear();
+		while(line[i] != ' ' && line[i] != '\t'){
+			ploidy += line[i];
+			i++;
+			if(i == line.size()) break;
+		}
+		i++;
+    
+		if(ploidy != "NA"){
+      if(stoi(ploidy) == 1){
+				diploid = false;
+			}else{
+        if(!diploid){
+          std::cerr << "Error: Detected both haploid and diploid samples." << std::endl;
+					exit(1);
+				}
+			}
+		}
     exists = false;
     for(std::vector<std::string>::iterator it_groups = groups.begin(); it_groups != groups.end(); it_groups++){
       if(!read.compare(*it_groups)){
@@ -66,7 +91,7 @@ Sample::Read(const std::string& filename){
     for(std::vector<std::string>::iterator it_groups = groups.begin(); it_groups != groups.end(); it_groups++){
       if(!read.compare(*it_groups)){
         group_of_haplotype.push_back(ind);
-        group_of_haplotype.push_back(ind);
+        if(diploid) group_of_haplotype.push_back(ind);
         break;
       }
       ind++;

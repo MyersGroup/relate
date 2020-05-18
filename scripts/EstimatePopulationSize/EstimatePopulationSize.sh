@@ -18,11 +18,12 @@ then
   echo "--pop_of_interest: Optional: Specify the populations for which you want to estimate the population size as a comma separated string. Default is all populations."
   echo "--threshold:       Optional: Used to delete trees with less than specified number of mutations. Use 0 to use all trees. Default: Number of haplotypes."
   echo "--years_per_gen :  Optional: Years per generation. Default is 28."
-  echo "--num_bins:        Optional: Number of bins between 1,000ybp and 10,000,000 ybp. Default is 30."
+  echo "--bins:            Optional: Specify epoch bins. Format: lower, upper, stepsize for function c(0,10^seq(lower, upper, stepsize))."
   echo "--num_iter:        Optional: Number of iterations of the algorithm. Default: 5."
+  echo "--chr:             Optional: File listing chromosome IDs (one per line). Overrides --first_chr, --last_chr. Assumes input files are indexed by chr, e.g., example_chr1.anc, example_chr1.mut, etc. Specify -i example in this case."
   echo "--first_chr:       Optional: Index of first chr. Assumes that input files are indexed by chr, e.g. example_chr1.anc, example_chr1.mut, etc. Specify -i example in this case. "
   echo "--last_chr:        Optional: Index of last chr."
-  echo "--coal:            Optional: Initial estimate of coalescent rate, treating all haplotypes as one population. Ignored if num_bins is specified."
+  echo "--coal:            Optional: Initial estimate of coalescent rate, treating all haplotypes as one population. Ignored if bins is specified."
   echo "--threads:         Optional. Maximum number of threads."
   echo "--seed:            Optional: Random seed for branch lengths estimation"
   echo ""
@@ -30,7 +31,7 @@ then
 fi
 
 #chr
-#num_bins
+#bins
 #threads
 
 PATH_TO_RELATE=$0
@@ -90,13 +91,18 @@ do
       shift # past argument
       shift # past value
       ;;
-    --num_bins)
-      num_bins="$2"
+    --bins)
+      bins="$2"
       shift # past argument
       shift # past value
       ;;
     --num_iter)
       num_iter="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --chr)
+      chr="$2"
       shift # past argument
       shift # past value
       ;;
@@ -130,10 +136,16 @@ done
 
 if [ -z "${num_iter-}" ];
 then
-  num_iter=5
+  num_iter=10
 else
+  if [ $num_iter -le 0 ];
+  then
+    echo "Error: set num_iter > 0"
+    exit 1
+  fi
   num_iter_set="FALSE"
 fi
+
 
 echo "********************************"
 echo "Parameters passed to script:"
@@ -155,9 +167,9 @@ if [ ! -z "${pop_of_interest-}" ];
 then
   echo "pop_of_interest = $pop_of_interest"
 fi
-if [ ! -z "${num_bins-}" ];
+if [ ! -z "${bins-}" ];
 then
-  echo "num_bins      = $num_bins"
+  echo "bins          = $bins"
 fi
 if [ ! -z "${first_chr-}" -a ! -z "${last_chr-}" ];
 then
@@ -189,7 +201,7 @@ if [ "$maxjobs" -eq 1 ]
 then
 
 
-  if [ -z "${first_chr-}" -o -z "${last_chr-}" ];
+  if [ -z "${first_chr-}" -o -z "${last_chr-}" ] && [ -z "${chr-}" ];
   then
 
     if [ ! -z "${pop_of_interest-}" ];
@@ -211,13 +223,14 @@ then
       if [ -z "${threshold-}" ];
       then
 
-        if [ ! -f $filename.anc ]
-        then
-          threshold=($(gunzip -c $filename.anc.gz | head -1))
-        else
-          threshold=($(head -1 $filename.anc))
-        fi
-        threshold=${threshold[1]}
+        #if [ ! -f $filename.anc ]
+        #then
+        #  threshold=($(gunzip -c $filename.anc.gz | head -1))
+        #else
+        #  threshold=($(head -1 $filename.anc))
+        #fi
+        #threshold=${threshold[1]}
+        threshold=0.5
 
       fi
 
@@ -226,18 +239,18 @@ then
       if [ -z "${threshold-}" ];
       then
 
-        if [ ! -f $filename.anc ]
-        then
-          threshold=($(gunzip -c $filename.anc.gz | head -1))
-        else
-          threshold=($(head -1 $filename.anc))
-        fi
-        threshold=${threshold[1]}
+        #if [ ! -f $filename.anc ]
+        #then
+        #  threshold=($(gunzip -c $filename.anc.gz | head -1))
+        #else
+        #  threshold=($(head -1 $filename.anc))
+        #fi
+        #threshold=${threshold[1]}
+        threshold=0.5
 
       fi
 
     fi
-
 
     #delete all trees that have fewer than $threshold mutations
     ${PATH_TO_RELATE}/bin/RelateExtract \
@@ -248,11 +261,91 @@ then
       -o ${output} 
 
 
+    if [ -z "${bins-}" ];
+    then
+
+      ${PATH_TO_RELATE}/bin/RelateMutationRate \
+        --mode Avg \
+        --dist ${output}.dist \
+        --years_per_gen ${years_per_gen} \
+        -i ${output} \
+        -o ${output}
+
+      if [ -z "${coal-}" ]
+      then
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode CoalRateForTree \
+          --years_per_gen ${years_per_gen} \
+          -i ${output} \
+          -o ${output}
+
+      else
+
+        cp $coal ${output}.coal
+        chmod +w ${output}.coal
+
+        epochs=$(cat ${coal} | head -2 | tail -1)
+        echo -n > ${output}_avg.rate
+        for e in ${epochs}
+        do
+          echo "$e ${mu}" >> ${output}_avg.rate
+        done
+
+      fi
+
+    else
+
+      ${PATH_TO_RELATE}/bin/RelateMutationRate \
+        --mode Avg \
+        --dist ${output}.dist \
+        --years_per_gen ${years_per_gen} \
+        --bins ${bins} \
+        -i ${output} \
+        -o ${output}
+
+      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+        --mode CoalRateForTree \
+        --years_per_gen ${years_per_gen} \
+        --bins ${bins} \
+        -i ${output} \
+        -o ${output}
+
+    fi
+
+
     #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
     for i in `seq 1 1 ${num_iter}`
     do
 
-      if [ -z "${num_bins-}" ];
+      if [ -z "${seed-}" ];
+      then
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode SampleBranchLengths \
+          --coal ${output}.coal \
+          --mrate ${output}_avg.rate \
+          --dist ${output}.dist \
+          --num_samples 1 \
+          -m ${mu} \
+          -i ${output} \
+          -o ${output}
+
+      else
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode SampleBranchLengths \
+          --coal ${output}.coal \
+          --mrate ${output}_avg.rate \
+          --dist ${output}.dist \
+          --num_samples 1 \
+          --seed $seed \
+          -m ${mu} \
+          -i ${output} \
+          -o ${output}
+
+      fi
+
+      if [ -z "${bins-}" ];
       then
 
         ${PATH_TO_RELATE}/bin/RelateMutationRate \
@@ -264,12 +357,15 @@ then
 
         if [ -z "${coal-}" ]
         then
+
           ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode EstimatePopulationSize \
+            --mode CoalRateForTree \
             --years_per_gen ${years_per_gen} \
             -i ${output} \
             -o ${output}
+
         else
+
           cp $coal ${output}.coal
           chmod +w ${output}.coal
 
@@ -286,46 +382,24 @@ then
 
         ${PATH_TO_RELATE}/bin/RelateMutationRate \
           --mode Avg \
-          --dist ${output}.dist \
           --years_per_gen ${years_per_gen} \
-          --num_bins ${num_bins} \
+          --bins ${bins} \
+          --dist ${output}.dist \
           -i ${output} \
           -o ${output}
 
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode EstimatePopulationSize \
+          --mode CoalRateForTree \
           --years_per_gen ${years_per_gen} \
-          --num_bins ${num_bins} \
+          --bins ${bins} \
           -i ${output} \
           -o ${output}
 
-      fi
-
-      if [ -z "${seed-}" ];
-      then
-        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode ReEstimateBranchLengths \
-          --coal ${output}.coal \
-          --mrate ${output}_avg.rate \
-          --dist ${output}.dist \
-          -m ${mu} \
-          -i ${output} \
-          -o ${output}
-      else
-        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode ReEstimateBranchLengths \
-          --coal ${output}.coal \
-          --mrate ${output}_avg.rate \
-          --dist ${output}.dist \
-          --seed $seed \
-          -m ${mu} \
-          -i ${output} \
-          -o ${output}
       fi
 
       if [ -z "${num_iter_set-}" ];
       then
-        if [ $i -ge 2 ];
+        if [ $i -ge 5 ];
         then
           terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
           if [ ${terminate} == "TRUE" ];
@@ -338,64 +412,74 @@ then
 
     done
 
-    #estimate mutation rate and coalescent rates for a final time
-
-    if [ -z "${num_bins-}" ];
+    if [ -z "${bins-}" ];
     then
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output}.dist \
-        --years_per_gen ${years_per_gen} \
-        -i ${output} \
-        -o ${output}
-
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode EstimatePopulationSize \
         --years_per_gen ${years_per_gen} \
         -i ${output} \
-        -o ${output}
+        -o ${output}_pairwise
+    else
+      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+        --mode EstimatePopulationSize \
+        --years_per_gen ${years_per_gen} \
+        --bins ${bins} \
+        -i ${output} \
+        -o ${output}_pairwise
+    fi
+
+    #estimate mutation rate and coalescent rates for a final time
+    if [ -z "${seed-}" ];
+    then
 
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        -i ${output} \
-        -o ${output} \
-        --poplabels ${filename_poplabels}
+        --mode ReEstimateBranchLengths \
+        --coal ${output}.coal \
+        --mrate ${output}_avg.rate \
+        --dist ${output}.dist \
+        -m ${mu} \
+        -i ${filename} \
+        -o ${output}
 
     else
 
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
+      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+        --mode ReEstimateBranchLengths \
+        --coal ${output}.coal \
+        --mrate ${output}_avg.rate \
         --dist ${output}.dist \
-        --years_per_gen ${years_per_gen} \
-        --num_bins ${num_bins} \
-        -i ${output} \
+        --seed $seed \
+        -m ${mu} \
+        -i ${filename} \
         -o ${output}
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode EstimatePopulationSize \
-        --years_per_gen ${years_per_gen} \
-        --num_bins ${num_bins} \
-        -i ${output} \
-        -o ${output}
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        -i ${output} \
-        -o ${output} \
-        --num_bins ${num_bins} \
-        --poplabels ${filename_poplabels}
 
     fi
 
   else
+
+    if [ ! -z "${chr-}" ];
+    then
+      chromosomes=$(cat "chr.txt") 
+    else
+      chromosomes=`seq ${first_chr} 1 ${last_chr}`
+    fi
+    first_chr=($chromosomes)
+    filename_chr=${output}.chr
+    if [ -f ${filename_chr} ]
+    then
+      rm ${filename_chr}
+    fi
+    for chr in $chromosomes
+    do
+      echo $chr >> ${filename_chr}
+    done
 
     if [ ! -z "${pop_of_interest-}" ];
     then
 
       labels=$(echo ${pop_of_interest} | tr -d ",")
 
-      for chr in `seq ${first_chr} 1 ${last_chr}`
+      for chr in $chromosomes
       do
 
         #delete all trees that have fewer than $threshold mutations
@@ -407,48 +491,51 @@ then
           --mut ${filename}_chr${chr}.mut \
           -o ${output}_${labels}_chr${chr} 
 
-      done
+        done
 
-      mv ${output}_${labels}_chr${first_chr}.poplabels ${output}_${labels}.poplabels
-      for chr in `seq $((${first_chr}+1)) 1 ${last_chr}`
-      do
-        rm ${output}_${labels}_chr${chr}.poplabels 
-      done
-      filename=${output}_${labels}
-      filename_poplabels=${filename}.poplabels
+        mv ${output}_${labels}_chr${first_chr}.poplabels ${output}_${labels}.poplabels
+        for chr in $chromosomes
+        do
+          rm ${output}_${labels}_chr${chr}.poplabels 
+        done
+        filename=${output}_${labels}
+        filename_poplabels=${filename}.poplabels
 
-      if [ -z "${threshold-}" ];
-      then
-
-        if [ ! -f ${filename}_chr${first_chr}.anc ]
+        if [ -z "${threshold-}" ];
         then
-          threshold=($(gunzip -c ${filename}_chr${first_chr}.anc.gz | head -1))
-        else
-          threshold=($(head -1 ${filename}_chr${first_chr}.anc))
+
+          #if [ ! -f ${filename}_chr${first_chr}.anc ]
+          #then
+          #  threshold=($(gunzip -c ${filename}_chr${first_chr}.anc.gz | head -1))
+          #else
+          #  threshold=($(head -1 ${filename}_chr${first_chr}.anc))
+          #fi
+          #threshold=${threshold[1]}
+          threshold=0.5
+
         fi
-        threshold=${threshold[1]}
 
-      fi
+      else
 
-    else
-
-      if [ -z "${threshold-}" ];
-      then
-
-        if [ ! -f ${filename}_chr${first_chr}.anc ]
+        if [ -z "${threshold-}" ];
         then
-          threshold=($(gunzip -c ${filename}_chr${first_chr}.anc.gz | head -1))
-        else
-          threshold=($(head -1 ${filename}_chr${first_chr}.anc))
-        fi
-        threshold=${threshold[1]}
 
-      fi
+          #if [ ! -f ${filename}_chr${first_chr}.anc ]
+          #then
+          #  threshold=($(gunzip -c ${filename}_chr${first_chr}.anc.gz | head -1))
+          #else
+          #  threshold=($(head -1 ${filename}_chr${first_chr}.anc))
+          #fi
+          #threshold=${threshold[1]}
+          threshold=0.5
+
+        fi
 
     fi
 
-    for chr in `seq ${first_chr} 1 ${last_chr}`
+    for chr in ${chromosomes}
     do
+
       #delete all trees that have fewer than $threshold mutations
       ${PATH_TO_RELATE}/bin/RelateExtract \
         --mode RemoveTreesWithFewMutations \
@@ -456,41 +543,131 @@ then
         --anc ${filename}_chr${chr}.anc \
         --mut ${filename}_chr${chr}.mut \
         -o ${output}_chr${chr}
+
     done
+
+    if [ -z "${bins-}" ];
+    then
+
+      ${PATH_TO_RELATE}/bin/RelateMutationRate \
+        --mode Avg \
+        --dist ${output} \
+        --years_per_gen ${years_per_gen} \
+        --chr ${filename_chr} \
+        -i ${output} \
+        -o ${output}
+
+      if [ -z "${coal-}" ]
+      then
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode CoalRateForTree \
+          --years_per_gen ${years_per_gen} \
+          --chr ${filename_chr} \
+          -i ${output} \
+          -o ${output}
+
+      else
+
+        cp $coal $output.coal
+
+        epochs=$(cat ${coal} | head -2 | tail -1)
+        echo -n > ${output}_avg.rate
+        for e in ${epochs}
+        do
+          echo "$e ${mu}" >> ${output}_avg.rate
+        done
+
+      fi
+
+    else
+
+      ${PATH_TO_RELATE}/bin/RelateMutationRate \
+        --mode Avg \
+        --dist ${output} \
+        --years_per_gen ${years_per_gen} \
+        --bins ${bins} \
+        --chr ${filename_chr} \
+        -i ${output} \
+        -o ${output}
+
+      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+        --mode CoalRateForTree \
+        --years_per_gen ${years_per_gen} \
+        --bins ${bins} \
+        --chr ${filename_chr} \
+        -i ${output} \
+        -o ${output}
+
+    fi
 
     #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
     for i in `seq 1 1 ${num_iter}`
     do
 
-      if [ -z "${num_bins-}" ];
+      for chr in ${chromosomes}
+      do
+        if [ -z "${seed-}" ];
+        then
+
+          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+            --mode SampleBranchLengths \
+            --coal ${output}.coal \
+            --mrate ${output}_avg.rate \
+            --dist ${output}_chr${chr}.dist \
+            --num_samples 1 \
+            -m ${mu} \
+            -i ${output}_chr${chr} \
+            -o ${output}_chr${chr}
+
+        else
+
+          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+            --mode SampleBranchLengths \
+            --coal ${output}.coal \
+            --mrate ${output}_avg.rate \
+            --dist ${output}_chr${chr}.dist \
+            --num_samples 1 \
+            --seed $seed \
+            -m ${mu} \
+            -i ${output}_chr${chr} \
+            -o ${output}_chr${chr} 
+
+        fi
+      done
+
+      if [ -z "${bins-}" ];
       then
 
         ${PATH_TO_RELATE}/bin/RelateMutationRate \
           --mode Avg \
           --dist ${output} \
           --years_per_gen ${years_per_gen} \
-          --first_chr $first_chr \
-          --last_chr $last_chr \
+          --chr ${filename_chr} \
           -i ${output} \
           -o ${output}
 
         if [ -z "${coal-}" ]
         then
+
           ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode EstimatePopulationSize \
+            --mode CoalRateForTree \
             --years_per_gen ${years_per_gen} \
-            --first_chr $first_chr \
-            --last_chr $last_chr \
+            --chr ${filename_chr} \
             -i ${output} \
             -o ${output}
+
         else
+
           cp $coal $output.coal
+
           epochs=$(cat ${coal} | head -2 | tail -1)
           echo -n > ${output}_avg.rate
           for e in ${epochs}
           do
             echo "$e ${mu}" >> ${output}_avg.rate
           done
+
         fi
 
       else
@@ -499,51 +676,24 @@ then
           --mode Avg \
           --dist ${output} \
           --years_per_gen ${years_per_gen} \
-          --num_bins ${num_bins} \
-          --first_chr $first_chr \
-          --last_chr $last_chr \
+          --bins ${bins} \
+          --chr ${filename_chr} \
           -i ${output} \
           -o ${output}
 
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode EstimatePopulationSize \
+          --mode CoalRateForTree \
           --years_per_gen ${years_per_gen} \
-          --num_bins ${num_bins} \
-          --first_chr $first_chr \
-          --last_chr $last_chr \
+          --bins ${bins} \
+          --chr ${filename_chr} \
           -i ${output} \
           -o ${output}
 
       fi
 
-      for chr in `seq ${first_chr} 1 ${last_chr}`
-      do
-        if [ -z "${seed-}" ];
-        then
-          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode ReEstimateBranchLengths \
-            --coal ${output}.coal \
-            --mrate ${output}_avg.rate \
-            --dist ${output}_chr${chr}.dist \
-            -m ${mu} \
-            -i ${output}_chr${chr} \
-            -o ${output}_chr${chr} 
-        else
-          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode ReEstimateBranchLengths \
-            --coal ${output}.coal \
-            --mrate ${output}_avg.rate \
-            --dist ${output}_chr${chr}.dist \
-            --seed $seed \
-            -m ${mu} \
-            -i ${output}_chr${chr} \
-            -o ${output}_chr${chr} 
-        fi
-      done
-
       if [ -z "${num_iter_set-}" ]
       then
-        if [ $i -ge 2 ]
+        if [ $i -ge 5 ]
         then
           terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
           if [ ${terminate} == "TRUE" ]
@@ -555,74 +705,59 @@ then
 
     done
 
-    #estimate mutation rate and coalescent rates for a final time
-
-    if [ -z "${num_bins-}" ];
+    if [ -z "${bins-}" ];
     then
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output} \
-        --years_per_gen ${years_per_gen} \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
-        -i ${output} \
-        -o ${output}
-
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode EstimatePopulationSize \
         --years_per_gen ${years_per_gen} \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
+        --chr ${filename_chr} \
         -i ${output} \
-        -o ${output}
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
-        -i ${output} \
-        -o ${output} \
-        --poplabels ${filename_poplabels}
-
+        -o ${output}_pairwise
     else
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output} \
-        --years_per_gen ${years_per_gen} \
-        --num_bins ${num_bins} \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
-        -i ${output} \
-        -o ${output}
-
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode EstimatePopulationSize \
         --years_per_gen ${years_per_gen} \
-        --num_bins ${num_bins} \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
+        --chr ${filename_chr} \
+        --bins ${bins} \
         -i ${output} \
-        -o ${output}
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        -i ${output} \
-        -o ${output} \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
-        --years_per_gen ${years_per_gen} \
-        --num_bins ${num_bins} \
-        --poplabels ${filename_poplabels}
-
+        -o ${output}_pairwise
     fi
+
+    #estimate mutation rate and coalescent rates for a final time
+    for chr in ${chromosomes}
+    do
+      if [ -z "${seed-}" ];
+      then
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode ReEstimateBranchLengths \
+          --coal ${output}.coal \
+          --mrate ${output}_avg.rate \
+          --dist ${output}_chr${chr}.dist \
+          -m ${mu} \
+          -i ${filename}_chr${chr} \
+          -o ${output}_chr${chr} 
+
+      else
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode ReEstimateBranchLengths \
+          --coal ${output}.coal \
+          --mrate ${output}_avg.rate \
+          --dist ${output}_chr${chr}.dist \
+          --seed $seed \
+          -m ${mu} \
+          -i ${filename}_chr${chr} \
+          -o ${output}_chr${chr} 
+
+      fi
+    done
 
   fi
 
 else
 
-  if [ -z "${first_chr-}" -o -z "${last_chr-}" ];
+  if [ -z "${first_chr-}" -o -z "${last_chr-}" ] && [ -z "${chr-}" ];
   then
 
     if [ ! -z "${pop_of_interest-}" ];
@@ -644,13 +779,14 @@ else
       if [ -z "${threshold-}" ];
       then
 
-        if [ ! -f $filename.anc ]
-        then
-          threshold=($(gunzip -c $filename.anc.gz | head -1))
-        else
-          threshold=($(head -1 $filename.anc))
-        fi
-        threshold=${threshold[1]}
+        #if [ ! -f $filename.anc ]
+        #then
+        #  threshold=($(gunzip -c $filename.anc.gz | head -1))
+        #else
+        #  threshold=($(head -1 $filename.anc))
+        #fi
+        #threshold=${threshold[1]}
+        threshold=0.5
 
       fi
 
@@ -659,13 +795,14 @@ else
       if [ -z "${threshold-}" ];
       then
 
-        if [ ! -f $filename.anc ]
-        then
-          threshold=($(gunzip -c $filename.anc.gz | head -1))
-        else
-          threshold=($(head -1 $filename.anc))
-        fi
-        threshold=${threshold[1]}
+        #if [ ! -f $filename.anc ]
+        #then
+        #  threshold=($(gunzip -c $filename.anc.gz | head -1))
+        #else
+        #  threshold=($(head -1 $filename.anc))
+        #fi
+        #threshold=${threshold[1]}
+        threshold=0.5
 
       fi
 
@@ -690,59 +827,58 @@ else
       rm ${output}_tmp*
     fi
 
+    if [ -z "${bins-}" ];
+    then
+
+      ${PATH_TO_RELATE}/bin/RelateMutationRate \
+        --mode Avg \
+        --dist ${output}.dist \
+        --years_per_gen ${years_per_gen} \
+        -i ${output} \
+        -o ${output}
+
+      if [ -z "${coal-}" ]
+      then
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode CoalRateForTree \
+          --years_per_gen ${years_per_gen} \
+          -i ${output} \
+          -o ${output}
+
+      else
+        cp $coal ${output}.coal
+        epochs=$(cat ${coal} | head -2 | tail -1)
+        echo -n > ${output}_avg.rate
+        for e in ${epochs}
+        do
+          echo "$e ${mu}" >> ${output}_avg.rate
+        done
+      fi
+
+    else
+
+      ${PATH_TO_RELATE}/bin/RelateMutationRate \
+        --mode Avg \
+        --dist ${output}.dist \
+        --years_per_gen ${years_per_gen} \
+        --bins ${bins} \
+        -i ${output} \
+        -o ${output}
+
+      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+        --mode CoalRateForTree \
+        --years_per_gen ${years_per_gen} \
+        --bins ${bins} \
+        -i ${output} \
+        -o ${output}
+
+    fi
+
+
     #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
     for i in `seq 1 1 ${num_iter}`
     do
-
-      if [ -z "${num_bins-}" ];
-      then
-
-        ${PATH_TO_RELATE}/bin/RelateMutationRate \
-          --mode Avg \
-          --dist ${output}.dist \
-          --years_per_gen ${years_per_gen} \
-          -i ${output} \
-          -o ${output}
-
-        if [ -z "${coal-}" ]
-        then
-
-          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode EstimatePopulationSize \
-            --years_per_gen ${years_per_gen} \
-            -i ${output} \
-            -o ${output}
-
-        else
-          cp $coal ${output}.coal
-          epochs=$(cat ${coal} | head -2 | tail -1)
-          echo -n > ${output}_avg.rate
-          for e in ${epochs}
-          do
-            echo "$e ${mu}" >> ${output}_avg.rate
-          done
-        fi
-
-      else
-
-        ${PATH_TO_RELATE}/bin/RelateMutationRate \
-          --mode Avg \
-          --dist ${output}.dist \
-          --years_per_gen ${years_per_gen} \
-          --num_bins ${num_bins} \
-          -i ${output} \
-          -o ${output}
-
-
-
-        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode EstimatePopulationSize \
-          --years_per_gen ${years_per_gen} \
-          --num_bins ${num_bins} \
-          -i ${output} \
-          -o ${output}
-
-      fi
 
       ${PATH_TO_RELATE}/bin/RelateExtract \
         --mode DivideAncMut \
@@ -760,24 +896,30 @@ else
         chunk=$1 
         if [ -z "${seed-}" ];
         then
+
           ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode ReEstimateBranchLengths \
+            --mode SampleBranchLengths \
             --coal ${output}.coal \
             --mrate ${output}_avg.rate \
             --dist ${output}.dist \
+            --num_samples 1 \
             -m ${mu} \
             -i ${output}_tmp_chr${chunk} \
             -o ${output}_tmp_chr${chunk} 2> ${output}_tmp_chr${chunk}.log 
+
         else
+
           ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode ReEstimateBranchLengths \
+            --mode SampleBranchLengths \
             --coal ${output}.coal \
             --mrate ${output}_avg.rate \
             --dist ${output}.dist \
+            --num_samples 1 \
             --seed $seed \
             -m ${mu} \
             -i ${output}_tmp_chr${chunk} \
             -o ${output}_tmp_chr${chunk} 2> ${output}_tmp_chr${chunk}.log 
+
         fi
 
         rm ${output}_tmp_chr${chunk}.anc.gz
@@ -797,259 +939,320 @@ else
       }
       parallelize_estimating_branchlengths `seq ${first_chunk} 1 ${last_chunk}`
 
-      for chr in `seq ${first_chunk} 1 ${last_chunk}`
-      do
-        cat ${output}_tmp_chr${chr}.log  
-        rm ${output}_tmp_chr${chr}.log  
-      done
+			for chr in `seq ${first_chunk} 1 ${last_chunk}`
+			do
+				cat ${output}_tmp_chr${chr}.log  
+				rm ${output}_tmp_chr${chr}.log  
+			done
 
-      ${PATH_TO_RELATE}/bin/RelateExtract \
-        --mode CombineAncMut \
-        -o ${output}_tmp
-      mv ${output}_tmp.anc.gz ${output}.anc.gz
-      mv ${output}_tmp.mut.gz ${output}.mut.gz
+			${PATH_TO_RELATE}/bin/RelateExtract \
+				--mode CombineAncMut \
+				-o ${output}_tmp
 
-      if [ -z "${num_iter_set-}" ]
-      then
-        if [ $i -ge 2 ]
-        then
-          terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
-          if [ ${terminate} == "TRUE" ]
-          then
-            break
-          fi
-        fi
-      fi
+			mv ${output}_tmp.anc.gz ${output}.anc.gz
+			mv ${output}_tmp.mut.gz ${output}.mut.gz
 
-
-    done
-
-    #estimate mutation rate and coalescent rates for a final time
-
-    if [ -z "${num_bins-}" ];
-    then
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output}.dist \
-        --years_per_gen ${years_per_gen} \
-        -i ${output} \
-        -o ${output}
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode EstimatePopulationSize \
-        --years_per_gen ${years_per_gen} \
-        -i ${output} \
-        -o ${output}
-
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        -i ${output} \
-        -o ${output} \
-        --poplabels ${filename_poplabels}
-
-    else
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output}.dist \
-        --years_per_gen ${years_per_gen} \
-        --num_bins ${num_bins} \
-        -i ${output} \
-        -o ${output}
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode EstimatePopulationSize \
-        --years_per_gen ${years_per_gen} \
-        --num_bins ${num_bins} \
-        -i ${output} \
-        -o ${output}
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        -i ${output} \
-        -o ${output} \
-        --num_bins ${num_bins} \
-        --poplabels ${filename_poplabels}
-
-    fi
-
-
-  else
-
-    if [ ! -z "${pop_of_interest-}" ];
-    then
-
-      labels=$(echo ${pop_of_interest} | tr -d ",")
-
-      ExtractSubTrees (){
-        chr=$1
-        #delete all trees that have fewer than $threshold mutations
-        ${PATH_TO_RELATE}/bin/RelateExtract \
-          --mode SubTreesForSubpopulation \
-          --poplabels ${filename_poplabels} \
-          --pop_of_interest ${pop_of_interest} \
-          --anc ${filename}_chr${chr}.anc \
-          --mut ${filename}_chr${chr}.mut \
-          -o ${output}_${labels}_chr${chr} 2> ${output}_chr${chr}.log  
-      }
-
-      parallelize_extract_subtrees () {
-        while [ $# -gt 0 ] ; do
-          jobcnt=(`jobs -p`)
-          if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-            ExtractSubTrees $1 &
-            shift
-          fi
-        done
-        wait
-      }
-      parallelize_extract_subtrees `seq ${first_chr} 1 ${last_chr}`
-
-      for chr in `seq ${first_chr} 1 ${last_chr}`
-      do
-        cat ${output}_chr${chr}.log  
-        rm ${output}_chr${chr}.log  
-      done
-
-      mv ${output}_${labels}_chr${first_chr}.poplabels ${output}_${labels}.poplabels
-      for chr in `seq $((${first_chr}+1)) 1 ${last_chr}`
-      do
-        rm ${output}_${labels}_chr${chr}.poplabels 
-      done
-      filename=${output}_${labels}
-      filename_poplabels=${filename}.poplabels
-
-      if [ -z "${threshold-}" ];
-      then
-
-        if [ ! -f ${filename}_chr${first_chr}.anc ]
-        then
-          threshold=($(gunzip -c ${filename}_chr${first_chr}.anc.gz | head -1))
-        else
-          threshold=($(head -1 ${filename}_chr${first_chr}.anc))
-        fi
-        threshold=${threshold[1]}
-
-      fi
-
-    else
-
-      if [ -z "${threshold-}" ];
-      then
-
-        if [ ! -f ${filename}_chr${first_chr}.anc ]
-        then
-          threshold=($(gunzip -c ${filename}_chr${first_chr}.anc.gz | head -1))
-        else
-          threshold=($(head -1 ${filename}_chr${first_chr}.anc))
-        fi
-        threshold=${threshold[1]}
-
-      fi
-
-    fi
-
-
-    RemoveTreesWithFewMutations (){
-      chr=$1
-      #delete all trees that have fewer than $threshold mutations
-      ${PATH_TO_RELATE}/bin/RelateExtract \
-        --mode RemoveTreesWithFewMutations \
-        --threshold $threshold \
-        --anc ${filename}_chr${chr}.anc \
-        --mut ${filename}_chr${chr}.mut \
-        -o ${output}_chr${chr} 2> ${output}_chr${chr}.log
-
-      gzip ${output}_chr${chr}.anc
-      gzip ${output}_chr${chr}.mut
-    }
-
-    parallelize_remove_trees () {
-      while [ $# -gt 0 ] ; do
-        jobcnt=(`jobs -p`)
-        if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-          RemoveTreesWithFewMutations $1 &
-          shift
-        fi
-      done
-      wait
-    }
-    parallelize_remove_trees `seq ${first_chr} 1 ${last_chr}`
-
-    for chr in `seq ${first_chr} 1 ${last_chr}`
-    do
-      cat ${output}_chr${chr}.log  
-      rm ${output}_chr${chr}.log  
-    done
-
-    #remove tmp files of previous runs
-    foo=$( ls ${output}_chr*_tmp* 2>/dev/null | wc -l)
-    if [ $foo -ge 1 ]
-    then
-      rm ${output}_chr*_tmp*
-    fi
-
-    #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
-    for i in `seq 1 1 ${num_iter}`
-    do
-
-      if [ -z "${num_bins-}" ];
+      if [ -z "${bins-}" ];
       then
 
         ${PATH_TO_RELATE}/bin/RelateMutationRate \
           --mode Avg \
-          --dist ${output} \
+          --dist ${output}.dist \
           --years_per_gen ${years_per_gen} \
-          --first_chr $first_chr \
-          --last_chr $last_chr \
           -i ${output} \
           -o ${output}
 
-        if [ -z "${coal-}" ]
-        then
+				if [ -z "${coal-}" ]
+				then
+					${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+						--mode CoalRateForTree \
+						--years_per_gen ${years_per_gen} \
+						-i ${output} \
+						-o ${output}
+				else
+					cp $coal ${output}.coal
+					epochs=$(cat ${coal} | head -2 | tail -1)
+					echo -n > ${output}_avg.rate
+					for e in ${epochs}
+					do
+						echo "$e ${mu}" >> ${output}_avg.rate
+					done
+				fi
 
-          EstimatePopulationSize (){
-            chr=$1
-            #delete all trees that have fewer than $threshold mutations
-            ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-              --mode CoalescentRateForSection \
-              --years_per_gen ${years_per_gen} \
-              -i ${output}_chr${chr} \
-              -o ${output}_chr${chr} 2> ${output}_chr${chr}.log  
-          }
+			else
 
-          parallelize_population_size () {
-            while [ $# -gt 0 ] ; do
-              jobcnt=(`jobs -p`)
-              if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-                EstimatePopulationSize $1 &
-                shift
-              fi
-            done
-            wait
-          }
-          parallelize_population_size `seq ${first_chr} 1 ${last_chr}`
+				${PATH_TO_RELATE}/bin/RelateMutationRate \
+					--mode Avg \
+					--dist ${output}.dist \
+					--years_per_gen ${years_per_gen} \
+					--bins ${bins} \
+					-i ${output} \
+					-o ${output}
 
-          for chr in `seq ${first_chr} 1 ${last_chr}`
-          do
-            cat ${output}_chr${chr}.log  
-            rm ${output}_chr${chr}.log  
-          done
+				${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+					--mode CoalRateForTree \
+					--years_per_gen ${years_per_gen} \
+					--bins ${bins} \
+					-i ${output} \
+					-o ${output}
 
-          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode SummarizeCoalescentRateForGenome \
-            --first_chr ${first_chr} \
-            --last_chr ${last_chr} \
-            -i ${output} \
-            -o ${output}
-          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode FinalizePopulationSize \
-            -i ${output} \
-            -o ${output}
+			fi
 
-        else
+			if [ -z "${num_iter_set-}" ]
+			then
+				if [ $i -ge 5 ]
+				then
+					terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
+					if [ ${terminate} == "TRUE" ]
+					then
+						break
+					fi
+				fi
+			fi
+
+    done
+
+    if [ -z "${bins-}" ];
+    then
+      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+        --mode EstimatePopulationSize \
+        --years_per_gen ${years_per_gen} \
+        -i ${output} \
+        -o ${output}_pairwise
+    else
+      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+        --mode EstimatePopulationSize \
+        --years_per_gen ${years_per_gen} \
+        --bins ${bins} \
+        -i ${output} \
+        -o ${output}_pairwise
+    fi
+
+    #estimate mutation rate and coalescent rates for a final time
+    ${PATH_TO_RELATE}/bin/RelateExtract \
+      --mode DivideAncMut \
+      --threads $maxjobs \
+      --anc ${filename}.anc \
+      --mut ${filename}.mut \
+      -o ${output}_tmp
+
+    first_chunk=0
+    last_chunk=$(ls ${output}_tmp_chr*.mut.gz | wc -l)
+    last_chunk=$((${last_chunk} - 1)) 
+
+    ReEstimateBranchLengths (){
+
+      chunk=$1 
+      if [ -z "${seed-}" ];
+      then
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode ReEstimateBranchLengths \
+          --coal ${output}.coal \
+          --mrate ${output}_avg.rate \
+          --dist ${output}.dist \
+          -m ${mu} \
+          -i ${output}_tmp_chr${chunk} \
+          -o ${output}_tmp_chr${chunk} 2> ${output}_tmp_chr${chunk}.log 
+
+      else
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode ReEstimateBranchLengths \
+          --coal ${output}.coal \
+          --mrate ${output}_avg.rate \
+          --dist ${output}.dist \
+          --seed $seed \
+          -m ${mu} \
+          -i ${output}_tmp_chr${chunk} \
+          -o ${output}_tmp_chr${chunk} 2> ${output}_tmp_chr${chunk}.log 
+
+      fi
+
+      rm ${output}_tmp_chr${chunk}.anc.gz
+      rm ${output}_tmp_chr${chunk}.mut.gz
+
+    }
+
+		parallelize_estimating_branchlengths () {
+			while [ $# -gt 0 ] ; do
+				jobcnt=(`jobs -p`)
+				if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
+					ReEstimateBranchLengths $1 &
+					shift
+				fi
+			done
+			wait
+		}
+
+    parallelize_estimating_branchlengths `seq ${first_chunk} 1 ${last_chunk}`
+
+		for chr in `seq ${first_chunk} 1 ${last_chunk}`
+		do
+			cat ${output}_tmp_chr${chr}.log  
+			rm ${output}_tmp_chr${chr}.log  
+		done
+
+		${PATH_TO_RELATE}/bin/RelateExtract \
+			--mode CombineAncMut \
+			-o ${output}_tmp
+			mv ${output}_tmp.anc.gz ${output}.anc.gz
+			mv ${output}_tmp.mut.gz ${output}.mut.gz
+
+  else
+
+    if [ ! -z "${chr-}" ];
+    then
+      chromosomes=$(cat "chr.txt") 
+    else
+      chromosomes=`seq ${first_chr} 1 ${last_chr}`
+    fi
+    first_chr=($chromosomes)
+    filename_chr=${output}.chr
+    if [ -f ${filename_chr} ]
+    then
+      rm ${filename_chr}
+    fi
+    for chr in $chromosomes
+    do
+      echo $chr >> ${filename_chr}
+    done
+
+		if [ ! -z "${pop_of_interest-}" ];
+		then
+
+		  labels=$(echo ${pop_of_interest} | tr -d ",")
+
+			ExtractSubTrees (){
+					chr=$1
+					#delete all trees that have fewer than $threshold mutations
+					${PATH_TO_RELATE}/bin/RelateExtract \
+						--mode SubTreesForSubpopulation \
+						--poplabels ${filename_poplabels} \
+						--pop_of_interest ${pop_of_interest} \
+						--anc ${filename}_chr${chr}.anc \
+						--mut ${filename}_chr${chr}.mut \
+						-o ${output}_${labels}_chr${chr} 2> ${output}_chr${chr}.log  
+			}
+
+	  	parallelize_extract_subtrees () {
+					while [ $# -gt 0 ] ; do
+						jobcnt=(`jobs -p`)
+						if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
+							ExtractSubTrees $1 &
+							shift
+						fi
+					done
+					wait
+			}
+	  	parallelize_extract_subtrees ${chromosomes}
+
+				for chr in ${chromosomes}
+				do
+					cat ${output}_chr${chr}.log  
+					rm ${output}_chr${chr}.log  
+				done
+
+				mv ${output}_${labels}_chr${first_chr}.poplabels ${output}_${labels}.poplabels
+				for chr in `seq $((${first_chr}+1)) 1 ${last_chr}`
+				do
+					rm ${output}_${labels}_chr${chr}.poplabels 
+				done
+				filename=${output}_${labels}
+				filename_poplabels=${filename}.poplabels
+
+				if [ -z "${threshold-}" ];
+				then
+
+					#if [ ! -f ${filename}_chr${first_chr}.anc ]
+					#then
+					#	threshold=($(gunzip -c ${filename}_chr${first_chr}.anc.gz | head -1))
+					#else
+					#	threshold=($(head -1 ${filename}_chr${first_chr}.anc))
+					#fi
+					#threshold=${threshold[1]}
+          threshold=0.5
+
+				fi
+
+			else
+
+				if [ -z "${threshold-}" ];
+				then
+
+					#if [ ! -f ${filename}_chr${first_chr}.anc ]
+					#then
+					#	threshold=($(gunzip -c ${filename}_chr${first_chr}.anc.gz | head -1))
+					#else
+					#	threshold=($(head -1 ${filename}_chr${first_chr}.anc))
+			  	#fi
+					#threshold=${threshold[1]}
+          threshold=0.5
+
+				fi
+
+			fi
+
+
+			RemoveTreesWithFewMutations (){
+				chr=$1
+				#delete all trees that have fewer than $threshold mutations
+				${PATH_TO_RELATE}/bin/RelateExtract \
+					--mode RemoveTreesWithFewMutations \
+					--threshold $threshold \
+					--anc ${filename}_chr${chr}.anc \
+					--mut ${filename}_chr${chr}.mut \
+					-o ${output}_chr${chr} 2> ${output}_chr${chr}.log
+
+				gzip ${output}_chr${chr}.anc
+				gzip ${output}_chr${chr}.mut
+			}
+
+			parallelize_remove_trees () {
+				while [ $# -gt 0 ] ; do
+					jobcnt=(`jobs -p`)
+					if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
+						RemoveTreesWithFewMutations $1 &
+						shift
+					fi
+				done
+				wait
+			}
+			parallelize_remove_trees ${chromosomes}
+
+			for chr in ${chromosomes}
+			do
+				cat ${output}_chr${chr}.log  
+				rm ${output}_chr${chr}.log  
+			done
+
+			#remove tmp files of previous runs
+			foo=$( ls ${output}_chr*_tmp* 2>/dev/null | wc -l)
+			if [ $foo -ge 1 ]
+			then
+				rm ${output}_chr*_tmp*
+			fi
+
+			if [ -z "${bins-}" ];
+			then
+
+				${PATH_TO_RELATE}/bin/RelateMutationRate \
+					--mode Avg \
+					--dist ${output} \
+					--years_per_gen ${years_per_gen} \
+          --chr ${filename_chr} \
+					-i ${output} \
+					-o ${output}
+
+				if [ -z "${coal-}" ]
+				then
+					${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+							--mode CoalRateForTree \
+							--years_per_gen ${years_per_gen} \
+              --chr ${filename_chr} \
+							-i ${output} \
+							-o ${output}
+				else
           cp $coal ${output}.coal
           chmod +w ${output}.coal
           epochs=$(cat ${coal} | head -2 | tail -1)
@@ -1058,274 +1261,298 @@ else
           do
             echo "$e ${mu}" >> ${output}_avg.rate
           done
-        fi
+				fi
 
-      else
+			else
 
-        ${PATH_TO_RELATE}/bin/RelateMutationRate \
-          --mode Avg \
-          --dist ${output} \
+				${PATH_TO_RELATE}/bin/RelateMutationRate \
+					--mode Avg \
+					--dist ${output} \
+					--years_per_gen ${years_per_gen} \
+					--bins ${bins} \
+          --chr ${filename_chr} \
+					-i ${output} \
+					-o ${output}
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+				  --mode CoalRateForTree \
+					--years_per_gen ${years_per_gen} \
+          --bins ${bins} \
+          --chr ${filename_chr} \
+					-i ${output} \
+					-o ${output}
+
+			fi
+	
+			#repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
+			for i in `seq 1 1 ${num_iter}`
+			do
+
+				for chr in ${chromosomes}
+				do
+
+					${PATH_TO_RELATE}/bin/RelateExtract \
+						--mode DivideAncMut \
+						--threads $maxjobs \
+						--anc ${output}_chr${chr}.anc \
+						--mut ${output}_chr${chr}.mut \
+						-o ${output}_chr${chr}_tmp 
+
+					first_chunk=0
+					last_chunk=$(( $(ls ${output}_chr${chr}_tmp_chr*.mut.gz | wc -l) - 1))
+
+					ReEstimateBranchLengths (){
+
+						chunk=$1 
+						if [ -z "${seed-}" ];
+						then
+
+							${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+								--mode SampleBranchLengths \
+								--coal ${output}.coal \
+								--mrate ${output}_avg.rate \
+								--dist ${output}_chr${chr}.dist \
+								--num_samples 1 \
+								-m ${mu} \
+								-i ${output}_chr${chr}_tmp_chr${chunk} \
+								-o ${output}_chr${chr}_tmp_chr${chunk} 2> ${output}_chr${chr}_chr${chunk}.log 
+
+						else
+
+							${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+								--mode SampleBranchLengths \
+								--coal ${output}.coal \
+								--mrate ${output}_avg.rate \
+								--dist ${output}_chr${chr}.dist \
+								--num_samples 1 \
+								--seed $seed \
+								-m ${mu} \
+								-i ${output}_chr${chr}_tmp_chr${chunk} \
+								-o ${output}_chr${chr}_tmp_chr${chunk} 2> ${output}_chr${chr}_chr${chunk}.log 
+						fi
+
+						rm ${output}_chr${chr}_tmp_chr${chunk}.anc.gz
+						rm ${output}_chr${chr}_tmp_chr${chunk}.mut.gz
+
+					}
+
+          parallelize_estimating_branchlengths () {
+						while [ $# -gt 0 ] ; do
+							jobcnt=(`jobs -p`)
+							if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
+								ReEstimateBranchLengths $1 &
+								shift
+							fi
+						done
+						wait
+					}
+          parallelize_estimating_branchlengths `seq ${first_chunk} 1 ${last_chunk}`
+
+					for chunk in `seq ${first_chunk} 1 ${last_chunk}`
+					do
+						cat ${output}_chr${chr}_chr${chunk}.log  
+						rm ${output}_chr${chr}_chr${chunk}.log  
+					done
+
+					${PATH_TO_RELATE}/bin/RelateExtract \
+						--mode CombineAncMut \
+						-o ${output}_chr${chr}_tmp
+
+					mv ${output}_chr${chr}_tmp.anc.gz ${output}_chr${chr}.anc.gz
+					mv ${output}_chr${chr}_tmp.mut.gz ${output}_chr${chr}.mut.gz
+
+	      done
+
+
+				if [ -z "${bins-}" ];
+				then
+
+					${PATH_TO_RELATE}/bin/RelateMutationRate \
+						--mode Avg \
+						--dist ${output} \
+						--years_per_gen ${years_per_gen} \
+            --chr ${filename_chr} \
+						-i ${output} \
+						-o ${output}
+
+					if [ -z "${coal-}" ]
+					then
+            ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+              --mode CoalRateForTree \
+              --years_per_gen ${years_per_gen} \
+              --chr ${filename_chr} \
+              -i ${output} \
+					    -o ${output}
+					else
+						cp $coal ${output}.coal
+						chmod +w ${output}.coal
+						epochs=$(cat ${coal} | head -2 | tail -1)
+						echo -n > ${output}_avg.rate
+						for e in ${epochs}
+						do
+							echo "$e ${mu}" >> ${output}_avg.rate
+						done
+					fi
+
+        else
+
+				${PATH_TO_RELATE}/bin/RelateMutationRate \
+					--mode Avg \
+					--dist ${output} \
+					--years_per_gen ${years_per_gen} \
+					--bins ${bins} \
+          --chr ${filename_chr} \
+					-i ${output} \
+					-o ${output}
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode CoalRateForTree \
           --years_per_gen ${years_per_gen} \
-          --num_bins ${num_bins} \
-          --first_chr $first_chr \
-          --last_chr $last_chr \
+          --chr ${filename_chr} \
+          --bins ${bins} \
           -i ${output} \
           -o ${output}
 
-        EstimatePopulationSize (){
-          chr=$1
-          #delete all trees that have fewer than $threshold mutations
-          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-            --mode CoalescentRateForSection \
-            --years_per_gen ${years_per_gen} \
-            --num_bins ${num_bins} \
-            -i ${output}_chr${chr} \
-            -o ${output}_chr${chr} 2> ${output}_chr${chr}.log  
-        }
+			fi
 
-        parallelize_population_size () {
-          while [ $# -gt 0 ] ; do
-            jobcnt=(`jobs -p`)
-            if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-              EstimatePopulationSize $1 &
-              shift
-            fi
-          done
-          wait
-        }
-        parallelize_population_size `seq ${first_chr} 1 ${last_chr}`
 
-        for chr in `seq ${first_chr} 1 ${last_chr}`
-        do
-          cat ${output}_chr${chr}.log  
-          rm ${output}_chr${chr}.log  
-        done
-
-        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode SummarizeCoalescentRateForGenome \
-          --first_chr ${first_chr} \
-          --last_chr ${last_chr} \
-          -i ${output} \
-          -o ${output}
-        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode FinalizePopulationSize \
-          -i ${output} \
-          -o ${output}
-
-      fi
-
-      for chr in `seq ${first_chr} 1 ${last_chr}`
-      do
-
-        ${PATH_TO_RELATE}/bin/RelateExtract \
-          --mode DivideAncMut \
-          --threads $maxjobs \
-          --anc ${output}_chr${chr}.anc \
-          --mut ${output}_chr${chr}.mut \
-          -o ${output}_chr${chr}_tmp 
-
-        first_chunk=0
-        last_chunk=$(( $(ls ${output}_chr${chr}_tmp_chr*.mut.gz | wc -l) - 1))
-
-        ReEstimateBranchLengths (){
-
-          chunk=$1 
-          if [ -z "${seed-}" ];
-          then
-            ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-              --mode ReEstimateBranchLengths \
-              --coal ${output}.coal \
-              --mrate ${output}_avg.rate \
-              --dist ${output}_chr${chr}.dist \
-              -m ${mu} \
-              -i ${output}_chr${chr}_tmp_chr${chunk} \
-              -o ${output}_chr${chr}_tmp_chr${chunk} 2> ${output}_chr${chr}_chr${chunk}.log 
-          else
-            ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-              --mode ReEstimateBranchLengths \
-              --coal ${output}.coal \
-              --mrate ${output}_avg.rate \
-              --dist ${output}_chr${chr}.dist \
-              --seed $seed \
-              -m ${mu} \
-              -i ${output}_chr${chr}_tmp_chr${chunk} \
-              -o ${output}_chr${chr}_tmp_chr${chunk} 2> ${output}_chr${chr}_chr${chunk}.log 
-          fi
-
-          rm ${output}_chr${chr}_tmp_chr${chunk}.anc.gz
-          rm ${output}_chr${chr}_tmp_chr${chunk}.mut.gz
-
-        }
-
-        parallelize_estimating_branchlengths () {
-          while [ $# -gt 0 ] ; do
-            jobcnt=(`jobs -p`)
-            if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-              ReEstimateBranchLengths $1 &
-              shift
-            fi
-          done
-          wait
-        }
-        parallelize_estimating_branchlengths `seq ${first_chunk} 1 ${last_chunk}`
-
-        for chunk in `seq ${first_chunk} 1 ${last_chunk}`
-        do
-          cat ${output}_chr${chr}_chr${chunk}.log  
-          rm ${output}_chr${chr}_chr${chunk}.log  
-        done
-
-        ${PATH_TO_RELATE}/bin/RelateExtract \
-          --mode CombineAncMut \
-          -o ${output}_chr${chr}_tmp
-
-        mv ${output}_chr${chr}_tmp.anc.gz ${output}_chr${chr}.anc.gz
-        mv ${output}_chr${chr}_tmp.mut.gz ${output}_chr${chr}.mut.gz
-
-      done
-
-      if [ -z "${num_iter_set-}" ]
-      then
-        if [ $i -ge 2 ]
-        then
-          terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
-          if [ ${terminate} == "TRUE" ]
-          then
-            break
-          fi
-        fi
-      fi
+			if [ -z "${num_iter_set-}" ]
+			then
+				if [ $i -ge 5 ]
+				then
+					terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
+					if [ ${terminate} == "TRUE" ]
+					then
+						break
+					fi
+				fi
+			fi
 
     done
 
+		EstimatePopulationSize (){
+			chr=$1
+			#delete all trees that have fewer than $threshold mutations
+			${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+				--mode CoalescentRateForSection \
+				--years_per_gen ${years_per_gen} \
+				--bins ${bins} \
+				-i ${output}_chr${chr} \
+				-o ${output}_pairwise_chr${chr} 2> ${output}_chr${chr}.log  
+		}
+
+		parallelize_population_size () {
+			while [ $# -gt 0 ] ; do
+				jobcnt=(`jobs -p`)
+				if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
+					EstimatePopulationSize $1 &
+					shift
+				fi
+			done
+			wait
+    }
+    parallelize_population_size ${chromosomes}
+
+		for chr in ${chromosomes}
+		do
+			cat ${output}_chr${chr}.log  
+			rm ${output}_chr${chr}.log  
+		done
+
+		${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+			--mode SummarizeCoalescentRateForGenome \
+      --chr ${filename_chr} \
+			-o ${output}_pairwise
+
+		${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+			--mode FinalizePopulationSize \
+			-o ${output}_pairwise
+
     #estimate mutation rate and coalescent rates for a final time
+    for chr in ${chromosomes}
+    do
 
-    if [ -z "${num_bins-}" ];
-    then
+      ${PATH_TO_RELATE}/bin/RelateExtract \
+        --mode DivideAncMut \
+        --threads $maxjobs \
+        --anc ${filename}_chr${chr}.anc \
+        --mut ${filename}_chr${chr}.mut \
+        -o ${output}_chr${chr}_tmp 
 
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output} \
-        --years_per_gen ${years_per_gen} \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
-        -i ${output} \
-        -o ${output}
+      first_chunk=0
+      last_chunk=$(( $(ls ${output}_chr${chr}_tmp_chr*.mut.gz | wc -l) - 1))
 
-      EstimatePopulationSize (){
-        chr=$1
-        #delete all trees that have fewer than $threshold mutations
-        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode CoalescentRateForSection \
-          --years_per_gen ${years_per_gen} \
-          -i ${output}_chr${chr} \
-          -o ${output}_chr${chr} 2> ${output}_chr${chr}.log  
+      ReEstimateBranchLengths (){
+
+        chunk=$1 
+        if [ -z "${seed-}" ];
+        then
+
+          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+            --mode ReEstimateBranchLengths \
+            --coal ${output}.coal \
+            --mrate ${output}_avg.rate \
+            --dist ${output}_chr${chr}.dist \
+            -m ${mu} \
+            -i ${output}_chr${chr}_tmp_chr${chunk} \
+            -o ${output}_chr${chr}_tmp_chr${chunk} 2> ${output}_chr${chr}_chr${chunk}.log 
+
+        else
+
+          ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+            --mode ReEstimateBranchLengths \
+            --coal ${output}.coal \
+            --mrate ${output}_avg.rate \
+            --dist ${output}_chr${chr}.dist \
+            --seed $seed \
+            -m ${mu} \
+            -i ${output}_chr${chr}_tmp_chr${chunk} \
+            -o ${output}_chr${chr}_tmp_chr${chunk} 2> ${output}_chr${chr}_chr${chunk}.log 
+
+        fi
+
+        rm ${output}_chr${chr}_tmp_chr${chunk}.anc.gz
+        rm ${output}_chr${chr}_tmp_chr${chunk}.mut.gz
+
       }
 
-      parallelize_population_size () {
-        while [ $# -gt 0 ] ; do
-          jobcnt=(`jobs -p`)
-          if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-            EstimatePopulationSize $1 &
-            shift
-          fi
-        done
-        wait
-      }
-      parallelize_population_size `seq ${first_chr} 1 ${last_chr}`
+			parallelize_estimating_branchlengths () {
+				while [ $# -gt 0 ] ; do
+					jobcnt=(`jobs -p`)
+					if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
+						ReEstimateBranchLengths $1 &
+						shift
+					fi
+				done
+				wait
+			}
+      parallelize_estimating_branchlengths `seq ${first_chunk} 1 ${last_chunk}`
 
-      for chr in `seq ${first_chr} 1 ${last_chr}`
-      do
-        cat ${output}_chr${chr}.log  
-        rm ${output}_chr${chr}.log  
-      done
+			for chunk in `seq ${first_chunk} 1 ${last_chunk}`
+			do
+				cat ${output}_chr${chr}_chr${chunk}.log  
+				rm ${output}_chr${chr}_chr${chunk}.log  
+			done
 
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode SummarizeCoalescentRateForGenome \
-        --first_chr ${first_chr} \
-        --last_chr ${last_chr} \
-        -i ${output} \
-        -o ${output}
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        -i ${output} \
-        -o ${output}
+			${PATH_TO_RELATE}/bin/RelateExtract \
+				--mode CombineAncMut \
+				-o ${output}_chr${chr}_tmp
 
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
-        -i ${output} \
-        -o ${output} \
-        --poplabels ${filename_poplabels}
+			mv ${output}_chr${chr}_tmp.anc.gz ${output}_chr${chr}.anc.gz
+			mv ${output}_chr${chr}_tmp.mut.gz ${output}_chr${chr}.mut.gz
 
-    else
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output} \
-        --years_per_gen ${years_per_gen} \
-        --num_bins ${num_bins} \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
-        -i ${output} \
-        -o ${output}
-
-
-      EstimatePopulationSize (){
-        chr=$1
-        #delete all trees that have fewer than $threshold mutations
-        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-          --mode CoalescentRateForSection \
-          --years_per_gen ${years_per_gen} \
-          --num_bins ${num_bins} \
-          -i ${output}_chr${chr} \
-          -o ${output}_chr${chr} 2> ${output}_chr${chr}.log  
-      }
-
-      parallelize_population_size () {
-        while [ $# -gt 0 ] ; do
-          jobcnt=(`jobs -p`)
-          if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-            EstimatePopulationSize $1 &
-            shift
-          fi
-        done
-        wait
-      }
-      parallelize_population_size `seq ${first_chr} 1 ${last_chr}`
-
-      for chr in `seq ${first_chr} 1 ${last_chr}`
-      do
-        cat ${output}_chr${chr}.log  
-        rm ${output}_chr${chr}.log  
-      done
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode SummarizeCoalescentRateForGenome \
-        --first_chr ${first_chr} \
-        --last_chr ${last_chr} \
-        -i ${output} \
-        -o ${output}
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        -i ${output} \
-        -o ${output}
-
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-        --mode FinalizePopulationSize \
-        -i ${output} \
-        -o ${output} \
-        --first_chr $first_chr \
-        --last_chr $last_chr \
-        --years_per_gen ${years_per_gen} \
-        --num_bins ${num_bins} \
-        --poplabels ${filename_poplabels}
-
-    fi
+    done
 
   fi
 
+fi
+
+if [ ! -z ${filename_poplabels} ];
+then
+	${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+		--mode FinalizePopulationSize \
+		-o ${output}_pairwise \
+		--poplabels ${filename_poplabels}
 fi
 
 if [ ! -z "${pop_of_interest-}" ];

@@ -3,6 +3,7 @@ if(as.numeric(version$major) < 3 || (as.numeric(version$major) == 3 && as.numeri
 }
 while(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
 while(!require(cowplot)) install.packages("cowplot", repos = "http://cran.us.r-project.org")
+while(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
 
 ##################################################################################
 
@@ -38,8 +39,14 @@ TreeView <- function(filename_plot, years_per_gen, ...){
   plotcoords      <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
   plotcoords[3:4] <- plotcoords[3:4] * years_per_gen
 
-  p <- ggplot()          + geom_segment(data = subset(plotcoords, seg_type != "m"), aes(x = x_begin, xend = x_end, y = y_begin, yend = y_end), ...) +
+	plotcoords_sample     <- read.table(paste(filename_plot, "_sample.plotcoords", sep = ""), header = T)
+	plotcoords_sample[,2] <- plotcoords_sample[,2] * years_per_gen
+  plotcoords_sample     <- merge(plotcoords_sample, subset(plotcoords, seg_type %in% c("t","v")), by = "branchID")
+  plotcoords_sample %>% group_by(x_begin, branchID) %>% summarize(agemin = quantile(age, p = 0.025), agemax = quantile(age, p = 0.975)) -> plotcoords_sample
+
+  p <- ggplot()          + geom_segment(data = subset(plotcoords, seg_type != "m"), aes(x = x_begin, xend = x_end, y = y_begin, yend = y_end), alpha = 0.3,...) +
                             #geom_point(data = subset(plotcoords, seg_type == "m"), aes(x = x_begin, y = y_begin), color = "black", size = 2) +
+		                       geom_errorbar(data = plotcoords_sample, aes(x = x_begin, ymin = agemin, ymax = agemax, group = branchID), width = 0.5, lwd = 2, colour = "#0D00A4") +
                             theme(text = element_text(size=30),
                                   axis.line=element_blank(),axis.text.x=element_blank(),
                                   axis.ticks=element_blank(),
@@ -53,7 +60,7 @@ TreeView <- function(filename_plot, years_per_gen, ...){
                                   legend.key.height= unit(1.5, "line"),
                                   legend.text=element_text(size=35),
                                   strip.text = element_text(face="bold"), plot.margin = margin(t = 0, r = 20, b = 60, l = 30, unit = "pt")) + 
-                             scale_x_continuous(limits = c(0, max(plotcoords$x_begin)+1)) + scale_y_continuous(limits = c(0, max(plotcoords$y_end)))
+                             scale_x_continuous(limits = c(0, max(plotcoords$x_begin)+1)) #+ scale_y_continuous(limits = c(0, max(plotcoords$y_end)))
 
   return(p)
 
@@ -92,12 +99,12 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
   mutation_file <- read.table(filename_mut, header = T, sep = ";")  
   colnames(mutation_file)[2] <- "pos"
 
-  muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos")
-  muts$is_flipped[muts$is_flipped == 0] <- "unflipped"
-  muts$is_flipped[muts$is_flipped == 1] <- "flipped"
-  muts$is_flipped <- factor(muts$is_flipped, levels = c("unflipped", "flipped"))
+  #muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos", all.x = T)
+  #muts$is_flipped[muts$is_flipped == 0] <- "unflipped"
+  #muts$is_flipped[muts$is_flipped == 1] <- "flipped"
+  #muts$is_flipped <- factor(muts$is_flipped, levels = c("unflipped", "flipped"))
 
-  p <- geom_point(data = muts, aes(x = x_begin, y = y_begin, color = is_flipped), ...)
+  p <- geom_point(data = muts, aes(x = x_begin, y = y_begin), alpha = 0.7, colour = "#FF3C38", ...)
 
   return(p)
   #geom_text(data = muts, aes(x = x_begin + 6, y = y_begin, label = id), size = 8) +
@@ -108,9 +115,9 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
 PopLabels <- function(filename_plot, filename_poplabels, text_size = 100, ...){
 
   plotcoords <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
-  poplabels  <- read.table(filename_poplabels, header = T)[,2:4]
+	poplabels  <- read.table(filename_poplabels, header = T)[,2:4]
 
-  tips <- subset(plotcoords, seg_type == "t")
+	tips <- subset(plotcoords, seg_type == "t")
 	if(all(is.na(poplabels[,3])) || any(poplabels[,3] != 1)){
 		tips <- cbind(tips, population = poplabels[ceiling((tips$branchID+1)/2),1], region = poplabels[ceiling((tips$branchID+1)/2),2])
 	}else{
@@ -144,20 +151,28 @@ filename_sample      <- argv[3]
 filename_poplabels   <- argv[4]
 filename_anc         <- argv[5]
 filename_mut         <- argv[6]
-years_per_gen        <- as.numeric(argv[7])
-snp                  <- argv[8]
-filename_plot        <- argv[9]
+filename_dist        <- argv[7]
+years_per_gen        <- as.numeric(argv[8])
+snp                  <- argv[9]
+filename_plot        <- argv[10]
 
 ##################################################################################
 
 # run RelateTreeView to extract tmp files for plotting tree
-system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode TreeView --anc ", filename_anc," --mut ", filename_mut," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
-system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --anc ", filename_anc," --mut ", filename_mut," --haps ", filename_haps," --sample ", filename_sample," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
+
+
+#system(paste0(PATH_TO_RELATE, "/bin/RelateExtract --mode ExtractDistFromMut --mut ", filename_mut," -o ", paste0(filename_plot,"_sample")))
+
+system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode TreeViewSample --anc ", filename_anc," --mut ", filename_mut," --snp_of_interest ", as.integer(snp)," -o ", paste0(filename_plot,"_sample")))
+
+system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode TreeView --anc ", filename_plot,"_sample.anc --mut ", filename_plot,"_sample.mut --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
+
+system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --anc ", filename_plot,"_sample.anc --mut ", filename_plot,"_sample.mut --dist ",filename_dist," --haps ", filename_haps," --sample ", filename_sample," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
 
 # plot tree
 p1 <- TreeView(filename_plot, years_per_gen, lwd = tree_lwd) + 
       AddMutations(filename_plot, years_per_gen, size = mut_size) #+ scale_y_continuous(trans = "log10") 
-      
+
 # some modifications to theme
 p1 <- p1 + theme(axis.text.y = element_text(size = rel(2.3)), 
                  legend.title = element_text(size = rel(1)), 
@@ -175,5 +190,10 @@ plot_grid(p1,p2, rel_heights = ratio, labels = "", align = "v", ncol = 1)
 dev.off()
 
 # delete tmp files for plotting tree
+system(paste("rm ",filename_plot, "_sample.anc", sep = ""))
+system(paste("rm ",filename_plot, "_sample.mut", sep = ""))
+system(paste("rm ",filename_plot, "_sample.plotcoords", sep = ""))
 system(paste("rm ",filename_plot, ".plotcoords", sep = ""))
 system(paste("rm ",filename_plot, ".plotcoords.mut", sep = ""))
+
+

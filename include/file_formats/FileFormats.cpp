@@ -400,7 +400,6 @@ ConvertFromVcf(cxxopts::Options& options){
 #endif
   std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
-
 }
 
 void
@@ -523,7 +522,7 @@ RemoveSamples(cxxopts::Options& options){
   Data data(m_hap.GetN(), m_hap.GetL());
 
   // first read input file containing ids of individuals to remove
-  char id[1024];
+  char id[1024], id2[1024];
   std::string line, line2;
   std::vector<std::string> id_remove;
   igzstream is_rem(options["input"].as<std::string>());
@@ -575,7 +574,7 @@ RemoveSamples(cxxopts::Options& options){
       }
     }
 
-    sscanf(line.c_str(), "%s", id);
+    sscanf(line.c_str(), "%s %s", id, id2);
 
     bool remove = false;
     for(std::vector<std::string>::iterator it_rem = id_remove.begin(); it_rem != id_remove.end(); it_rem++){
@@ -590,10 +589,16 @@ RemoveSamples(cxxopts::Options& options){
       if(poplabels) os_pop << line2 << "\n";
       remaining_haps[i] = j;
       i++;
-      remaining_haps[i] = j+1;
-      i++;
-    }
-    j += 2;
+			j++;
+			if(strcmp(id, id2) == 0){ //diploid
+        remaining_haps[i] = j+1;
+        i++;
+				j++;
+			}
+    }else{
+      j++;
+			if(strcmp(id, id2) == 0) j++;
+		}
 
   }
   assert(i == remaining_haps.size());

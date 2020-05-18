@@ -14,9 +14,11 @@
 
 int Paint(cxxopts::Options& options, int chunk_index){
 
+  std::string file_out = options["output"].as<std::string>() + "/"; 
+
   int N, L, num_windows;
   std::vector<int> window_boundaries;
-  FILE* fp = fopen(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
+  FILE* fp = fopen((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
   assert(fp != NULL);
   fread(&N, sizeof(int), 1, fp);
   fread(&L, sizeof(int), 1, fp);
@@ -26,8 +28,8 @@ int Paint(cxxopts::Options& options, int chunk_index){
   fclose(fp);
   num_windows--;
 
-  Data data(("chunk_" + std::to_string(chunk_index) + ".hap").c_str(), ("chunk_" + std::to_string(chunk_index) + ".bp").c_str(), ("chunk_" + std::to_string(chunk_index) + ".r").c_str(), ("chunk_" + std::to_string(chunk_index) + ".rpos").c_str()); //struct data is defined in data.hpp 
-  data.name = ("chunk_" + std::to_string(chunk_index) + "/paint/relate");
+  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str()); //struct data is defined in data.hpp 
+  data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
 
   /*
   int L = 10;
@@ -53,15 +55,15 @@ int Paint(cxxopts::Options& options, int chunk_index){
 
   //create directory called paint/ if not existent
   filesys f;
-  f.MakeDir(("chunk_" + std::to_string(chunk_index) + "/").c_str());
-  f.MakeDir(("chunk_" + std::to_string(chunk_index) + "/paint/").c_str());
+  f.MakeDir((file_out + "chunk_" + std::to_string(chunk_index) + "/").c_str());
+  f.MakeDir((file_out + "chunk_" + std::to_string(chunk_index) + "/paint/").c_str());
 
   //////////////////////////////////////////// Paint sequence ////////////////////////////
 
-  char filename[32];
+  char filename[1024];
   std::vector<FILE*> pfiles(num_windows);
   for(int w = 0; w < num_windows; w++){
-    snprintf(filename, sizeof(char) * 32, "%s_%i.bin", data.name.c_str(), w);
+    snprintf(filename, sizeof(char) * 1024, "%s_%i.bin", data.name.c_str(), w);
     pfiles[w] = fopen(filename, "wb");
     assert(pfiles[w] != NULL);
   }

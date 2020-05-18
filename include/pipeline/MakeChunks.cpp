@@ -4,15 +4,16 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "filesystem.hpp"
 #include "cxxopts.hpp"
 #include "data.hpp"
 
 int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
 
   bool help = false;
-  if(!options.count("haps") || !options.count("sample") || !options.count("map")){
+  if(!options.count("haps") || !options.count("sample") || !options.count("map") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: haps, sample, map. Optional: memory, dist." << std::endl;
+    std::cout << "Needed: haps, sample, map, output. Optional: memory, dist." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -26,6 +27,15 @@ int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
 
   //////////////////////////////////
   //Parse Data
+
+  struct stat info;
+  //check if directory exists
+  if( stat( (options["output"].as<std::string>() + "/").c_str(), &info ) == 0 ){
+    std::cerr << "Error: Directory " << options["output"].as<std::string>() << " already exists. Relate will use this directory to store temporary files." << std::endl;
+    exit(1);
+  }
+  filesys f;
+  f.MakeDir((options["output"].as<std::string>() + "/").c_str());
 
   Data data;
   /*
@@ -44,15 +54,15 @@ int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
 
   if(options.count("memory")){
     if(options.count("dist")){
-      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), options["dist"].as<std::string>(), options["memory"].as<float>());
+      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), options["dist"].as<std::string>(), options["output"].as<std::string>(), options["memory"].as<float>());
     }else{
-      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), "unspecified", options["memory"].as<float>());
+      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), "unspecified", options["output"].as<std::string>(), options["memory"].as<float>());
     }
   }else{
     if(options.count("dist")){
-      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), options["dist"].as<std::string>());
+      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), options["dist"].as<std::string>(), options["output"].as<std::string>());
     }else{
-      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), "unspecified");
+      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), "unspecified", options["output"].as<std::string>());
     }
   }
   
@@ -62,8 +72,8 @@ int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
     int i = 0; 
     while(is_ages >> sample_ages[i]){
       i++;
-      sample_ages[i] = sample_ages[i-1];
-      i++;
+      //sample_ages[i] = sample_ages[i-1];
+      //i++;
       if(i == data.N) break;
     }
     if(i < data.N){

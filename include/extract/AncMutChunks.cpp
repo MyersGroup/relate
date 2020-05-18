@@ -38,11 +38,31 @@ DivideAncMut(cxxopts::Options& options){
     std::cerr << "Error opening .anc file" << std::endl;
     exit(1);
   }
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.ignore(256, ' ');
-  is_N >> num_trees;
-  is_N.close();
+	std::istringstream is_header;
+	std::string line, tmp, line2, read;
+	//read num_haplotypes
+	getline(is_N, line);
+	is_header.str(line);
+	is_header >> tmp;
+	is_header >> N;
+
+	//read sample ages
+	std::vector<double> sample_ages(N);
+	std::vector<double>::iterator it_sample_ages = sample_ages.begin();
+	int i = 0;
+	while(is_header >> *it_sample_ages){
+		it_sample_ages++;
+		i++;
+		if(it_sample_ages == sample_ages.end()) break;
+	}
+	if(i != N) sample_ages.clear();
+
+	//read num trees
+	getline(is_N, line);
+	is_header.str(line);
+	is_header.clear();
+	is_header >> tmp;
+	is_header >> num_trees;
   const int num_trees_check = num_trees;
     
   int L = 0;
@@ -66,7 +86,6 @@ DivideAncMut(cxxopts::Options& options){
   int num_trees_per_chunk = ((int) num_trees/(5.0 * num_threads)) + 1;
   if(num_trees_per_chunk < 10) num_trees_per_chunk = 10;
 
-  std::string line;
   igzstream is(options["anc"].as<std::string>());
   if(is.fail()) is.open(options["anc"].as<std::string>() + ".gz");
   if(is.fail()){
@@ -87,16 +106,24 @@ DivideAncMut(cxxopts::Options& options){
   Mutations mut;
   mut.Read(options["mut"].as<std::string>());
 
-  int i = 0, snp = 0, tree_index = mut.info[snp].tree;
+  i = 0;
+  int snp = 0, tree_index = mut.info[snp].tree;
 
   while(num_trees > num_trees_per_chunk + 10){
     ogzstream os(options["output"].as<std::string>() + "_chr" + std::to_string(i) + ".anc.gz");
     ogzstream os_mut(options["output"].as<std::string>() + "_chr" + std::to_string(i) + ".mut.gz");
 
     os << "NUM_HAPLOTYPES " << data.N << "\n";
-    os << "NUM_TREES " << num_trees_per_chunk << "\n";
+    os << "NUM_TREES " << num_trees_per_chunk << " ";
+    if(sample_ages.size() > 0){
+      for(std::vector<double>::iterator it_sample_ages = sample_ages.begin(); it_sample_ages != sample_ages.end(); it_sample_ages++){
+        os << *it_sample_ages << " ";
+      }
+    }
+    os << "\n";
     os_mut << header << "\n";
 
+    //std::cerr << snp << " " << tree_index << " " << i << std::endl;
     for(int k = 0; k < num_trees_per_chunk; k++){
       assert(getline(is, line));
       os << line << "\n";
@@ -126,9 +153,17 @@ DivideAncMut(cxxopts::Options& options){
   ogzstream os_mut(options["output"].as<std::string>() + "_chr" + std::to_string(i) + ".mut.gz");
 
   os << "NUM_HAPLOTYPES " << data.N << "\n";
-  os << "NUM_TREES " << num_trees << "\n";
+  os << "NUM_TREES " << num_trees << " ";
+  if(sample_ages.size() > 0){
+    for(std::vector<double>::iterator it_sample_ages = sample_ages.begin(); it_sample_ages != sample_ages.end(); it_sample_ages++){
+      os << *it_sample_ages << " ";
+    }
+  }
+  os << "\n";
   os_mut << header << "\n";
 
+
+  //std::cerr << snp << " " << tree_index << " " << i << std::endl;
   while(getline(is, line)){
     os << line << "\n";
     if(snp < data.L){
@@ -139,6 +174,7 @@ DivideAncMut(cxxopts::Options& options){
         if(snp >= data.L) break;
       }
     }else{
+      //std::cerr << snp << " " << tree_index << " " << i << std::endl;
       std::cerr << "Mutation file does not seem to contain all SNPs.\n";
       exit(1);
     }

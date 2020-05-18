@@ -34,8 +34,10 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
     seed = options["seed"].as<int>();
   }
 
+  std::string file_out = options["output"].as<std::string>() + "/";
+
   int N, L, num_windows;
-  FILE* fp = fopen(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
+  FILE* fp = fopen((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
   assert(fp != NULL);
   fread(&N, sizeof(int), 1, fp);
   fread(&L, sizeof(int), 1, fp);
@@ -46,8 +48,8 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
   int Ne = 30000;
   if(options.count("effectiveN")) Ne = (int) options["effectiveN"].as<float>();
   double mutation_rate = options["mutation_rate"].as<float>();
-  Data data(("chunk_" + std::to_string(chunk_index) + ".bp").c_str(), ("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), Ne, mutation_rate); //struct data is defined in data.hpp 
-  const std::string dirname = "chunk_" + std::to_string(chunk_index) + "/";
+  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), Ne, mutation_rate); //struct data is defined in data.hpp 
+  const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Inferring branch lengths of AncesTrees in sections " << first_section << "-" << last_section << "..." << std::endl;
@@ -109,8 +111,8 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
     int i = 0; 
     while(is_ages >> sample_ages[i]){
       i++;
-      sample_ages[i] = sample_ages[i-1];
-      i++;
+      //sample_ages[i] = sample_ages[i-1];
+      //i++;
       if(i == N) break;
     }
     if(i < N) sample_ages.clear();

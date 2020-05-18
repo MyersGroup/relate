@@ -23,7 +23,8 @@ then
   echo "--dist:   Optional but recommended. Distance in BP between SNPs. Can be generated using RelateFileFormats. If unspecified, distances in haps are used."
   echo "--annot:  Optional. Filename of file containing additional annotation of snps. Can be generated using RelateFileFormats."
   echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB."
-  echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
+	echo "--sample_ages: Optional. Filename of file containing sample ages (one per line)." 
+	echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
   exit 1;
 fi
@@ -94,6 +95,11 @@ do
       shift # past argument
       shift # past value
       ;;
+		--sample_ages)
+			sample_ages="$2"
+			shift # past argument
+			shift # past value
+			;;
     --coal)
       coal="$2"
       shift # past argument
@@ -145,6 +151,10 @@ fi
 if [ ! -z "${memory-}" ];
 then
   echo "memory = $memory"
+fi
+if [ ! -z "${sample_ages-}" ];
+then
+	echo "sample_ages = $sample_ages"
 fi
 if [ ! -z "${seed-}" ];
 then
@@ -203,7 +213,7 @@ then
 
     qsub -sync y \
          -N make_chunks_${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist} \
+         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},output={$output} \
          -wd ${PWD}/${output} \
          -e log/make_chunks.log \
          -o log/make_chunks.log \
@@ -221,7 +231,7 @@ then
 
     qsub -sync y \
          -N make_chunks_${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},annot=${annot} \
+         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},annot=${annot},output={$output} \
          -wd ${PWD}/${output} \
          -e log/make_chunks.log \
          -o log/make_chunks.log \
@@ -237,7 +247,7 @@ else
 
     qsub -sync y \
          -N make_chunks_${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory} \
+         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},output={$output} \
          -wd ${PWD}/${output} \
          -e log/make_chunks.log \
          -o log/make_chunks.log \
@@ -255,7 +265,7 @@ else
 
     qsub -sync y \
          -N make_chunks_${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},annot=${annot} \
+         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},annot=${annot},output={$output} \
          -wd ${PWD}/${output} \
          -e log/make_chunks.log \
          -o log/make_chunks.log \
@@ -294,7 +304,7 @@ do
   qsub -hold_jid find_equivalent_branches_${output}_$(($chunk - 5)) \
        -N paint_${output}_${chunk} \
        -wd ${PWD}/${output} \
-       -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk} \
+       -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},output={$output} \
        -e log/paint_c${chunk}.log \
        -o log/paint_c${chunk}.log \
        -P $p \
@@ -327,96 +337,189 @@ do
        -pe ${pe} \
        ${PATH_TO_RELATE}/scripts/RelateSGE/FindEquivalentBranches.sh
 
-  ##TODO: need if statement showing if --coal is specified
   ## infer branch lengths
-  if [ -z ${coal-} ]
-  then
-    if [ -z ${seed-} ]
-    then
-      qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
-           -N infer_branch_lengths_${output}_${chunk} \
-           -wd ${PWD}/${output} \
-           -t 1-$num_batched_windows \
-           -v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output} \
-           -e infer_branch_length_c${chunk}.log \
-           -o infer_branch_length_c${chunk}.log \
-           -P $p \
-           -q $q \
-           -pe ${pe} \
-           ${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
-    else
-      qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
-           -N infer_branch_lengths_${output}_${chunk} \
-           -wd ${PWD}/${output} \
-           -t 1-$num_batched_windows \
-           -v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output},seed=${seed} \
-           -e infer_branch_length_c${chunk}.log \
-           -o infer_branch_length_c${chunk}.log \
-           -P $p \
-           -q $q \
-           -pe ${pe} \
-           ${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
-    fi
+  if [ -z ${sample_ages-} ]
+	then
+		if [ -z ${coal-} ]
+		then
+			if [ -z ${seed-} ]
+			then
+				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
+						 -N infer_branch_lengths_${output}_${chunk} \
+						 -wd ${PWD}/${output} \
+						 -t 1-$num_batched_windows \
+						 -v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output} \
+						 -e infer_branch_length_c${chunk}.log \
+						 -o infer_branch_length_c${chunk}.log \
+						 -P $p \
+						 -q $q \
+						 -pe ${pe} \
+						 ${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
+			else
+				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
+						 -N infer_branch_lengths_${output}_${chunk} \
+						 -wd ${PWD}/${output} \
+						 -t 1-$num_batched_windows \
+						 -v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output},seed=${seed} \
+						 -e infer_branch_length_c${chunk}.log \
+						 -o infer_branch_length_c${chunk}.log \
+						 -P $p \
+						 -q $q \
+						 -pe ${pe} \
+						 ${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
+			fi
 
-    ## combine args into one file
-    qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
-         -N combine_args_${output} \
-         -wd ${PWD}/${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
-         -e log/combine_args_c${chunk}.log \
-         -o log/combine_args_c${chunk}.log \
-         -P $p \
-         -q $q \
-         -pe ${pe} \
-         ${PATH_TO_RELATE}/scripts/RelateSGE/CombineArgs.sh
+			## combine args into one file
+			qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
+					 -N combine_args_${output} \
+					 -wd ${PWD}/${output} \
+					 -v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
+					 -e log/combine_args_c${chunk}.log \
+					 -o log/combine_args_c${chunk}.log \
+					 -P $p \
+					 -q $q \
+					 -pe ${pe} \
+					 ${PATH_TO_RELATE}/scripts/RelateSGE/CombineArgs.sh
+
+		else
+
+			if [[ "$coal" != /* ]]; 
+			then
+				coal="../${coal}"
+			fi
+
+			if [ -z ${seed-} ]
+			then
+				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
+						 -N infer_branch_lengths_${output}_${chunk} \
+						 -wd ${PWD}/${output} \
+						 -t 1-$num_batched_windows \
+						 -v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output} \
+						 -e infer_branch_length_c${chunk}.log \
+						 -o infer_branch_length_c${chunk}.log \
+						 -P $p \
+						 -q $q \
+						 -pe ${pe} \
+						 ${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
+			else
+				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
+						 -N infer_branch_lengths_${output}_${chunk} \
+						 -wd ${PWD}/${output} \
+						 -t 1-$num_batched_windows \
+						 -v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output},seed=${seed} \
+						 -e infer_branch_length_c${chunk}.log \
+						 -o infer_branch_length_c${chunk}.log \
+						 -P $p \
+						 -q $q \
+						 -pe ${pe} \
+						 ${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
+			fi
+
+			## combine args into one file
+			qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
+					 -N combine_args_${output} \
+					 -wd ${PWD}/${output} \
+					 -v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
+					 -e log/combine_args_c${chunk}.log \
+					 -o log/combine_args_c${chunk}.log \
+					 -P $p \
+					 -q $q \
+					 -pe ${pe} \
+					 ${PATH_TO_RELATE}/scripts/RelateSGE/CombineArgs.sh
+
+		fi
 
   else
 
-    if [[ "$coal" != /* ]]; 
-    then
-      coal="../${coal}"
-    fi
+		if [ -z ${coal-} ]
+		then
+			if [ -z ${seed-} ]
+			then
+				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
+					-N infer_branch_lengths_${output}_${chunk} \
+					-wd ${PWD}/${output} \
+					-t 1-$num_batched_windows \
+					-v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output} \
+					-e infer_branch_length_c${chunk}.log \
+					-o infer_branch_length_c${chunk}.log \
+					-P $p \
+					-q $q \
+					-pe ${pe} \
+					${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
+			else
+				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
+					-N infer_branch_lengths_${output}_${chunk} \
+					-wd ${PWD}/${output} \
+					-t 1-$num_batched_windows \
+					-v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output},seed=${seed} \
+					-e infer_branch_length_c${chunk}.log \
+					-o infer_branch_length_c${chunk}.log \
+					-P $p \
+					-q $q \
+					-pe ${pe} \
+					${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
+			fi
 
-    if [ -z ${seed-} ]
-    then
-      qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
-           -N infer_branch_lengths_${output}_${chunk} \
-           -wd ${PWD}/${output} \
-           -t 1-$num_batched_windows \
-           -v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output} \
-           -e infer_branch_length_c${chunk}.log \
-           -o infer_branch_length_c${chunk}.log \
-           -P $p \
-           -q $q \
-           -pe ${pe} \
-           ${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
-    else
-      qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
-           -N infer_branch_lengths_${output}_${chunk} \
-           -wd ${PWD}/${output} \
-           -t 1-$num_batched_windows \
-           -v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output},seed=${seed} \
-           -e infer_branch_length_c${chunk}.log \
-           -o infer_branch_length_c${chunk}.log \
-           -P $p \
-           -q $q \
-           -pe ${pe} \
-           ${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
-    fi
+			## combine args into one file
+			qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
+				-N combine_args_${output} \
+				-wd ${PWD}/${output} \
+				-v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
+				-e log/combine_args_c${chunk}.log \
+				-o log/combine_args_c${chunk}.log \
+				-P $p \
+				-q $q \
+				-pe ${pe} \
+				${PATH_TO_RELATE}/scripts/RelateSGE/CombineArgs.sh
 
-    ## combine args into one file
-    qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
-         -N combine_args_${output} \
-         -wd ${PWD}/${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
-         -e log/combine_args_c${chunk}.log \
-         -o log/combine_args_c${chunk}.log \
-         -P $p \
-         -q $q \
-         -pe ${pe} \
-         ${PATH_TO_RELATE}/scripts/RelateSGE/CombineArgs.sh
+		else
 
-  fi
+			if [[ "$coal" != /* ]]; 
+			then
+				coal="../${coal}"
+			fi
+
+			if [ -z ${seed-} ]
+			then
+				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
+					-N infer_branch_lengths_${output}_${chunk} \
+					-wd ${PWD}/${output} \
+					-t 1-$num_batched_windows \
+					-v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output} \
+					-e infer_branch_length_c${chunk}.log \
+					-o infer_branch_length_c${chunk}.log \
+					-P $p \
+					-q $q \
+					-pe ${pe} \
+					${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
+			else
+				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
+					-N infer_branch_lengths_${output}_${chunk} \
+					-wd ${PWD}/${output} \
+					-t 1-$num_batched_windows \
+					-v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output},seed=${seed} \
+					-e infer_branch_length_c${chunk}.log \
+					-o infer_branch_length_c${chunk}.log \
+					-P $p \
+					-q $q \
+					-pe ${pe} \
+					${PATH_TO_RELATE}/scripts/RelateSGE/InferBranchLengths.sh
+			fi
+
+			## combine args into one file
+			qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
+				-N combine_args_${output} \
+				-wd ${PWD}/${output} \
+				-v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
+				-e log/combine_args_c${chunk}.log \
+				-o log/combine_args_c${chunk}.log \
+				-P $p \
+				-q $q \
+				-pe ${pe} \
+				${PATH_TO_RELATE}/scripts/RelateSGE/CombineArgs.sh
+
+		fi
+	fi
 
   prev_chunk=$chunk
 
@@ -425,18 +528,32 @@ done
 ############################# Finalize ###########################
 #-sync y causes qsub to wait for the job to complete before exiting. 
 #finalize results
-qsub -sync y \
-     -hold_jid combine_args_${output} \
-     -wd ${PWD}/${output} \
-     -N finalize_${output} \
-     -v PATH_TO_RELATE=${PATH_TO_RELATE},output=${output} \
-     -e log/combine_args.log \
-     -o log/combine_args.log \
-     -P $p \
-     -q $q \
-     -pe ${pe} \
-     ${PATH_TO_RELATE}/scripts/RelateSGE/Finalize.sh
-
+if [ -z ${sample_ages-} ]
+then
+	qsub -sync y \
+			 -hold_jid combine_args_${output} \
+			 -wd ${PWD}/${output} \
+			 -N finalize_${output} \
+			 -v PATH_TO_RELATE=${PATH_TO_RELATE},output=${output} \
+			 -e log/combine_args.log \
+			 -o log/combine_args.log \
+			 -P $p \
+			 -q $q \
+			 -pe ${pe} \
+			 ${PATH_TO_RELATE}/scripts/RelateSGE/Finalize.sh
+else
+	qsub -sync y \
+		-hold_jid combine_args_${output} \
+		-wd ${PWD}/${output} \
+		-N finalize_${output} \
+		-v PATH_TO_RELATE=${PATH_TO_RELATE}, sample_ages=${sample_ages},output=${output} \
+		-e log/combine_args.log \
+		-o log/combine_args.log \
+		-P $p \
+		-q $q \
+		-pe ${pe} \
+		${PATH_TO_RELATE}/scripts/RelateSGE/Finalize.sh
+fi
 ##################################################################
 #clean up directory
 for chunk in `seq 0 $(($num_chunks - 1))`;

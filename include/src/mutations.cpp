@@ -643,12 +643,12 @@ AncMutIterators::NextSNP(MarginalTree& mtr, Muts::iterator& it_mut){
   }
 
   //return the number of bases between prev and next snp (midpoints)
-  if(it_mut != mut.info.begin()){
-    assert((*std::prev(pit_mut,1)).dist >= 0.0);
-    assert((*pit_mut).dist >= 0.0);
+  if(it_mut != mut.info.begin() && it_mut != mut.info.end()){
+    assert((*std::prev(it_mut,1)).dist >= 0.0);
+    assert((*it_mut).dist >= 0.0);
     num_bases_tree_persists = (*std::prev(it_mut,1)).dist/2.0 + (*it_mut).dist/2.0;
   }else{
-    assert((*pit_mut).dist >= 0.0);
+    assert((*it_mut).dist >= 0.0);
     num_bases_tree_persists = (*it_mut).dist/2.0;
   }
 

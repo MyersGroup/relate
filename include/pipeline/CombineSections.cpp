@@ -32,8 +32,10 @@ int CombineSections(cxxopts::Options& options, int chunk_index = 0){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Combining AncesTrees in Sections..." << std::endl;
 
+  std::string file_out = options["output"].as<std::string>() + "/";
+
   int N, L, num_windows;
-  FILE* fp = fopen(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
+  FILE* fp = fopen((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
   assert(fp != NULL);
   fread(&N, sizeof(int), 1, fp);
   fread(&L, sizeof(int), 1, fp);
@@ -48,7 +50,7 @@ int CombineSections(cxxopts::Options& options, int chunk_index = 0){
   //Parse Data
 
   Data data(N, L, Ne); //struct data is defined in data.hpp
-  const std::string dirname = "chunk_" + std::to_string(chunk_index) + "/";
+  const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
   const std::string output_file = dirname + options["output"].as<std::string>();
 
   ///////////////////////////////////////// Combine AncesTrees /////////////////////////
@@ -93,8 +95,8 @@ int CombineSections(cxxopts::Options& options, int chunk_index = 0){
     std::remove((output_file + "_" + std::to_string(i) + ".anc").c_str());
     std::remove((output_file + "_" + std::to_string(i) + ".mut").c_str());
   }
-  std::remove(("chunk_" + std::to_string(chunk_index) + ".bp").c_str());
-  std::remove(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str());
+  std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str());
+  std::remove((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str());
 
   /////////////////////////////////////////////
   //Resource Usage

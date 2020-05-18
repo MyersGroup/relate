@@ -29,6 +29,8 @@ int Finalize(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Finalizing..." << std::endl;
 
+  std::string file_out = options["output"].as<std::string>() + "/";
+
   int N, L, num_chunks;
   double tmp;
   int overlap_chunk_size = 10000;
@@ -38,7 +40,7 @@ int Finalize(cxxopts::Options& options){
   std::string line, line2, read;
 
   std::vector<int> section_boundary_start, section_boundary_end;
-  FILE* fp = fopen("parameters.bin", "r");
+  FILE* fp = fopen((file_out + "parameters.bin").c_str(), "r");
   assert(fp != NULL);
   fread(&N, sizeof(int), 1, fp);
   fread(&L, sizeof(int), 1, fp);
@@ -56,8 +58,8 @@ int Finalize(cxxopts::Options& options){
     int i = 0; 
     while(is_ages >> sample_ages[i]){
       i++;
-      sample_ages[i] = sample_ages[i-1];
-      i++;
+      //sample_ages[i] = sample_ages[i-1];
+      //i++;
       if(i == N) break;
     }
     if(i < N) sample_ages.clear();
@@ -77,7 +79,7 @@ int Finalize(cxxopts::Options& options){
 
   ///////////////////////////////////////// Combine Mutation Files /////////////////////////
 
-  FILE* fp_props = fopen("props.bin", "rb");
+  FILE* fp_props = fopen((file_out + "props.bin").c_str(), "rb");
   std::ifstream is_annot;
   bool exists_annot = false;
   if(options.count("annot")){
@@ -104,7 +106,7 @@ int Finalize(cxxopts::Options& options){
   //Rest
   for(int c = 0; c < num_chunks; c++){
 
-    std::string file_prefix = "chunk_" + std::to_string(c) + "/" + options["output"].as<std::string>();
+    std::string file_prefix = file_out + "chunk_" + std::to_string(c) + "/" + options["output"].as<std::string>();
 
     is.open(file_prefix + "_c" + std::to_string(c) + ".mut");
     std::remove((file_prefix + "_c" + std::to_string(c) + ".mut").c_str());
@@ -217,7 +219,7 @@ int Finalize(cxxopts::Options& options){
       end_chunk -= overlap_chunk_size;
     }
 
-    std::string file_prefix = "chunk_" + std::to_string(c) + "/" + options["output"].as<std::string>();
+    std::string file_prefix = file_out + "chunk_" + std::to_string(c) + "/" + options["output"].as<std::string>();
 
     int position;
     AncesTree anc;
@@ -276,16 +278,17 @@ int Finalize(cxxopts::Options& options){
   fclose(pfile);
 
   assert(num_trees == num_trees_cum);
-  std::remove("parameters.bin");
-  std::remove("props.bin");
+  std::remove((file_out + "parameters.bin").c_str());
+  std::remove((file_out + "props.bin").c_str());
 
   filesys f;
   for(int c = 0; c < num_chunks; c++){
     //now delete directories
-    f.RmDir( ("chunk_" + std::to_string(c) + "/paint/").c_str() );
-    f.RmDir( ("chunk_" + std::to_string(c) + "/").c_str() );
+    f.RmDir( (file_out + "chunk_" + std::to_string(c) + "/paint/").c_str() );
+    f.RmDir( (file_out + "chunk_" + std::to_string(c) + "/").c_str() );
   }
-
+  f.RmDir( (file_out).c_str() );
+  
   /////////////////////////////////////////////
   //Resource Usage
 

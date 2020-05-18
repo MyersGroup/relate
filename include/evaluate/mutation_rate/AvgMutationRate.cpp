@@ -152,15 +152,15 @@ GetBranchLengthsInEpoch(Data& data, std::vector<double>& epoch, std::vector<floa
 ////////////// Avg mutation rate //////////////
 
 void 
-CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<double>& mutation_by_epoch, std::vector<double>& opportunity_by_epoch, int chr = -1){
+CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<double>& mutation_by_epoch, std::vector<double>& opportunity_by_epoch, std::string chr = "NA"){
 
   std::string line, read;
 
   AncMutIterators ancmut;
-  if(chr == -1){
+  if(chr == "NA"){
     ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
   }else{
-    ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".anc", options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+    ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + chr + ".anc", options["input"].as<std::string>() + "_chr" + chr + ".mut");
   }   
   
   int N = ancmut.NumTips();
@@ -175,10 +175,10 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
   ///////// read mutations file ///////////
 
   Mutations mutations(data);
-  if(chr == -1){
+  if(chr == "NA"){
     mutations.Read(options["input"].as<std::string>() + ".mut");
   }else{
-    mutations.Read(options["input"].as<std::string>() + "_chr" + std::to_string(chr) + ".mut");
+    mutations.Read(options["input"].as<std::string>() + "_chr" + chr + ".mut");
   }
 
   std::vector<int> pos, dist;
@@ -187,8 +187,8 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
     int L_allsnps = 0;
 
     std::string filename_dist = options["dist"].as<std::string>();
-    if(chr != -1){
-      filename_dist += "_chr" + std::to_string(chr) + ".dist";
+    if(chr != "NA"){
+      filename_dist += "_chr" + chr + ".dist";
     }
 
     igzstream is_L(filename_dist);
@@ -233,22 +233,86 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
   float years_per_gen = 28.0;
   if(options.count("years_per_gen")){
     years_per_gen = options["years_per_gen"].as<float>();
-  }
-  
-  int num_epochs = 30;
-  if(options.count("num_bins") > 0){
-    num_epochs = options["num_bins"].as<int>();
-  }
-  num_epochs++;
-  std::vector<double> epoch(num_epochs);
-  epoch[0] = 0.0;
-  epoch[1] = 1e3/years_per_gen;
+  } 
+ 
+  int num_epochs;
+  std::vector<double> epochs;
   float log_10 = std::log(10);
-  for(int e = 2; e < num_epochs-1; e++){
-    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
-  }
-  epoch[num_epochs-1] = 1e8/years_per_gen;
+  if(options.count("bins")){
 
+    double log_age = std::log(0);
+    double age = 0;
+
+    double epoch_lower, epoch_upper, epoch_step;
+    std::string str_epochs = options["bins"].as<std::string>();
+    std::string tmp;
+    int i = 0;
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_lower = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_upper = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_step = std::stof(tmp);
+
+    int ep = 0;
+    epochs.resize(1);
+    epochs[ep] = 0.0;
+    ep++; 
+    double epoch_boundary = 0.0;
+    if(log_age < epoch_lower && age != 0.0){
+      epochs.push_back(age);
+      ep++;
+    }
+    epoch_boundary = epoch_lower;
+    while(epoch_boundary < epoch_upper){
+      if(log_age < epoch_boundary){
+        if(ep == 1 && age != 0.0) epochs.push_back(age);
+        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        ep++;
+      }
+      epoch_boundary += epoch_step;
+    }
+    epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
+		num_epochs = epochs.size();
+
+  }else{
+
+    num_epochs = 31;
+    epochs.resize(num_epochs);
+    epochs[0] = 0.0;
+    epochs[1] = 1e3/years_per_gen;
+    for(int e = 2; e < num_epochs-1; e++){
+      epochs[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+    }
+    epochs[num_epochs-1] = 1e8/years_per_gen;
+
+  }
 
   ////////// Count number of bases by type ///////////
   //double total_num_bases = (*std::prev(mutations.info.end(),1)).pos - (*mutations.info.begin()).pos;
@@ -306,7 +370,7 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
   ancmut.FirstSNP(mtr, it_mut);
 
   GetCoordsAndLineages(mtr, coordinates_tree, num_lineages);
-  GetBranchLengthsInEpoch(data, epoch, coordinates_tree, num_lineages, branch_lengths_in_epoch);
+  GetBranchLengthsInEpoch(data, epochs, coordinates_tree, num_lineages, branch_lengths_in_epoch);
 
   SNPInfo snp_info;
   int current_tree = (*it_mut).tree;
@@ -321,15 +385,15 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
         current_tree = (*it_mut).tree;
         mtr.tree.GetCoordinates(coordinates_tree);
         GetCoordsAndLineages(mtr, coordinates_tree, num_lineages);
-        GetBranchLengthsInEpoch(data, epoch, coordinates_tree, num_lineages, branch_lengths_in_epoch);
+        GetBranchLengthsInEpoch(data, epochs, coordinates_tree, num_lineages, branch_lengths_in_epoch);
       }
       assert(current_tree == snp_info.tree);
 
       // identify epoch and add to number of mutations per lineage in epoch
       int ep = 0;
-      while(epoch[ep] <= snp_info.age_begin){
+      while(epochs[ep] <= snp_info.age_begin){
         ep++;
-        if(ep == epoch.size()) break;
+        if(ep == epochs.size()) break;
       }
       ep--;
 
@@ -341,23 +405,23 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
       float age_end = snp_info.age_end;
       double branch_length = age_end - snp_info.age_begin;
       if(ep < num_epochs-1){
-        if(age_end <= epoch[ep+1]){
+        if(age_end <= epochs[ep+1]){
 
           mutation_by_epoch[ep] += 1.0;
 
         }else{
 
-          mutation_by_epoch[ep] += (epoch[ep+1] - snp_info.age_begin)/branch_length;
+          mutation_by_epoch[ep] += (epochs[ep+1] - snp_info.age_begin)/branch_length;
           ep++;
-          while(epoch[ep+1] <= age_end && ep < num_epochs-1){
-            mutation_by_epoch[ep] += (epoch[ep+1]-epoch[ep])/branch_length;
+          while(epochs[ep+1] <= age_end && ep < num_epochs-1){
+            mutation_by_epoch[ep] += (epochs[ep+1]-epochs[ep])/branch_length;
             ep++;
           }
           if(ep + 1 == num_epochs){
-            assert(epoch[ep] <= age_end);
+            assert(epochs[ep] <= age_end);
           }else{
-            mutation_by_epoch[ep] += (age_end-epoch[ep])/branch_length;
-            assert(epoch[ep+1] > age_end);
+            mutation_by_epoch[ep] += (age_end-epochs[ep])/branch_length;
+            assert(epochs[ep+1] > age_end);
           }
 
         }
@@ -389,7 +453,7 @@ void AvgMutationRate(cxxopts::Options& options){
   bool help = false;
   if(!options.count("input") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, output.  Optional: first_chr, last_chr, years_per_gen, num_bins, dist." << std::endl;
+    std::cout << "Needed: input, output.  Optional: chr, first_chr, last_chr, years_per_gen, bins, dist." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -399,7 +463,9 @@ void AvgMutationRate(cxxopts::Options& options){
   }  
 
   std::cerr << "---------------------------------------------------------" << std::endl;
-  if(options.count("first_chr") && options.count("last_chr")){
+  if(options.count("chr")){
+		std::cerr << "Calculating average mutation rate for " << options["input"].as<std::string>() << "* ..." << std::endl;
+	}else if(options.count("first_chr") && options.count("last_chr")){
     std::cerr << "Calculating average mutation rate for " << options["input"].as<std::string>() << "_chr" << options["first_chr"].as<int>();
     std::cerr << " - " << options["input"].as<std::string>() << "_chr" << options["last_chr"].as<int>() << " ..." << std::endl;
   }else{
@@ -412,19 +478,84 @@ void AvgMutationRate(cxxopts::Options& options){
     years_per_gen = options["years_per_gen"].as<float>();
   }
 
-  int num_epochs = 30;
-  if(options.count("num_bins") > 0){
-    num_epochs = options["num_bins"].as<int>();
-  }
-  num_epochs++;
-  std::vector<float> epoch(num_epochs);
-  epoch[0] = 0.0;
-  epoch[1] = 1e3/years_per_gen;
+  int num_epochs;
+  std::vector<float> epochs;
   float log_10 = std::log(10);
-  for(int e = 2; e < num_epochs-1; e++){
-    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
+  if(options.count("bins")){
+
+    double log_age = std::log(0);
+    double age = 0;
+
+    double epoch_lower, epoch_upper, epoch_step;
+    std::string str_epochs = options["bins"].as<std::string>();
+    std::string tmp;
+    int i = 0;
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_lower = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_upper = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_step = std::stof(tmp);
+
+    int ep = 0;
+    epochs.resize(1);
+    epochs[ep] = 0.0;
+    ep++; 
+    double epoch_boundary = 0.0;
+    if(log_age < epoch_lower && age != 0.0){
+      epochs.push_back(age);
+      ep++;
+    }
+    epoch_boundary = epoch_lower;
+    while(epoch_boundary < epoch_upper){
+      if(log_age < epoch_boundary){
+        if(ep == 1 && age != 0.0) epochs.push_back(age);
+        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        ep++;
+      }
+      epoch_boundary += epoch_step;
+    }
+    epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
+		num_epochs = epochs.size();
+
+  }else{
+
+    num_epochs = 31;
+    epochs.resize(num_epochs);
+    epochs[0] = 0.0;
+    epochs[1] = 1e3/years_per_gen;
+    for(int e = 2; e < num_epochs-1; e++){
+      epochs[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+    }
+    epochs[num_epochs-1] = 1e8/years_per_gen;
+
   }
-  epoch[num_epochs-1] = 1e8/years_per_gen;
 
   ///////////////////////////////
 
@@ -435,9 +566,19 @@ void AvgMutationRate(cxxopts::Options& options){
   std::fill(mutation_by_epoch.begin(), mutation_by_epoch.end(), 0.0);
   std::fill(opportunity_by_epoch.begin(), opportunity_by_epoch.end(), 0.0);
 
-  if(options.count("first_chr") && options.count("last_chr")){
+	if(options.count("chr")){
+		igzstream is_chr(options["chr"].as<std::string>());
+		if(is_chr.fail()){
+			std::cerr << "Error while opening file " << options["chr"].as<std::string>() << std::endl;
+		}
+		std::string line;
+		while(getline(is_chr, line)){
+			CalculateAvgMutationRateForChromosome(options, mutation_by_epoch, opportunity_by_epoch, line);
+		}
+		is_chr.close();
+	}else if(options.count("first_chr") && options.count("last_chr")){
     for(int chr = options["first_chr"].as<int>(); chr <= options["last_chr"].as<int>(); chr++){
-      CalculateAvgMutationRateForChromosome(options, mutation_by_epoch, opportunity_by_epoch, chr);
+      CalculateAvgMutationRateForChromosome(options, mutation_by_epoch, opportunity_by_epoch, std::to_string(chr));
     } 
   }else{
     CalculateAvgMutationRateForChromosome(options, mutation_by_epoch, opportunity_by_epoch);
@@ -457,10 +598,10 @@ void AvgMutationRate(cxxopts::Options& options){
   //divide every entry by epoch delta time and length of genome
   std::vector<double>::iterator it_mutation = mutation_by_epoch.begin();
   std::vector<double>::iterator it_opportunity = opportunity_by_epoch.begin();
-  std::vector<float>::iterator it_epoch  = epoch.begin();
+  std::vector<float>::iterator it_epoch  = epochs.begin();
   double total_num_bases = 1e9;
   int e = 0;
-  while(it_epoch != epoch.end()){
+  while(it_epoch != epochs.end()){
     rate[e] = (*it_mutation/(*it_opportunity))/total_num_bases;
     os << *it_epoch << " " << rate[e] << "\n";
     it_epoch++;
@@ -471,9 +612,7 @@ void AvgMutationRate(cxxopts::Options& options){
   os.close();
 
   plot p(60,10);
-  p.draw(epoch, rate);
-
-
+  p.draw(epochs, rate);
 
   /////////////////////////////////////////////
   //Resource Usage

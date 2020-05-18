@@ -169,10 +169,11 @@ RelateForChunk (){
   ## paint all sequences against each other
   ${PATH_TO_RELATE}/bin/Relate \
     --mode Paint \
+    -o ${output} \
     --chunk_index ${chunk_index} 
 
   #GET NUMBER OF SECTIONS
-  num_sections=$(ls chunk_${chunk_index}/paint/*bin | wc -l)
+  num_sections=$(ls ${output}/chunk_${chunk_index}/paint/*bin | wc -l)
 
   ## build tree topologies
   parallelize_tree_building () {
@@ -185,7 +186,7 @@ RelateForChunk (){
           --chunk_index ${chunk_index} \
           --first_section $1 \
           --last_section $1 \
-          -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+          -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
 
         shift
       fi
@@ -196,14 +197,15 @@ RelateForChunk (){
 
   for section in `seq 0 1 $(($num_sections - 1))`
   do
-    cat chunk_${chunk_index}/sec${section}.log 
-    rm chunk_${chunk_index}/sec${section}.log 
+    cat ${output}/chunk_${chunk_index}/sec${section}.log 
+    rm ${output}/chunk_${chunk_index}/sec${section}.log 
   done
 
   ## find equivalent branches in adjacent trees 
   ${PATH_TO_RELATE}/bin/Relate \
     --mode FindEquivalentBranches \
     --chunk_index ${chunk_index} \
+    -o ${output} \
     -o ${output} 
 
   ## infer branch lengths
@@ -223,7 +225,7 @@ RelateForChunk (){
               --first_section $1 \
               --last_section $1 \
               --sample_ages ${sample_ages} \
-              -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
           else
             ${PATH_TO_RELATE}/bin/Relate \
               --mode InferBranchLengths \
@@ -233,7 +235,7 @@ RelateForChunk (){
               --first_section $1 \
               --last_section $1 \
               --sample_ages ${sample_ages} \
-              -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
           fi
 
         else
@@ -246,7 +248,7 @@ RelateForChunk (){
               --chunk_index ${chunk_index} \
               --first_section $1 \
               --last_section $1 \
-              -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
           else
             ${PATH_TO_RELATE}/bin/Relate \
               --mode InferBranchLengths \
@@ -255,7 +257,7 @@ RelateForChunk (){
               --chunk_index ${chunk_index} \
               --first_section $1 \
               --last_section $1 \
-              -o ${output} 2> chunk_${chunk_index}/sec${1}.log &
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
           fi
 
         fi
@@ -318,6 +320,7 @@ then
         --mode "MakeChunks" \
         --haps ${haps} \
         --sample ${sample} \
+        -o ${output} \
         --map ${map}  
 
     else
@@ -328,6 +331,7 @@ then
         --haps ${haps} \
         --sample ${sample} \
         --map ${map} \
+        -o ${output} \
         --seed ${seed} 
 
     fi
@@ -341,6 +345,7 @@ then
         --haps ${haps} \
         --sample ${sample} \
         --map ${map} \
+        -o ${output} \
         --memory ${memory}
 
     else
@@ -352,6 +357,7 @@ then
         --sample ${sample} \
         --map ${map} \
         --memory ${memory} \
+        -o ${output} \
         --seed ${seed}
 
     fi
@@ -368,6 +374,7 @@ else
         --haps ${haps} \
         --sample ${sample} \
         --map ${map} \
+        -o ${output} \
         --dist ${dist}
 
     else
@@ -379,6 +386,7 @@ else
         --sample ${sample} \
         --map ${map} \
         --dist ${dist} \
+        -o ${output} \
         --seed ${seed}
 
     fi
@@ -393,6 +401,7 @@ else
         --sample ${sample} \
         --map ${map} \
         --dist ${dist} \
+        -o ${output} \
         --memory ${memory}
 
     else
@@ -405,6 +414,7 @@ else
         --map ${map} \
         --dist ${dist} \
         --memory ${memory} \
+        -o ${output} \
         --seed ${seed}
 
     fi
@@ -412,7 +422,7 @@ else
 fi
 
 ###########GET NUMBER OF CHUNKS
-num_chunks=$(ls parameters_* | wc -l)
+num_chunks=$(ls ${output}/parameters_* | wc -l)
 
 echo "********************************"
 echo "Number of chunks: "$num_chunks

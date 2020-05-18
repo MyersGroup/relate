@@ -30,7 +30,11 @@ int main(int argc, char* argv[]){
 
     TreeView(options);
 
-  }else if(!mode.compare("MutationsOnBranches")){
+	}else if(!mode.compare("TreeViewSample")){
+
+		TreeViewSample(options);
+
+	}else if(!mode.compare("MutationsOnBranches")){
 
     MutationsOnBranches(options);
 

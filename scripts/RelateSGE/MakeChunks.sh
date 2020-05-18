@@ -43,7 +43,8 @@ then
       --sample ${sample} \
       --map ${map} \
       --dist ${dist} \
-      --memory ${memory} 2>> log/make_chunks.log
+      --memory ${memory} \
+      --output $output 2>> log/make_chunks.log
 
   else
 
@@ -55,7 +56,8 @@ then
       --map ${map} \
       --dist ${dist} \
       --annot ${annot} \
-      --memory ${memory} 2>> log/make_chunks.log
+      --memory ${memory} \
+      --output $output 2>> log/make_chunks.log
 
   fi
 else
@@ -67,7 +69,8 @@ else
       --haps ${haps} \
       --sample ${sample} \
       --map ${map} \
-      --memory ${memory} 2>> log/make_chunks.log
+      --memory ${memory} \
+      --output $output 2>> log/make_chunks.log
 
   else
 
@@ -78,7 +81,8 @@ else
       --sample ${sample} \
       --map ${map} \
       --annot ${annot} \
-      --memory ${memory} 2>> log/make_chunks.log
+      --memory ${memory} \
+      --output $output 2>> log/make_chunks.log
 
   fi
 fi

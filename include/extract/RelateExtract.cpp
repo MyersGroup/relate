@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
     ("bp_of_interest", "BP of position of interest.", cxxopts::value<int>())
     ("first_bp", "BP of first SNP of interest.", cxxopts::value<int>())
     ("last_bp", "BP of last SNP of interest.", cxxopts::value<int>())
-    ("threshold", "Threshold used in RemoveTreesWithFewMutations.", cxxopts::value<int>())
+    ("threshold", "Threshold used in RemoveTreesWithFewMutations.", cxxopts::value<float>())
     ("threads", "Optional: Number of threads used (only used to decide chunk size in DivideAncMut)", cxxopts::value<int>())
     ("o,output", "Filename of output (excl file extension).", cxxopts::value<std::string>());
 

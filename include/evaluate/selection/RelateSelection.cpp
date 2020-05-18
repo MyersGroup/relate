@@ -353,20 +353,86 @@ Frequency(cxxopts::Options& options){
   if(options.count("years_per_gen")){
     years_per_gen = options["years_per_gen"].as<float>();
   }
-
-  int num_epochs = 30;
-  if(options.count("num_bins") > 0){
-    num_epochs = options["num_bins"].as<int>();
-  }
-  num_epochs++;
-  std::vector<float> epoch(num_epochs);
-  epoch[0] = 0.0;
-  epoch[1] = 1e3/years_per_gen;
+ 
+  int num_epochs;
+  std::vector<float> epochs;
   float log_10 = std::log(10);
-  for(int e = 2; e < num_epochs-1; e++){
-    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
+  if(options.count("bins")){
+
+    double log_age = std::log(0);
+    double age = 0; 
+ 
+    double epoch_lower, epoch_upper, epoch_step;
+    std::string str_epochs = options["bins"].as<std::string>();
+    std::string tmp;
+    int i = 0;
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_lower = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_upper = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_step = std::stof(tmp);
+
+    int ep = 0;
+    epochs.resize(1);
+    epochs[ep] = 0.0;
+    ep++; 
+    double epoch_boundary = 0.0;
+    if(log_age < epoch_lower && age != 0.0){
+      epochs.push_back(age);
+      ep++;
+    }
+    epoch_boundary = epoch_lower;
+    while(epoch_boundary < epoch_upper){
+      if(log_age < epoch_boundary){
+        if(ep == 1 && age != 0.0) epochs.push_back(age);
+        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        ep++;
+      }
+      epoch_boundary += epoch_step;
+    }
+    epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
+		num_epochs = epochs.size();
+
+  }else{
+
+    num_epochs = 31;
+    epochs.resize(num_epochs);
+    epochs[0] = 0.0;
+    epochs[1] = 1e3/years_per_gen;
+    for(int e = 2; e < num_epochs-1; e++){
+      epochs[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+    }
+    epochs[num_epochs-1] = 1e8/years_per_gen;
+
   }
-  epoch[num_epochs-1] = 1e8/years_per_gen;;
+
 
   //read mutations file
   Mutations mutations(data);
@@ -400,13 +466,13 @@ Frequency(cxxopts::Options& options){
 
   os_freq << "pos rs_id ";
   for(int ep = num_epochs-1; ep >= 0; ep--){
-    os_freq << std::to_string(epoch[ep]) << " ";
+    os_freq << std::to_string(epochs[ep]) << " ";
   }
   os_freq << "TreeFreq DataFreq\n";
 
   os_lin << "pos rs_id ";
   for(int ep = num_epochs-1; ep >= 0; ep--){
-    os_lin << std::to_string(epoch[ep]) << " ";
+    os_lin << std::to_string(epochs[ep]) << " ";
   }
   //os_lin << "when_mutation_has_freq2 when_mutation_has_freq3 when_mutation_has_freq4 when_mutation_has_freq5 when_mutation_has_freq6 when_mutation_has_freq7\n";
   os_lin << "when_mutation_has_freq2\n";
@@ -475,7 +541,7 @@ Frequency(cxxopts::Options& options){
           int ep = num_epochs-1; 
 
           //while epoch[ep] is larger than root of tree, number of lineages is 0
-          while(coordinates_tree[n_tree] < epoch[ep]){
+          while(coordinates_tree[n_tree] < epochs[ep]){
             os_freq << 0 << " ";
             os_lin  << 0 << " ";
             ep--;
@@ -542,7 +608,7 @@ Frequency(cxxopts::Options& options){
             }
 
             assert(coordinates_mutation[n_mut] <= coordinates_tree[n_tree]);
-            while(coordinates_tree[n_tree] < epoch[ep]){ //n_tree+1 is above epoch[ep], n_tree is just below, but could span multiple epochs
+            while(coordinates_tree[n_tree] < epochs[ep]){ //n_tree+1 is above epoch[ep], n_tree is just below, but could span multiple epochs
 
               float num_muts = 0.0;
               if(k_when_mutation_appears != -1){ 
@@ -552,10 +618,10 @@ Frequency(cxxopts::Options& options){
                   for(int k = 0; k <= num_carriers; k++){
                     int branch   = current_branches[k];
 
-                    assert(epoch[ep] >= coordinates_tree_unsrt[branch]);
+                    assert(epochs[ep] >= coordinates_tree_unsrt[branch]);
                     assert(coordinates_tree_unsrt[branch] <= coordinates_mutation[n_mut]);
-                    assert( coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - epoch[ep] <= (coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - coordinates_tree_unsrt[branch]));
-                    num_muts    += (coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - epoch[ep])/(coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - coordinates_tree_unsrt[branch]); 
+                    assert( coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - epochs[ep] <= (coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - coordinates_tree_unsrt[branch]));
+                    num_muts    += (coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - epochs[ep])/(coordinates_tree_unsrt[(*mtr.tree.nodes[branch].parent).label] - coordinates_tree_unsrt[branch]); 
 
                   }
 
@@ -685,20 +751,86 @@ SDS(cxxopts::Options& options){
   if(options.count("years_per_gen")){
     years_per_gen = options["years_per_gen"].as<float>();
   }
-
-  int num_epochs = 30;
-  if(options.count("num_bins") > 0){
-    num_epochs = options["num_bins"].as<int>();
-  }
-  num_epochs++;
-  std::vector<float> epoch(num_epochs);
-  epoch[0] = 0.0;
-  epoch[1] = 1e3/years_per_gen;
+ 
+  int num_epochs;
+  std::vector<float> epochs;
   float log_10 = std::log(10);
-  for(int e = 2; e < num_epochs-1; e++){
-    epoch[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen; 
+  if(options.count("bins")){
+
+    double log_age = std::log(0);
+    double age = 0;
+ 
+    double epoch_lower, epoch_upper, epoch_step;
+    std::string str_epochs = options["bins"].as<std::string>();
+    std::string tmp;
+    int i = 0;
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_lower = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_upper = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_step = std::stof(tmp);
+
+    int ep = 0;
+    epochs.resize(1);
+    epochs[ep] = 0.0;
+    ep++; 
+    double epoch_boundary = 0.0;
+    if(log_age < epoch_lower && age != 0.0){
+      epochs.push_back(age);
+      ep++;
+    }
+    epoch_boundary = epoch_lower;
+    while(epoch_boundary < epoch_upper){
+      if(log_age < epoch_boundary){
+        if(ep == 1 && age != 0.0) epochs.push_back(age);
+        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        ep++;
+      }
+      epoch_boundary += epoch_step;
+    }
+    epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
+		num_epochs = epochs.size();
+
+  }else{
+
+    num_epochs = 31;
+    epochs.resize(num_epochs);
+    epochs[0] = 0.0;
+    epochs[1] = 1e3/years_per_gen;
+    for(int e = 2; e < num_epochs-1; e++){
+      epochs[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+    }
+    epochs[num_epochs-1] = 1e8/years_per_gen;
+
   }
-  epoch[num_epochs-1] = 1e8/years_per_gen;
+
 
   //read mutations file
   Mutations mutations(data);
@@ -1066,7 +1198,7 @@ int main(int argc, char* argv[]){
     ("last_snp", "Index of last SNP. Optional.", cxxopts::value<int>())
     ("threshold", "Optional: Threshold for number of mutations that trees need for inclusion. Default = 0.", cxxopts::value<int>())
     ("years_per_gen", "Optional: Years per generation (float). Default: 28.", cxxopts::value<float>())
-    ("num_bins", "Optional: Number of bins.", cxxopts::value<int>())
+    ("bins", "Specify epoch bins. Format: lower, upper, stepsize for function c(0,10^seq(lower, upper, stepsize)).", cxxopts::value<std::string>())
     ("i,input", "Filename of .anc and .mut file without file extension", cxxopts::value<std::string>())
     ("o,output", "Output file", cxxopts::value<std::string>());
 

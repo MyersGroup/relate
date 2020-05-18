@@ -30,65 +30,133 @@ then
   PATH_TO_RELATE="../${PATH_TO_RELATE}"
 fi
 
-if [ -z ${coal-} ]
+if [ -z ${sample_ages-} ]
 then
+	if [ -z ${coal-} ]
+	then
 
-  if [ -z ${seed-} ]
-  then
+		if [ -z ${seed-} ]
+		then
 
-    ${PATH_TO_RELATE}/bin/Relate \
-        --mode "InferBranchLengths" \
-        -m $mu \
-        -N $Ne \
-        --first_section $start_ind \
-        --last_section $end_ind \
-        --chunk_index ${chunk_index} \
-        -o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
+			${PATH_TO_RELATE}/bin/Relate \
+					--mode "InferBranchLengths" \
+					-m $mu \
+					-N $Ne \
+					--first_section $start_ind \
+					--last_section $end_ind \
+					--chunk_index ${chunk_index} \
+					-o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
 
-  else
+		else
 
-    ${PATH_TO_RELATE}/bin/Relate \
-        --mode "InferBranchLengths" \
-        -m $mu \
-        -N $Ne \
-        --first_section $start_ind \
-        --last_section $end_ind \
-        --chunk_index ${chunk_index} \
-        --seed ${seed} \
-        -o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
+			${PATH_TO_RELATE}/bin/Relate \
+					--mode "InferBranchLengths" \
+					-m $mu \
+					-N $Ne \
+					--first_section $start_ind \
+					--last_section $end_ind \
+					--chunk_index ${chunk_index} \
+					--seed ${seed} \
+					-o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
 
-  fi
+		fi
 
+	else
+
+		check_file_existence ${coal} 
+
+		if [ -z ${seed-} ]
+		then
+
+			${PATH_TO_RELATE}/bin/Relate \
+					--mode "InferBranchLengths" \
+					-m $mu \
+					--coal ${coal} \
+					--first_section $start_ind \
+					--last_section $end_ind \
+					--chunk_index ${chunk_index} \
+					-o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
+
+		else
+
+			${PATH_TO_RELATE}/bin/Relate \
+					--mode "InferBranchLengths" \
+					-m $mu \
+					--coal ${coal} \
+					--first_section $start_ind \
+					--last_section $end_ind \
+					--chunk_index ${chunk_index} \
+					--seed ${seed} \
+					-o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
+
+		fi
+
+	fi
 else
+	if [ -z ${coal-} ]
+	then
 
-  check_file_existence ${coal} 
+		if [ -z ${seed-} ]
+		then
 
-  if [ -z ${seed-} ]
-  then
+			${PATH_TO_RELATE}/bin/Relate \
+				--mode "InferBranchLengths" \
+				-m $mu \
+				-N $Ne \
+				--first_section $start_ind \
+				--last_section $end_ind \
+				--chunk_index ${chunk_index} \
+				--sample_ages ${sample_ages} \
+				-o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
 
-    ${PATH_TO_RELATE}/bin/Relate \
-        --mode "InferBranchLengths" \
-        -m $mu \
-        --coal ${coal} \
-        --first_section $start_ind \
-        --last_section $end_ind \
-        --chunk_index ${chunk_index} \
-        -o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
+		else
 
-  else
+			${PATH_TO_RELATE}/bin/Relate \
+				--mode "InferBranchLengths" \
+				-m $mu \
+				-N $Ne \
+				--first_section $start_ind \
+				--last_section $end_ind \
+				--chunk_index ${chunk_index} \
+				--seed ${seed} \
+				--sample_ages ${sample_ages} \
+				-o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
 
-    ${PATH_TO_RELATE}/bin/Relate \
-        --mode "InferBranchLengths" \
-        -m $mu \
-        --coal ${coal} \
-        --first_section $start_ind \
-        --last_section $end_ind \
-        --chunk_index ${chunk_index} \
-        --seed ${seed} \
-        -o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
+		fi
 
-  fi
+	else
 
+		check_file_existence ${coal} 
+
+		if [ -z ${seed-} ]
+		then
+
+			${PATH_TO_RELATE}/bin/Relate \
+				--mode "InferBranchLengths" \
+				-m $mu \
+				--coal ${coal} \
+				--first_section $start_ind \
+				--last_section $end_ind \
+				--chunk_index ${chunk_index} \
+				--sample_ages ${sample_ages} \
+				-o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
+
+		else
+
+			${PATH_TO_RELATE}/bin/Relate \
+				--mode "InferBranchLengths" \
+				-m $mu \
+				--coal ${coal} \
+				--first_section $start_ind \
+				--last_section $end_ind \
+				--chunk_index ${chunk_index} \
+				--seed ${seed} \
+				--sample_ages ${sample_ages} \
+				-o ${output} 2>> ${SGE_TASK_ID}_infer_branch_length_c${chunk_index}.log 
+
+		fi
+
+	fi
 fi
 
 echo "***********************************************"

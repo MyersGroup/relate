@@ -80,38 +80,20 @@ RemoveTreesWithFewMutations(cxxopts::Options& options){
   }  
 
   std::cerr << "---------------------------------------------------------" << std::endl;
-  std::cerr << "Removing trees with few mutations from " << options["mut"].as<std::string>() << " ... " << std::endl;
-    
-  int N, num_trees;
-
-  igzstream is_N(options["anc"].as<std::string>());
-  if(is_N.fail()) is_N.open(options["anc"].as<std::string>() + ".gz");
-  if(is_N.fail()){
-    std::cerr << "Error opening .anc file" << std::endl;
-    exit(1);
-  }
-  is_N.ignore(256, ' ');
-  is_N >> N;
-  is_N.close();
-
-  int L = 0;
-  igzstream is_L(options["mut"].as<std::string>());
-  if(is_L.fail()) is_L.open(options["mut"].as<std::string>() + ".gz");
-  if(is_L.fail()){
-    std::cerr << "Error opening .mut file" << std::endl;
-    exit(1);
-  }
-  std::string unused;
-  std::getline(is_L, unused); 
-  while ( std::getline(is_L, unused) ){
-    ++L;
-  }
-  is_L.close();
+  std::cerr << "Removing trees with few mutations from " << options["mut"].as<std::string>() << " ... " << std::endl; 
  
-  Data data(N,L);
-
   AncesTree anc;
-  anc.Read(options["anc"].as<std::string>());
+  AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  int num_trees = ancmut.NumTrees();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0;
+  anc.N = N;
+  anc.L = num_trees;
+  anc.sample_ages = ancmut.sample_ages;
+  Data data(N,L);
 
   Mutations mut;
   mut.Read(options["mut"].as<std::string>());
@@ -119,20 +101,35 @@ RemoveTreesWithFewMutations(cxxopts::Options& options){
   Mutations mut_subset;
   mut_subset.header = mut.header;
 
-  int num_mutations_threshold = options["threshold"].as<int>(), num_mutations;
-  //count the number of mutatinos on each tree.
-  
-  CorrTrees::iterator it_anc = anc.seq.begin();
+  int num_mutations_threshold, num_mutations;
+  double threshold = std::max(0.0f, std::min(1.0f, options["threshold"].as<float>()));
+  std::vector<int> num_muts(ancmut.NumTrees(), 0), num_muts_sorted;
+  std::vector<int>::iterator it_num_muts = num_muts.begin();
+
   std::vector<Node>::iterator it_node;
-  int num_tree_before = mut.info[0].tree, num_tree_after = 0, snp = 0;
-  for(; it_anc != anc.seq.end();){ 
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  while(num_bases_tree_persists >= 0.0){
     num_mutations = 0;
-    it_node = (*it_anc).tree.nodes.begin();
-    for(; it_node != (*it_anc).tree.nodes.end(); it_node++){
+    it_node = mtr.tree.nodes.begin();
+    for(; it_node != mtr.tree.nodes.end(); it_node++){
       num_mutations += (*it_node).num_events;
     }
+    *it_num_muts = num_mutations;
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+    it_num_muts++;
+  }
 
-    if(num_mutations >= num_mutations_threshold){ 
+  num_muts_sorted = num_muts;
+  std::sort(num_muts_sorted.begin(), num_muts_sorted.end());
+  num_mutations_threshold = num_muts_sorted[(int)(threshold*num_muts.size())];
+  ancmut.OpenFiles(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+
+  //count the number of mutatinos on each tree.
+  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  int num_tree_before = 0, num_tree_after = 0, snp = 0;
+  while(num_bases_tree_persists >= 0.0){
+
+    if(num_muts[num_tree_before] >= num_mutations_threshold){ 
       //include SNPs to mut_subset
       while(mut.info[snp].tree < num_tree_before){
         snp++;
@@ -147,13 +144,11 @@ RemoveTreesWithFewMutations(cxxopts::Options& options){
         snp++;
         if(snp == (int)mut.info.size()) break;
       }
-      if(snp == (int)mut.info.size()) break;
       num_tree_after++;
-      it_anc++;
-    }else{
-      it_anc = anc.seq.erase(it_anc);
+      anc.seq.push_back(mtr);
+      if(snp == (int)mut.info.size()) break;
     }
-    
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
     num_tree_before++;
   }
 

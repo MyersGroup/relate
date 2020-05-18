@@ -17,9 +17,17 @@ then
   PATH_TO_RELATE="../${PATH_TO_RELATE}"
 fi
 
-${PATH_TO_RELATE}/bin/Relate \
-  --mode "Finalize" \
-  -o ${output} 2>> log/combine_args.log
+if [ -z ${sample_ages-} ]
+then
+	${PATH_TO_RELATE}/bin/Relate \
+		--mode "Finalize" \
+		-o ${output} 2>> log/combine_args.log
+else
+	${PATH_TO_RELATE}/bin/Relate \
+		--mode "Finalize" \
+		--sample_ages ${sample_ages} \
+		-o ${output} 2>> log/combine_args.log
+fi
 
 echo "***********************************************"
 echo "Finished at: "`date`

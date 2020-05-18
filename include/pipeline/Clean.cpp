@@ -29,8 +29,10 @@ int Clean(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Cleaning directory..." << std::endl;
 
+  std::string file_out = options["output"].as<std::string>() + "/";
+
   int N, L, num_chunks;
-  FILE* fp = fopen("parameters.bin", "r");
+  FILE* fp = fopen((file_out + "parameters.bin").c_str(), "r");
   if(fp == NULL){
     std::cerr << "Cannot delete files. Please delete temporary files manually." << std::endl;
     exit(1);
@@ -48,12 +50,12 @@ int Clean(cxxopts::Options& options){
   
     struct stat info;
 
-    std::string dirname = "chunk_" + std::to_string(chunk_index) + "/";
+    std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
     //check if directory exists
     if( stat( dirname.c_str(), &info ) == 0 ){
 
       int N, L, num_windows;
-      fp = fopen(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
+      fp = fopen((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), "r");
       if(fp != NULL){
 
         fread(&N, sizeof(int), 1, fp);
@@ -72,11 +74,11 @@ int Clean(cxxopts::Options& options){
 
 
         //check if directory exists
-        if( stat( ("chunk_" + std::to_string(chunk_index) + "/paint/").c_str(), &info ) == 0 ){
+        if( stat( (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/").c_str(), &info ) == 0 ){
           //paint/ exists so delete it.  
           char painting_filename[32];
           for(int w = 0; w < num_windows; w++){
-            snprintf(painting_filename, sizeof(char) * 32, "%s_%i.bin", ("chunk_" + std::to_string(chunk_index) + "/paint/relate").c_str(), w);
+            snprintf(painting_filename, sizeof(char) * 32, "%s_%i.bin", (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate").c_str(), w);
             std::remove(painting_filename);
           }
         }
@@ -89,11 +91,11 @@ int Clean(cxxopts::Options& options){
 
     }
  
-    std::remove(("chunk_" + std::to_string(chunk_index) + ".hap").c_str());
-    std::remove(("chunk_" + std::to_string(chunk_index) + ".r").c_str());
-    std::remove(("chunk_" + std::to_string(chunk_index) + ".rpos").c_str());
-    std::remove(("chunk_" + std::to_string(chunk_index) + ".bp").c_str());
-    std::remove(("parameters_c" + std::to_string(chunk_index) + ".bin").c_str());
+    std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str());
+    std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str());
+    std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str());
+    std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str());
+    std::remove((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str());
 
   }
 
@@ -103,12 +105,15 @@ int Clean(cxxopts::Options& options){
     struct stat info;
 
     //now delete directories
-    if( stat( ("chunk_" + std::to_string(c) + "/paint/").c_str() , &info ) == 0 ) f.RmDir( ("chunk_" + std::to_string(c) + "/paint/").c_str() );
-    if( stat( ("chunk_" + std::to_string(c) + "/").c_str() , &info ) == 0 ) f.RmDir( ("chunk_" + std::to_string(c) + "/").c_str() );
+    if( stat( (file_out + "chunk_" + std::to_string(c) + "/paint/").c_str() , &info ) == 0 ) f.RmDir( (file_out + "chunk_" + std::to_string(c) + "/paint/").c_str() );
+    if( stat( (file_out + "chunk_" + std::to_string(c) + "/").c_str() , &info ) == 0 ) f.RmDir( (file_out + "chunk_" + std::to_string(c) + "/").c_str() );
   }
 
-  std::remove("parameters.bin");
-  std::remove("props.bin");
+  std::remove((file_out + "parameters.bin").c_str());
+  std::remove((file_out + "props.bin").c_str());
+
+  struct stat info;
+  if( stat( (file_out).c_str() , &info ) == 0 ) f.RmDir( (file_out).c_str() );
 
   /////////////////////////////////////////////
   //Resource Usage
