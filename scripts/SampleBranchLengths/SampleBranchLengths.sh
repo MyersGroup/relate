@@ -127,6 +127,11 @@ then
   echo "num_proposals = ${num_proposals}"  
 fi
 
+if [ ! -z "${threads-}" ];
+then
+	echo "threads       = $threads"
+fi
+
 if [ ! -z "${seed-}" ];
 then
   echo "seed          = $seed"

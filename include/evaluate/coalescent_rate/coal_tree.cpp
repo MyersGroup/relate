@@ -177,7 +177,16 @@ coal_tree::populate(Tree& tree){
 		it2_denom++;
 
 	}
+	if(0){
+	if(*it_num_lins != 1){
+		std::cerr << std::endl;
+		std::cerr << *it_num_lins << " " << current_lower_age << std::endl;
+		for(int i = 0; i < num_lins.size(); i++){
+      std::cerr << num_lins[i] << " " << coords[i] << std::endl;
+		}
+	}
   assert(*it_num_lins == 1);
+	}
 	count_trees++;
 
 }
@@ -227,10 +236,8 @@ coal_tree::Dump(std::string filename){
     blocks.resize(num_bootstrap);
     for(it1_blocks = blocks.begin(); it1_blocks != blocks.end(); it1_blocks++){
       (*it1_blocks).resize(num_blocks);
-      int i = 0;
       for(it2_blocks = (*it1_blocks).begin(); it2_blocks != (*it1_blocks).end(); it2_blocks++){
-        *it2_blocks = i;
-        i++;
+        *it2_blocks = 1;
       } 
     }
   }else{
@@ -248,7 +255,7 @@ coal_tree::Dump(std::string filename){
 			it2_num_boot++;
 			it2_denom_boot++;
 		}
-
+ 
 		it1_num   = num.begin();
 		it1_denom = denom.begin();
 		assert(num.size() == (*it1_blocks).size());

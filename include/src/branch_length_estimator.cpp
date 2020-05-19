@@ -2825,21 +2825,27 @@ EstimateBranchLengthsWithSampleAge::SwitchOrder(Tree& tree, int node_k, std::uni
 
             //calculate new branch lengths
             tree.nodes[node_k].branch_length                 = coordinates[(*tree.nodes[node_k].parent).label]  - coordinates[node_k];
+						if(tree.nodes[node_k].branch_length < 0.0) tree.nodes[node_k].branch_length = 0.0;
             assert(tree.nodes[node_k].branch_length >= 0.0); 
             child_left_label                                 = (*tree.nodes[node_k].child_left).label;
             tree.nodes[child_left_label].branch_length       = coordinates[node_k] - coordinates[child_left_label];
+						if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
             assert(tree.nodes[child_left_label].branch_length >= 0.0);
             child_right_label                                = (*tree.nodes[node_k].child_right).label;
             tree.nodes[child_right_label].branch_length      = coordinates[node_k] - coordinates[child_right_label];
+						if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
             assert(tree.nodes[child_right_label].branch_length >= 0.0);
 
             tree.nodes[node_swap_k].branch_length            = coordinates[(*tree.nodes[node_swap_k].parent).label]  - coordinates[node_swap_k];
+						if(tree.nodes[node_k].branch_length < 0.0) tree.nodes[node_k].branch_length = 0.0;
             assert(tree.nodes[node_swap_k].branch_length >= 0.0); 
             child_left_label                                 = (*tree.nodes[node_swap_k].child_left).label;
             tree.nodes[child_left_label].branch_length       = coordinates[node_swap_k] - coordinates[child_left_label];
+						if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
             assert(tree.nodes[child_left_label].branch_length >= 0.0);
             child_right_label                                = (*tree.nodes[node_swap_k].child_right).label;
             tree.nodes[child_right_label].branch_length      = coordinates[node_swap_k] - coordinates[child_right_label];
+						if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
             assert(tree.nodes[child_right_label].branch_length >= 0.0);
 
           }

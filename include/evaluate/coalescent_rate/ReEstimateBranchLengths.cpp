@@ -60,28 +60,30 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
 
   //make this more efficient
   int L = 0;
-  igzstream is_L;
-
   if(options.count("dist")){
-    is_L.open(options["dist"].as<std::string>());
+    igzstream is_L(options["dist"].as<std::string>());
     if(is_L.fail()){
       std::cerr << "Error while opening .dist file." << std::endl;
       exit(1);
     } 
+		while(std::getline(is_L, line)){
+			++L;
+		}
+		L--;
+		is_L.close();
   }else{
-    is_L.open(options["input"].as<std::string>() + ".mut");
-    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + "mut.gz");
+    igzstream is_L(options["input"].as<std::string>() + ".mut");
+    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
     if(is_L.fail()){
       std::cerr << "Error while opening .mut file." << std::endl;
       exit(1);
     } 
+		while(std::getline(is_L, line)){
+			++L;
+		}
+		L--;
+		is_L.close();
   }
-
-  while(std::getline(is_L, line)){
-    ++L;
-  }
-  L--;
-  is_L.close();
 
   Data data(N, L, Ne, mutation_rate);
 
@@ -314,28 +316,30 @@ int SampleBranchLengths(cxxopts::Options& options){
 
   //make this more efficient
   int L = 0;
-  igzstream is_L;
-
   if(options.count("dist")){
-    is_L.open(options["dist"].as<std::string>());
+    igzstream is_L(options["dist"].as<std::string>());
     if(is_L.fail()){
       std::cerr << "Error while opening .dist file." << std::endl;
       exit(1);
     } 
+		while(std::getline(is_L, line)){
+			++L;
+		}
+		L--;
+		is_L.close();
   }else{
-    is_L.open(options["input"].as<std::string>() + ".mut");
+    igzstream is_L(options["input"].as<std::string>() + ".mut");
     if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
     if(is_L.fail()){
       std::cerr << "Error while opening .mut file." << std::endl;
       exit(1);
     } 
+		while(std::getline(is_L, line)){
+			++L;
+		}
+		L--;
+		is_L.close();
   }
-
-  while(std::getline(is_L, line)){
-    ++L;
-  }
-  L--;
-  is_L.close();
 
   Data data(N, L, Ne, mutation_rate);
   Mutations mut(data);
@@ -890,28 +894,32 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 
   //make this more efficient
   int L = 0;
-  igzstream is_L;
-
   if(options.count("dist")){
-    is_L.open(options["dist"].as<std::string>());
+    igzstream is_L(options["dist"].as<std::string>());
     if(is_L.fail()){
       std::cerr << "Error while opening .dist file." << std::endl;
       exit(1);
     } 
+		while(std::getline(is_L, line)){
+			++L;
+		}
+		L--;
+		is_L.close();
   }else{
-    is_L.open(options["input"].as<std::string>() + ".mut");
-    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".gz");
+    igzstream is_L(options["input"].as<std::string>() + ".mut");
+    if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
     if(is_L.fail()){
       std::cerr << "Error while opening .mut file." << std::endl;
       exit(1);
     } 
+		while(std::getline(is_L, line)){
+			++L;
+		}
+		L--;
+		is_L.close();
   }
 
-  while(std::getline(is_L, line)){
-    ++L;
-  }
-  L--;
-  is_L.close();
+
 
   Data data(N, L, Ne, mutation_rate);
 
