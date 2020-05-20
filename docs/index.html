@@ -104,7 +104,7 @@ ga('send', 'pageview');
 
                 <p><b>Relate</b> is available for academic use. To see rules for non-academic use, please read the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf" download>LICENCE</a> file, which is included with each software download.</p>
 
-                <h5 id="Binaries">Pre-compiled binaries (last updated: 10/01/2020)</h5> 
+                <h5 id="Binaries">Pre-compiled binaries (last updated: 20/05/2020)</h5> 
                 <form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
                   <div class="form-group">
                     <div class="checkbox">
@@ -118,22 +118,22 @@ ga('send', 'pageview');
                   <div class="form-group">
                     <button type="submit" 
                             class="btn btn-link" 
-                            formaction="download/relate_v1.0.17_x86_64_dynamic.tgz"   
+                            formaction="download/relate_v1.1.0_x86_64_dynamic.tgz"   
                             data-on="click"
                             data-event-category="Relate download (x86_64, dynamic)"
-                            data-event-action="click">Linux (x86_64, dynamic) - v1.0.17</button><br/>
+                            data-event-action="click">Linux (x86_64, dynamic) - v1.1.0</button><br/>
                           <button type="submit" 
                                   class="btn btn-link" 
-                                  formaction="download/relate_v1.0.17_x86_64_static.tgz"
+                                  formaction="download/relate_v1.1.0_x86_64_static.tgz"
                                   data-on="click"
                                   data-event-category="Relate download (x86_64, static)"
-                                  data-event-action="click">Linux (x86_64, static) - v1.0.17</button><br/>
+                                  data-event-action="click">Linux (x86_64, static) - v1.1.0</button><br/>
                                 <button type="submit" 
                                         class="btn btn-link" 
-                                        formaction="download/relate_v1.0.17_MacOSX.tgz"
+                                        formaction="download/relate_v1.1.0_MacOSX.tgz"
                                         data-on="click"
                                         data-event-category="Relate download (Mac_OSX)"
-                                        data-event-action="click">Mac OSX - v1.0.17</button>                   
+                                        data-event-action="click">Mac OSX - v1.1.0</button>                   
                   </div>
                 </form>
 
@@ -150,6 +150,29 @@ ga('send', 'pageview');
 
           <!-- 2nd row -->
           <div class="row">
+            <h3 id="news">What's new?</h3>
+            <hr/>
+          </div>
+
+          <!-- 3rd row -->
+          <div class="row">
+            <div class="col-md-12">
+							Versions >1.1.0 include a few new features such as:
+              <ul>
+                <li>Allowing for non-contemporary samples, e.g., ancient DNA: Simply add the --sample_ages option.</li>
+                <li>Allowing for haploid organisms: set the ID_2 column in the sample file to NA and Relate will work for haploid organisms.</li>
+                <li>Improved coalescence rate estimation: The algorithm has been improved and behaviour has changed slightly. The output now always contains all trees, and the threshold parameter only affects iterations leading up to the last one. The threshold parameter now is a float in [0,1], specifying the proportion of trees to throw away (Default = 0.5).</li>
+                <li>Arbitrary strings as chromosome IDs: in scripts such as EstimatePopulationSize.sh, use the --chr option to specify a file containing chromosome name.</li>
+                <li>More flexible epochs for coalescence rate estimation: use the option --bins to specify epoch boundaries in the format 10^seq(x,y,stepsize).
+              </ul>
+            </div>
+            <div class="col-md-8 col-md-offset-2">
+              <img src="figures/Relate_workflow.png">
+            </div>
+          </div>
+
+          <!-- 2nd row -->
+          <div class="row">
             <h3 id="1000GP">1000 Genomes coalescence rates, allele ages, and selection p-values</h3>
             <hr/>
           </div>
@@ -159,8 +182,8 @@ ga('send', 'pageview');
             <div class="col-md-12">
               <p>We deposited Relate-estimated coalescence rates, allele ages, and p-values for evidence of positive selection for the 1000 Genomes Project <a href="https://zenodo.org/record/3234689">here</a>.<br/>
               These were obtained by estimating the joint genealogy of all 1000 GP populations and then extracted the embedded genealogy for each population.
-For the genealogy of each population, we jointly estimated the population size history and branch lengths. 
-Variants segregating in more than one population therefore have correlated but different allele ages in each population.</p>
+              For the genealogy of each population, we jointly estimated the population size history and branch lengths. 
+              Variants segregating in more than one population therefore have correlated but different allele ages in each population.</p>
             </div>
           </div>
 
@@ -177,6 +200,28 @@ Variants segregating in more than one population therefore have correlated but d
               You can install this package, e.g., using
               <pre><code>library(devtools)
 devtools::install_github("leospeidel/relater")</code></pre>
+            </div>
+          </div>
+
+          <!-- 2nd row -->
+          <div class="row">
+            <h3 id="relater">relate_lib: C++ library for parsing Relate files and tree sequence conversion</h3>
+            <hr/>
+          </div>
+
+          <!-- 3rd row -->
+          <div class="row">
+            <div class="col-md-12">
+              <p>I made a <a href="https://github.com/leospeidel/relate_lib">C++ library</a> for handling Relate output files (MIT license). It's still under development but the main functionality is working.</p>
+              <p> This contains a binary for conversion of tree sequence format to anc/mut format and back. (Note that conversions are not loss-less).</p>
+              <pre><code>relate_lib/bin/Convert --mode ConvertFromTreeSequence \
+              --anc example.anc.gz \
+              --mut example.mut.gz \
+              -i example</code></pre>
+              <pre><code>relate_lib/bin/Convert --mode ConvertToTreeSequence \
+              --anc example.anc.gz \
+              --mut example.mut.gz \
+              -o example</code></pre>
             </div>
           </div>
 
@@ -254,7 +299,31 @@ devtools::install_github("leospeidel/relater")</code></pre>
               </div>
             </div>
 
+          </div>
 
+          <!-- 6th row -->
+          <div class="row">
+
+            <div class="col-md-6">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="aDNA"><a href="getting_started.html">Infer genealogies for ancient samples</a></h4></div>
+                <div class="panel-body"> 
+                 <img src="figures/plot_aDNA.png">
+                 <b>Relate</b> can infer genealogies for non-contemporary samples, such as high coverage ancient genomes or time-stamped samples of bacteria or viruses. This plot was generated using the TreeViewSamples.sh script, using 100 sampled branch lengths. The tree represents the posterior mean times, and "error bars" indicate the 0.025 and 0.975 quantiles of the posterior density of coalescence ages.
+                </div> 
+              </div>
+            </div>
+
+
+            <div class="col-md-6">
+              <div class="panel panel-info">
+                <div class="panel-heading"> <h4 id="SampleBranchLengths"><a href="modules.html#SampleBranchLengths">Sample branch lengths</a></h4></div>
+                <div class="panel-body">  
+                  <img src="figures/plot_clues.png">
+                  Using the SampleBranchLengths.sh script, <b>Relate</b> can sample branch lengths from the posterior, which can then be used e.g., by CLUES to infer allele frequency trajectories and selection coefficients using an importance sampling scheme. See the <a href="https://github.com/35ajstern/clues">CLUES</a> repo for more details.
+                </div>
+              </div>
+            </div>
 
           </div>
 
@@ -265,7 +334,6 @@ devtools::install_github("leospeidel/relater")</code></pre>
 
       <div class="container-fluid">
 
-
         <!-- 1st row -->
         <div class="row">
           <div class="col-md-10 col-md-offset-1">
@@ -273,358 +341,435 @@ devtools::install_github("leospeidel/relater")</code></pre>
             <h3 id="ChangeLog">Change-log</h3>
             <hr/>
 
-            <div class="panel-group" id="accordion">
-             
+            <div class="panel-group" id="accordion2">
 
               <div class="panel panel-default">
                 <div class="panel-heading">
                   <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse18">
-                      v1.0.17
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse20">
+                      v1.1.0
                     </a>
                   </h4>
                 </div>
-                <div id="collapse18" class="panel-collapse collapse">
+                <div id="collapse20" class="panel-collapse collapse">
                   <div class="panel-body">
-                    Date: 10th January 2020<br/>     
-                    <ul>
-                      <li>Input files can now have CHR, RSID, ANC, DER columns of type strings (up to 1024 chars).</li>
-											<li>Added a scripts named TreeViewMutation.sh, taking same input as TreeView.sh, but different visualisation (bp_of_interest has to be SNP).</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-							<div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse17">
-                      v1.0.16
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse17" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 2nd September 2019<br/>     
-                    <ul>
-                      <li>Fixed a bug in ConvertToTreeSequence that meant internal nodes were flagged as sample nodes.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse16">
-                      v1.0.15
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse16" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 13th August 2019<br/>     
-                    <ul>
-                      <li>Fixed a small bug that meant memory was misallocated when the --memory value was set too large.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse15">
-                      v1.0.14
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse15" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 24th July 2019<br/>     
-                    <ul>
-                      <li>Fixed a bug in PrepareInputFiles.sh that meant the script terminated before filtering SNPs using a genomic mask when input was not gzipped.</li>
-                      <li>Changed the default for y axis scale in TreeView to not be a log-scale.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse14">
-                      v1.0.13
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse14" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 27th May 2019<br/>     
-                    <ul>
-                      <li>Modified default criteria to terminate population size estimation. Now terminating when iteration at least 2 and "mean absolute error"/mu less than 0.1.</li>
-                      <li>Modified memory allocation in Relate, where we were allocating too much memory for very small sample sizes (N less than 10).</li>
-                      <li>Modified error message when poplabels file is misspecified in FinalizePopulationSize - you can just rerun this step again at the end.</li>
-                      <li>Included the script RelateSGE.sh for running Relate on a SGE cluster.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse13">
-                      v1.0.12
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse13" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 16th May 2019<br/>     
-                    <ul>
-                      <li>Fixed a bug in FinalizePopulationSize --mode EstimatePopulationSize, where I had forgotten to close a file leading to an error on some platforms.</li>
-                      <li>Allowing .poplabels file to be tab separated.</li>
-                      <li>Fixed a bug in TreeView which threw an error when completely fixed SNPs were included in the haps/sample file.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse12">
-                      v1.0.11
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse12" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 14th May 2019<br/>     
-                    <ul>
-                      <li>Fixed a bug in FinalizePopulationSize introduced in v1.0.9, which threw an error message for correct input files.</li>
-                      <li>Fixed a bug in SampleBranchLengths which was introducing small rounding errors.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse11">
-                      v1.0.10
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse11" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 13th May 2019<br/>     
-                    <ul>
-                      <li>Fixed a bug in SampleBranchLengths.sh, where a filename was hard-coded by mistake.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse10">
-                      v1.0.9
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse10" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 3rd May 2019<br/>     
-                    <ul>
-                      <li>Implemented a module which samples branch lengths from the posterior given tree topologies and effective population size histories.</li>
-                      <li>Added some more detail to documentation for RelateSelection.</li>
-                      <li>Added a more meaningful error message when .poplabels file is misspecified in EstimatePopulationSize.sh.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse9">
-                      v1.0.8
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse9" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 15th March 2019<br/>     
-                    <ul>
-                      <li>Now requiring different input and output names for DetectSelection.sh when it overwrites files otherwise.</li>
-                      <li>DetectSelection.sh now works also if additional columns are not appended to the .mut file using ./RelateFileFormats --mode GenerateSNPAnnotations. However, code is more efficient if these columns are appended.</li>
-                      <li>Switched to using R package cowplot in TreeView.sh.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse8">
-                      v1.0.7
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse8" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 25th Feburary 2019<br/>     
-                    <ul>
-                      <li>Fixed bug in the painting which affects tree topologies sometimes, but has only a small effect (not visible in distance measures when comparing to truth in simulations).</li> 
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse7">
-                      v1.0.6
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse7" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 6th Feburary 2019<br/>     
-                    <ul>
-                      <li>I added a function for converting anc/mut output files to tree sequence file format (tskit). Currenty, some information is lost by this conversion.</li> 
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse6">
-                      v1.0.5
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse6" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 18th October 2018<br/>     
-                    <ul>
-                      <li>I had introduced a bug in update v1.0.4 in the function RelateExtract --mode TreeAtSNPAsNewick which has been fixed.</li> 
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse5">
-                      v1.0.4
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse5" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 13th October 2018<br/>     
-                    <ul>
-                      <li>Substituted zcat with gunzip -c to fix a bug in Macs.</li>
-                      <li>Added requirement of R version >= 3.3.1 for TreeView because of a known bug with grid.draw() in older versions.</li>
-                      <li>Fixed bug in RelateExtract --mode TreeAtSNPAsNewick, which outputted the first tree when snp_of_interest was not a SNP in the data set. Changed option snp_of_interest to pos_of_interest and this function now prints the tree at the position of interest. In addition, output filename was not using the option -o, which has been corrected.</li> 
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse4">
-                      v1.0.3
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse4" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 30th August 2018<br/>     
-                    <ul>
-                      <li>Implemented pipeline for calculating p-values for selection evidence. Updated corresponing entry in the documentation.</li>
-                      <li>Bug fix in RelateSelection --mode Frequency: Previous version had a bug whenever two internal nodes had same age.</li>
-                      <li>Fixed function RelateFileFormats --mode ConvertFromVcf which previously parsed the vcf incorrectly in some cases.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse3">
-                      v1.0.2
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse3" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 16th July 2018<br/>     
-                    <ul>
-                      <li>Implemented parallelization of module EstimatePopulationSize.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse2">
-                      v1.0.1
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse2" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 30th June 2018<br/>
-                    <ul>
-                      <li>Bug fix in parsing function of haps/sample.</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse1">
-                      v1.0.0
-                    </a>
-                  </h4>
-                </div>
-                <div id="collapse1" class="panel-collapse collapse">
-                  <div class="panel-body">
-                    Date: 4th June 2018
-                    <ul>
-                      <li> Initial release.</li>
-                    </ul>
+                    Date: 20 May 2020 <br/>     
+										<ul>
+											<li>Allowing for non-contemporary samples, e.g., ancient DNA: Simply add the --sample_ages option.</li>
+											<li>Allowing for haploid organisms: set the ID_2 column in the sample file to NA and Relate will work for haploid organisms.</li>
+											<li>Improved coalescence rate estimation: The algorithm has been improved and behaviour has changed slightly. The output now always contains all trees, and the threshold parameter only affects iterations leading up to the last one. The threshold parameter now is a float in [0,1], specifying the proportion of trees to throw away (Default = 0.5).</li>
+											<li>Arbitrary strings as chromosome IDs: in scripts such as EstimatePopulationSize.sh, use the --chr option to specify a file containing chromosome name.</li>
+											<li>More flexible epochs for coalescence rate estimation: use the option --bins to specify epoch boundaries in the format 10^seq(x,y,stepsize).
+										</ul>
                   </div>
                 </div>
               </div>
             </div>
 
+            <div class="panel-group" id="accordion_version">
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion_version" href="#collapse19">
+                      v1.0.*
+                    </a>
+
+										<h5 id="Binaries">Pre-compiled binaries (last updated: 10/01/2020)</h5> 
+										<form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
+											<div class="form-group">
+												<div class="checkbox">
+													<label>
+														<input type="checkbox" id="terms" oninvalid="this.setCustomValidity('Required')" onchange="this.setCustomValidity('')" required>
+														I agree with the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf">terms and conditions</a>
+													</label>
+													<div class="help-block with-errors"></div>
+												</div>
+											</div>
+											<div class="form-group">
+												<button type="submit" 
+																class="btn btn-link" 
+																formaction="download/v1.0.17/relate_v1.0.17_x86_64_dynamic.tgz"   
+																data-on="click"
+																data-event-category="Relate download (x86_64, dynamic)"
+																data-event-action="click">Linux (x86_64, dynamic) - v1.1.0</button><br/>
+															<button type="submit" 
+																			class="btn btn-link" 
+																			formaction="download/v1.0.17/relate_v1.0.17_x86_64_static.tgz"
+																			data-on="click"
+																			data-event-category="Relate download (x86_64, static)"
+																			data-event-action="click">Linux (x86_64, static) - v1.1.0</button><br/>
+																		<button type="submit" 
+																						class="btn btn-link" 
+																						formaction="download/v1.0.17/relate_v1.0.17_MacOSX.tgz"
+																						data-on="click"
+																						data-event-category="Relate download (Mac_OSX)"
+																						data-event-action="click">Mac OSX - v1.1.0</button>                   
+											</div>
+										</form>
+
+                    <div id="collapse19" class="panel-collapse collapse">
+                      <div class="panel-body">
+
+                        <div class="panel-group" id="accordion">
+
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse18">
+                                  v1.0.17
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse18" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 10th January 2020<br/>     
+                                <ul>
+                                  <li>Input files can now have CHR, RSID, ANC, DER columns of type strings (up to 1024 chars).</li>
+                                  <li>Added a scripts named TreeViewMutation.sh, taking same input as TreeView.sh, but different visualisation (bp_of_interest has to be SNP).</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse17">
+                                  v1.0.16
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse17" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 2nd September 2019<br/>     
+                                <ul>
+                                  <li>Fixed a bug in ConvertToTreeSequence that meant internal nodes were flagged as sample nodes.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse16">
+                                  v1.0.15
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse16" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 13th August 2019<br/>     
+                                <ul>
+                                  <li>Fixed a small bug that meant memory was misallocated when the --memory value was set too large.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse15">
+                                  v1.0.14
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse15" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 24th July 2019<br/>     
+                                <ul>
+                                  <li>Fixed a bug in PrepareInputFiles.sh that meant the script terminated before filtering SNPs using a genomic mask when input was not gzipped.</li>
+                                  <li>Changed the default for y axis scale in TreeView to not be a log-scale.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse14">
+                                  v1.0.13
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse14" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 27th May 2019<br/>     
+                                <ul>
+                                  <li>Modified default criteria to terminate population size estimation. Now terminating when iteration at least 2 and "mean absolute error"/mu less than 0.1.</li>
+                                  <li>Modified memory allocation in Relate, where we were allocating too much memory for very small sample sizes (N less than 10).</li>
+                                  <li>Modified error message when poplabels file is misspecified in FinalizePopulationSize - you can just rerun this step again at the end.</li>
+                                  <li>Included the script RelateSGE.sh for running Relate on a SGE cluster.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse13">
+                                  v1.0.12
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse13" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 16th May 2019<br/>     
+                                <ul>
+                                  <li>Fixed a bug in FinalizePopulationSize --mode EstimatePopulationSize, where I had forgotten to close a file leading to an error on some platforms.</li>
+                                  <li>Allowing .poplabels file to be tab separated.</li>
+                                  <li>Fixed a bug in TreeView which threw an error when completely fixed SNPs were included in the haps/sample file.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse12">
+                                  v1.0.11
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse12" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 14th May 2019<br/>     
+                                <ul>
+                                  <li>Fixed a bug in FinalizePopulationSize introduced in v1.0.9, which threw an error message for correct input files.</li>
+                                  <li>Fixed a bug in SampleBranchLengths which was introducing small rounding errors.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse11">
+                                  v1.0.10
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse11" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 13th May 2019<br/>     
+                                <ul>
+                                  <li>Fixed a bug in SampleBranchLengths.sh, where a filename was hard-coded by mistake.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse10">
+                                  v1.0.9
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse10" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 3rd May 2019<br/>     
+                                <ul>
+                                  <li>Implemented a module which samples branch lengths from the posterior given tree topologies and effective population size histories.</li>
+                                  <li>Added some more detail to documentation for RelateSelection.</li>
+                                  <li>Added a more meaningful error message when .poplabels file is misspecified in EstimatePopulationSize.sh.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse9">
+                                  v1.0.8
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse9" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 15th March 2019<br/>     
+                                <ul>
+                                  <li>Now requiring different input and output names for DetectSelection.sh when it overwrites files otherwise.</li>
+                                  <li>DetectSelection.sh now works also if additional columns are not appended to the .mut file using ./RelateFileFormats --mode GenerateSNPAnnotations. However, code is more efficient if these columns are appended.</li>
+                                  <li>Switched to using R package cowplot in TreeView.sh.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse8">
+                                  v1.0.7
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse8" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 25th Feburary 2019<br/>     
+                                <ul>
+                                  <li>Fixed bug in the painting which affects tree topologies sometimes, but has only a small effect (not visible in distance measures when comparing to truth in simulations).</li> 
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse7">
+                                  v1.0.6
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse7" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 6th Feburary 2019<br/>     
+                                <ul>
+                                  <li>I added a function for converting anc/mut output files to tree sequence file format (tskit). Currenty, some information is lost by this conversion.</li> 
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse6">
+                                  v1.0.5
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse6" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 18th October 2018<br/>     
+                                <ul>
+                                  <li>I had introduced a bug in update v1.0.4 in the function RelateExtract --mode TreeAtSNPAsNewick which has been fixed.</li> 
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                  v1.0.4
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse5" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 13th October 2018<br/>     
+                                <ul>
+                                  <li>Substituted zcat with gunzip -c to fix a bug in Macs.</li>
+                                  <li>Added requirement of R version >= 3.3.1 for TreeView because of a known bug with grid.draw() in older versions.</li>
+                                  <li>Fixed bug in RelateExtract --mode TreeAtSNPAsNewick, which outputted the first tree when snp_of_interest was not a SNP in the data set. Changed option snp_of_interest to pos_of_interest and this function now prints the tree at the position of interest. In addition, output filename was not using the option -o, which has been corrected.</li> 
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+                                  v1.0.3
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse4" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 30th August 2018<br/>     
+                                <ul>
+                                  <li>Implemented pipeline for calculating p-values for selection evidence. Updated corresponing entry in the documentation.</li>
+                                  <li>Bug fix in RelateSelection --mode Frequency: Previous version had a bug whenever two internal nodes had same age.</li>
+                                  <li>Fixed function RelateFileFormats --mode ConvertFromVcf which previously parsed the vcf incorrectly in some cases.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                  v1.0.2
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse3" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 16th July 2018<br/>     
+                                <ul>
+                                  <li>Implemented parallelization of module EstimatePopulationSize.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                  v1.0.1
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse2" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 30th June 2018<br/>
+                                <ul>
+                                  <li>Bug fix in parsing function of haps/sample.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                  v1.0.0
+                                </a>
+                              </h4>
+                            </div>
+                            <div id="collapse1" class="panel-collapse collapse">
+                              <div class="panel-body">
+                                Date: 4th June 2018
+                                <ul>
+                                  <li> Initial release.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+
+                    </div>
+                </div>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
 

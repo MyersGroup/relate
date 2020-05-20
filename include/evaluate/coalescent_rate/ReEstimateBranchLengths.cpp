@@ -1053,7 +1053,7 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   std::string chrid = "chr";
 
   //prepare files for output
-  std::string filename = options["output"].as<std::string>() + ".clues";
+  std::string filename = options["output"].as<std::string>() + ".palm";
   FILE* fp = fopen(filename.c_str(), "wb");
   //write number of trees and number of proposals per SNP
   //std::cerr << num_mapping_SNPs << " " << sizeof(int) << std::endl;

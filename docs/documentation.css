@@ -201,6 +201,7 @@ ul.CTAs a {
 }
 
 .table{
+	font-size: 1em !important;
   max-width: none;
   width: 100%;    
   word-wrap: break-word;

@@ -359,20 +359,7 @@ then
           -i ${output} \
           -o ${output}
 
-      fi
-
-      if [ -z "${num_iter_set-}" ];
-      then
-        if [ $i -ge 5 ];
-        then
-          teminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
-          if [ ${terminate} == "TRUE" ];
-          then
-            break
-          fi
-        fi
-      fi
-
+      fi 
 
     done
 
@@ -628,18 +615,6 @@ then
           -i ${output} \
           -o ${output}
 
-      fi
-
-      if [ -z "${num_iter_set-}" ]
-      then
-        if [ $i -ge 5 ]
-        then
-          terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
-          if [ ${terminate} == "TRUE" ]
-          then
-            break
-          fi
-        fi
       fi
 
     done
@@ -903,18 +878,6 @@ else
 					-i ${output} \
 					-o ${output}
 
-			fi
-
-			if [ -z "${num_iter_set-}" ]
-			then
-				if [ $i -ge 5 ]
-				then
-					terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
-					if [ ${terminate} == "TRUE" ]
-					then
-						break
-					fi
-				fi
 			fi
 
     done
@@ -1286,19 +1249,6 @@ else
 						-i ${output} \
 						-o ${output}
 
-				fi
-
-
-				if [ -z "${num_iter_set-}" ]
-				then
-					if [ $i -ge 5 ]
-					then
-						terminate=$(Rscript ${DIR}/mae.R ${output}_avg.rate ${years_per_gen} ${mu})
-						if [ ${terminate} == "TRUE" ]
-						then
-							break
-						fi
-					fi
 				fi
 
 			done

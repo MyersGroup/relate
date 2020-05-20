@@ -116,9 +116,8 @@ gtag('config', 'UA-115753061-1');
 
               <div class="alert alert-warning">
                 <strong>Warning!</strong><br/>
-                <b>Relate</b> creates temporary files and directories.<br/>
-                DO NOT RUN MORE THAN ONE INSTANCE OF <b>RELATE</b> IN THE SAME DIRECTORY.<br/>
-                (You can run <b>Relate</b> in different subdirectories.)
+                <b>Relate</b> creates temporary files and directories under a directory with name of the output prefix.<br/>
+                You can now run Relate in the same directory provided the output filenames are different. 
               </div>
 
             </div>
@@ -194,7 +193,9 @@ gtag('config', 'UA-115753061-1');
               <b>Relate</b> has a few more optional arguments.
 
               <dl class="dl-horizontal">
-                <dt>--annot</dt>
+								<dt>--sample_ages</dt>
+								<dd>File containing sample ages (one per line). Please specify an age for every haploid sequence, i.e. 2N for diploid organisms.</dd>
+								<dt>--annot</dt>
                 <dd>Add columns to the .mut file. This can also be done after running <b>Relate</b> (a tool for generating a .annot file and/or appends columns to the .mut file can be found <a href="input_data.html#GenerateSNPAnnotations">here</a>). The additional columns are needed, for instance, when estimating population size.</dd>
                 <dt>--dist</dt>
                 <dd>Specifies distances (in BP) between SNPs. This is to correct for regions with low mappability in the genomic mask (A tool that takes a genomic mask and generates a .dist file can be found <a href="input_data.html#FilterHapsUsingMask">here</a>).</dd>
@@ -238,8 +239,8 @@ gtag('config', 'UA-115753061-1');
                 <tbody>
                   <tr>
                     <td>.anc </td>
-                    <td>This file contains the trees. The first line shows the number of haplotypes. The second line shows the number of trees. <br/>
-                      Each subsequent line represents one tree. 
+                    <td>This file contains the trees. The first line shows the number of haplotypes. If sample ages are provided, this line will list sample ages. The second line shows the number of trees. <br/>
+                      Each subsequent line represents one tree.
                       <ul>
 
                         <li> Every line starts with an integer specifying at which SNP the tree begins. </li>

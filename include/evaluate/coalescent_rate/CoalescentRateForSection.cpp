@@ -588,7 +588,7 @@ CoalescenceRateForTree(cxxopts::Options& options){
 			ct.populate(mtr.tree);	
 			num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
 		}
-
+		std::cerr << "[100%]\r";
 		std::cerr << std::endl;
 
 	}
@@ -608,9 +608,6 @@ CoalescenceRateForTree(cxxopts::Options& options){
 	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
 #endif
 	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
-
-
-
 
 }
 

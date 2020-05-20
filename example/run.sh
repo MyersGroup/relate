@@ -34,7 +34,7 @@
 	--first_bp 900000 \
 	--last_bp 1000000 \
 	--format a \
-	--coal example_bypop.coal
+	--coal example.coal
 
 ../scripts/SampleBranchLengths/SampleBranchLengths.sh \
 	-i example2 \
