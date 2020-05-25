@@ -44,7 +44,6 @@ DIR="${PATH_TO_RELATE}/scripts/EstimatePopulationSize/"
 
 maxjobs=1
 years_per_gen=28
-noanc=0
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -137,7 +136,7 @@ done
 
 if [ -z "${num_iter-}" ];
 then
-  num_iter=5
+  num_iter=10
 else
   if [ $num_iter -le 0 ];
   then

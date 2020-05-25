@@ -104,7 +104,7 @@ ga('send', 'pageview');
 
                 <p><b>Relate</b> is available for academic use. To see rules for non-academic use, please read the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf" download>LICENCE</a> file, which is included with each software download.</p>
 
-                <h5 id="Binaries">Pre-compiled binaries (last updated: 20/05/2020)</h5> 
+                <h5 id="Binaries">Pre-compiled binaries (last updated: 25/05/2020)</h5> 
                 <form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
                   <div class="form-group">
                     <div class="checkbox">
@@ -118,22 +118,22 @@ ga('send', 'pageview');
                   <div class="form-group">
                     <button type="submit" 
                             class="btn btn-link" 
-                            formaction="download/relate_v1.1.0_x86_64_dynamic.tgz"   
+                            formaction="download/relate_v1.1.1_x86_64_dynamic.tgz"   
                             data-on="click"
                             data-event-category="Relate download (x86_64, dynamic)"
-                            data-event-action="click">Linux (x86_64, dynamic) - v1.1.0</button><br/>
+                            data-event-action="click">Linux (x86_64, dynamic) - v1.1.1</button><br/>
                           <button type="submit" 
                                   class="btn btn-link" 
-                                  formaction="download/relate_v1.1.0_x86_64_static.tgz"
+                                  formaction="download/relate_v1.1.1_x86_64_static.tgz"
                                   data-on="click"
                                   data-event-category="Relate download (x86_64, static)"
-                                  data-event-action="click">Linux (x86_64, static) - v1.1.0</button><br/>
+                                  data-event-action="click">Linux (x86_64, static) - v1.1.1</button><br/>
                                 <button type="submit" 
                                         class="btn btn-link" 
-                                        formaction="download/relate_v1.1.0_MacOSX.tgz"
+                                        formaction="download/relate_v1.1.1_MacOSX.tgz"
                                         data-on="click"
                                         data-event-category="Relate download (Mac_OSX)"
-                                        data-event-action="click">Mac OSX - v1.1.0</button>                   
+                                        data-event-action="click">Mac OSX - v1.1.1</button>                   
                   </div>
                 </form>
 
@@ -343,6 +343,26 @@ devtools::install_github("leospeidel/relater")</code></pre>
 
             <div class="panel-group" id="accordion2">
 
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h4 class="panel-title">
+										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse21">
+											v1.1.1
+										</a>
+									</h4>
+								</div>
+								<div id="collapse20" class="panel-collapse collapse">
+									<div class="panel-body">
+										Date: 25 May 2020 <br/>     
+										<ul>
+											<li>Changed filename used for CLUES and PALM from *.palm to *.timeb.</li>
+											<li>Fixed bug in EstimatePopulationSize.sh</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+
+
               <div class="panel panel-default">
                 <div class="panel-heading">
                   <h4 class="panel-title">
@@ -359,11 +379,12 @@ devtools::install_github("leospeidel/relater")</code></pre>
 											<li>Allowing for haploid organisms: set the ID_2 column in the sample file to NA and Relate will work for haploid organisms.</li>
 											<li>Improved coalescence rate estimation: The algorithm has been improved and behaviour has changed slightly. The output now always contains all trees, and the threshold parameter only affects iterations leading up to the last one. The threshold parameter now is a float in [0,1], specifying the proportion of trees to throw away (Default = 0.5).</li>
 											<li>Arbitrary strings as chromosome IDs: in scripts such as EstimatePopulationSize.sh, use the --chr option to specify a file containing chromosome name.</li>
-											<li>More flexible epochs for coalescence rate estimation: use the option --bins to specify epoch boundaries in the format 10^seq(x,y,stepsize).
+											<li>More flexible epochs for coalescence rate estimation: use the option --bins to specify epoch boundaries in the format 10^seq(x,y,stepsize).</li>
 										</ul>
                   </div>
                 </div>
               </div>
+
             </div>
 
             <div class="panel-group" id="accordion_version">

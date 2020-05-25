@@ -163,22 +163,24 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     } 
   } 
 
-  if(options.count("mrate")){
-    //multiply by mutation rate
-    is.open(options["mrate"].as<std::string>());
-    double mepoch, mrate;
-    int e = 0;
-    while(getline(is, line)){
-      sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
-      assert(mepoch/data.Ne == epoch[e]);
-      if(mrate > 0){
-        double diff = (data.mu - mrate)/data.mu;
-        if(diff > 1) diff = 1;
-        if(diff < -1) diff = 1;
-        coalescent_rate[e] *= exp(log(10)*diff);
-        //coalescent_rate[e] *= data.mu/mrate;
+  if(0){
+    if(options.count("mrate")){
+      //multiply by mutation rate
+      is.open(options["mrate"].as<std::string>());
+      double mepoch, mrate;
+      int e = 0;
+      while(getline(is, line)){
+        sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
+        assert(mepoch/data.Ne == epoch[e]);
+        if(mrate > 0){
+          double diff = (data.mu - mrate)/data.mu;
+          if(diff > 1) diff = 1;
+          if(diff < -1) diff = 1;
+          coalescent_rate[e] *= exp(log(10)*diff);
+          //coalescent_rate[e] *= data.mu/mrate;
+        }
+        e++;
       }
-      e++;
     }
   }
 
@@ -421,7 +423,7 @@ int SampleBranchLengths(cxxopts::Options& options){
     } 
   } 
 
-  if(1){
+  if(0){
   if(options.count("mrate")){
     //multiply by mutation rate
     is.open(options["mrate"].as<std::string>());
@@ -434,8 +436,8 @@ int SampleBranchLengths(cxxopts::Options& options){
         double diff = (data.mu - mrate)/data.mu;
         if(diff > 1) diff = 1;
         if(diff < -1) diff = 1;
-        coalescent_rate[e] *= exp(log(10)*diff);
-        //coalescent_rate[e] *= data.mu/mrate;
+        //coalescent_rate[e] *= exp(log(10)*diff);
+        coalescent_rate[e] *= data.mu/mrate;
       }
       e++;
     }
@@ -1007,22 +1009,24 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
     } 
   } 
 
-  if(options.count("mrate")){
-    //multiply by mutation rate
-    is.open(options["mrate"].as<std::string>());
-    double mepoch, mrate;
-    int e = 0;
-    while(getline(is, line)){
-      sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
-      assert(mepoch/data.Ne == epoch[e]);
-      if(mrate > 0){     
-        double diff = (data.mu - mrate)/data.mu;
-        if(diff > 1) diff = 1;
-        if(diff < -1) diff = 1;
-        coalescent_rate[e] *= exp(log(10)*diff);
-        //coalescent_rate[e] *= data.mu/mrate;
+  if(0){
+    if(options.count("mrate")){
+      //multiply by mutation rate
+      is.open(options["mrate"].as<std::string>());
+      double mepoch, mrate;
+      int e = 0;
+      while(getline(is, line)){
+        sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
+        assert(mepoch/data.Ne == epoch[e]);
+        if(mrate > 0){     
+          double diff = (data.mu - mrate)/data.mu;
+          if(diff > 1) diff = 1;
+          if(diff < -1) diff = 1;
+          coalescent_rate[e] *= exp(log(10)*diff);
+          //coalescent_rate[e] *= data.mu/mrate;
+        }
+        e++;
       }
-      e++;
     }
   }
 
@@ -1053,7 +1057,7 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   std::string chrid = "chr";
 
   //prepare files for output
-  std::string filename = options["output"].as<std::string>() + ".palm";
+  std::string filename = options["output"].as<std::string>() + ".timeb";
   FILE* fp = fopen(filename.c_str(), "wb");
   //write number of trees and number of proposals per SNP
   //std::cerr << num_mapping_SNPs << " " << sizeof(int) << std::endl;

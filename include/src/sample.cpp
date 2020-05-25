@@ -36,7 +36,7 @@ Sample::Read(const std::string& filename){
 		i++;
     
 		if(ploidy != "NA"){
-      if(stoi(ploidy) == 1){
+      if(ploidy == "1"){
 				diploid = false;
 			}else{
         if(!diploid){
