@@ -2,6 +2,7 @@
 #include "CreateAncesTreeFileForSubpopulation.cpp"
 #include "RemoveTreesWithFewMutations.cpp"
 #include "AncMutChunks.cpp"
+#include "Convert.cpp"
 
 #include "filesystem.hpp"
 #include "cxxopts.hpp"
@@ -23,7 +24,9 @@ int main(int argc, char* argv[]){
     ("first_bp", "BP of first SNP of interest.", cxxopts::value<int>())
     ("last_bp", "BP of last SNP of interest.", cxxopts::value<int>())
     ("threshold", "Threshold used in RemoveTreesWithFewMutations.", cxxopts::value<float>())
+		("anc_genome", "Fasta file containing ancestral genome.", cxxopts::value<std::string>())
     ("threads", "Optional: Number of threads used (only used to decide chunk size in DivideAncMut)", cxxopts::value<int>())
+		("i,input", "Filename of input (excl file extension).", cxxopts::value<std::string>())
     ("o,output", "Filename of output (excl file extension).", cxxopts::value<std::string>());
 
   options.parse(argc, argv);
@@ -67,12 +70,16 @@ int main(int argc, char* argv[]){
   
     CombineAncMut(options);
 
+	}else if(!mode.compare("ConvertNewickToTimeb")){
+
+		ConvertNewickToTimeb(options);
+
   }else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "TreeAtSNPAsNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion." << std::endl;
+    std::cout << "TreeAtSNPAsNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb." << std::endl;
   
   }
 

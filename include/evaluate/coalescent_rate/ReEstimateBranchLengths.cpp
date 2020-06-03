@@ -436,8 +436,8 @@ int SampleBranchLengths(cxxopts::Options& options){
         double diff = (data.mu - mrate)/data.mu;
         if(diff > 1) diff = 1;
         if(diff < -1) diff = 1;
-        //coalescent_rate[e] *= exp(log(10)*diff);
-        coalescent_rate[e] *= data.mu/mrate;
+        coalescent_rate[e] *= exp(log(10)*diff);
+        //coalescent_rate[e] *= data.mu/mrate;
       }
       e++;
     }
@@ -1065,20 +1065,19 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   fwrite(&num_mapping_SNPs, sizeof(int), 1, fp);
   fwrite(&num_samples, sizeof(int), 1, fp);
 
-
+	char anc_allele, der_allele;
   if(ancmut.sample_ages.size() == 0){
 
     //Infer branch lengths
     InferBranchLengths bl(data);
     std::vector<Leaves> leaves;
-    //iterate through whole file
+		bool first_snp = false;
+		std::vector<Tree> sampled_trees(num_samples);
+		//iterate through whole file
     while(num_bases_tree_persists >= 0.0){
 
       num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
-
-      for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
-        (*it_node).branch_length /= (double) data.Ne;
-      }
+			first_snp = true;
 
       if(it_mut != ancmut.mut_end()){
         while((*it_mut).tree == count_trees){
@@ -1090,7 +1089,24 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
               ShowProgress(progress); 
             }
 
-            mtr.tree.FindAllLeaves(leaves);
+						if(first_snp){
+							for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
+								(*it_node).branch_length /= (double) data.Ne;
+							}
+							mtr.tree.FindAllLeaves(leaves);
+
+							int i = 0;
+							if(i < num_samples){
+								sampled_trees[i] = mtr.tree;
+								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
+							}
+							i++;
+							for(; i < num_samples; i++){
+								sampled_trees[i] = mtr.tree;
+								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
+							}
+							first_snp = false;
+						}
 
             //store matrix with
             //num_snps x anc_times x num_samples
@@ -1104,36 +1120,46 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 
             int count = 0;
             if(count < num_samples){
-              bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
-
               //store anc and dertimes
               std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-              GetCoords(2*data.N-2, mtr.tree, branch, data.Ne, 'a', it_dertimes, it_anctimes);
+              GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
               assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
               assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
               std::sort(it_anctimes_s, it_anctimes);
               std::sort(it_dertimes_s, it_dertimes);
-
             }
             count++;
             for(;count < num_samples; count++){
-              bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
-
               //store anc and dertimes
               std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-              GetCoords(2*data.N-2, mtr.tree, branch, data.Ne, 'a', it_dertimes, it_anctimes);
+              GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
               assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
               assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
               std::sort(it_anctimes_s, it_anctimes);
               std::sort(it_dertimes_s, it_dertimes);
-
             }
 
             //WriteBinary(anctimes, dertimes, fp);
             //BP, DAF, N, 
             //dump
+
+						int msize = (*it_mut).mutation_type.size();
+						if(msize >= 1){
+						  anc_allele = (*it_mut).mutation_type[0];
+							der_allele = 'N';
+							int i = 1;
+							while((*it_mut).mutation_type[i] != '/' && i < msize){
+								i++;
+								if(i == msize) break;
+							}
+							i++;
+							if(i < msize) der_allele = (*it_mut).mutation_type[i];
+						}
+
             int BP = (*it_mut).pos;
             fwrite(&BP, sizeof(int), 1, fp);
+						fwrite(&anc_allele, sizeof(char), 1, fp);
+						fwrite(&der_allele, sizeof(char), 1, fp);
             fwrite(&DAF, sizeof(int), 1, fp);
             fwrite(&data.N, sizeof(int), 1, fp);
             fwrite(&anctimes[0], sizeof(float), num_samples*(data.N-DAF-1), fp);
@@ -1156,14 +1182,13 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
     //Infer branch lengths
     EstimateBranchLengthsWithSampleAge bl(data, ancmut.sample_ages);
     std::vector<Leaves> leaves;
+		bool first_snp = false;
+		std::vector<Tree> sampled_trees(num_samples);
     //iterate through whole file
     while(num_bases_tree_persists >= 0.0){
 
       num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
-
-      for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
-        (*it_node).branch_length /= (double) data.Ne;
-      }
+      first_snp = true;
 
       if(it_mut != ancmut.mut_end()){
         while((*it_mut).tree == count_trees){
@@ -1175,7 +1200,24 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
               ShowProgress(progress); 
             }
 
-            mtr.tree.FindAllLeaves(leaves);
+						if(first_snp){
+							for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
+								(*it_node).branch_length /= (double) data.Ne;
+							}
+							mtr.tree.FindAllLeaves(leaves);
+
+							int i = 0;
+							if(i < num_samples){
+								sampled_trees[i] = mtr.tree;
+								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
+							}
+							i++;
+							for(; i < num_samples; i++){
+                sampled_trees[i] = mtr.tree;
+								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
+							}
+							first_snp = false;
+						}
 
             //store matrix with
             //num_snps x anc_times x num_samples
@@ -1189,36 +1231,45 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 
             int count = 0;
             if(count < num_samples){
-              bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
-
               //store anc and dertimes
               std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-              GetCoords(2*data.N-2, mtr.tree, branch, data.Ne, 'a', it_dertimes, it_anctimes);
+              GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
               assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
               assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
               std::sort(it_anctimes_s, it_anctimes);
               std::sort(it_dertimes_s, it_dertimes);
-
             }
             count++;
             for(;count < num_samples; count++){
-              bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
-
               //store anc and dertimes
               std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-              GetCoords(2*data.N-2, mtr.tree, branch, data.Ne, 'a', it_dertimes, it_anctimes);
+              GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
               assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
               assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
               std::sort(it_anctimes_s, it_anctimes);
               std::sort(it_dertimes_s, it_dertimes);
-
             }
 
             //WriteBinary(anctimes, dertimes, fp);
             //BP, DAF, N, 
             //dump
+						int msize = (*it_mut).mutation_type.size();
+						if(msize >= 1){
+							anc_allele = (*it_mut).mutation_type[0];
+							der_allele = 'N';
+							int i = 1;
+							while((*it_mut).mutation_type[i] != '/' && i < msize){
+								i++;
+								if(i == msize) break;
+							}
+							i++;
+							if(i < msize) der_allele = (*it_mut).mutation_type[i];
+						}
+
             int BP = (*it_mut).pos;
             fwrite(&BP, sizeof(int), 1, fp);
+						fwrite(&anc_allele, sizeof(char), 1, fp);
+						fwrite(&der_allele, sizeof(char), 1, fp);
             fwrite(&DAF, sizeof(int), 1, fp);
             fwrite(&data.N, sizeof(int), 1, fp);
             fwrite(&anctimes[0], sizeof(float), num_samples*(data.N-DAF-1), fp);
@@ -1261,4 +1312,5 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
   return 0;
+
 }
