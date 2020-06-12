@@ -980,29 +980,34 @@ gtag('config', 'UA-115753061-1');
 
             <div class="col-md-10 col-md-offset-1">
               <div class="panel panel-info">
-                <div class="panel-heading"> <h4 id="TreeAtSNPAsNewick">Extract tree at a SNP of interest in newick format</h4></div>
+                <div class="panel-heading"> <h4 id="TreeAsNewick">Extract tree in region of interest in newick format</h4></div>
                 <div class="panel-body">  
 
-                  <p>Extracts a tree at a SNP of interest in newick format.</p>
+                  <p>Extracts trees in region of interest in newick format.</p>
 
                   <dl class="dl-horizontal">
                     <dt>--anc</dt>
                     <dd>Filename of the .anc file.</dd>
                     <dt>--mut</dt>
-                    <dd>Filename of the .mut file.</dd>
-                    <dt>--bp_of_interest</dt>
-                    <dd>Integer specfifying the BP position of interest</dd>
+                    <dd>Filename of the .mut file.</dd> 
                     <dt>-o,--output</dt>
                     <dd>File of the output files without file extensions.</dd>
+										<dt>--bp_of_interest</dt>
+										<dd>Integer specfifying the BP position of interest</dd>
+										<dt>--first_bp</dt>
+										<dd>Integer specfifying the first BP position of interest</dd>
+										<dt>--last_bp</dt>
+										<dd>Integer specfifying the last BP position of interest</dd>
                   </dl>
 
                   <pre><code> PATH_TO_RELATE/bin/RelateExtract\
-                 --mode TreeAtSNPAsNewick \
+                 --mode AncToNewick \
                  --anc example.anc \
                  --mut example.mut \
-                 --bp_of_interest 3000000 \
+                 --first_bp 3000000 \
+								 --last_bp 4000000 \
                  -o example </code></pre>
-                  Output: example_at_.newick.
+                  Output: example.newick, example.pos. The latter file stores bp start position of each tree.
 
                 </div>
               </div>

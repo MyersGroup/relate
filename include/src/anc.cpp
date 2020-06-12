@@ -127,81 +127,85 @@ Tree::ReadTreeBin(FILE* pfile, int N){
 
 void
 Tree::WriteNewick(const std::string& filename_newick, double factor, const bool add) const{
-
-  //coordinates.clear();
-
-  //maybe not the most efficient convertion algorithm but it works
-
-  int root = (int) nodes.size() - 1;
-  for(int i = 0; i < (int) nodes.size(); i++){
-    if(nodes[i].parent == NULL){
-      root = i; //root
-      break;
-    }
-  }
-
-  std::ofstream os_new;
+ 
+  std::ofstream os;
   if(!add){ 
-    os_new.open(filename_newick);
+    os.open(filename_newick);
   }else{
-    os_new.open(filename_newick, std::ofstream::app);
+    os.open(filename_newick, std::ofstream::app);
   }
 
-  std::list<Node> todo_nodes;
-  float l1 = ((*nodes[root].child_left).branch_length) * factor;
-  float l2 = ((*nodes[root].child_right).branch_length) * factor;
+	WriteNewick(os, factor);
 
-  //if(l1 < 0.0) std::cerr << root << ": " << coordinates[root].tree << ", " << children[root][0] << ": " << coordinates[children[root][0]].tree << std::endl;    
-  //if(l2 < 0.0) std::cerr << root << ": " << coordinates[root].tree << ", " << children[root][1] << ": " << coordinates[children[root][1]].tree << std::endl;
+  os.close();
 
-  std::string newick = "(" + std::to_string((*nodes[root].child_left).label) + ":" + std::to_string(l1)  + "," + std::to_string((*nodes[root].child_right).label) + ":" + std::to_string(l2) + ")";
-  todo_nodes.push_back(*nodes[root].child_left);
-  todo_nodes.push_back(*nodes[root].child_right);
+}
 
-  while(todo_nodes.size() > 0){
+void
+Tree::WriteNewick(std::ofstream& os, double factor) const{
 
-    std::list<Node>::iterator node = todo_nodes.begin();
+	//coordinates.clear();
+	//maybe not the most efficient convertion algorithm but it works
+	int root = (int) nodes.size() - 1;
+	for(int i = 0; i < (int) nodes.size(); i++){
+		if(nodes[i].parent == NULL){
+			root = i; //root
+			break;
+		}
+	}
 
-    if((*node).child_left == NULL){
-      todo_nodes.erase(node);
-    }else{
-      int index = 0;
-      std::string node_index;
-      for(; index < (int) newick.size(); index++){
-        while( !isdigit(newick[index]) ){
-          //std::cerr << newick[index] << " " << isdigit(newick[index]) << std::endl;
-          index++;
-        }
-        node_index.clear();
-        while( newick[index] != ',' && newick[index] != ')' && newick[index] != ':'){
-          node_index = node_index + newick[index];
-          index++;
-          //std::cerr << node_index << " " << index << " " << newick[index] << std::endl;
-        }
-        if((float)(*node).label == stof(node_index) && newick[index] == ':') break;
-      }
-      assert(index < (int) newick.size());
+	std::list<Node> todo_nodes;
+	float l1 = ((*nodes[root].child_left).branch_length) * factor;
+	float l2 = ((*nodes[root].child_right).branch_length) * factor;
 
-      float l1 = ((*(*node).child_left).branch_length) * factor;
-      float l2 = ((*(*node).child_right).branch_length) * factor;
+	//if(l1 < 0.0) std::cerr << root << ": " << coordinates[root].tree << ", " << children[root][0] << ": " << coordinates[children[root][0]].tree << std::endl;    
+	//if(l2 < 0.0) std::cerr << root << ": " << coordinates[root].tree << ", " << children[root][1] << ": " << coordinates[children[root][1]].tree << std::endl;
 
-      std::string new_brackets = "(" + std::to_string((*(*node).child_left).label) + ":" + std::to_string(l1) + "," + std::to_string((*(*node).child_right).label) + ":" + std::to_string(l2) + ")";
-      newick.replace(index-node_index.size(), node_index.size(), new_brackets);
-      todo_nodes.push_back(*(*node).child_left);
-      todo_nodes.push_back(*(*node).child_right);
-      todo_nodes.erase(node);
+	std::string newick = "(" + std::to_string((*nodes[root].child_left).label) + ":" + std::to_string(l1)  + "," + std::to_string((*nodes[root].child_right).label) + ":" + std::to_string(l2) + ")";
+	todo_nodes.push_back(*nodes[root].child_left);
+	todo_nodes.push_back(*nodes[root].child_right);
 
-    }
+	while(todo_nodes.size() > 0){
 
-    //std::cerr << "newick: " << newick << " " << todo_nodes.size() << std::endl;
+		std::list<Node>::iterator node = todo_nodes.begin();
 
-  }
-  newick += ";";
+		if((*node).child_left == NULL){
+			todo_nodes.erase(node);
+		}else{
+			int index = 0;
+			std::string node_index;
+			for(; index < (int) newick.size(); index++){
+				while( !isdigit(newick[index]) ){
+					//std::cerr << newick[index] << " " << isdigit(newick[index]) << std::endl;
+					index++;
+				}
+				node_index.clear();
+				while( newick[index] != ',' && newick[index] != ')' && newick[index] != ':'){
+					node_index = node_index + newick[index];
+					index++;
+					//std::cerr << node_index << " " << index << " " << newick[index] << std::endl;
+				}
+				if((float)(*node).label == stof(node_index) && newick[index] == ':') break;
+			}
+			assert(index < (int) newick.size());
 
-  os_new << newick << std::endl;
+			float l1 = ((*(*node).child_left).branch_length) * factor;
+			float l2 = ((*(*node).child_right).branch_length) * factor;
 
-  os_new.close();
+			std::string new_brackets = "(" + std::to_string((*(*node).child_left).label) + ":" + std::to_string(l1) + "," + std::to_string((*(*node).child_right).label) + ":" + std::to_string(l2) + ")";
+			newick.replace(index-node_index.size(), node_index.size(), new_brackets);
+			todo_nodes.push_back(*(*node).child_left);
+			todo_nodes.push_back(*(*node).child_right);
+			todo_nodes.erase(node);
 
+		}
+
+		//std::cerr << "newick: " << newick << " " << todo_nodes.size() << std::endl;
+
+	}
+	newick += ";";
+
+	os << newick << std::endl;
 
 }
 

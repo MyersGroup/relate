@@ -23,6 +23,7 @@ int main(int argc, char* argv[]){
     ("bp_of_interest", "BP of position of interest.", cxxopts::value<int>())
     ("first_bp", "BP of first SNP of interest.", cxxopts::value<int>())
     ("last_bp", "BP of last SNP of interest.", cxxopts::value<int>())
+		("years_per_gen", "Years per generation.", cxxopts::value<float>())
     ("threshold", "Threshold used in RemoveTreesWithFewMutations.", cxxopts::value<float>())
 		("anc_genome", "Fasta file containing ancestral genome.", cxxopts::value<std::string>())
     ("threads", "Optional: Number of threads used (only used to decide chunk size in DivideAncMut)", cxxopts::value<int>())
@@ -33,7 +34,7 @@ int main(int argc, char* argv[]){
 
   std::string mode = options["mode"].as<std::string>();
 
-  if(!mode.compare("TreeAtSNPAsNewick")){
+  if(!mode.compare("AncToNewick")){
   
     GetTreeOfInterest(options);
 
@@ -79,7 +80,7 @@ int main(int argc, char* argv[]){
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "TreeAtSNPAsNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb." << std::endl;
+    std::cout << "AncToNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb." << std::endl;
   
   }
 

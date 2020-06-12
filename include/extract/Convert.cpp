@@ -163,7 +163,8 @@ ReadNewick(std::string line, int& bp_start, int& bp_end, Tree& tree){
 
 }
 
-int ConvertNewickToTimeb(cxxopts::Options& options){
+void 
+ConvertNewickToTimeb(cxxopts::Options& options){
 
 	//////////////////////////////////
 	//Program options

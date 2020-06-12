@@ -121,6 +121,7 @@ class Tree{
     void ReadTree(const char* line, int N);
     void ReadTreeBin(FILE* pfile, int N);
     void WriteNewick(const std::string& filename_newick, double factor, const bool add = 0) const; //this is slow. For fast output use WriteOrientedTree
+		void WriteNewick(std::ofstream& os, double factor) const;
     void WriteNHX(const std::string& filename_nhx, std::vector<std::string>& property, const bool add = 0) const; 
     void WriteOrientedTree(const std::string& filename, const bool add = 0);
 

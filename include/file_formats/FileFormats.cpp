@@ -373,6 +373,10 @@ ConvertFromVcf(cxxopts::Options& options){
     }
 
     if(N == N_prev){
+
+			for(int i = 0; i < strlen(rsid); i++){
+        if(rsid[i] == ';') rsid[i] = ',';
+			}
       fprintf(fp_haps, "%s %s %d %s %s", chr, rsid, bp, ancestral, alternative);
       for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
         fprintf(fp_haps, " %c", *it_seq);
@@ -521,6 +525,8 @@ RemoveSamples(cxxopts::Options& options){
   FILE* fp = fopen((options["output"].as<std::string>() + ".haps").c_str(), "w");
   Data data(m_hap.GetN(), m_hap.GetL());
 
+  std::cerr << m_hap.GetN() << " " << m_hap.GetL() << std::endl;
+
   // first read input file containing ids of individuals to remove
   char id[1024], id2[1024];
   std::string line, line2;
@@ -591,7 +597,7 @@ RemoveSamples(cxxopts::Options& options){
       i++;
 			j++;
 			if(strcmp(id, id2) == 0){ //diploid
-        remaining_haps[i] = j+1;
+        remaining_haps[i] = j;
         i++;
 				j++;
 			}

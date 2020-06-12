@@ -167,7 +167,6 @@ Mutations::Read(igzstream& is){
     }
     i++;
     info[snp].snp_id = std::stoi(inread);
-
     //pos_of_snp
     inread.clear();
     while(line[i] != ';'){
@@ -176,7 +175,6 @@ Mutations::Read(igzstream& is){
     }
     i++;
     info[snp].pos = std::stoi(inread);
-
     //dist_to_next_snp
 
     inread.clear();
@@ -186,7 +184,6 @@ Mutations::Read(igzstream& is){
     }
     i++;
     info[snp].dist = std::stoi(inread);
-
     //rs-id
     inread.clear();
     while(line[i] != ';'){
@@ -203,7 +200,6 @@ Mutations::Read(igzstream& is){
     }
     info[snp].tree = std::stoi(inread);
     inread.clear();
-
     do{
       i++;
       while(line[i] != ' ' && line[i] != ';'){

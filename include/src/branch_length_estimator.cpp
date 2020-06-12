@@ -2436,7 +2436,7 @@ EstimateBranchLengthsWithSampleAge::InitializeMCMC(const Data& data, Tree& tree)
   //assign pseudo coordinates to nodes, by giving them a lower bound on age + epsilon
   //then use code as if coordinates are given
   std::vector<double> pseudo_coords(N_total, 0.0);
-  double epsilon = 0.001;
+  double epsilon = 2.0/log(N_total);
   for(int i = 0; i < N; i++){
     pseudo_coords[i] = sample_age[i];
     int k1 = i, k2 = i;
@@ -5058,7 +5058,7 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
   InitializeMCMC(data, tree); //Initialize using coalescent prior 
 
   //Randomly switch around order of coalescences
-  for(int j = 0; j < (int) data.N * data.N; j++){
+  for(int j = 0; j < (int) 10*data.N * data.N; j++){
     RandomSwitchOrder(tree, dist_n(rng), dist_unif);
   }
   //Initialise branch lengths
@@ -5495,7 +5495,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
 
   float p1 = std::min(10.0/data.N, 0.1), p2;
   p1 = 0.05;
-  p2 = 0.4;
+  p2 = 0.6;
   //std::cerr << p1 << " " << p2 << std::endl;
 
   int delta = std::max(data.N/10.0, 10.0);
@@ -5504,16 +5504,30 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
   InitializeMCMC(data, tree); //Initialize using coalescent prior 
 
   //Randomly switch around order of coalescences
-  for(int j = 0; j < (int) data.N * data.N; j++){
+  for(int j = 0; j < (int) 10*data.N * data.N; j++){
     RandomSwitchOrder(tree, dist_n(rng), dist_unif);
   }
   //Initialise branch lengths
   InitializeBranchLengths(tree);
 
+  for(int i = 0; i < N_total-1; i++){
+    assert(tree.nodes[i].branch_length >= 0.0);
+    assert(order[sorted_indices[i]] == i);
+    assert(order[i] < order[(*tree.nodes[i].parent).label]);
+    assert(coordinates[sorted_indices[i]] <= coordinates[sorted_indices[i+1]]);
+  }
+
   ////////////////// Transient /////////////////
 
   count = 0;
   for(; count < 100*delta; count++){
+
+    for(int i = 0; i < N_total-1; i++){
+      assert(tree.nodes[i].branch_length >= 0.0);
+      assert(order[sorted_indices[i]] == i);
+      assert(order[i] < order[(*tree.nodes[i].parent).label]);
+      assert(coordinates[sorted_indices[i]] <= coordinates[sorted_indices[i+1]]);
+    }
 
     //Either switch order of coalescent event or extent time while k ancestors 
     uniform_rng = dist_unif(rng);
@@ -5536,9 +5550,9 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
     }
 
     for(int k = N; k < N_total; k++){
-      assert((coordinates[k] > coordinates[(*tree.nodes[k].child_left).label]));
-      assert((coordinates[k] > coordinates[(*tree.nodes[k].child_right).label]));
-      //std::cerr << k << " " << order[k] << " " << sorted_indices[order[k]] << " " << coordinates[k] << " " << coordinates[sorted_indices[order[k]]] << std::endl;
+      //std::cerr << k << " " << order[k] << " " << sorted_indices[order[k]] << " " << coordinates[k] << " " << coordinates[sorted_indices[order[k]]] << " " <<  << std::endl;
+      assert((coordinates[k] >= coordinates[(*tree.nodes[k].child_left).label]));
+      assert((coordinates[k] >= coordinates[(*tree.nodes[k].child_right).label]));
       assert(sorted_indices[order[k]] == k);
     }
   }
@@ -5589,8 +5603,8 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
       }
 
       for(int k = N; k < N_total; k++){
-        assert((coordinates[k] > coordinates[(*tree.nodes[k].child_left).label]));
-        assert((coordinates[k] > coordinates[(*tree.nodes[k].child_right).label]));
+        assert((coordinates[k] >= coordinates[(*tree.nodes[k].child_left).label]));
+        assert((coordinates[k] >= coordinates[(*tree.nodes[k].child_right).label]));
         //std::cerr << k << " " << order[k] << " " << sorted_indices[order[k]] << " " << coordinates[k] << " " << coordinates[sorted_indices[order[k]]] << std::endl;
         assert(sorted_indices[order[k]] == k);
       }

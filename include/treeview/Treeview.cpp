@@ -128,7 +128,6 @@ TreeView(cxxopts::Options& options){
 	std::cerr << "---------------------------------------------------------" << std::endl;
 	std::cerr << "Get tree at BP " << snp_of_interest << "..." << std::endl;
 
-
 	//////////////////////////////////
 	//Parse Data
 	AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
@@ -136,7 +135,6 @@ TreeView(cxxopts::Options& options){
 	MarginalTree mtr;
 	Muts::iterator it_mut;
 	float num_bases_tree_persists = 0.0;
-
 	int i; 
 	std::string line, line2, read;
 
