@@ -25,9 +25,13 @@ def parse_clues(filename):
         filepos += 8
         #iterate over mutations
         for m in range(0,num_muts):
-            bp, daf, n = np.frombuffer(data[slice(filepos, filepos+12, 1)], dtype = np.int32)
-            filepos   += 12
-            print("BP: %d, DAF: %d, n: %d" % (bp, daf, n))
+            bp = np.frombuffer(data[slice(filepos, filepos+4, 1)], dtype = np.int32)
+            filepos += 4
+            anc, der = np.frombuffer(data[slice(filepos, filepos+2, 1)], dtype = 'c')
+            filepos += 2
+            daf, n = np.frombuffer(data[slice(filepos, filepos+8, 1)], dtype = np.int32)
+            filepos += 8
+            print("BP: %d, anc: %s, der %s, DAF: %d, n: %d" % (bp, str(anc), str(der), daf, n))
             
             num_anctimes = 4*(n-daf-1)*num_sampled_trees_per_mut
             anctimes     = np.reshape(np.frombuffer(data[slice(filepos, filepos+num_anctimes, 1)], dtype = np.float32), (num_sampled_trees_per_mut, n-daf-1))
