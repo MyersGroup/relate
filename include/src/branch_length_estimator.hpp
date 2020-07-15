@@ -145,6 +145,7 @@ class EstimateBranchLengthsWithSampleAge{
     float log_deltat(float t);
 
     void InitializeBranchLengths(Tree& tree);
+    void InitializeOrder(Tree& tree);
     void InitializeMCMC(const Data& data, Tree& tree);
 
     void UpdateAvg(Tree& tree);

@@ -265,11 +265,13 @@ ConvertToTreeSequence(cxxopts::Options& options){
   std::vector<float> coordinates(2*data.N-1,0.0);
   int pos, snp, pos_end, snp_end, tree_count = 0, node, node_const, site_count = 0;
 
+	int count = 0;
   char derived_allele[1];
   num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
   while(num_bases_tree_persists >= 0.0){
 
     mtr.tree.GetCoordinates(coordinates);
+
     pos = mut.info[mtr.pos].pos;
     if(mtr.pos == 0) pos = 0;
     snp = mtr.pos;

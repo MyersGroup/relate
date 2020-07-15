@@ -166,6 +166,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
   for(int e = 0; e < num_epochs; e++){
     coalescent_rate_data[e].ReadFromFile(fp);
     if(coalescent_rate_data[e].size() != N || coalescent_rate_data[e].subVectorSize(0) != N){
+			std::cerr << N << " " << coalescent_rate_data[e].size() << std::endl;
       std::cerr << "Error: number of haplotypes in anc/mut does not match number of samples in .poplabels file" << std::endl;
       std::cerr << "You can just rerun this step using:" << std::endl;
       std::cerr << "PATH_TO_RELATE/bin/RelateCoalescentRate --mode FinalizePopulationSize -o example --poplabels example.poplabels" << std::endl;

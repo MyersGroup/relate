@@ -134,9 +134,11 @@ gtag('config', 'UA-115753061-1');
                         <li>Second individual ID</li>
                         <li>Missing data proportion</li>
                       </ol>
+											<b>Diploid organisms:</b>
                       <pre><code>ID_1 ID_2 missing<br/>0    0    0<br/>UNR1 UNR1 0<br/>UNR2 UNR2 0<br/>UNR3 UNR3 0<br/>UNR4 UNR4 0<br/></code></pre>
+											<b>Haploid organisms:</b>
+											<pre><code>ID_1 ID_2 missing<br/>0    0    0<br/>UNR1 NA 0<br/>UNR2 NA 0<br/>UNR3 NA 0<br/>UNR4 NA 0<br/></code></pre>
 											This file is space delimited.<br/>
-											For haploid organisms, set ID_2 to NA and provide an ID for every sample.
                     </td>
                   </tr>
                 </tbody>
@@ -177,10 +179,13 @@ gtag('config', 'UA-115753061-1');
                         <li>Group label [string]</li>
                         <li>Sex [integer]</li>
                       </ol>
+											<b>Diploid organisms:</b>
                       <pre><code>sample population group sex<br/>UNR1 PJB SAS NA<br/>UNR2 JPT EAS NA<br/>UNR3 GBR EUR NA<br/>UNR4 YRI AFR NA</code></pre>
+											<b>Haploid organisms:</b>
+											<pre><code>sample population group sex<br/>UNR1 PJB SAS 1<br/>UNR2 JPT EAS 1<br/>UNR3 GBR EUR 1<br/>UNR4 YRI AFR 1</code></pre>
+											For haploid organisms (or haplotype level annotation in diploid organisms) set the SEX column to 1.<br/>
                       This file is space delimited.<br>
 											<b>Samples must be listed in the same order as in the .sample file above.</b><br/>
-											For haploid organisms (or haplotype level annotation in diploid organisms) set the SEX column to 1.
                     </td>
                   </tr>
                 </tbody>

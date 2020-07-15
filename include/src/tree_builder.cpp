@@ -1764,7 +1764,7 @@ InferBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, con
 
       //Either switch order of coalescent event or extent time while k ancestors 
       uniform_rng = dist_unif(rng);
-      if(uniform_rng < 0.8){
+      if(uniform_rng < 0.6){
         SwitchOrder(tree, dist_switch(rng), dist_unif);
         UpdateAvg(tree);
       }else{ 
@@ -1902,7 +1902,7 @@ InferBranchLengths::MCMCVariablePopulationSizeForRelate(const Data& data, Tree& 
 
     //Either switch order of coalescent event or extent time while k ancestors 
     uniform_rng = dist_unif(rng);
-    if(uniform_rng < 0.5){
+    if(uniform_rng < 0.6){
       SwitchOrder(tree, dist_switch(rng), dist_unif);
     }else{
       //ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
@@ -2093,7 +2093,7 @@ InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tre
 
     //Either switch order of coalescent event or extent time while k ancestors 
     uniform_rng = dist_unif(rng);
-    if(uniform_rng < 0.8){
+    if(uniform_rng < 0.6){
       SwitchOrder(tree, dist_switch(rng), dist_unif);
     }else{ 
       ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);

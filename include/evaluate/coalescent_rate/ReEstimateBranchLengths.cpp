@@ -786,7 +786,10 @@ int SampleBranchLengths(cxxopts::Options& options){
         }
         (*it_anc).tree.GetCoordinates(coordinates);
       }
-      if((*it_mut).tree != num_tree) std::cerr << (*it_mut).tree << " " << num_tree << std::endl;
+      if((*it_mut).tree != num_tree){
+        std::cerr << (*it_mut).tree << " " << num_tree << std::endl;
+        exit(1);
+      }
       if((*it_mut).branch.size() == 1){
         int branch = *(*it_mut).branch.begin();
         (*it_mut).age_begin = data.Ne*coordinates[branch];

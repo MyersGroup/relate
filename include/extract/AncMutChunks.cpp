@@ -113,14 +113,14 @@ DivideAncMut(cxxopts::Options& options){
     ogzstream os(options["output"].as<std::string>() + "_chr" + std::to_string(i) + ".anc.gz");
     ogzstream os_mut(options["output"].as<std::string>() + "_chr" + std::to_string(i) + ".mut.gz");
 
-    os << "NUM_HAPLOTYPES " << data.N << "\n";
-    os << "NUM_TREES " << num_trees_per_chunk << " ";
+    os << "NUM_HAPLOTYPES " << data.N << " ";
     if(sample_ages.size() > 0){
       for(std::vector<double>::iterator it_sample_ages = sample_ages.begin(); it_sample_ages != sample_ages.end(); it_sample_ages++){
         os << *it_sample_ages << " ";
       }
     }
     os << "\n";
+    os << "NUM_TREES " << num_trees_per_chunk << "\n";
     os_mut << header << "\n";
 
     //std::cerr << snp << " " << tree_index << " " << i << std::endl;
@@ -152,14 +152,14 @@ DivideAncMut(cxxopts::Options& options){
   ogzstream os(options["output"].as<std::string>() + "_chr" + std::to_string(i) + ".anc.gz");
   ogzstream os_mut(options["output"].as<std::string>() + "_chr" + std::to_string(i) + ".mut.gz");
 
-  os << "NUM_HAPLOTYPES " << data.N << "\n";
-  os << "NUM_TREES " << num_trees << " ";
+  os << "NUM_HAPLOTYPES " << data.N << " ";
   if(sample_ages.size() > 0){
     for(std::vector<double>::iterator it_sample_ages = sample_ages.begin(); it_sample_ages != sample_ages.end(); it_sample_ages++){
       os << *it_sample_ages << " ";
     }
   }
   os << "\n";
+  os << "NUM_TREES " << num_trees << "\n";
   os_mut << header << "\n";
 
 
@@ -250,9 +250,6 @@ CombineAncMut(cxxopts::Options& options){
   ogzstream os(options["output"].as<std::string>() + ".anc.gz");
   ogzstream os_mut(options["output"].as<std::string>() + ".mut.gz");
 
-  os << "NUM_HAPLOTYPES " << data.N << "\n";
-  os << "NUM_TREES " << num_trees << "\n";
-
   for(int i = 0; i < num_chunks; i++){
     bool is_gzipped = false;
     igzstream is(options["output"].as<std::string>() + "_chr" + std::to_string(i) + ".anc");
@@ -264,8 +261,15 @@ CombineAncMut(cxxopts::Options& options){
       std::cerr << "Error opening .anc file" << std::endl;
       exit(1);
     }
-    assert(getline(is,line));
-    assert(getline(is,line));
+    if(i == 0){
+      assert(getline(is,line));
+      os << line << "\n";
+      assert(getline(is,line));
+      os << "NUM_TREES " << num_trees << "\n";
+    }else{
+      assert(getline(is,line));
+      assert(getline(is,line));
+    }
     while(getline(is, line)){
       os << line << "\n";
     }

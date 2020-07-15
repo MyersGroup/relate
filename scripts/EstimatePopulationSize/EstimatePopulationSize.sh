@@ -416,7 +416,7 @@ then
 
     if [ ! -z "${chr-}" ];
     then
-      chromosomes=$(cat "chr.txt") 
+      chromosomes=$(cat ${chr}) 
     else
       chromosomes=`seq ${first_chr} 1 ${last_chr}`
     fi
@@ -980,7 +980,7 @@ else
 
     if [ ! -z "${chr-}" ];
     then
-      chromosomes=$(cat "chr.txt") 
+      chromosomes=$(cat ${chr}) 
     else
       chromosomes=`seq ${first_chr} 1 ${last_chr}`
     fi

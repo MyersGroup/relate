@@ -2399,38 +2399,11 @@ EstimateBranchLengthsWithSampleAge::InitializeBranchLengths(Tree& tree){
 }
 
 void
-EstimateBranchLengthsWithSampleAge::InitializeMCMC(const Data& data, Tree& tree){
-
-  mut_rate.resize(N_total);
-  for(int i = 0; i < N_total; i++){
-    int snp_begin = tree.nodes[i].SNP_begin;
-    int snp_end   = tree.nodes[i].SNP_end;
-
-    assert(snp_end < data.pos.size());
-    //if(snp_end >= data.pos.size()) snp_end = data.pos.size()-1;
-    mut_rate[i]            = 0.0;
-    for(int snp = snp_begin; snp < snp_end; snp++){
-      mut_rate[i]         += data.pos[snp];
-    }
-
-    if(snp_begin > 0){
-      snp_begin--;
-      mut_rate[i]         += 0.5 * data.pos[snp_begin];
-    }
-    if(snp_end < data.L-1){
-      mut_rate[i]         += 0.5 * data.pos[snp_end];
-    }
-
-    mut_rate[i]           *= data.Ne * data.mu;
-    //mut_rate[i]     = 0.0;
-  }
+EstimateBranchLengthsWithSampleAge::InitializeOrder(Tree& tree){
 
   //initialize
   //1. sort coordinate vector to obtain sorted_indices
   //2. sort sorted_indices to obtain order
-
-  order.resize(N_total);
-  sorted_indices.resize(N_total);
 
   //strategy:
   //assign pseudo coordinates to nodes, by giving them a lower bound on age + epsilon
@@ -2447,19 +2420,7 @@ EstimateBranchLengthsWithSampleAge::InitializeMCMC(const Data& data, Tree& tree)
         pseudo_coords[k2] = pseudo_coords[k1] + epsilon;
       }
     }
-  }
-
-  /*
-     for(int i = 0; i < N; i++){
-     int k = i;
-     std::cerr << pseudo_coords[i] << " ";
-     while(k < root){
-     k = (*tree.nodes[k].parent).label;
-     std::cerr << pseudo_coords[k] << " ";
-     }
-     std::cerr << std::endl;
-     }
-     */
+  } 
 
   std::size_t m1(0);
   std::generate(std::begin(sorted_indices), std::end(sorted_indices), [&]{ return m1++; });
@@ -2500,22 +2461,47 @@ EstimateBranchLengthsWithSampleAge::InitializeMCMC(const Data& data, Tree& tree)
   order_new          = order;
   num_lineages_new   = num_lineages;
 
-  /*
-     for(int i = 0; i < N; i++){
-     std::cerr << sample_age[sorted_indices[i]] << " ";
-     }
-     std::cerr << std::endl; 
-     for(int i = 0; i < N_total; i++){
-     std::cerr << num_lineages[sorted_indices[i]] << " ";
-     }
-     std::cerr << std::endl;
-     */ 
-
   //debug
   for(int i = 0; i < N_total-1; i++){
     assert(order[sorted_indices[i]] == i);
     assert(order[i] < order[(*tree.nodes[i].parent).label]);
   }
+
+}
+
+void
+EstimateBranchLengthsWithSampleAge::InitializeMCMC(const Data& data, Tree& tree){
+
+  mut_rate.resize(N_total);
+  for(int i = 0; i < N_total; i++){
+    int snp_begin = tree.nodes[i].SNP_begin;
+    int snp_end   = tree.nodes[i].SNP_end;
+
+    assert(snp_end < data.pos.size());
+    //if(snp_end >= data.pos.size()) snp_end = data.pos.size()-1;
+    mut_rate[i]            = 0.0;
+    for(int snp = snp_begin; snp < snp_end; snp++){
+      mut_rate[i]         += data.pos[snp];
+    }
+
+    if(snp_begin > 0){
+      snp_begin--;
+      mut_rate[i]         += 0.5 * data.pos[snp_begin];
+    }
+    if(snp_end < data.L-1){
+      mut_rate[i]         += 0.5 * data.pos[snp_end];
+    }
+
+    mut_rate[i]           *= data.Ne * data.mu;
+    //mut_rate[i]     = 0.0;
+  }
+
+  //initialize
+  //1. sort coordinate vector to obtain sorted_indices
+  //2. sort sorted_indices to obtain order
+
+  order.resize(N_total);
+  sorted_indices.resize(N_total);
 
 }
 
@@ -2825,27 +2811,27 @@ EstimateBranchLengthsWithSampleAge::SwitchOrder(Tree& tree, int node_k, std::uni
 
             //calculate new branch lengths
             tree.nodes[node_k].branch_length                 = coordinates[(*tree.nodes[node_k].parent).label]  - coordinates[node_k];
-						if(tree.nodes[node_k].branch_length < 0.0) tree.nodes[node_k].branch_length = 0.0;
+            if(tree.nodes[node_k].branch_length < 0.0) tree.nodes[node_k].branch_length = 0.0;
             assert(tree.nodes[node_k].branch_length >= 0.0); 
             child_left_label                                 = (*tree.nodes[node_k].child_left).label;
             tree.nodes[child_left_label].branch_length       = coordinates[node_k] - coordinates[child_left_label];
-						if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
+            if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
             assert(tree.nodes[child_left_label].branch_length >= 0.0);
             child_right_label                                = (*tree.nodes[node_k].child_right).label;
             tree.nodes[child_right_label].branch_length      = coordinates[node_k] - coordinates[child_right_label];
-						if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
+            if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
             assert(tree.nodes[child_right_label].branch_length >= 0.0);
 
             tree.nodes[node_swap_k].branch_length            = coordinates[(*tree.nodes[node_swap_k].parent).label]  - coordinates[node_swap_k];
-						if(tree.nodes[node_k].branch_length < 0.0) tree.nodes[node_k].branch_length = 0.0;
+            if(tree.nodes[node_k].branch_length < 0.0) tree.nodes[node_k].branch_length = 0.0;
             assert(tree.nodes[node_swap_k].branch_length >= 0.0); 
             child_left_label                                 = (*tree.nodes[node_swap_k].child_left).label;
             tree.nodes[child_left_label].branch_length       = coordinates[node_swap_k] - coordinates[child_left_label];
-						if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
+            if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
             assert(tree.nodes[child_left_label].branch_length >= 0.0);
             child_right_label                                = (*tree.nodes[node_swap_k].child_right).label;
             tree.nodes[child_right_label].branch_length      = coordinates[node_swap_k] - coordinates[child_right_label];
-						if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
+            if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
             assert(tree.nodes[child_right_label].branch_length >= 0.0);
 
           }
@@ -3837,6 +3823,7 @@ EstimateBranchLengthsWithSampleAge::CalculatePrior(int k_start, int k_end, const
 
     if(ep < epoch.size() - 1){
 
+      if(!(p_coordinates[p_sorted_indices[k_tmp-1]] >= epoch[ep])) std::cerr << p_coordinates[p_sorted_indices[k_tmp-1]] << " " << epoch[ep] << std::endl;
       assert(p_coordinates[p_sorted_indices[k_tmp-1]] >= epoch[ep]);
       if(is_sample == true){
         tmp_tau = p_coordinates[p_sorted_indices[k_tmp]] - lower_coord;
@@ -4710,9 +4697,9 @@ EstimateBranchLengthsWithSampleAge::ChangeTimeWhilekAncestorsVP_new(Tree& tree, 
       for(it_sorted_indices = std::next(sorted_indices.begin(), k); it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
         if(*it_sorted_indices >= N){
           child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
-          tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
+          tree.nodes[child_left_label].branch_length       = std::max(0.0, coordinates[*it_sorted_indices] - coordinates[child_left_label]);
           child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
-          tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
+          tree.nodes[child_right_label].branch_length      = std::max(0.0, coordinates[*it_sorted_indices] - coordinates[child_right_label]);
           assert(tree.nodes[child_left_label].branch_length >= 0.0);
           assert(tree.nodes[child_right_label].branch_length >= 0.0);
         }
@@ -5026,8 +5013,11 @@ EstimateBranchLengthsWithSampleAge::GetCoordinates(Node& n, std::vector<double>&
     GetCoordinates(*n.child_left, coords);
     GetCoordinates(*n.child_right, coords);
 
-    coords[n.label] = coords[(*n.child_left).label] + (*n.child_left).branch_length;
+    assert((*n.child_left).branch_length >= 0.0);
+
+    coords[n.label] = std::max(coords[(*n.child_right).label] + (*n.child_right).branch_length, coords[(*n.child_left).label] + (*n.child_left).branch_length);
   }else{
+    assert(n.label < (coords.size() + 1)/2.0);
     coords[n.label] = sample_age[n.label];
   }
 
@@ -5056,6 +5046,7 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
   root = N_total - 1;
 
   InitializeMCMC(data, tree); //Initialize using coalescent prior 
+  InitializeOrder(tree); 
 
   //Randomly switch around order of coalescences
   for(int j = 0; j < (int) 10*data.N * data.N; j++){
@@ -5254,6 +5245,8 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSize(const Data& data,
   InitializeMCMC(data, tree); //Initialize using coalescent prior 
 
   if(0){
+
+    InitializeOrder(tree); 
     //Randomly switch around order of coalescences
     for(int j = 0; j < (int) data.N * data.N; j++){
       RandomSwitchOrder(tree, dist_n(rng), dist_unif);
@@ -5323,6 +5316,16 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSize(const Data& data,
         assert(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)]);
       }
 
+    }
+
+    sorted_indices_new = sorted_indices;
+    order_new          = order;
+    num_lineages_new   = num_lineages;
+
+    //debug
+    for(int i = 0; i < N_total-1; i++){
+      assert(order[sorted_indices[i]] == i);
+      assert(order[i] < order[(*tree.nodes[i].parent).label]);
     }
 
   }
@@ -5502,6 +5505,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
   root = N_total - 1;
 
   InitializeMCMC(data, tree); //Initialize using coalescent prior 
+  InitializeOrder(tree); 
 
   //Randomly switch around order of coalescences
   for(int j = 0; j < (int) 10*data.N * data.N; j++){
@@ -5691,7 +5695,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
 
   float p1 = std::min(10.0/data.N, 0.1), p2;
   p1 = 0.05;
-  p2 = 0.4;
+  p2 = 0.6;
 
   if(init == 1){
 
@@ -5699,9 +5703,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
     root = N_total - 1;
 
     InitializeMCMC(data, tree); 
-
     coordinates.resize(N_total);
-    GetCoordinates(tree.nodes[root], coordinates);
 
     //as a sanity check that branch lengths are consistent with sample_ages, calculate branch lengths to root + sample_age
     double dist_to_root, dist_to_root_0 = 0.0;
@@ -5721,6 +5723,8 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
       assert(dist_to_root - dist_to_root_0 < 1e-1);
     }
 
+    GetCoordinates(tree.nodes[root], coordinates);
+
     std::size_t m1(0);
     std::generate(std::begin(sorted_indices), std::end(sorted_indices), [&]{ return m1++; });
     std::sort(std::begin(sorted_indices), std::end(sorted_indices), [&](int i1, int i2) {
@@ -5733,7 +5737,6 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
     std::sort(std::begin(order), std::end(order), [&](int i1, int i2) { return sorted_indices[i1] < sorted_indices[i2]; } );
 
     ////////////////////////////////
-
     int num_lins = 0;
     double age = coordinates[*sorted_indices.begin()];
     std::vector<int>::iterator it_sorted_indices_start = sorted_indices.begin();
@@ -5757,6 +5760,16 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
 
     }
 
+    sorted_indices_new = sorted_indices;
+    order_new          = order;
+    num_lineages_new   = num_lineages;
+
+    //debug
+    for(int i = 0; i < N_total-1; i++){
+      //std::cerr << i << " " << (*tree.nodes[i].parent).label << " " << order[i]  << " " << order[(*tree.nodes[i].parent).label] << " " << coordinates[i] << " " << coordinates[(*tree.nodes[i].parent).label] << std::endl;
+      assert(order[sorted_indices[i]] == i);
+      assert(order[i] < order[(*tree.nodes[i].parent).label]);
+    }
   }
 
   ////////////////// Sample branch lengths /////////////////

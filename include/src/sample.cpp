@@ -34,7 +34,7 @@ Sample::Read(const std::string& filename){
 			if(i == line.size()) break;
 		}
 		i++;
-    
+   
 		if(ploidy != "NA"){
       if(ploidy == "1"){
 				diploid = false;
