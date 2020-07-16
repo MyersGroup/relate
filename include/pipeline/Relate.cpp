@@ -6,6 +6,7 @@
 #include "CombineSections.cpp"
 #include "Finalize.cpp"
 #include "Clean.cpp"
+#include "OptimizeParameters.cpp"
 
 #include "cxxopts.hpp"
 #include <string>
@@ -33,6 +34,8 @@ int main(int argc, char* argv[]){
     ("last_section", "Optional. Index of last section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("coal", "Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN.", cxxopts::value<std::string>()) 
     //("anc_allele_unknown", "Specify if ancestral allele is unknown.") 
+		("i,input", "Filename of input.", cxxopts::value<std::string>())
+		("painting", "Optional. Copying and transition parameters in chromosome painting algorithm. Format: theta,rho. Default: 0.025,1.", cxxopts::value<std::string>())
     ("seed", "Optional. Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
 
   options.parse(argc, argv);
@@ -278,12 +281,16 @@ int main(int argc, char* argv[]){
     std::cerr << "---------------------------------------------------------" << std::endl;
     std::cerr << "*********************************************************" << std::endl << std::endl;
 
-  }else{
+  }else if(!mode.compare("OptimizeParameters")){
+
+    OptimizeParameters(options);
+
+	}else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "All, Clean, MakeChunks, Paint, BuildTopology, FindEquivalentBranches, InferBranchLengths, CombineSections, Finalize." << std::endl;
+    std::cout << "All, Clean, MakeChunks, Paint, BuildTopology, FindEquivalentBranches, InferBranchLengths, CombineSections, Finalize, OptimizeParameters." << std::endl;
   
   }
 

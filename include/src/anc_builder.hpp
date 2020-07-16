@@ -115,6 +115,7 @@ class DistanceMeasure{
       section_endpos   = -1;
     }
 
+		void Assign(std::vector<CollapsedMatrix<float>>& itop, std::vector<std::vector<float>>& ilog, const int isection_startpos, const int isection_endpos, const int snp);
     void GetTopologyWithRepaint(const int snp); //call this function whenever data.pos[snp] does not lie within [section_startpos, section_endpos]
     void GetMatrix(const int snp);
 
@@ -164,7 +165,7 @@ class AncesTreeBuilder{
 
     void BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc, const int seed, const bool ancestral_state);
     void AssociateTrees(std::vector<AncesTree>& v_anc, const std::string& dirname = "./");
-    //std::pair<int, int> OptimizeParameters(const int section_startpos, const int section_endpos, Data& data);
+		int OptimizeParameters(const int section, const int section_startpos, const int section_endpos, Data& data, const int seed);
 
     void PreCalcPotentialBranches();
     void BranchAssociation(Tree& ref_tree, Tree& tree, std::vector<int>& equivalent_branches);

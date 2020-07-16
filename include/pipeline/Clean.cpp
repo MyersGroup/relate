@@ -1,4 +1,6 @@
 //Finalizing
+#ifndef CLEAN
+#define CLEAN
 
 #include <iomanip>
 #include <sys/time.h>
@@ -76,10 +78,10 @@ int Clean(cxxopts::Options& options){
         //check if directory exists
         if( stat( (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/").c_str(), &info ) == 0 ){
           //paint/ exists so delete it.  
-          char painting_filename[32];
+          char painting_filename[1024];
           for(int w = 0; w < num_windows; w++){
-            snprintf(painting_filename, sizeof(char) * 32, "%s_%i.bin", (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate").c_str(), w);
-            std::remove(painting_filename);
+						snprintf(painting_filename, sizeof(char) * 1024, "%s_%i.bin", (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate").c_str(), w);
+						std::remove(painting_filename);
           }
         }
 
@@ -132,3 +134,5 @@ int Clean(cxxopts::Options& options){
   return 0;
 
 }
+
+#endif //CLEAN

@@ -156,7 +156,7 @@ system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --
 
 # plot tree
 p1 <- TreeView(filename_plot, years_per_gen, lwd = tree_lwd) + 
-      AddMutations(filename_plot, years_per_gen, size = mut_size) + scale_y_continuous(trans = "log10") 
+      AddMutations(filename_plot, years_per_gen, size = mut_size) #+ scale_y_continuous(trans = "log10") 
       
 # some modifications to theme
 p1 <- p1 + theme(axis.text.y = element_text(size = rel(2.3)), 

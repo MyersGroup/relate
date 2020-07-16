@@ -1,4 +1,6 @@
 //All against all painting.
+#ifndef PAINTING
+#define PAINTING
 
 #include <iostream>
 #include <sys/time.h>
@@ -31,24 +33,30 @@ int Paint(cxxopts::Options& options, int chunk_index){
   Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str()); //struct data is defined in data.hpp 
   data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
 
-  /*
-  int L = 10;
-  int N = 10;  
-  for(int i = 0; i < L; i++){
-    for(int j = 0; j < N; j++){
-      std::cerr << data.sequence[i][j] << " ";
-    }
-    std::cerr << std::endl;
-  }
-  for(int i = 0; i < L; i++){
-    std::cerr << data.pos[i] << " " << data.rpos[i] << " " << data.r[i] << std::endl;
-  }
+  if(options.count("painting")){
 
-  std::cerr << data.sequence.size() << " " << data.sequence.subVectorSize(0) << std::endl;
-  std::cerr << data.pos.size() << std::endl;
-  std::cerr << data.rpos.size() << std::endl;
-  std::cerr << data.r.size() << std::endl;
-  */
+	  std::string val;
+		std::string painting = options["painting"].as<std::string>();
+		int i = 0;
+		for(;i < painting.size(); i++){
+      if(painting[i] == ',') break;
+			val += painting[i];
+		}
+		data.theta = std::stof(val);
+		data.ntheta = 1.0 - data.theta;
+
+		i++;
+		val.clear();
+		for(;i < painting.size(); i++){
+			if(painting[i] == ',') break;
+			val += painting[i];
+		}
+    double rho = std::stof(val);
+		for(int l = 0; l < (int)data.r.size(); l++){
+			data.r[l] *= rho;
+		}
+
+	}
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Painting sequences..." << std::endl;
@@ -94,3 +102,5 @@ int Paint(cxxopts::Options& options, int chunk_index){
 
   return 0;
 }
+
+#endif //PAINTING

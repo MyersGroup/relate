@@ -43,8 +43,50 @@ Correlation::Pearson(const Leaves& set1, const Leaves& set2){
 //////////////////////// DistanceMeasure //////////////////
 
 void 
-DistanceMeasure::GetTopologyWithRepaint(const int snp){
+DistanceMeasure::Assign(std::vector<CollapsedMatrix<float>>& itop, std::vector<std::vector<float>>& ilog, const int isection_startpos, const int isection_endpos, const int snp){
 
+	CollapsedMatrix<float> alpha_begin, beta_end;
+	float logscale_alpha, logscale_beta;
+	int boundarySNP_begin, boundarySNP_end;
+
+	section_startpos = isection_startpos;
+	section_endpos   = isection_endpos;
+	topology  = &itop; 
+	logscales = &ilog;
+
+	//Reset v_snp_prev. I need to know which derivedSNP 'snp' is.
+	//Iterate backwards until I get to section_startpos. 
+	//I am always including one SNP prior to section_startpos, so the number of derived SNPs to section startpos gives me the previous derived SNP.
+	//This is because when accessing matrices, it is 0 based.
+	std::fill(v_snp_prev.begin(), v_snp_prev.end(), 0);
+	if(snp > 0){
+		int tsnp = snp;
+		while(tsnp >= section_startpos){
+			for(int n = 0; n < N; n++){
+				if((*data).sequence[tsnp][n] == '1'){
+					v_snp_prev[n]++;
+					assert(v_snp_prev[n] < (int)top[n].size());
+				}
+			}
+			tsnp--;
+		} 
+	}
+
+	//get v_rpos_prev[n] to the last snp with derived mutation
+	for(int n = 0; n < N; n++){
+		int tsnp = snp;
+		while((*data).sequence[tsnp][n] != '1' && tsnp > 0) tsnp--;  //tsnp > 0 is correct, because I want the previous SNP before section_startpos if there is no derived mutation after that
+		v_rpos_prev[n] = (*data).rpos[tsnp];
+		v_rpos_next[n] = v_rpos_prev[n];
+	}
+	assert(section_startpos <= snp);
+	assert(section_endpos >= snp);
+	section++;
+
+}
+
+void 
+DistanceMeasure::GetTopologyWithRepaint(const int snp){
 
   CollapsedMatrix<float> alpha_begin, beta_end;
   float logscale_alpha, logscale_beta;
@@ -202,7 +244,6 @@ DistanceMeasure::GetMatrix(const int snp){
   }
   */
   
-
 }
 
 
@@ -211,7 +252,8 @@ DistanceMeasure::GetMatrix(const int snp){
 //////////// Constructor
 
 AncesTreeBuilder::AncesTreeBuilder(Data& data){
-  N       = data.N;
+
+	N       = data.N;
   N_total = 2*N-1;
   root    = N_total - 1;
   L       = data.L;
@@ -540,54 +582,24 @@ AncesTreeBuilder::AssociateTrees(std::vector<AncesTree>& v_anc, const std::strin
 
 }
 
-/*
-std::pair<int, int>
-AncesTreeBuilder::OptimizeParameters(const int section_startpos, const int section_endpos, Data& data){
-
-  int window_length = 400;
+int
+AncesTreeBuilder::OptimizeParameters(const int section, const int section_startpos, const int section_endpos, Data& data, const int seed){
 
   int num_nonmapping_snps = 0;
   int num_nonmapping_rare_snps = 0;
+ 
+	/////////////////////////////////////////////
+	//Tree Building
+	//input:  Data and distance matrix
+	//output: AncesTree (tree sequence) 
 
-  //Paint
-  DistanceMeasure d(data); //this will calculate the distance measure.
+	rng.seed(seed);  
+	std::uniform_real_distribution<double> dist_unif(0,1);
 
-  std::vector<CollapsedMatrix<float>> topology;
-  std::vector<std::vector<float>> logscales;
-  CollapsedMatrix<float> alpha_begin, beta_end;
+	DistanceMeasure d(data, section); //this will calculate the distance measure. Needed because we only painted derived sites, so need to recover d by averaging entries of topology
 
-  topology.resize(data.N);
-  logscales.resize(data.N);
-  alpha_begin.resize(1,data.N);
-  beta_end.resize(1,data.N);
-  float logscale_alpha = 0.0, logscale_beta = 0.0;
-  int boundarySNP_begin = section_startpos, boundarySNP_end = section_endpos;
-
-  // populate variables that are independent of k 
-  float prior_theta  = data.theta/(data.N-1.0) - data.ntheta/(data.N-1.0);
-  float prior_ntheta = data.ntheta/(data.N-1.0);
-  int derived;
-  std::fill(beta_end.vbegin(), beta_end.vend(), 1.0);
-
-  // paint
-  FastPainting painter(data);
-  float rescale = fast_log(data.theta/(1.0-data.theta));
-
-  for(int k = 0; k < data.N; k++){
-    for(int n = 0; n < data.N; n++){
-      derived                   = (double) (data.sequence[0][k] > data.sequence[0][n]);
-      alpha_begin[0][n]         = derived * prior_theta + prior_ntheta;
-    }
-    painter.RePaintSection(data, topology[k], logscales[k], alpha_begin, beta_end, boundarySNP_begin, boundarySNP_end, logscale_alpha, logscale_beta, k);
-
-    float normalizing_constant = fast_log(N-1.0) - topology.size() * fast_log(data.ntheta); //topology.size() needs to be derived mutations of section
-    for(int l = 0; l < (int) logscales[k].size(); l++){
-      logscales[k][l] += normalizing_constant;
-    }
-
-  }
-  int snp = section_startpos + window_length;
-  d.AssignTopology(topology, logscales, section_startpos, section_endpos, snp);
+	//build tree topology for snp = section_startpos
+	d.GetMatrix(section_startpos); //calculate d
 
   /////////////////////////////////////////////
   //Tree Building
@@ -602,9 +614,10 @@ AncesTreeBuilder::OptimizeParameters(const int section_startpos, const int secti
 
   Tree tree;
   float min_value;
-  const float log_theta = log(data.theta), log_ntheta = log(data.ntheta);
+  const float log_theta = log(data.theta), log_ntheta = log(data.ntheta), log_ratio = log(data.theta/data.ntheta);
   float min;
 
+  int snp = section_startpos;
   sequences_carrying_mutation.num_leaves = 0; //this stores the number of nodes with a mutation at this snp.
   for(int i = 0; i < data.N; i++){
     if(data.sequence[snp][i] == '1'){
@@ -615,15 +628,15 @@ AncesTreeBuilder::OptimizeParameters(const int section_startpos, const int secti
     }
   }
 
-  if(sequences_carrying_mutation.num_leaves > 1){
+  if(sequences_carrying_mutation.num_leaves >= 0){
     d.GetMatrix(snp); //calculate d
     //modify distance matrix so that current SNP is cancelled
     for(int i = 0; i < data.N; i++){
       if(data.sequence[snp][i] == '1'){
         min = std::numeric_limits<float>::infinity();
         for(int j = 0; j < data.N; j++){
-          if(data.sequence[snp][j] == '0') d.matrix[i][j] += log_theta; //adding because d.matrix is multiplied by -1
-          if(data.sequence[snp][j] == '1') d.matrix[i][j] += log_ntheta;
+          if(data.sequence[snp][j] == '0') d.matrix[i][j] += log_ratio; //adding because d.matrix is multiplied by -1
+          //if(data.sequence[snp][j] == '1') d.matrix[i][j] += log_ntheta;
           if(min > d.matrix[i][j]) min = d.matrix[i][j];
           assert(d.matrix[i][j] < std::numeric_limits<float>::infinity());
         }
@@ -643,7 +656,7 @@ AncesTreeBuilder::OptimizeParameters(const int section_startpos, const int secti
 
   //build tree topology for snp > start_section
   snp++;
-  for(; snp <= section_startpos + 2*window_length; snp++){
+  for(; snp <= section_endpos; snp++){
 
     //Check if mutations on snp falls on current tree
     sequences_carrying_mutation.num_leaves = 0; //this stores the number of nodes with a mutation at this snp.
@@ -658,15 +671,29 @@ AncesTreeBuilder::OptimizeParameters(const int section_startpos, const int secti
       }
     }
 
-    if(sequences_carrying_mutation.num_leaves > 1){
+    if(sequences_carrying_mutation.num_leaves >= 0){
       d.GetMatrix(snp); //calculate d
+
+			/*
+			if(snp == 402){
+				std::cerr << log_ratio << std::endl << std::endl;
+				for(int i = 0; i < 10; i++){
+					for(int j = 0; j < 10; j++){
+						std::cerr << -d.matrix[i][j]/log_ratio << "\t";
+					}
+					std::cerr << std::endl;
+				}
+				std::cerr << std::endl << std::endl;
+			}
+			*/
+
       //modify distance matrix so that current SNP is cancelled
       for(int i = 0; i < data.N; i++){
         if(data.sequence[snp][i] == '1'){
           min = std::numeric_limits<float>::infinity();
           for(int j = 0; j < data.N; j++){
-            if(data.sequence[snp][j] == '0') d.matrix[i][j] += log_theta;
-            if(data.sequence[snp][j] == '1') d.matrix[i][j] += log_ntheta;
+            if(data.sequence[snp][j] == '0') d.matrix[i][j] += log_ratio;
+            //if(data.sequence[snp][j] == '1') d.matrix[i][j] += log_ntheta;
             if(min > d.matrix[i][j]) min = d.matrix[i][j];
             assert(d.matrix[i][j] < std::numeric_limits<float>::infinity());
           }
@@ -675,6 +702,24 @@ AncesTreeBuilder::OptimizeParameters(const int section_startpos, const int secti
           }
         }
       }
+
+			for(int i = 0; i < data.N; i++){
+			  for(int j = 0; j < data.N; j++){
+					d.matrix[i][j] = std::round(d.matrix[i][j]*10)/10;
+				}
+			}
+			
+			/*
+			if(snp == 402){
+				for(int i = 0; i < 10; i++){
+					for(int j = 0; j < 10; j++){
+						std::cerr << -d.matrix[i][j]/log_ratio << "\t";
+					}
+					std::cerr << std::endl;
+				}
+			}
+			*/
+	
       tb.QuickBuild(d.matrix, tree); //build tree topology and store in (*it_seq).tree
 
       if(MapMutation(tree, sequences_carrying_mutation, snp, min_value) > 1){
@@ -685,10 +730,10 @@ AncesTreeBuilder::OptimizeParameters(const int section_startpos, const int secti
 
   }
 
-  return std::make_pair(num_nonmapping_snps, num_nonmapping_rare_snps);
+  //return std::make_pair(num_nonmapping_snps, num_nonmapping_rare_snps);
+	return num_nonmapping_snps;
 
 }
-*/
 
 ////////////////////////////////
 //PRIVATE HELPER

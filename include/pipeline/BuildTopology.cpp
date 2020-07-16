@@ -35,6 +35,31 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
   if(first_section >= num_windows) return 1;
 
+	if(options.count("painting")){
+
+		std::string val;
+		std::string painting = options["painting"].as<std::string>();
+		int i = 0;
+		for(;i < painting.size(); i++){
+			if(painting[i] == ',') break;
+			val += painting[i];
+		}
+		data.theta = std::stof(val);
+		data.ntheta = 1.0 - data.theta;
+
+		i++;
+		val.clear();
+		for(;i < painting.size(); i++){
+			if(painting[i] == ',') break;
+			val += painting[i];
+		}
+		double rho = std::stof(val);
+		for(int l = 0; l < (int)data.r.size(); l++){
+			data.r[l] *= rho;
+		}
+
+	}
+
   int seed;
   if(!options.count("seed")){
     seed = std::time(0) + getpid();

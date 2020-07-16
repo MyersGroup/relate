@@ -1,4 +1,6 @@
 //Make overlapping chunks with fixed number of SNPs from data set
+#ifndef MAKE_CHUNKS
+#define MAKE_CHUNKS
 
 #include <iostream>
 #include <sys/time.h>
@@ -103,3 +105,4 @@ int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
 
 }
 
+#endif //MAKE_CHUNKS
