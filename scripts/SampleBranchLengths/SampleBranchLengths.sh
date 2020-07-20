@@ -179,7 +179,7 @@ then
 
   if [ ! -z "${dist-}" ]
   then
-    is_gzipped=$(file ${dist} | grep -c gzip)
+    is_gzipped=$(file ${dist} | grep -c gzip || true)
     if [ ${is_gzipped} -eq "0" ]
     then
       cp ${dist} ${output}.dist
@@ -200,7 +200,7 @@ then
         -m ${mu} \
         --coal ${coal} \
         --num_samples ${num_samples} \
-        -i ${output} \
+        -i ${outp2ut} \
         -o ${output} \
         --num_proposals ${num_proposals} \
         --dist ${output}.dist \

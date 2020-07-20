@@ -376,7 +376,6 @@ int SampleBranchLengths(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Sampling branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
 
-
   // read epochs and population size 
   igzstream is(options["coal"].as<std::string>()); 
   if(is.fail()){
@@ -814,6 +813,7 @@ int SampleBranchLengths(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
   return 0;
+
 }
 
 
@@ -916,8 +916,6 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 		is_L.close();
   }
 
-
-
   Data data(N, L, Ne, mutation_rate);
 
   Mutations mut(data);
@@ -926,6 +924,10 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   for(Muts::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
     if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false) num_mapping_SNPs++;
   }
+	if(num_mapping_SNPs == 0){
+    std::cerr << "Error: No SNPs are mapping to tree" << std::endl;
+		exit(1);
+	}
 
   data.pos.resize(L);
   std::vector<int> bp(L);
@@ -953,10 +955,8 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
     }
   }
 
-
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Sampling branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
-
 
   // read epochs and population size 
   igzstream is(options["coal"].as<std::string>()); 
@@ -1031,6 +1031,7 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   MarginalTree mtr; //stores marginal trees. mtr.pos is SNP position at which tree starts, mtr.tree stores the tree
   Muts::iterator it_mut; //iterator for mut file
   float num_bases_tree_persists = 0.0;
+  int root = 2*data.N - 2;
 
   AncMutIterators ancmut(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
   int num_trees = ancmut.NumTrees();
@@ -1109,17 +1110,21 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 
             int branch = *(*it_mut).branch.begin();
             int DAF    = leaves[branch].num_leaves;
-            std::vector<float> anctimes(num_samples*(data.N-DAF-1), 0.0);
-            std::vector<float> dertimes(num_samples*(DAF-1), 0.0);
+            std::vector<float> anctimes(num_samples*std::max(0,(data.N-DAF-1)), 0.0);
+            std::vector<float> dertimes(num_samples*std::max(0,(DAF-1)), 0.0);
             std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
 
             int count = 0;
             if(count < num_samples){
               //store anc and dertimes
               std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-              GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
-              assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
-              assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
+              if(branch != root){
+							  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+							}else{
+								GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
+							}
+							assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+              assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
               std::sort(it_anctimes_s, it_anctimes);
               std::sort(it_dertimes_s, it_dertimes);
             }
@@ -1127,9 +1132,13 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
             for(;count < num_samples; count++){
               //store anc and dertimes
               std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-              GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
-              assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
-              assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
+              if(branch != root){
+						  	GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+							}else{
+								GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
+							}
+              assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+              assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
               std::sort(it_anctimes_s, it_anctimes);
               std::sort(it_dertimes_s, it_dertimes);
             }
@@ -1157,8 +1166,8 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 						fwrite(&der_allele, sizeof(char), 1, fp);
             fwrite(&DAF, sizeof(int), 1, fp);
             fwrite(&data.N, sizeof(int), 1, fp);
-            fwrite(&anctimes[0], sizeof(float), num_samples*(data.N-DAF-1), fp);
-            fwrite(&dertimes[0], sizeof(float), num_samples*(DAF-1), fp);
+            fwrite(&anctimes[0], sizeof(float), num_samples*std::max(0,(data.N-DAF-1)), fp);
+            fwrite(&dertimes[0], sizeof(float), num_samples*std::max(0,(DAF-1)), fp);
 
             count_snps++;
           }
@@ -1220,15 +1229,19 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 
             int branch = *(*it_mut).branch.begin();
             int DAF    = leaves[branch].num_leaves;
-            std::vector<float> anctimes(num_samples*(data.N-DAF-1), 0.0);
-            std::vector<float> dertimes(num_samples*(DAF-1), 0.0);
+            std::vector<float> anctimes(num_samples*std::max(0,(data.N-DAF-1)), 0.0);
+            std::vector<float> dertimes(num_samples*std::max(0,(DAF-1)), 0.0);
             std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
 
             int count = 0;
             if(count < num_samples){
               //store anc and dertimes
               std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-              GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+              if(branch != root){
+						  	GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+							}else{
+								GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
+							}
               assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
               assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
               std::sort(it_anctimes_s, it_anctimes);
@@ -1238,9 +1251,13 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
             for(;count < num_samples; count++){
               //store anc and dertimes
               std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-              GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
-              assert(std::next(it_anctimes_s, data.N-DAF-1) == it_anctimes);
-              assert(std::next(it_dertimes_s, DAF-1) == it_dertimes);
+							if(branch != root){
+                GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+							}else{
+               GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);	
+							}
+              assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+              assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
               std::sort(it_anctimes_s, it_anctimes);
               std::sort(it_dertimes_s, it_dertimes);
             }
@@ -1267,8 +1284,8 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 						fwrite(&der_allele, sizeof(char), 1, fp);
             fwrite(&DAF, sizeof(int), 1, fp);
             fwrite(&data.N, sizeof(int), 1, fp);
-            fwrite(&anctimes[0], sizeof(float), num_samples*(data.N-DAF-1), fp);
-            fwrite(&dertimes[0], sizeof(float), num_samples*(DAF-1), fp);
+            fwrite(&anctimes[0], sizeof(float), num_samples*std::max(0,(data.N-DAF-1)), fp);
+            fwrite(&dertimes[0], sizeof(float), num_samples*std::max(0,(DAF-1)), fp);
 
             count_snps++;
           }

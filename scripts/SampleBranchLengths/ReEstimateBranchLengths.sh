@@ -162,7 +162,7 @@ then
 
 		if [ ! -z "${dist-}" ]
 		then
-			is_gzipped=$(file ${dist} | grep -c gzip)
+			is_gzipped=$(file ${dist} | grep -c gzip || true)
 			if [ ${is_gzipped} -eq "0" ]
 			then
 				cp ${dist} ${output}.dist
@@ -282,7 +282,7 @@ else
 
 		if [ ! -z "${dist-}" ]
 		then
-			is_gzipped=$(file ${dist} | grep -c gzip)
+			is_gzipped=$(file ${dist} | grep -c gzip || true)
 			if [ ${is_gzipped} -eq "0" ]
 			then
 				cp ${dist} ${output}.dist

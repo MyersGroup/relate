@@ -19,6 +19,8 @@ int main(int argc, char* argv[]){
     ("poplabels", "Filename of file containing population labels.", cxxopts::value<std::string>()) 
     ("anc", "Filename of file containing trees.", cxxopts::value<std::string>())
     ("mut", "Filename of file containing mut.", cxxopts::value<std::string>())
+		("haps", "Filename of haps file (Output file format of Shapeit).", cxxopts::value<std::string>())
+		("sample", "Filename of sample file (Output file format of Shapeit).", cxxopts::value<std::string>())
     ("pop_of_interest", "Population label. If not specified, use all haplotypes.", cxxopts::value<std::string>())
     ("bp_of_interest", "BP of position of interest.", cxxopts::value<int>())
     ("first_bp", "BP of first SNP of interest.", cxxopts::value<int>())
@@ -75,12 +77,17 @@ int main(int argc, char* argv[]){
 
 		ConvertNewickToTimeb(options);
 
-  }else{
+	}else if(!mode.compare("MapMutations")){
+
+		GetDistFromMut(options);
+		MapMutation(options);
+
+	}else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "AncToNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb." << std::endl;
+    std::cout << "AncToNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb, MapMutations." << std::endl;
   
   }
 

@@ -703,11 +703,13 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
         }
       }
 
+			/*
 			for(int i = 0; i < data.N; i++){
 			  for(int j = 0; j < data.N; j++){
 					d.matrix[i][j] = std::round(d.matrix[i][j]*10)/10;
 				}
 			}
+			*/
 			
 			/*
 			if(snp == 402){
@@ -896,10 +898,12 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
 
     if(branches.size() == 1 || force){
       mutations.info[snp].branch  = branches;
-      float weight = 1.0/((float) branches.size());
+      /*
+			float weight = 1.0/((float) branches.size());
       for(std::deque<int>::iterator it = branches.begin(); it != branches.end(); it++){
         tree.nodes[*it].num_events += weight;
       }
+			*/
     }
 
     return branches.size();
@@ -909,10 +913,12 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
     if( branches.size() <= branches_flipped.size() && branches.size() > 0 ){ 
       if(branches.size() == 1 || force){
         mutations.info[snp].branch  = branches;
-        float weight = 1.0/((float) branches.size());
+        /*
+				float weight = 1.0/((float) branches.size());
         for(std::deque<int>::iterator it = branches.begin(); it != branches.end(); it++){
           tree.nodes[*it].num_events += weight;
         }
+				*/
       }
 
       return branches.size();
@@ -920,10 +926,12 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
       if(branches_flipped.size() == 1 || force){
         mutations.info[snp].flipped = true;
         mutations.info[snp].branch  = branches_flipped;
+				/*
         float weight = 1.0/((float) branches_flipped.size());
         for(std::deque<int>::iterator it = branches_flipped.begin(); it != branches_flipped.end(); it++){
           tree.nodes[*it].num_events += weight;
         }
+				*/
       }
 
       return branches_flipped.size();
