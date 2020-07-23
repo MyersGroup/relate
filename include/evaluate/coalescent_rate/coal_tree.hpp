@@ -38,7 +38,7 @@ class coal_tree {
 		coal_tree(std::vector<double> epochs, int num_bootstrap, int block_size, AncMutIterators& ancmut);
 
     void update_ancmut(AncMutIterators& ancmut);
-		void populate(Tree& tree);
+		void populate(Tree& tree, double num_bases_tree_persists);
     void init_bootstrap();
 		void Dump(std::string filename);
 

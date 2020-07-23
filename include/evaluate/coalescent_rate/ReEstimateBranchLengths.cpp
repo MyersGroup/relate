@@ -922,7 +922,7 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   mut.Read(options["input"].as<std::string>() + ".mut");
   int num_mapping_SNPs = 0;
   for(Muts::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
-    if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false) num_mapping_SNPs++;
+    if((*it_mut).branch.size() == 1) num_mapping_SNPs++;
   }
 	if(num_mapping_SNPs == 0){
     std::cerr << "Error: No SNPs are mapping to tree" << std::endl;

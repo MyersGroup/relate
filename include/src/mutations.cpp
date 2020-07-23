@@ -611,6 +611,7 @@ AncMutIterators::NextTree(MarginalTree& mtr, Muts::iterator& it_mut){
     if(pit_mut != mut.info.begin()){
       assert((*std::prev(pit_mut,1)).dist >= 0.0);
       num_bases_tree_persists = (*std::prev(pit_mut,1)).dist/2.0;
+      //num_bases_tree_persists = 0.0;
     }else{
       num_bases_tree_persists = 0.0;
     }
@@ -625,6 +626,7 @@ AncMutIterators::NextTree(MarginalTree& mtr, Muts::iterator& it_mut){
     if(pit_mut != mut.info.end()){
       assert((*std::prev(pit_mut,1)).dist >= 0.0);
       num_bases_tree_persists -= (*std::prev(pit_mut,1)).dist/2.0;   
+      //num_bases_tree_persists -= (*std::prev(pit_mut,1)).dist;   
       assert(tree_index_in_mut < (*pit_mut).tree);
       tree_index_in_mut        = (*pit_mut).tree;
     }

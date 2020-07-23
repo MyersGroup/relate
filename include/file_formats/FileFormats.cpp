@@ -509,7 +509,7 @@ RemoveSamples(cxxopts::Options& options){
   bool help = false;
   if( !options.count("haps") || !options.count("sample") || !options.count("input") || !options.count("output") ){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: haps, sample, input, output. Optional: poplabels" << std::endl;
+    std::cout << "Needed: haps, sample, input, output. Optional: poplabels, flag (0: remove fixed mutations - default, 1: output all mutations)." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -520,6 +520,16 @@ RemoveSamples(cxxopts::Options& options){
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Removing samples specified in input.. " << std::endl;
+
+  bool remove_fixed = true;
+	if(options.count("flag")){
+		if((options["flag"].as<std::string>() != "0") && (options["flag"].as<std::string>() != "1")){
+      std::cerr << "Error: flag does not exist." << std::endl;
+			std::cerr << "Use --flag 0: remove fixed mutations - default, --flag 1: output all mutations." << std::endl;
+			exit(1);
+		}
+    remove_fixed = (options["flag"].as<std::string>() == "0");
+	}
 
   haps m_hap(options["haps"].as<std::string>().c_str(), options["sample"].as<std::string>().c_str());
   FILE* fp = fopen((options["output"].as<std::string>() + ".haps").c_str(), "w");
@@ -633,7 +643,7 @@ RemoveSamples(cxxopts::Options& options){
         num_carriers++;
       }
     }
-    if(num_carriers > 0 && num_carriers < remaining_haps.size()){
+    if(!remove_fixed || (num_carriers > 0 && num_carriers < remaining_haps.size())){
       m_hap.DumpSNP(sequence_new, bp, fp);
       L_new++;
     }

@@ -144,7 +144,7 @@ MapMutation(cxxopts::Options& options){
 
 	std::cerr << "---------------------------------------------------------" << std::endl;
 	std::cerr << "Mapping mutations to " << options["anc"].as<std::string>() << "..." << std::endl;
-
+  std::cerr << "Mutations mapping at already existing positions will be skipped." << std::endl;
 
 	haps mhaps(options["haps"].as<std::string>().c_str(), options["sample"].as<std::string>().c_str()); 
 	Data data(mhaps.GetN(), mhaps.GetL());
@@ -198,9 +198,7 @@ MapMutation(cxxopts::Options& options){
 		}
 
 		//map new SNP to tree
-		if(bp == (*it_mut).pos){
-			std::cerr << "Warning: skipping mutation " << bp << " because a mutation is already mapped to the tree at this position" << std::endl; 
-		}else{
+		if(bp != (*it_mut).pos && bp != mut.info[snp_mut].pos){
 
 			//map mutation onto tree
 			sequences_carrying_mutation.num_leaves = 0; //this stores the number of nodes with a mutation at this snp.

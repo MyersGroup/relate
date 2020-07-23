@@ -585,7 +585,7 @@ CoalescenceRateForTree(cxxopts::Options& options){
 				std::cerr << "[" << perc << "%]\r";
 			}
 			tree_count++;
-			ct.populate(mtr.tree);	
+			ct.populate(mtr.tree, num_bases_tree_persists);	
 			num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
 		}
 		std::cerr << "[100%]\r";

@@ -20,6 +20,7 @@ int main(int argc, char* argv[]){
     ("poplabels", "Filename of file containing population labels.", cxxopts::value<std::string>()) 
     ("chr", "Chromosome index", cxxopts::value<int>())
     ("mut", "Filename of .mut file", cxxopts::value<std::string>())
+		("flag", "Flag for different options in each mode", cxxopts::value<std::string>())
     ("i,input", "Filename of input.", cxxopts::value<std::string>())
     ("o,output", "Filename of output (excl file extension).", cxxopts::value<std::string>());
 

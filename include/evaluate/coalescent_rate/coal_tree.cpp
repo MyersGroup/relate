@@ -96,7 +96,7 @@ coal_tree::update_ancmut(AncMutIterators& ancmut){
 }
 
 void 
-coal_tree::populate(Tree& tree){
+coal_tree::populate(Tree& tree, double num_bases_tree_persists){
 
 	tree.GetCoordinates(coords);
 
@@ -143,12 +143,12 @@ coal_tree::populate(Tree& tree){
 	}
 	std::sort(coords.begin(), coords.end());
 
-	/*
+  /*
 	for(int i = 0; i < 2*N-1; i++){
 		std::cerr << i << " " << coords[i] << " " << num_lins[i] << std::endl;
 	}
 	std::cerr << std::endl;
-	*/
+  */
 
 	it2_num           = (*it1_num).begin();
 	it2_denom         = (*it1_denom).begin();
@@ -158,11 +158,12 @@ coal_tree::populate(Tree& tree){
 	it_sorted_indices = std::next(sorted_indices.begin(),1);
 	it_epochs         = std::next(epochs.begin(),1);
 	double current_lower_age = epochs[0];
+  //num_bases_tree_persists /= 1e3;
 	for(;it_epochs != epochs.end();){
 
 		while(*it_coords_next <= *it_epochs){
-			if(*it_sorted_indices >= N) (*it2_num)++;
-			*it2_denom += (*it_num_lins) * (*it_num_lins-1)/2.0 * (*it_coords_next - current_lower_age)/1e6;
+			if(*it_sorted_indices >= N) (*it2_num) += num_bases_tree_persists/1e9;
+			*it2_denom += num_bases_tree_persists * (*it_num_lins) * (*it_num_lins-1)/2.0 * (*it_coords_next - current_lower_age)/1e9;
 			current_lower_age = *it_coords_next;
 			it_num_lins++;
 			it_coords_next++;
@@ -170,7 +171,7 @@ coal_tree::populate(Tree& tree){
 			if(it_coords_next == coords.end()) break;
 		}
 		if(it_coords_next == coords.end()) break;
-		*it2_denom += (*it_num_lins) * (*it_num_lins-1)/2.0 * (*it_epochs - current_lower_age)/1e6;
+		*it2_denom += num_bases_tree_persists * (*it_num_lins) * (*it_num_lins-1)/2.0 * (*it_epochs - current_lower_age)/1e9;
 		current_lower_age = *it_epochs;
 		it_epochs++;
 		it2_num++;
@@ -298,6 +299,44 @@ coal_tree::Dump(std::string filename){
 		os << *it_epochs << " ";
 	}
 	os << "\n";
+
+  std::vector<double> coal_rates(num_boot[0].size(), 0);
+  double mean = 0.0;
+  int size = 0;
+  for(int i = 0; i < num_boot[0].size(); i++){
+    //denom_boot[0][i] *= 1e6;
+    //std::cerr << num_boot[0][i] << " " << denom_boot[0][i] << std::endl;
+    if(denom_boot[0][i] != 0){
+      coal_rates[i] = num_boot[0][i]/(denom_boot[0][i]);
+    }else if(i > 0){
+      coal_rates[i] = coal_rates[i-1];
+    }
+
+    if(denom_boot[0][i] != 0){
+      mean += coal_rates[i];
+      size++;
+    }
+  } 
+  mean /= size;
+
+  /*
+  double alpha = 1000.0;
+
+  int i = 0;
+  coal_rates[i]   = num_boot[0][i]/(denom_boot[0][i] - alpha * mean/(coal_rates[i]*coal_rates[i]) * tanh(mean/coal_rates[i+1] - mean/coal_rates[i]));
+  for(i = 1; i < num_boot[0].size()-1; i++){
+    coal_rates[i] = num_boot[0][i]/(denom_boot[0][i] - alpha * mean/(coal_rates[i]*coal_rates[i]) * tanh(mean/coal_rates[i-1] - mean/coal_rates[i]) - alpha * mean/(coal_rates[i]*coal_rates[i]) * tanh(mean/coal_rates[i+1] - mean/coal_rates[i]));
+  } 
+  coal_rates[i]   = num_boot[0][i]/(denom_boot[0][i] - alpha * mean/(coal_rates[i]*coal_rates[i]) * tanh(mean/coal_rates[i-1] - mean/coal_rates[i]));
+  */
+
+  os << "0 0 ";
+  for(int i = 0; i < num_boot[0].size(); i++){
+    os << coal_rates[i] << " ";
+  } 
+  os << "\n";
+
+  /*
 	it1_num_boot = num_boot.begin();
 	it1_denom_boot = denom_boot.begin();
 	int i = 0;
@@ -317,6 +356,7 @@ coal_tree::Dump(std::string filename){
 		it1_num_boot++;
 		it1_denom_boot++;
 	}
+  */
 	os.close();
 
 }
