@@ -40,7 +40,9 @@ class coal_tree {
     void update_ancmut(AncMutIterators& ancmut);
 		void populate(Tree& tree, double num_bases_tree_persists);
     void init_bootstrap();
-		void Dump(std::string filename);
+
+		void Dump(const std::string& filename);
+		void Dump(const std::string& filename, std::vector<double>& coal);
 
 };
 

@@ -70,19 +70,23 @@ class AncMutIterators{
     igzstream is;
     Muts::iterator pit_mut;
     Mutations mut;
+    std::vector<double>::iterator it_dist, it_pos; 
+    std::vector<double> dist, pos;
 
     int N, num_trees;
     int tree_index_in_anc, tree_index_in_mut;
     double num_bases_tree_persists;
-    std::string line, filename_anc, filename_mut;
+    std::string line, filename_anc, filename_mut, filename_dist;
 
   public:
 
     std::vector<double> sample_ages;
     AncMutIterators(){};
     AncMutIterators(const std::string& filename_anc, const std::string& filename_mut);
+    AncMutIterators(const std::string& filename_anc, const std::string& filename_mut, const std::string& filename_dist);
 
     void OpenFiles(const std::string& i_filename_anc, const std::string& i_filename_mut);
+    void OpenFiles(const std::string& i_filename_anc, const std::string& i_filename_mut, const std::string& i_filename_dist);
     void CloseFiles(){
       if(is.rdbuf() -> is_open()) is.close(); //close if stream is still open
     }
@@ -106,7 +110,7 @@ class AncMutIterators{
       return(tree_index_in_anc);
     }
 
-    double NextTree(MarginalTree& mtr, Muts::iterator& it_mut);
+    double NextTree(MarginalTree& mtr, Muts::iterator& it_mut, int mode = 0);
     double FirstSNP(MarginalTree& mtr, Muts::iterator& it_mut);
     double NextSNP(MarginalTree& mtr, Muts::iterator& it_mut);
 

@@ -194,6 +194,7 @@ MapMutation(cxxopts::Options& options){
 					mtr_prev.tree.GetCoordinates(coordinates);	
 				}
 				num_bases_tree_persists = ancmut.NextSNP(mtr, it_mut);
+				if(num_bases_tree_persists < 0.0) break;
 			}
 		}
 

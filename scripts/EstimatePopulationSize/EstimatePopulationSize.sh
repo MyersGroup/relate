@@ -270,6 +270,7 @@ then
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode CoalRateForTree \
         --years_per_gen ${years_per_gen} \
+        --dist ${output}.dist \
         -i ${output} \
         -o ${output} 
 
@@ -287,6 +288,7 @@ then
         --mode CoalRateForTree \
         --years_per_gen ${years_per_gen} \
         --bins ${bins} \
+        --dist ${output}.dist \
         -i ${output} \
         -o ${output}
 
@@ -338,6 +340,8 @@ then
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
           --mode CoalRateForTree \
           --years_per_gen ${years_per_gen} \
+          --coal ${output}.coal \
+          --dist ${output}.dist \
           -i ${output} \
           -o ${output}
 
@@ -355,6 +359,8 @@ then
           --mode CoalRateForTree \
           --years_per_gen ${years_per_gen} \
           --bins ${bins} \
+          --coal ${output}.coal \
+          --dist ${output}.dist \
           -i ${output} \
           -o ${output}
 
@@ -367,6 +373,7 @@ then
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode EstimatePopulationSize \
         --years_per_gen ${years_per_gen} \
+        --dist ${output}.dist \
         -i ${output} \
         -o ${output}.pairwise
     else
@@ -374,6 +381,7 @@ then
         --mode EstimatePopulationSize \
         --years_per_gen ${years_per_gen} \
         --bins ${bins} \
+        --dist ${output}.dist \
         -i ${output} \
         -o ${output}.pairwise
     fi
@@ -518,6 +526,7 @@ then
         --mode CoalRateForTree \
         --years_per_gen ${years_per_gen} \
         --chr ${filename_chr} \
+        --dist ${output} \
         -i ${output} \
         -o ${output} 
 
@@ -537,6 +546,7 @@ then
         --years_per_gen ${years_per_gen} \
         --bins ${bins} \
         --chr ${filename_chr} \
+        --dist ${output} \
         -i ${output} \
         -o ${output}
 
@@ -592,6 +602,8 @@ then
           --mode CoalRateForTree \
           --years_per_gen ${years_per_gen} \
           --chr ${filename_chr} \
+          --coal ${output}.coal \
+          --dist ${output} \
           -i ${output} \
           -o ${output} 
 
@@ -611,6 +623,8 @@ then
           --years_per_gen ${years_per_gen} \
           --bins ${bins} \
           --chr ${filename_chr} \
+          --coal ${output}.coal \
+          --dist ${output} \
           -i ${output} \
           -o ${output}
 
@@ -624,6 +638,7 @@ then
         --mode EstimatePopulationSize \
         --years_per_gen ${years_per_gen} \
         --chr ${filename_chr} \
+        --dist ${output} \
         -i ${output} \
         -o ${output}.pairwise
     else
@@ -632,6 +647,7 @@ then
         --years_per_gen ${years_per_gen} \
         --chr ${filename_chr} \
         --bins ${bins} \
+        --dist ${output} \
         -i ${output} \
         -o ${output}.pairwise
     fi
@@ -745,6 +761,7 @@ else
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode CoalRateForTree \
         --years_per_gen ${years_per_gen} \
+        --dist ${output}.dist \
         -i ${output} \
         -o ${output} 
 
@@ -762,6 +779,7 @@ else
         --mode CoalRateForTree \
         --years_per_gen ${years_per_gen} \
         --bins ${bins} \
+        --dist ${output}.dist \
         -i ${output} \
         -o ${output}
 
@@ -857,6 +875,8 @@ else
 			  ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 				  --mode CoalRateForTree \
 					--years_per_gen ${years_per_gen} \
+          --coal ${output}.coal \
+          --dist ${output}.dist \
 					-i ${output} \
 					-o ${output}
 
@@ -874,6 +894,8 @@ else
 					--mode CoalRateForTree \
 					--years_per_gen ${years_per_gen} \
 					--bins ${bins} \
+          --coal ${output}.coal \
+          --dist ${output}.dist \
 					-i ${output} \
 					-o ${output}
 
@@ -886,6 +908,7 @@ else
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode EstimatePopulationSize \
         --years_per_gen ${years_per_gen} \
+        --dist ${output}.dist \
         -i ${output} \
         -o ${output}.pairwise
     else
@@ -893,6 +916,7 @@ else
         --mode EstimatePopulationSize \
         --years_per_gen ${years_per_gen} \
         --bins ${bins} \
+        --dist ${output}.dist \
         -i ${output} \
         -o ${output}.pairwise
     fi
@@ -1107,6 +1131,7 @@ else
 					--mode CoalRateForTree \
 					--years_per_gen ${years_per_gen} \
           --chr ${filename_chr} \
+          --dist ${output} \
 					-i ${output} \
 					-o ${output}
 
@@ -1126,6 +1151,7 @@ else
 					--years_per_gen ${years_per_gen} \
           --bins ${bins} \
           --chr ${filename_chr} \
+          --dist ${output} \
 					-i ${output} \
 					-o ${output}
 
@@ -1226,6 +1252,8 @@ else
             --mode CoalRateForTree \
             --years_per_gen ${years_per_gen} \
             --chr ${filename_chr} \
+            --coal ${output}.coal \
+            --dist ${output} \
             -i ${output} \
 					  -o ${output}	
 
@@ -1244,7 +1272,9 @@ else
 						--mode CoalRateForTree \
 						--years_per_gen ${years_per_gen} \
 						--chr ${filename_chr} \
-						--bins ${bins} \
+			  		--bins ${bins} \
+            --coal ${output}.coal \
+            --dist ${output} \
 						-i ${output} \
 						-o ${output}
 
@@ -1260,6 +1290,7 @@ else
 					${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 						--mode CoalescentRateForSection \
 						--years_per_gen ${years_per_gen} \
+            --dist ${output}_chr${chr}.dist \
 						-i ${output}_chr${chr} \
 						-o ${output}.pairwise_chr${chr} 2> ${output}_chr${chr}.log  
 				else
@@ -1267,6 +1298,7 @@ else
 						--mode CoalescentRateForSection \
 						--years_per_gen ${years_per_gen} \
 						--bins ${bins} \
+            --dist ${output}_chr${chr}.dist \
 						-i ${output}_chr${chr} \
 						-o ${output}.pairwise_chr${chr} 2> ${output}_chr${chr}.log  
 				fi

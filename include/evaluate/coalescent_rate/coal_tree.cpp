@@ -228,7 +228,7 @@ coal_tree::init_bootstrap(){
 }
 
 void 
-coal_tree::Dump(std::string filename){
+coal_tree::Dump(const std::string& filename){
 
 	//populate num_boot and num_denom (vector of size num_bootstrap)
 	//using num, denom, blocks
@@ -360,3 +360,127 @@ coal_tree::Dump(std::string filename){
 	os.close();
 
 }
+
+void 
+coal_tree::Dump(const std::string& filename, std::vector<double>& coal){
+
+	//populate num_boot and num_denom (vector of size num_bootstrap)
+	//using num, denom, blocks
+
+  if(num_bootstrap == 1){
+    blocks.resize(num_bootstrap);
+    for(it1_blocks = blocks.begin(); it1_blocks != blocks.end(); it1_blocks++){
+      (*it1_blocks).resize(num_blocks);
+      for(it2_blocks = (*it1_blocks).begin(); it2_blocks != (*it1_blocks).end(); it2_blocks++){
+        *it2_blocks = 1;
+      } 
+    }
+  }else{
+    init_bootstrap();
+  } 
+	std::vector<std::vector<double>>::iterator it1_num_boot = num_boot.begin(), it1_denom_boot = denom_boot.begin();
+	std::vector<double>::iterator it2_num_boot, it2_denom_boot;
+	for(it1_blocks = blocks.begin(); it1_blocks != blocks.end(); it1_blocks++){
+
+		it2_num_boot   = (*it1_num_boot).begin();
+		it2_denom_boot = (*it1_denom_boot).begin();
+		for(;it2_num_boot != (*it1_num_boot).end();){
+			*it2_num_boot   = 0.0;
+			*it2_denom_boot = 0.0;
+			it2_num_boot++;
+			it2_denom_boot++;
+		}
+ 
+		it1_num   = num.begin();
+		it1_denom = denom.begin();
+		assert(num.size() == (*it1_blocks).size());
+		for(it2_blocks = (*it1_blocks).begin(); it2_blocks != (*it1_blocks).end(); it2_blocks++){
+
+			if(*it2_blocks > 0){
+
+				assert((*it1_num).size() == (*it1_num_boot).size());
+				it2_num        = (*it1_num).begin();
+				it2_denom      = (*it1_denom).begin();
+				it2_num_boot   = (*it1_num_boot).begin();
+				it2_denom_boot = (*it1_denom_boot).begin();
+				for(;it2_num != (*it1_num).end();){
+					//std::cerr << *it2_blocks << " " << *it2_num << " " << *it2_denom << std::endl;
+					*it2_num_boot   += *it2_blocks * *it2_num;
+					*it2_denom_boot += *it2_blocks * *it2_denom;
+					it2_num++;
+					it2_denom++;
+					it2_num_boot++;
+					it2_denom_boot++;
+				}
+
+			}
+			//std::cerr << "done" << std::endl;
+
+			it1_num++;
+			it1_denom++;
+		}
+
+		it1_num_boot++;
+		it1_denom_boot++;
+	}
+
+	std::ofstream os(filename);
+	for(int i = 0; i < num_bootstrap; i++){
+    os << i << " ";
+	}
+	os << "\n";
+	for(it_epochs = epochs.begin(); it_epochs != epochs.end(); it_epochs++){
+		os << *it_epochs << " ";
+	}
+	os << "\n";
+
+  double size = 0;
+  double mean = 0.0;
+  for(int i = 0; i < coal.size() - 1; i++){
+    if(!std::isnan(coal[i])){
+      mean += (epochs[i+1] - epochs[i]) * coal[i];
+      size += epochs[i+1] - epochs[i];
+    }
+  } 
+  mean /= size;
+
+  std::vector<double> coal_rates(num_boot[0].size(), 0); 
+  double alpha = 1e-5;
+  int i = 0;
+  coal_rates[i]   = num_boot[0][i]/(denom_boot[0][i] + alpha * mean/(coal[i]*coal[i]) * tanh(mean/coal[i+1] - mean/coal[i]));
+  for(i = 1; i < num_boot[0].size()-1; i++){
+    coal_rates[i] = num_boot[0][i]/(denom_boot[0][i] + alpha * mean/(coal[i]*coal[i]) * tanh(mean/coal[i-1] - mean/coal[i]) + alpha * mean/(coal[i]*coal[i]) * tanh(mean/coal[i+1] - mean/coal[i]));
+  } 
+  coal_rates[i]   = num_boot[0][i]/(denom_boot[0][i] + alpha * mean/(coal[i]*coal[i]) * tanh(mean/coal[i-1] - mean/coal[i]));
+
+  os << "0 0 ";
+  for(int i = 0; i < num_boot[0].size(); i++){
+    os << coal_rates[i] << " ";
+  } 
+  os << "\n";
+
+  /*
+	it1_num_boot = num_boot.begin();
+	it1_denom_boot = denom_boot.begin();
+	int i = 0;
+	for(; it1_num_boot != num_boot.end();){
+
+		os << "0 " << i << " ";
+		it2_num_boot = (*it1_num_boot).begin();
+		it2_denom_boot = (*it1_denom_boot).begin();
+		for(;it2_num_boot != (*it1_num_boot).end();){
+			os << *it2_num_boot/((*it2_denom_boot)*1e6) << " ";
+			it2_num_boot++;
+			it2_denom_boot++;
+		}
+		os << "\n";
+
+		i++;
+		it1_num_boot++;
+		it1_denom_boot++;
+	}
+  */
+	os.close();
+
+}
+

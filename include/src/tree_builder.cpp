@@ -1445,15 +1445,6 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
         if(coordinates[*it_sorted_indices] < coordinates[*std::prev(it_sorted_indices,1)]){
           coordinates[*it_sorted_indices] = coordinates[*std::prev(it_sorted_indices,1)]; 
         }
-        if(!(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)])){
-          std::cerr << *it_sorted_indices << " " << *std::next(sorted_indices.begin(), k) << std::endl;
-          std::cerr << coordinates[*it_sorted_indices] << " " << coordinates[*std::prev(it_sorted_indices,1)] << std::endl;
-          for(int i = 0; i < sorted_indices.size(); i++){
-            std::cerr << coordinates[sorted_indices[i]] << " ";
-          }
-          std::cerr << std::endl;
-          std::cerr << delta_tau << std::endl;
-        }
         assert(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)]);
         child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
         tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
