@@ -16,8 +16,8 @@ ln -s example_bypop.anc example_mapped.anc
 	--dist example_mapped.dist \
 	-m 1.25e-8 \
 	--num_samples 5 \
-	--first_bp 1000000 \
-	--last_bp 1000000 \
+	--first_bp 2811162 \
+	--last_bp 2811162 \
 	--format b \
 	--seed 1 \
 	--coal example_bypop.coal
