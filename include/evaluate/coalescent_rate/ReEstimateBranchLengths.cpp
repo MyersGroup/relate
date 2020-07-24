@@ -1078,7 +1078,7 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
       if(it_mut != ancmut.mut_end()){
         while((*it_mut).tree == count_trees){
 
-          if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false){
+          if((*it_mut).branch.size() == 1){
 
             if(count_snps % progress_interval == 0){
               progress += progress_step;
@@ -1197,7 +1197,7 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
       if(it_mut != ancmut.mut_end()){
         while((*it_mut).tree == count_trees){
 
-          if((*it_mut).branch.size() == 1 && (*it_mut).flipped == false){
+          if((*it_mut).branch.size() == 1){
 
             if(count_snps % progress_interval == 0){
               progress += progress_step;
