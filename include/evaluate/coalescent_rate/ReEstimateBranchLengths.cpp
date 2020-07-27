@@ -86,7 +86,6 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   }
 
   Data data(N, L, Ne, mutation_rate);
-
   Mutations mut(data);
   mut.Read(options["input"].as<std::string>() + ".mut");
 
@@ -264,8 +263,13 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     if((*it_mut).tree != num_tree) std::cerr << (*it_mut).tree << " " << num_tree << std::endl;
     if((*it_mut).branch.size() == 1){
       int branch = *(*it_mut).branch.begin();
-      (*it_mut).age_begin = coordinates[branch];
-      (*it_mut).age_end   = coordinates[(*(*it_anc).tree.nodes[branch].parent).label]; 
+			if(branch != root){
+        (*it_mut).age_begin = coordinates[branch];
+        (*it_mut).age_end   = coordinates[(*(*it_anc).tree.nodes[branch].parent).label]; 
+			}else{
+				(*it_mut).age_begin = coordinates[branch];
+				(*it_mut).age_end   = coordinates[branch];
+			}
     }
   }
   mut.Dump(options["output"].as<std::string>() + ".mut"); 
@@ -344,6 +348,8 @@ int SampleBranchLengths(cxxopts::Options& options){
   }
 
   Data data(N, L, Ne, mutation_rate);
+	int root = 2*N-2;
+
   Mutations mut(data);
   mut.Read(options["input"].as<std::string>() + ".mut");
   data.pos.resize(L);
@@ -791,8 +797,13 @@ int SampleBranchLengths(cxxopts::Options& options){
       }
       if((*it_mut).branch.size() == 1){
         int branch = *(*it_mut).branch.begin();
-        (*it_mut).age_begin = data.Ne*coordinates[branch];
-        (*it_mut).age_end   = data.Ne*coordinates[(*(*it_anc).tree.nodes[branch].parent).label]; 
+        if(branch != root){
+          (*it_mut).age_begin = data.Ne*coordinates[branch];
+          (*it_mut).age_end   = data.Ne*coordinates[(*(*it_anc).tree.nodes[branch].parent).label]; 
+				}else{
+					(*it_mut).age_begin = data.Ne*coordinates[branch];
+					(*it_mut).age_end   = data.Ne*coordinates[branch]; 
+				}
       }
     }
     mut.Dump(options["output"].as<std::string>() + ".mut"); 

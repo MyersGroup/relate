@@ -746,7 +746,21 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
 int 
 AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, std::uniform_real_distribution<double>& dist_unif, const int snp, float& min_value){
 
-  if(sequences_carrying_mutations.num_leaves == 0 || sequences_carrying_mutations.num_leaves == N) return 1;
+  if(sequences_carrying_mutations.num_leaves == N){
+    min_value = 0.0;
+		mutations.info[snp].branch.resize(1);
+		mutations.info[snp].flipped = false;
+		mutations.info[snp].branch[0] = 2*N-2;
+		tree.nodes[2*N-2].num_events += 1.0;
+		return 1;
+	}
+
+  if(sequences_carrying_mutations.num_leaves == 0){
+		min_value = 0.0;
+		mutations.info[snp].branch.resize(0);
+		mutations.info[snp].flipped = false;
+		return 1;
+	}
 
   //I want to place the mutation on all branches necessary for no loss of information
   //start with all leaves
@@ -814,64 +828,78 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
 int 
 AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, float& min_value){
 
-  if(sequences_carrying_mutations.num_leaves == 0 || sequences_carrying_mutations.num_leaves == N) return 1;
+	if(sequences_carrying_mutations.num_leaves == N){
+		min_value = 0.0;
+		mutations.info[snp].branch.resize(1);
+		mutations.info[snp].flipped = false;
+		mutations.info[snp].branch[0] = 2*N-2;
+		tree.nodes[2*N-2].num_events += 1.0;
+		return 1;
+	}
 
-  //I want to place the mutation on all branches necessary for no loss of information
-  //start with all leaves
-  //propagate up and count number of nodes needed.
-  //choose flipped or non-flipped depending on which is less.
+	if(sequences_carrying_mutations.num_leaves == 0){
+		min_value = 0.0;
+		mutations.info[snp].branch.resize(0);
+		mutations.info[snp].flipped = false;
+		return 1;
+	}
 
-  PropagateStructGlobal report;
-  PropagateMutationGlobal(tree.nodes[root], sequences_carrying_mutations, report);
- 
-  if(report.min == report.flipped_min && report.min <= thr){
-  
-    bool flag = true; //default flag
-    if(flag){// not flipped
-      min_value = report.min;
-      mutations.info[snp].branch.resize(1);
-      mutations.info[snp].branch[0] = report.best_branch; 
-      mutations.info[snp].flipped = false;
-      tree.nodes[report.best_branch].num_events += 1.0;
-      assert(mutations.info[snp].branch.size() == 1);
-      return 1;
-    }else{
-      min_value = report.flipped_min;
-      mutations.info[snp].branch.resize(1);
-      mutations.info[snp].branch[0] = report.best_flipped_branch;
-      mutations.info[snp].flipped = true;
-      tree.nodes[report.best_flipped_branch].num_events += 1.0;
-      assert(mutations.info[snp].branch.size() == 1);
-      return 2;
-    }
+	//I want to place the mutation on all branches necessary for no loss of information
+	//start with all leaves
+	//propagate up and count number of nodes needed.
+	//choose flipped or non-flipped depending on which is less.
 
-  }else if( report.min <= report.flipped_min ){
+	PropagateStructGlobal report;
+	PropagateMutationGlobal(tree.nodes[root], sequences_carrying_mutations, report);
 
-    min_value = report.min;
-    if( report.min <= thr ){
-      mutations.info[snp].branch.resize(1);
-      mutations.info[snp].branch[0] = report.best_branch; 
-      mutations.info[snp].flipped = false;
-      tree.nodes[report.best_branch].num_events += 1.0;
-      assert(mutations.info[snp].branch.size() == 1);
-      return 1;
-    }
-    return 3;
+	if(report.min == report.flipped_min && report.min <= thr){
 
-  }else{
+		bool flag = true; //default flag
+		if(flag){// not flipped
+			min_value = report.min;
+			mutations.info[snp].branch.resize(1);
+			mutations.info[snp].branch[0] = report.best_branch; 
+			mutations.info[snp].flipped = false;
+			tree.nodes[report.best_branch].num_events += 1.0;
+			assert(mutations.info[snp].branch.size() == 1);
+			return 1;
+		}else{
+			min_value = report.flipped_min;
+			mutations.info[snp].branch.resize(1);
+			mutations.info[snp].branch[0] = report.best_flipped_branch;
+			mutations.info[snp].flipped = true;
+			tree.nodes[report.best_flipped_branch].num_events += 1.0;
+			assert(mutations.info[snp].branch.size() == 1);
+			return 2;
+		}
 
-    min_value = report.flipped_min;
-    if( report.flipped_min <= thr ){
-      mutations.info[snp].branch.resize(1);
-      mutations.info[snp].branch[0] = report.best_flipped_branch;
-      mutations.info[snp].flipped = true;
-      tree.nodes[report.best_flipped_branch].num_events += 1.0;
-      assert(mutations.info[snp].branch.size() == 1);
-      return 2;
-    }
-    return 3;
+	}else if( report.min <= report.flipped_min ){
 
-  }
+		min_value = report.min;
+		if( report.min <= thr ){
+			mutations.info[snp].branch.resize(1);
+			mutations.info[snp].branch[0] = report.best_branch; 
+			mutations.info[snp].flipped = false;
+			tree.nodes[report.best_branch].num_events += 1.0;
+			assert(mutations.info[snp].branch.size() == 1);
+			return 1;
+		}
+		return 3;
+
+	}else{
+
+		min_value = report.flipped_min;
+		if( report.flipped_min <= thr ){
+			mutations.info[snp].branch.resize(1);
+			mutations.info[snp].branch[0] = report.best_flipped_branch;
+			mutations.info[snp].flipped = true;
+			tree.nodes[report.best_flipped_branch].num_events += 1.0;
+			assert(mutations.info[snp].branch.size() == 1);
+			return 2;
+		}
+		return 3;
+
+	}
 
 }
 
