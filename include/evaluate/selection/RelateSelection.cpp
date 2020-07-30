@@ -29,15 +29,16 @@ logFactorial(std::vector<float>& logF, int N){
 }
 
 void
-CopyCoordinates(int b, std::vector<float>& coordinates_mutation, const std::vector<float>& coordinates_unsrt, Tree& tr){
+CopyCoordinates(int b, std::vector<float>& coordinates_mutation, const std::vector<float>& coordinates_unsrt, Tree& tr, int& DAF){
   
   if( coordinates_unsrt[tr.nodes[b].label] != 0.0 ){
     if(tr.nodes[b].child_left != NULL){
       coordinates_mutation[b] = coordinates_unsrt[b];
-      CopyCoordinates((*tr.nodes[b].child_left).label, coordinates_mutation, coordinates_unsrt, tr);
-      CopyCoordinates((*tr.nodes[b].child_right).label, coordinates_mutation, coordinates_unsrt, tr);
+      CopyCoordinates((*tr.nodes[b].child_left).label, coordinates_mutation, coordinates_unsrt, tr, DAF);
+      CopyCoordinates((*tr.nodes[b].child_right).label, coordinates_mutation, coordinates_unsrt, tr, DAF);
     }
   }
+	if(tr.nodes[b].child_left == NULL) DAF++;
 
 }
 
@@ -229,7 +230,7 @@ Selection(cxxopts::Options& options){
     s_lin >> read;
     s_lin >> read;
 
-    int add_entries = 1;
+    int add_entries = 2;
 
     //read in k from s_lin and fk from s_freq
     if(logF.size() == 0){
@@ -267,9 +268,10 @@ Selection(cxxopts::Options& options){
     }
 
     if(fN > 2){
-      os << log_pvalue(num_lin[num_lin.size() - add_entries], 2.0, N, fN, logF) << "\n";
+			os << log_pvalue(num_lin[num_lin.size() - add_entries], (int)((fN+1.0)/2.0), N, fN, logF) << " ";
+      os << log_pvalue(num_lin[num_lin.size() - add_entries+1], 2.0, N, fN, logF) << "\n";
     }else{
-      os << "1\n";
+      os << "1 1\n";
     }
 
   }
@@ -293,7 +295,6 @@ Selection(cxxopts::Options& options){
   std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
 #endif
   std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
-
 
 }
 
@@ -475,11 +476,11 @@ Frequency(cxxopts::Options& options){
     os_lin << std::to_string(epochs[ep]) << " ";
   }
   //os_lin << "when_mutation_has_freq2 when_mutation_has_freq3 when_mutation_has_freq4 when_mutation_has_freq5 when_mutation_has_freq6 when_mutation_has_freq7\n";
-  os_lin << "when_mutation_has_freq2\n";
+  os_lin << "when_DAF_is_half when_mutation_has_freq2\n";
 
 
   //read tree
-  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+  num_bases_tree_persists = ancmut.FirstSNP(mtr, it_mut);
   mtr.tree.GetCoordinates(coordinates_tree);
   coordinates_tree_unsrt = coordinates_tree;
   std::sort(coordinates_tree.begin(), coordinates_tree.end());
@@ -524,10 +525,12 @@ Frequency(cxxopts::Options& options){
           os_freq << snp_info.pos << " " << snp_info.rs_id << " ";
           os_lin  << snp_info.pos << " " << snp_info.rs_id << " ";
 
+					int DAF = 0, DAF_half, num_lin_half = -1;
           std::fill(coordinates_mutation.begin(), coordinates_mutation.end(), 0.0);
           //get nodes below branch b
           //get coordinates from coordinates_tree_unsrt
-          CopyCoordinates(b, coordinates_mutation, coordinates_tree_unsrt, mtr.tree); //get coordinates of branches below mutation
+          CopyCoordinates(b, coordinates_mutation, coordinates_tree_unsrt, mtr.tree, DAF); //get coordinates of branches below mutation
+					DAF_half = (DAF+1)/2.0;
           coordinates_mutation[(*mtr.tree.nodes[b].parent).label] = coordinates_tree_unsrt[(*mtr.tree.nodes[b].parent).label]; //add to that list the coordinate of the parent of branch b
           std::sort(coordinates_mutation.begin(), coordinates_mutation.end()); //sort coordinates_mutation
 
@@ -550,6 +553,10 @@ Frequency(cxxopts::Options& options){
           //now coordinates_tree[n_tree] >= epoch[ep]
           do{
 
+						if(num_carriers == DAF_half && num_lin_half == -1){
+							num_lin_half = num_lineages;
+							//std::cerr << num_carriers << " " << num_lineages << " " << DAF << std::endl;
+						}
             assert(coordinates_tree[n_tree] >= coordinates_mutation[n_mut]);
 
             if(coordinates_tree[n_tree] > coordinates_mutation[n_mut]){ //if n_tree is not next node of a branch onto which mutation falls, increase num_lineages
@@ -650,12 +657,13 @@ Frequency(cxxopts::Options& options){
 
           assert(coordinates_mutation[n_mut] == 0.0);
           assert(num_lineages == data.N);
-          num_carriers++;
-          os_freq << num_carriers << " ";
+          num_carriers++; 
+					os_freq << num_carriers << " ";
           os_lin  << num_lineages << " ";
 
           os_freq << " " << num_carriers << " ";
           
+					assert(num_carriers == DAF);
           int carriers = 0;
           for(std::vector<int>::iterator it_freq = snp_info.freq.begin(); it_freq != snp_info.freq.end(); it_freq++){
             carriers += *it_freq;
@@ -663,6 +671,7 @@ Frequency(cxxopts::Options& options){
           os_freq << carriers << "\n";
 
           //os_lin  << k_when_mutation_has_freq2 << " " << k_when_mutation_has_freq3 << " " << k_when_mutation_has_freq4 << " " << k_when_mutation_has_freq5 << " " << k_when_mutation_has_freq6 << " " << k_when_mutation_has_freq7 << "\n";
+					os_lin  << num_lin_half << " ";
           os_lin  << k_when_mutation_has_freq2 << "\n";
         }
 
@@ -688,7 +697,6 @@ Frequency(cxxopts::Options& options){
   std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
 #endif
   std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
-
 
 }
 
