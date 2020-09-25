@@ -309,14 +309,16 @@ TEST_CASE( "Testing MCMC of branch lengths (2)" ){
   //first test that branch lengths are determined by prior if no information is given
 
   int N = 4;
-  int L = 1;
+  int L = 2;
   Data data(N,L); //struct data is defined in data.hpp
   data.theta = 0.025;
+  data.mu = 1e-8;
   data.pos.resize(L);
   data.rpos.resize(L);
   data.pos[0] = 0;
   data.rpos[0] = 0;
-
+  data.pos[1] = 1;
+  data.rpos[1] = 1;
 
   Tree tree;
   MinMatch tb(data);
@@ -351,8 +353,16 @@ TEST_CASE( "Testing MCMC of branch lengths (2)" ){
   tb.QuickBuild(d,tree);
   bl.MCMC(data,tree);
 
+  for(int i = 0; i < 2*N-1; i++){
+    tree.nodes[i].num_events = 1.0*data.mu*tree.nodes[i].branch_length;
+    tree.nodes[i].SNP_begin = 0;
+    tree.nodes[i].SNP_end   = 1;
+  }
+
+  bl.MCMC(data,tree);
+
   //for(int i = 0; i < 2*N-1; i++){
-  //  std::cerr << i << " " << tree.nodes[i].branch_length/data.Ne << std::endl;
+  //  std::cerr << i << " " << tree.nodes[i].branch_length << " " << tree.nodes[i].num_events/(1.0*data.mu) << std::endl;
   //}
 }
 

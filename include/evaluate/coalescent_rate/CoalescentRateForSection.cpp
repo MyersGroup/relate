@@ -401,22 +401,108 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
     }  
   }
 
-  //output as bin
-  FILE* fp;
-  if(chr == "NA"){
-    fp = fopen((options["output"].as<std::string>() + ".bin" ).c_str(), "wb");  
+  if(ancmut.sample_ages.size() > 0){
+    std::vector<float> epochs_new;
+    std::vector<double> all_sample_ages;
+    std::vector<int> epoch_old_index;
+    all_sample_ages = ancmut.sample_ages;
+    std::sort(all_sample_ages.begin(), all_sample_ages.end());
+
+
+    double ages = *all_sample_ages.begin();
+    int ep = 0;
+    if(ages == 0.0){
+      epochs_new.push_back(ages);
+      epoch_old_index.push_back(ep);
+      ep++;
+    }else{
+      while(epochs[ep] < ages){
+        epochs_new.push_back(epochs[ep]);
+        epoch_old_index.push_back(ep);
+        ep++;
+        if(ep == epochs.size()) break;
+      }
+      if(ages != epochs[ep]){
+        epochs_new.push_back(ages);
+        epoch_old_index.push_back(ep-1);
+      }
+    }
+    for(std::vector<double>::iterator it_sample_ages = all_sample_ages.begin(); it_sample_ages != all_sample_ages.end(); it_sample_ages++){
+      if(ages < *it_sample_ages){
+        ages = *it_sample_ages;
+        while(epochs[ep] < ages){
+          epochs_new.push_back(epochs[ep]);
+          epoch_old_index.push_back(ep);
+          ep++;
+          if(ep == epochs.size()) break;
+        }
+        if(ep == epochs.size()) break;
+        if(ages != epochs[ep]){
+          epochs_new.push_back(ages);
+          epoch_old_index.push_back(ep-1);
+        }
+      } 
+    }
+    for(; ep < epochs.size(); ep++){
+      epochs_new.push_back(epochs[ep]);
+      epoch_old_index.push_back(ep);
+    }
+    num_epochs = epochs_new.size();
+
+    std::vector<CollapsedMatrix<float>> coalescence_rate_data_new(num_epochs);
+    for(ep = 0; ep < num_epochs-1; ep++){
+      coalescence_rate_data_new[ep] = coalescence_rate_data[epoch_old_index[ep]];
+      //need to know which samples have sample_ages < epochs[ep]
+      for(int i = 0; i < data.N; i++){
+        if(ancmut.sample_ages[i] >= epochs_new[ep+1]){
+          for(int j = 0; j < data.N; j++){
+            coalescence_rate_data_new[ep][i][j] = 0.0;
+            coalescence_rate_data_new[ep][j][i] = 0.0;
+          } 
+        }
+      }
+    }
+    ep = num_epochs-1;
+    coalescence_rate_data_new[ep] = coalescence_rate_data[epoch_old_index[ep]];
+
+    //output as bin
+    FILE* fp;
+    if(chr == "NA"){
+      fp = fopen((options["output"].as<std::string>() + ".bin" ).c_str(), "wb");  
+    }else{
+      fp = fopen((options["output"].as<std::string>() + "_chr" + chr + ".bin" ).c_str(), "wb");  
+    }
+
+    fwrite(&num_epochs, sizeof(int), 1, fp);
+    fwrite(&epochs_new[0], sizeof(float), epochs_new.size(), fp);
+    for(std::vector<CollapsedMatrix<float>>::iterator it_coalescence_rate_data = coalescence_rate_data_new.begin(); it_coalescence_rate_data != coalescence_rate_data_new.end();){
+      (*it_coalescence_rate_data).DumpToFile(fp);
+      it_coalescence_rate_data++;
+    }
+
+    fclose(fp);
+
+
   }else{
-    fp = fopen((options["output"].as<std::string>() + "_chr" + chr + ".bin" ).c_str(), "wb");  
-  }
 
-  fwrite(&num_epochs, sizeof(int), 1, fp);
-  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
-  for(std::vector<CollapsedMatrix<float>>::iterator it_coalescence_rate_data = coalescence_rate_data.begin(); it_coalescence_rate_data != coalescence_rate_data.end();){
-    (*it_coalescence_rate_data).DumpToFile(fp);
-    it_coalescence_rate_data++;
-  }
+    //output as bin
+    FILE* fp;
+    if(chr == "NA"){
+      fp = fopen((options["output"].as<std::string>() + ".bin" ).c_str(), "wb");  
+    }else{
+      fp = fopen((options["output"].as<std::string>() + "_chr" + chr + ".bin" ).c_str(), "wb");  
+    }
 
-  fclose(fp);
+    fwrite(&num_epochs, sizeof(int), 1, fp);
+    fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
+    for(std::vector<CollapsedMatrix<float>>::iterator it_coalescence_rate_data = coalescence_rate_data.begin(); it_coalescence_rate_data != coalescence_rate_data.end();){
+      (*it_coalescence_rate_data).DumpToFile(fp);
+      it_coalescence_rate_data++;
+    }
+
+    fclose(fp);
+
+  }
 
   /////////////////////////////////////////////
   //Resource Usage
@@ -604,6 +690,7 @@ CoalescenceRateForTree(cxxopts::Options& options){
 
     }
   }else{
+    
     for(int chr = 0; chr < chromosomes.size(); chr++){
 
       AncMutIterators ancmut(filename_anc[chr], filename_mut[chr], filename_dist[chr]);
@@ -628,13 +715,12 @@ CoalescenceRateForTree(cxxopts::Options& options){
     }
   }
 
-  if(false && options.count("coal")){
+  igzstream is_coal(options["input"].as<std::string>() + ".coal");
+  bool is_coal_fail = is_coal.fail();
+  is_coal_fail = true;
 
-    igzstream is_coal(options["coal"].as<std::string>());
-    if(is_coal.fail()){
-      std::cerr << "Error: Failed to open file " << options["coal"].as<std::string>() << std::endl;
-      exit(1);
-    }
+  if(!is_coal_fail){
+
     float tmp;
     std::vector<float> coal_epochs;
     std::vector<double> coal_values;
@@ -675,6 +761,154 @@ CoalescenceRateForTree(cxxopts::Options& options){
   }else{
     ct.Dump(options["output"].as<std::string>() + ".coal");
   }
+
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+}
+
+void
+GenerateConstCoal(cxxopts::Options& options){
+
+  //Program options
+
+  bool help = false;
+  if(!options.count("input") || !options.count("output")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: input, output. Optional: bins, years_per_gen." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Calculate coalescence rates for sample." << std::endl;
+    exit(0);
+  }  
+
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  std::cerr << "Generating coalescence rates file with const rate " << options["input"].as<std::string>() << "..." << std::endl;
+
+  /////////////////////////////////
+  //get TMRCA at each SNP
+
+  ////////////////////////////////////////
+
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
+
+  //decide on epochs 
+  int num_epochs;
+  std::vector<double> epochs;
+  float log_10 = std::log(10);
+  if(options.count("bins")){
+
+    double log_age = std::log(0);
+    double age = 0;
+
+    double epoch_lower, epoch_upper, epoch_step;
+    std::string str_epochs = options["bins"].as<std::string>();
+    std::string tmp;
+    int i = 0;
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_lower = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_upper = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_step = std::stof(tmp);
+
+    int ep = 0;
+    epochs.resize(1);
+    epochs[ep] = 0.0;
+    ep++; 
+    double epoch_boundary = 0.0;
+    if(log_age < epoch_lower && age != 0.0){
+      epochs.push_back(age);
+      ep++;
+    }
+    epoch_boundary = epoch_lower;
+    while(epoch_boundary < epoch_upper){
+      if(log_age < epoch_boundary){
+        if(ep == 1 && age != 0.0) epochs.push_back(age);
+        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        ep++;
+      }
+      epoch_boundary += epoch_step;
+    }
+    epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
+    num_epochs = epochs.size();
+
+  }else{
+
+    num_epochs = 31;
+    epochs.resize(num_epochs);
+    epochs[0] = 0.0;
+    epochs[1] = 1e3/years_per_gen;
+    for(int e = 2; e < num_epochs-1; e++){
+      epochs[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+    }
+    epochs[num_epochs-1] = 1e8/years_per_gen;
+
+  }
+
+
+  std::ofstream os(options["output"].as<std::string>() + ".coal");
+  os << "group1\n";
+
+  for(int e = 0; e < num_epochs; e++){
+    os << epochs[e]  << " "; 
+  }
+  os << "\n";
+
+  std::vector<double> coal(epochs.size());
+
+  double Ne = std::stof(options["input"].as<std::string>());
+  os << 0 << " " << 0 << " ";
+  for(int e = 0; e < num_epochs; e++){
+    os << 1.0/Ne << " ";
+  }
+  os << "\n"; 
+
+  os.close();
+
+
 
   /////////////////////////////////////////////
   //Resource Usage

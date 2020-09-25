@@ -256,33 +256,17 @@ then
       --mut ${filename}.mut \
       -o ${output} 
 
-
-    if [ -z "${bins-}" ];
+   if [ -z "${bins-}" ];
     then
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output}.dist \
-        --years_per_gen ${years_per_gen} \
-        -i ${output} \
-        -o ${output}
 
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode CoalRateForTree \
         --years_per_gen ${years_per_gen} \
         --dist ${output}.dist \
         -i ${output} \
-        -o ${output} 
+        -o ${output}
 
     else
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output}.dist \
-        --years_per_gen ${years_per_gen} \
-        --bins ${bins} \
-        -i ${output} \
-        -o ${output}
 
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode CoalRateForTree \
@@ -294,7 +278,6 @@ then
 
     fi
 
-
     #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
     for i in `seq 1 1 ${num_iter}`
     do
@@ -305,7 +288,6 @@ then
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
           --mode SampleBranchLengths \
           --coal ${output}.coal \
-          --mrate ${output}_avg.rate \
           --dist ${output}.dist \
           --num_samples 1 \
           -m ${mu} \
@@ -317,7 +299,6 @@ then
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
           --mode SampleBranchLengths \
           --coal ${output}.coal \
-          --mrate ${output}_avg.rate \
           --dist ${output}.dist \
           --num_samples 1 \
           --seed $seed \
@@ -330,13 +311,6 @@ then
       if [ -z "${bins-}" ];
       then
 
-        ${PATH_TO_RELATE}/bin/RelateMutationRate \
-          --mode Avg \
-          --dist ${output}.dist \
-          --years_per_gen ${years_per_gen} \
-          -i ${output} \
-          -o ${output}
-
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
           --mode CoalRateForTree \
           --years_per_gen ${years_per_gen} \
@@ -346,14 +320,6 @@ then
           -o ${output}
 
       else
-
-        ${PATH_TO_RELATE}/bin/RelateMutationRate \
-          --mode Avg \
-          --years_per_gen ${years_per_gen} \
-          --bins ${bins} \
-          --dist ${output}.dist \
-          -i ${output} \
-          -o ${output}
 
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
           --mode CoalRateForTree \
@@ -386,6 +352,13 @@ then
         -o ${output}.pairwise
     fi
 
+    ${PATH_TO_RELATE}/bin/RelateMutationRate \
+      --mode Avg \
+      --dist ${output}.dist \
+      --years_per_gen ${years_per_gen} \
+      -i ${output} \
+      -o ${output}
+
     #estimate mutation rate and coalescent rates for a final time
 		if [ -z ${noanc-} ];
 		then
@@ -395,7 +368,6 @@ then
 				${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 					--mode ReEstimateBranchLengths \
 					--coal ${output}.coal \
-					--mrate ${output}_avg.rate \
 					--dist ${output}.dist \
 					-m ${mu} \
 					-i ${filename} \
@@ -406,7 +378,6 @@ then
 				${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 					--mode ReEstimateBranchLengths \
 					--coal ${output}.coal \
-					--mrate ${output}_avg.rate \
 					--dist ${output}.dist \
 					--seed $seed \
 					-m ${mu} \
@@ -514,32 +485,15 @@ then
     if [ -z "${bins-}" ];
     then
 
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output} \
-        --years_per_gen ${years_per_gen} \
-        --chr ${filename_chr} \
-        -i ${output} \
-        -o ${output}
-
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode CoalRateForTree \
         --years_per_gen ${years_per_gen} \
-        --chr ${filename_chr} \
         --dist ${output} \
-        -i ${output} \
-        -o ${output} 
-
-    else
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output} \
-        --years_per_gen ${years_per_gen} \
-        --bins ${bins} \
         --chr ${filename_chr} \
         -i ${output} \
         -o ${output}
+
+    else
 
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode CoalRateForTree \
@@ -564,7 +518,6 @@ then
           ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
             --mode SampleBranchLengths \
             --coal ${output}.coal \
-            --mrate ${output}_avg.rate \
             --dist ${output}_chr${chr}.dist \
             --num_samples 1 \
             -m ${mu} \
@@ -576,7 +529,6 @@ then
           ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
             --mode SampleBranchLengths \
             --coal ${output}.coal \
-            --mrate ${output}_avg.rate \
             --dist ${output}_chr${chr}.dist \
             --num_samples 1 \
             --seed $seed \
@@ -590,14 +542,6 @@ then
       if [ -z "${bins-}" ];
       then
 
-        ${PATH_TO_RELATE}/bin/RelateMutationRate \
-          --mode Avg \
-          --dist ${output} \
-          --years_per_gen ${years_per_gen} \
-          --chr ${filename_chr} \
-          -i ${output} \
-          -o ${output}
-
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
           --mode CoalRateForTree \
           --years_per_gen ${years_per_gen} \
@@ -608,15 +552,6 @@ then
           -o ${output} 
 
       else
-
-        ${PATH_TO_RELATE}/bin/RelateMutationRate \
-          --mode Avg \
-          --dist ${output} \
-          --years_per_gen ${years_per_gen} \
-          --bins ${bins} \
-          --chr ${filename_chr} \
-          -i ${output} \
-          -o ${output}
 
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
           --mode CoalRateForTree \
@@ -652,6 +587,14 @@ then
         -o ${output}.pairwise
     fi
 
+    ${PATH_TO_RELATE}/bin/RelateMutationRate \
+      --mode Avg \
+      --dist ${output} \
+      --years_per_gen ${years_per_gen} \
+      --chr ${filename_chr} \
+      -i ${output} \
+      -o ${output}
+
     #estimate mutation rate and coalescent rates for a final time
 		if [ -z ${noanc-} ]
 		then
@@ -663,7 +606,6 @@ then
 					${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 						--mode ReEstimateBranchLengths \
 						--coal ${output}.coal \
-						--mrate ${output}_avg.rate \
 						--dist ${output}_chr${chr}.dist \
 						-m ${mu} \
 						-i ${filename}_chr${chr} \
@@ -674,7 +616,6 @@ then
 					${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 						--mode ReEstimateBranchLengths \
 						--coal ${output}.coal \
-						--mrate ${output}_avg.rate \
 						--dist ${output}_chr${chr}.dist \
 						--seed $seed \
 						-m ${mu} \
@@ -751,29 +692,14 @@ else
     if [ -z "${bins-}" ];
     then
 
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output}.dist \
-        --years_per_gen ${years_per_gen} \
-        -i ${output} \
-        -o ${output}
-
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode CoalRateForTree \
         --years_per_gen ${years_per_gen} \
         --dist ${output}.dist \
         -i ${output} \
-        -o ${output} 
+        -o ${output}
 
     else
-
-      ${PATH_TO_RELATE}/bin/RelateMutationRate \
-        --mode Avg \
-        --dist ${output}.dist \
-        --years_per_gen ${years_per_gen} \
-        --bins ${bins} \
-        -i ${output} \
-        -o ${output}
 
       ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode CoalRateForTree \
@@ -784,7 +710,6 @@ else
         -o ${output}
 
     fi
-
 
     #repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
     for i in `seq 1 1 ${num_iter}`
@@ -810,7 +735,6 @@ else
           ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
             --mode SampleBranchLengths \
             --coal ${output}.coal \
-            --mrate ${output}_avg.rate \
             --dist ${output}.dist \
             --num_samples 1 \
             -m ${mu} \
@@ -822,7 +746,6 @@ else
           ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
             --mode SampleBranchLengths \
             --coal ${output}.coal \
-            --mrate ${output}_avg.rate \
             --dist ${output}.dist \
             --num_samples 1 \
             --seed $seed \
@@ -864,14 +787,7 @@ else
 
       if [ -z "${bins-}" ];
       then
-
-        ${PATH_TO_RELATE}/bin/RelateMutationRate \
-          --mode Avg \
-          --dist ${output}.dist \
-          --years_per_gen ${years_per_gen} \
-          -i ${output} \
-          -o ${output}
-
+ 
 			  ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 				  --mode CoalRateForTree \
 					--years_per_gen ${years_per_gen} \
@@ -881,14 +797,6 @@ else
 					-o ${output}
 
 			else
-
-				${PATH_TO_RELATE}/bin/RelateMutationRate \
-					--mode Avg \
-					--dist ${output}.dist \
-					--years_per_gen ${years_per_gen} \
-					--bins ${bins} \
-					-i ${output} \
-					-o ${output}
 
 				${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 					--mode CoalRateForTree \
@@ -905,7 +813,7 @@ else
 
     if [ -z "${bins-}" ];
     then
-      ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+     ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
         --mode EstimatePopulationSize \
         --years_per_gen ${years_per_gen} \
         --dist ${output}.dist \
@@ -920,6 +828,13 @@ else
         -i ${output} \
         -o ${output}.pairwise
     fi
+
+    ${PATH_TO_RELATE}/bin/RelateMutationRate \
+      --mode Avg \
+      --dist ${output}.dist \
+      --years_per_gen ${years_per_gen} \
+      -i ${output} \
+      -o ${output}
 
 		if [ -z ${noanc-} ]
 		then
@@ -945,7 +860,6 @@ else
 					${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 						--mode ReEstimateBranchLengths \
 						--coal ${output}.coal \
-						--mrate ${output}_avg.rate \
 						--dist ${output}.dist \
 						-m ${mu} \
 						-i ${output}_tmp_chr${chunk} \
@@ -956,7 +870,6 @@ else
 					${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 						--mode ReEstimateBranchLengths \
 						--coal ${output}.coal \
-						--mrate ${output}_avg.rate \
 						--dist ${output}.dist \
 						--seed $seed \
 						-m ${mu} \
@@ -1116,46 +1029,29 @@ else
 				rm ${output}_chr*_tmp*
 			fi
 
-			if [ -z "${bins-}" ];
-			then
-
-				${PATH_TO_RELATE}/bin/RelateMutationRate \
-					--mode Avg \
-					--dist ${output} \
-					--years_per_gen ${years_per_gen} \
-          --chr ${filename_chr} \
-					-i ${output} \
-					-o ${output}
-
-				${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-					--mode CoalRateForTree \
-					--years_per_gen ${years_per_gen} \
-          --chr ${filename_chr} \
-          --dist ${output} \
-					-i ${output} \
-					-o ${output}
-
-			else
-
-				${PATH_TO_RELATE}/bin/RelateMutationRate \
-					--mode Avg \
-					--dist ${output} \
-					--years_per_gen ${years_per_gen} \
-					--bins ${bins} \
-          --chr ${filename_chr} \
-					-i ${output} \
-					-o ${output}
+      if [ -z "${bins-}" ];
+      then
 
         ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
-				  --mode CoalRateForTree \
-					--years_per_gen ${years_per_gen} \
-          --bins ${bins} \
-          --chr ${filename_chr} \
+          --mode CoalRateForTree \
+          --years_per_gen ${years_per_gen} \
           --dist ${output} \
-					-i ${output} \
-					-o ${output}
+          --chr ${filename_chr} \
+          -i ${output} \
+          -o ${output}
 
-			fi
+      else
+
+        ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
+          --mode CoalRateForTree \
+          --years_per_gen ${years_per_gen} \
+          --bins ${bins} \
+          --dist ${output} \
+          --chr ${filename_chr} \
+          -i ${output} \
+          -o ${output}
+
+      fi
 	
 			#repeat iterations of estimating mutation rate, coalescence rates and re-estimating branch lengths
 			for i in `seq 1 1 ${num_iter}`
@@ -1183,7 +1079,6 @@ else
 							${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 								--mode SampleBranchLengths \
 								--coal ${output}.coal \
-								--mrate ${output}_avg.rate \
 								--dist ${output}_chr${chr}.dist \
 								--num_samples 1 \
 								-m ${mu} \
@@ -1195,7 +1090,6 @@ else
 							${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 								--mode SampleBranchLengths \
 								--coal ${output}.coal \
-								--mrate ${output}_avg.rate \
 								--dist ${output}_chr${chr}.dist \
 								--num_samples 1 \
 								--seed $seed \
@@ -1240,14 +1134,6 @@ else
 				if [ -z "${bins-}" ];
 				then
 
-					${PATH_TO_RELATE}/bin/RelateMutationRate \
-						--mode Avg \
-						--dist ${output} \
-						--years_per_gen ${years_per_gen} \
-            --chr ${filename_chr} \
-						-i ${output} \
-						-o ${output}
-
           ${PATH_TO_RELATE}/bin/RelateCoalescentRate \
             --mode CoalRateForTree \
             --years_per_gen ${years_per_gen} \
@@ -1258,15 +1144,6 @@ else
 					  -o ${output}	
 
         else
-
-					${PATH_TO_RELATE}/bin/RelateMutationRate \
-						--mode Avg \
-						--dist ${output} \
-						--years_per_gen ${years_per_gen} \
-						--bins ${bins} \
-						--chr ${filename_chr} \
-						-i ${output} \
-						-o ${output}
 
 					${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 						--mode CoalRateForTree \
@@ -1331,6 +1208,14 @@ else
 				--mode FinalizePopulationSize \
 				-o ${output}.pairwise
 
+      ${PATH_TO_RELATE}/bin/RelateMutationRate \
+        --mode Avg \
+        --dist ${output} \
+        --years_per_gen ${years_per_gen} \
+        --chr ${filename_chr} \
+        -i ${output} \
+        -o ${output}
+
 		if [ -z ${noanc-} ]
 		then
 
@@ -1357,7 +1242,6 @@ else
 						${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 							--mode ReEstimateBranchLengths \
 							--coal ${output}.coal \
-							--mrate ${output}_avg.rate \
 							--dist ${output}_chr${chr}.dist \
 							-m ${mu} \
 							-i ${output}_chr${chr}_tmp_chr${chunk} \
@@ -1368,7 +1252,6 @@ else
 						${PATH_TO_RELATE}/bin/RelateCoalescentRate \
 							--mode ReEstimateBranchLengths \
 							--coal ${output}.coal \
-							--mrate ${output}_avg.rate \
 							--dist ${output}_chr${chr}.dist \
 							--seed $seed \
 							-m ${mu} \

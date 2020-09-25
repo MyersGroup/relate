@@ -37,7 +37,7 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
   for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
 
     mcandidates[*it].dist = std::numeric_limits<float>::infinity();
-		mcandidates[*it].dist2 = std::numeric_limits<float>::infinity();
+    mcandidates[*it].dist2 = std::numeric_limits<float>::infinity();
     d_it = d.rowbegin(*it);
     for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
       if(*it_min_values_it > *d_it && *l != *it){
@@ -64,24 +64,24 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
         if( *it_min_values_jt >= d[*jt][*it]){ //it, jt is a candidate
 
           sym_dist = *it_d_it_jt + d[*jt][*it];
-					dist_random = dist_unif(rng);
+          dist_random = dist_unif(rng);
           if(mcandidates[*it].dist > sym_dist || (mcandidates[*it].dist == sym_dist && mcandidates[*it].dist2 > dist_random)){
             mcandidates[*it].lin1 = *it;
             mcandidates[*it].lin2 = *jt;
             mcandidates[*it].dist = sym_dist;
-						mcandidates[*it].dist2 = dist_random;
+            mcandidates[*it].dist2 = dist_random;
           }
-					if(mcandidates[*jt].dist > sym_dist || (mcandidates[*jt].dist == sym_dist && mcandidates[*jt].dist2 > dist_random)){
+          if(mcandidates[*jt].dist > sym_dist || (mcandidates[*jt].dist == sym_dist && mcandidates[*jt].dist2 > dist_random)){
             mcandidates[*jt].lin1 = *it;
             mcandidates[*jt].lin2 = *jt;
             mcandidates[*jt].dist = sym_dist;
-						mcandidates[*jt].dist2 = dist_random;
+            mcandidates[*jt].dist2 = dist_random;
           }
           if(best_candidate.dist > mcandidates[*jt].dist || (best_candidate.dist == mcandidates[*jt].dist && best_candidate.dist2 > mcandidates[*jt].dist2)){ //only need to check for *jt because if it is the absolute minimum, it would also be *it's candidate
             best_candidate.lin1 = *it;
             best_candidate.lin2 = *jt;
             best_candidate.dist = sym_dist;
-						best_candidate.dist2 = mcandidates[*jt].dist2;
+            best_candidate.dist2 = mcandidates[*jt].dist2;
           }
 
         }
@@ -441,8 +441,8 @@ MinMatch::CoalesceSym(const int i, const int j, CollapsedMatrix<float>& sym_d){
 void
 MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
 
-	rng.seed(1);
-	std::uniform_real_distribution<double> dist_unif(0,1);
+  rng.seed(1);
+  std::uniform_real_distribution<double> dist_unif(0,1);
 
   int root = N_total-1;
   tree.nodes.resize(N_total);
@@ -476,7 +476,7 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
   std::fill(min_values_sym.begin(), min_values_sym.end(), std::numeric_limits<float>::infinity());  //Stores the min values of each row of the distance matrix
 
   best_candidate.dist = std::numeric_limits<float>::infinity();
-	best_candidate.dist2 = std::numeric_limits<float>::infinity();
+  best_candidate.dist2 = std::numeric_limits<float>::infinity();
   best_sym_candidate.dist = std::numeric_limits<float>::infinity();
 
   Initialize(d, dist_unif);
@@ -890,7 +890,6 @@ InferBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distributio
   //Notice that the transition probabilities are symmetric: 
   //Distribution d_swap(child_order+1, parent_order-1); does not change after a transition.
 
-
   //This update is constant time.
   accept = true;
   int node_k, node_swap_k;
@@ -962,9 +961,9 @@ InferBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distributio
           }else{
 
             log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-            log_likelihood_ratio += n_num_events * log(tb_new/tb);
-            log_likelihood_ratio += child_right_num_events * log(tb_child_right_new/tb_child_right); 
-            log_likelihood_ratio += child_left_num_events * log(tb_child_left_new/tb_child_left); 
+            log_likelihood_ratio += n_num_events * fast_log(tb_new/tb);
+            log_likelihood_ratio += child_right_num_events * fast_log(tb_child_right_new/tb_child_right); 
+            log_likelihood_ratio += child_left_num_events * fast_log(tb_child_left_new/tb_child_left); 
 
             delta_tau  *= -1.0;
             child_left_label  = (*tree.nodes[node_swap_k].child_left).label;
@@ -999,9 +998,9 @@ InferBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distributio
                   log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
                 }else{ 
                   log_likelihood_ratio += (mut_rate[node_swap_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-                  log_likelihood_ratio += n_num_events * log(tb_new/tb);
-                  log_likelihood_ratio += child_right_num_events * log(tb_child_right_new/tb_child_right); 
-                  log_likelihood_ratio += child_left_num_events * log(tb_child_left_new/tb_child_left);
+                  log_likelihood_ratio += n_num_events * fast_log(tb_new/tb);
+                  log_likelihood_ratio += child_right_num_events * fast_log(tb_child_right_new/tb_child_right); 
+                  log_likelihood_ratio += child_left_num_events * fast_log(tb_child_left_new/tb_child_left);
 
                 }
 
@@ -1038,30 +1037,30 @@ InferBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distributio
 
         //calculate new branch lengths
         tree.nodes[node_k].branch_length                 = coordinates[(*tree.nodes[node_k].parent).label]  - coordinates[node_k];
-				if(tree.nodes[node_k].branch_length < 0.0) tree.nodes[node_k].branch_length = 0.0;
+        if(tree.nodes[node_k].branch_length < 0.0) tree.nodes[node_k].branch_length = 0.0;
         assert(tree.nodes[node_k].branch_length >= 0.0); 
         child_left_label                                 = (*tree.nodes[node_k].child_left).label;
         tree.nodes[child_left_label].branch_length       = coordinates[node_k] - coordinates[child_left_label];
-				if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
+        if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
         assert(tree.nodes[child_left_label].branch_length >= 0.0);
         child_right_label                                = (*tree.nodes[node_k].child_right).label;
         tree.nodes[child_right_label].branch_length      = coordinates[node_k] - coordinates[child_right_label];
-				if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
+        if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
         assert(tree.nodes[child_right_label].branch_length >= 0.0);
 
         tree.nodes[node_swap_k].branch_length            = coordinates[(*tree.nodes[node_swap_k].parent).label]  - coordinates[node_swap_k];
-				if(tree.nodes[node_swap_k].branch_length < 0.0) tree.nodes[node_swap_k].branch_length = 0.0;
-				if(!(tree.nodes[node_swap_k].branch_length >= 0.0)) std::cerr << tree.nodes[node_swap_k].branch_length << std::endl;
-				assert(tree.nodes[node_swap_k].branch_length >= 0.0); 
+        if(tree.nodes[node_swap_k].branch_length < 0.0) tree.nodes[node_swap_k].branch_length = 0.0;
+        if(!(tree.nodes[node_swap_k].branch_length >= 0.0)) std::cerr << tree.nodes[node_swap_k].branch_length << std::endl;
+        assert(tree.nodes[node_swap_k].branch_length >= 0.0); 
         child_left_label                                 = (*tree.nodes[node_swap_k].child_left).label;
         tree.nodes[child_left_label].branch_length       = coordinates[node_swap_k] - coordinates[child_left_label];
-				if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
+        if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
         assert(tree.nodes[child_left_label].branch_length >= 0.0);
         child_right_label                                = (*tree.nodes[node_swap_k].child_right).label;
         tree.nodes[child_right_label].branch_length      = coordinates[node_swap_k] - coordinates[child_right_label];
-				if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
+        if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
         assert(tree.nodes[child_right_label].branch_length >= 0.0);
- 
+
       }
     }
 
@@ -1069,7 +1068,7 @@ InferBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distributio
 
 }
 
-void
+float
 InferBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif){
 
   //This step is O(N)
@@ -1083,14 +1082,14 @@ InferBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_re
   log_likelihood_ratio = 0.0; 
   if(tau_old > 0.0){
     //choose tau_new according to Gamma(alpha, alpha/tau_old)
-    tau_new   = -fast_log(dist_unif(rng)) * tau_old;
+    tau_new   = -log(dist_unif(rng)) * tau_old;
     delta_tau = tau_new - tau_old;
     //calculate ratio of proposals
     log_likelihood_ratio = fast_log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);
     assert(tau_new > 0.0);
   }else{
     //choose tau_new according to Gamma(alpha, alpha/tau_old) 
-    tau_new   = -fast_log(dist_unif(rng))/k_choose_2;
+    tau_new   = -log(dist_unif(rng))/k_choose_2;
     tau_old   = 0.0;
     delta_tau = tau_new;
     //calculate ratio of proposals
@@ -1098,8 +1097,12 @@ InferBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_re
     assert(tau_new > 0.0);
   }
 
+  //std::cerr << "const: " << log_likelihood_ratio << std::endl;
+
   //coalescent prior
+  //float tmp = log_likelihood_ratio;
   log_likelihood_ratio -= k_choose_2 * delta_tau;
+  //std::cerr << "const: " << log_likelihood_ratio << std::endl;
 
   //assert(order[node_k] == k);
   int count_number_of_spanning_branches = 0;
@@ -1148,6 +1151,8 @@ InferBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_re
   }
   //assert(count_number_of_spanning_branches == num_lineages);
 
+  //std::cerr << "const: " << log_likelihood_ratio - tmp << std::endl;
+
   //decide whether to accept proposal or not.
   accept = true;
   if(log_likelihood_ratio < 0.0){
@@ -1171,9 +1176,11 @@ InferBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_re
     }
   }
 
+  return log_likelihood_ratio;
+
 }
 
-void
+float
 InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif){
 
   //This step is O(N)
@@ -1192,19 +1199,22 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
 
   if(tau_old > 0.0){
     tau_new   = -log(dist_unif(rng)) * tau_old;
+    //tau_new   = 1.1 * tau_old;
     delta_tau = tau_new - tau_old;
     //calculate ratio of proposals
-    log_likelihood_ratio = log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);   
+    log_likelihood_ratio = fast_log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);   
     assert(tau_new > 0.0);
   }else{
     tau_new   = -log(dist_unif(rng)) * 1.0/k_choose_2;
     tau_old   = 0.0;
     delta_tau = tau_new;    
     //calculate ratio of proposals
-    log_likelihood_ratio = log(1.0/(tau_new*k_choose_2)) + tau_new*k_choose_2;
+    log_likelihood_ratio = fast_log(1.0/(tau_new*k_choose_2)) + tau_new*k_choose_2;
 
     assert(tau_new > 0.0);
   }
+
+  //std::cerr << "var: " << log_likelihood_ratio << std::endl;
 
   //coalescent prior  
   int ep_begin = 0;
@@ -1274,14 +1284,15 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
         if(coal_rate[ep] == 0){
           log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
         }else{
-          log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+          log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
         }
 
       }else{
+
         if(coal_rate[ep] == 0){
           log_likelihood_ratio = -std::numeric_limits<float>::infinity();
         }else{
-          log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+          log_likelihood_ratio -= k_choose_2_tmp * coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
         }
       }
 
@@ -1293,8 +1304,9 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
         if(k_tmp > k){
           tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
         }
-        log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+        log_likelihood_ratio -= k_choose_2_tmp * coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
       }
+
     }
     k_tmp++;
 
@@ -1346,14 +1358,15 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
           if(coal_rate[ep] == 0){
             log_likelihood_ratio = std::numeric_limits<float>::infinity();
           }else{
-            log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+            log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
           }
 
         }else{
+
           if(coal_rate[ep] == 0){
             log_likelihood_ratio = std::numeric_limits<float>::infinity();
           }else{
-            log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+            log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
           }
         }
 
@@ -1364,12 +1377,17 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
           if(k_tmp > k){
             tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
           }
-          log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - log(coal_rate[ep]);
+          log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
         }
       }
 
       k_tmp++;
     }
+
+    //log_likelihood_ratio  = 0.0;
+    //log_likelihood_ratio = fast_log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);   
+    //log_likelihood_ratio -= k_choose_2 * delta_tau;
+    //std::cerr << "var: " << log_likelihood_ratio << " " << log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new) - k_choose_2 * delta_tau << std::endl;
 
     if(log_likelihood_ratio != std::numeric_limits<float>::infinity()){
       //assert(order[node_k] == k);
@@ -1394,7 +1412,7 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
             break;
           }else{
             log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-            log_likelihood_ratio += n.num_events * log(tb_new/tb);
+            log_likelihood_ratio += n.num_events * fast_log(tb_new/tb);
           }
 
         }
@@ -1415,7 +1433,7 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
             break;
           }else{
             log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-            log_likelihood_ratio += n.num_events * log(tb_new/tb);
+            log_likelihood_ratio += n.num_events * fast_log(tb_new/tb);
           }
         }
         if(count_number_of_spanning_branches == num_lineages) break;
@@ -1423,6 +1441,8 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
       //assert(count_number_of_spanning_branches == num_lineages);
     }
   }
+
+  //std::cerr << "var: " << log_likelihood_ratio - tmp << std::endl;
 
   //decide whether to accept proposal or not.
   accept = true;
@@ -1440,19 +1460,21 @@ InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::ve
     it_sorted_indices = std::next(sorted_indices.begin(), k);
     update_node1 = k;
 
-      for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-        coordinates[*it_sorted_indices]                 += delta_tau;
-        if(coordinates[*it_sorted_indices] < coordinates[*std::prev(it_sorted_indices,1)]){
-          coordinates[*it_sorted_indices] = coordinates[*std::prev(it_sorted_indices,1)]; 
-        }
-        assert(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)]);
-        child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
-        tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
-        child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
-        tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
+    for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
+      coordinates[*it_sorted_indices]                 += delta_tau;
+      if(coordinates[*it_sorted_indices] < coordinates[*std::prev(it_sorted_indices,1)]){
+        coordinates[*it_sorted_indices] = coordinates[*std::prev(it_sorted_indices,1)]; 
       }
- 
+      assert(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)]);
+      child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
+      tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
+      child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
+      tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
+    }
+
   }
+
+  return log_likelihood_ratio;
 
 }
 
@@ -1770,7 +1792,7 @@ InferBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, con
 
     num_iterations++;
 
-   is_avg_increasing = true;
+    is_avg_increasing = true;
     if(!is_count_threshold){
       //assert(is_avg_increasing);
       for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
@@ -1815,13 +1837,13 @@ InferBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, con
   }
 
   if(1){
-  for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-    (*it_n).branch_length = ((double) Ne) * (avg[(*(*it_n).parent).label] - avg[(*it_n).label]);
-  }
+    for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
+      (*it_n).branch_length = ((double) Ne) * (avg[(*(*it_n).parent).label] - avg[(*it_n).label]);
+    }
   }else{
-  for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-    (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
-  }
+    for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
+      (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
+    }
   }
 
 }  
@@ -2008,10 +2030,11 @@ InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tre
   float uniform_rng;
   std::uniform_real_distribution<double> dist_unif(0,1);
   std::uniform_int_distribution<int> dist_k(N,N_total-1);
+  //std::uniform_int_distribution<int> dist_k2(0,N);
   std::uniform_int_distribution<int> dist_switch(N,N_total-2);
 
   if(init == 1){
- 
+
     rng.seed(seed);
     root = N_total - 1;
     logFactorial(N); //precalculates log(k!) for k = 0,...,N
@@ -2019,10 +2042,10 @@ InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tre
     InitializeMCMC(data, tree); //Initialize using coalescent prior 
 
     /*
-    for(std::vector<Node>::iterator it_node = tree.nodes.begin(); it_node != tree.nodes.end(); it_node++){
-      (*it_node).branch_length /= (double) data.Ne;
-    }
-    */
+       for(std::vector<Node>::iterator it_node = tree.nodes.begin(); it_node != tree.nodes.end(); it_node++){
+       (*it_node).branch_length /= (double) data.Ne;
+       }
+       */
 
     coordinates.resize(N_total);
     GetCoordinates(tree.nodes[root], coordinates);
@@ -2078,16 +2101,41 @@ InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tre
   }
 
   ////////////////// Sample branch lengths /////////////////
-
+ 
   count = 0;
   for(; count < num_proposals; count++){
 
     //Either switch order of coalescent event or extent time while k ancestors 
     uniform_rng = dist_unif(rng);
-    if(uniform_rng < 0.6){
+    if(uniform_rng < 0.5){
       SwitchOrder(tree, dist_switch(rng), dist_unif);
-    }else{ 
-      ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
+    //}else if(uniform_rng < 0.0){
+    //  int k = (*tree.nodes[dist_k2(rng)].parent).label;
+    //  float tmp1 = ChangeTimeWhilekAncestorsVP(tree, k, epoch, coal_rate, dist_unif);
+    }else{
+
+      /*
+         std::fill(coal_rate.begin(), coal_rate.end(), 1.0);
+         Tree tree2 = tree;
+         std::vector<int> sorted_indices2 = sorted_indices;
+         std::vector<int> order2 = order;
+         std::vector<double> coordinates2 = coordinates;
+
+         std::mt19937 rng2 = rng;
+         */
+
+      float tmp1 = ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
+      //float tmp2 = ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
+      /*
+         rng = rng2;
+         order = order2;
+         coordinates = coordinates2;
+         sorted_indices = sorted_indices2;
+         float tmp2 = ChangeTimeWhilekAncestors(tree2, k, dist_unif);
+         std::cerr << tmp1 << " " << tmp2 << std::endl;
+         exit(1);
+         */
+      //ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
     }
 
   }

@@ -12,7 +12,7 @@ while(!require(cowplot)) install.packages("cowplot", repos = "http://cran.us.r-p
 height              <- 30
 width               <- 40
 #ratio of tree to poplabels
-ratio               <- c(6,1)
+ratio               <- c(6,2)
 
 #tree linewidth
 tree_lwd            <- 3

@@ -140,8 +140,8 @@ class InferBranchLengths{
     void UpdateAvg(Tree& tree);
     void logFactorial(int max);
 
-    void ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
-    void ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif);
+    float ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
+    float ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif);
 
     void SwitchOrder(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
     void RandomSwitchOrder(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);

@@ -303,7 +303,7 @@ int SampleBranchLengths(cxxopts::Options& options){
     seed = options["seed"].as<int>();
   }
 
-  int Ne = 3e4;
+  int Ne = 2e4;
   double mutation_rate = options["mutation_rate"].as<float>();
   std::string line;
   double tmp;
@@ -348,7 +348,7 @@ int SampleBranchLengths(cxxopts::Options& options){
   }
 
   Data data(N, L, Ne, mutation_rate);
-	int root = 2*N-2;
+  int root = 2*N-2;
 
   Mutations mut(data);
   mut.Read(options["input"].as<std::string>() + ".mut");

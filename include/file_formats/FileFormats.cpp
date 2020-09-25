@@ -723,7 +723,8 @@ FilterHapsUsingMask(cxxopts::Options& options){
   std::string line;
   std::string::iterator it_mask, it_start, it_end;
 
-  int mask_threshold = 1801;
+  //int mask_threshold = 1801;
+  int mask_threshold = 2000;
   int d_num_nonpass_vincity;
   int passing_snp = 0;
   for(int snp = 0; snp < data.L; snp++){

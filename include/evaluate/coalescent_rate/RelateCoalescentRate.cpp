@@ -90,6 +90,10 @@ int main(int argc, char* argv[]){
   
     CoalescenceRateForTree(options);
   
+  }else if(!mode.compare("GenerateConstCoalFile")){
+  
+    GenerateConstCoal(options);
+  
   }else if(!mode.compare("EstimateDirPopulationSize")){
  
     //variable population size.

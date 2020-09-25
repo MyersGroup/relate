@@ -213,7 +213,7 @@ then
 
     qsub -sync y \
          -N make_chunks_${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},output={$output} \
+         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},output=${output} \
          -wd ${PWD}/${output} \
          -e log/make_chunks.log \
          -o log/make_chunks.log \
@@ -231,7 +231,7 @@ then
 
     qsub -sync y \
          -N make_chunks_${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},annot=${annot},output={$output} \
+         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},annot=${annot},output=${output} \
          -wd ${PWD}/${output} \
          -e log/make_chunks.log \
          -o log/make_chunks.log \
@@ -247,7 +247,7 @@ else
 
     qsub -sync y \
          -N make_chunks_${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},output={$output} \
+         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},output=${output} \
          -wd ${PWD}/${output} \
          -e log/make_chunks.log \
          -o log/make_chunks.log \
@@ -265,7 +265,7 @@ else
 
     qsub -sync y \
          -N make_chunks_${output} \
-         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},annot=${annot},output={$output} \
+         -v PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},annot=${annot},output=${output} \
          -wd ${PWD}/${output} \
          -e log/make_chunks.log \
          -o log/make_chunks.log \
@@ -304,7 +304,7 @@ do
   qsub -hold_jid find_equivalent_branches_${output}_$(($chunk - 5)) \
        -N paint_${output}_${chunk} \
        -wd ${PWD}/${output} \
-       -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},output={$output} \
+       -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},output=${output} \
        -e log/paint_c${chunk}.log \
        -o log/paint_c${chunk}.log \
        -P $p \

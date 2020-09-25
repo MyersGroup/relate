@@ -74,7 +74,17 @@ CountBasesByType(Data& data, const std::string& filename_mask, const std::string
   std::string::iterator it_mask, it_start, it_end, it_ancestor; 
 
   std::cerr << mask.seq.size() << " " << ancestor.size() << std::endl;
+  if(mask.seq.size() < ancestor.size()){
+    int mask_size = mask.seq.size();
+    mask.seq.resize(ancestor.size());
+    std::fill(std::next(mask.seq.begin(),mask_size), mask.seq.end(), 'N');
+  }else{
+    int anc_size = ancestor.size();
+    ancestor.resize(mask.seq.size());
+    std::fill(std::next(ancestor.begin(),anc_size), ancestor.end(), 'N');
+  }
   assert(mask.seq.size() == ancestor.size());
+
 
   it_start = mask.seq.begin();
   it_end   = std::next(mask.seq.begin(), std::min((int)mask.seq.size(),1001));
@@ -1270,7 +1280,6 @@ void MutationRateForCategory(cxxopts::Options& options, std::string chr = "NA"){
 
               if(snp_info.mutation_type[2] == 'A' || snp_info.mutation_type[2] == 'C' || snp_info.mutation_type[2] == 'G' || snp_info.mutation_type[2] == 'T'){
 
-
                 // identify category of mutation
                 pattern = snp_info.upstream_base + snp_info.downstream_base + snp_info.mutation_type[0] + snp_info.mutation_type[2];
                 // then identify its age and number of lineages at the time
@@ -1311,6 +1320,7 @@ void MutationRateForCategory(cxxopts::Options& options, std::string chr = "NA"){
 
                 for(int ep_tmp = 0; ep_tmp < num_epochs; ep_tmp++){
                   double bl = branch_lengths_in_epoch[ep_tmp];
+                  assert(bl >= 0.0);
                   for(int ind_tmp = 0; ind_tmp < num_categories; ind_tmp++){
                     //std::cerr << count_bases_by_type[snp][ind_tmp] << " ";
                     opportunity_by_type_and_epoch[num_tree][ep_tmp][ind_tmp] += bl * count_bases_by_type[snp][ind_tmp];
@@ -1343,9 +1353,9 @@ void MutationRateForCategory(cxxopts::Options& options, std::string chr = "NA"){
 
   std::random_device rd;  //Will be used to obtain a seed for the random number engine
   std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-  std::uniform_int_distribution<> sam(0, (ancmut.NumTrees()-1.0)/10000.0);
+  std::uniform_int_distribution<> sam(0, (ancmut.NumTrees()-1.0)/1000.0);
 
-  int n_boot = 1000;
+  int n_boot = 100;
   std::vector<CollapsedMatrix<double>> boot_mutation_by_type_and_epoch(n_boot);
   std::vector<CollapsedMatrix<double>> boot_opportunity_by_type_and_epoch(n_boot);
   for(std::vector<CollapsedMatrix<double>>::iterator it_m = boot_mutation_by_type_and_epoch.begin(); it_m != boot_mutation_by_type_and_epoch.end(); it_m++){
@@ -1366,8 +1376,8 @@ void MutationRateForCategory(cxxopts::Options& options, std::string chr = "NA"){
 
     int size = 0;
     for(std::vector<int>::iterator it_boot_trees = boot_trees.begin(); it_boot_trees != boot_trees.end();){
-      int start = 10000*sam(gen);
-      for(int k = start; k < start + 10000 && size < boot_trees.size() && k < boot_trees.size(); k++){
+      int start = 1000*sam(gen);
+      for(int k = start; k < start + 1000 && size < boot_trees.size() && k < boot_trees.size(); k++){
         *it_boot_trees = k;
         it_boot_trees++;
         size++;
@@ -1403,7 +1413,7 @@ void MutationRateForCategory(cxxopts::Options& options, std::string chr = "NA"){
     fp = fopen((options["output"].as<std::string>() + "_chr" + chr + "_mut" + ".bin" ).c_str(), "wb");  
   }
   fwrite(&num_epochs, sizeof(int), 1, fp);
-  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
+  fwrite(&epochs[0], sizeof(double), epochs.size(), fp);
   for(int n = 0; n < n_boot; n++){
     boot_mutation_by_type_and_epoch[n].DumpToFile(fp);
   }
@@ -1489,9 +1499,15 @@ void SummarizeWholeGenomeForCategory(cxxopts::Options& options){
   std::vector<double> epochs;
   fread(&num_epochs, sizeof(int), 1, fp);
   epochs.resize(num_epochs);
-  fread(&epochs[0], sizeof(float), num_epochs, fp);
+  fread(&epochs[0], sizeof(double), num_epochs, fp);
 
-  int n_boot = 1000;
+  std::cerr << num_epochs << std::endl;
+  for(int e = 0; e < num_epochs; e++){
+    std::cerr << epochs[e] << " ";
+  }
+  std::cerr << std::endl;
+
+  int n_boot = 100;
   std::vector<CollapsedMatrix<double>> mut_by_type_and_epoch(n_boot);
   CollapsedMatrix<double> mut_by_type_and_epoch_tmp;
   for(int n = 0; n < n_boot; n++){
@@ -1502,7 +1518,7 @@ void SummarizeWholeGenomeForCategory(cxxopts::Options& options){
     fp = fopen(filenames[i].c_str(),"rb");
 
     fread(&num_epochs, sizeof(int), 1, fp);
-    fread(&epochs[0], sizeof(float), num_epochs, fp);
+    fread(&epochs[0], sizeof(double), num_epochs, fp);
 
     for(int n = 0; n < n_boot; n++){
       mut_by_type_and_epoch_tmp.ReadFromFile(fp);
@@ -1554,7 +1570,7 @@ void SummarizeWholeGenomeForCategory(cxxopts::Options& options){
 
   fp = fopen((options["output"].as<std::string>() + "_mut" + ".bin" ).c_str(), "wb"); 
   fwrite(&num_epochs, sizeof(int), 1, fp);
-  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
+  fwrite(&epochs[0], sizeof(double), epochs.size(), fp);
   for(int n = 0; n < n_boot; n++){
     mut_by_type_and_epoch[n].DumpToFile(fp);
   }
@@ -1606,24 +1622,17 @@ void FinalizeMutationRateForCategory(cxxopts::Options& options){
   int num_categories = 0;
   std::vector<double> epoch;
 
-
-  int n_boot = 1000;
-  std::vector<CollapsedMatrix<double>> boot_mutation_by_type_and_epoch(n_boot);
-  std::vector<CollapsedMatrix<double>> boot_opportunity_by_type_and_epoch(n_boot);
-  for(std::vector<CollapsedMatrix<double>>::iterator it_m = boot_mutation_by_type_and_epoch.begin(); it_m != boot_mutation_by_type_and_epoch.end(); it_m++){
-    (*it_m).resize(num_epochs, num_categories);
-  }
-  for(std::vector<CollapsedMatrix<double>>::iterator it_o = boot_opportunity_by_type_and_epoch.begin(); it_o != boot_opportunity_by_type_and_epoch.end(); it_o++){
-    (*it_o).resize(num_epochs, num_categories);
-  } 
-   
   FILE* fp; 
   fp = fopen((options["input"].as<std::string>() + "_mut" + ".bin" ).c_str(), "r");  
   assert(fp != NULL);
 
   fread(&num_epochs, sizeof(int), 1, fp);
   epoch.resize(num_epochs);
-  fread(&epoch[0], sizeof(float), num_epochs, fp);
+  fread(&epoch[0], sizeof(double), num_epochs, fp);
+
+  int n_boot = 100;
+  std::vector<CollapsedMatrix<double>> boot_mutation_by_type_and_epoch(n_boot);
+  std::vector<CollapsedMatrix<double>> boot_opportunity_by_type_and_epoch(n_boot);
 
   for(int n = 0; n < n_boot; n++){
     boot_mutation_by_type_and_epoch[n].ReadFromFile(fp);

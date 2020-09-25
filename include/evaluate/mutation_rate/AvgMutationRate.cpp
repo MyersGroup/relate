@@ -27,15 +27,15 @@ GetCoordsAndLineages(MarginalTree& mtr, std::vector<float>& coordinates_tree, st
   vec1[2] = 6;
   vec1[3] = 7;
   std::vector<int> vec2(4,0); 
-  
+
   std::vector<int> ind(4);
   std::size_t m2(0);
   std::generate(std::begin(ind), std::end(ind), [&]{ return m2++; });
   for(int i = 0; i < 4; i++){
-    std::cerr << ind[i] << std::endl;
+  std::cerr << ind[i] << std::endl;
   }
   std::sort(std::begin(ind), std::end(ind), [&](int i1, int i2) {
-          return std::tie(vec1[i1],i1) < std::tie(vec1[i2],i2); } ); 
+  return std::tie(vec1[i1],i1) < std::tie(vec1[i2],i2); } ); 
 
   std::size_t m3(0); 
   std::generate(std::begin(vec2), std::end(vec2), [&]{ return m3++; });
@@ -43,12 +43,12 @@ GetCoordsAndLineages(MarginalTree& mtr, std::vector<float>& coordinates_tree, st
   vec2[1] = 0;
   vec2[2] = 0;
   vec2[3] = 0;
-  
+
   std::sort(std::begin(vec2), std::end(vec2), [&](int i1, int i2) {
-          return std::tie(vec1[i1],i1) < std::tie(vec1[i2],i2); } ); 
+  return std::tie(vec1[i1],i1) < std::tie(vec1[i2],i2); } ); 
 
   for(int i = 0; i < 4; i++){
-    std::cerr << vec1[i] << " " << ind[i] << " " << vec2[i] << std::endl;
+  std::cerr << vec1[i] << " " << ind[i] << " " << vec2[i] << std::endl;
   }
 
   exit(1);
@@ -62,7 +62,7 @@ GetCoordsAndLineages(MarginalTree& mtr, std::vector<float>& coordinates_tree, st
   std::size_t m1(0);
   std::generate(std::begin(sorted_indices), std::end(sorted_indices), [&]{ return m1++; });
   std::sort(std::begin(sorted_indices), std::end(sorted_indices), [&](int i1, int i2) {
-          return std::tie(coordinates_tree[i1],i1) < std::tie(coordinates_tree[i2],i2); } ); 
+      return std::tie(coordinates_tree[i1],i1) < std::tie(coordinates_tree[i2],i2); } ); 
 
   int num_lins = 0;
   double age = coordinates_tree[*sorted_indices.begin()];
@@ -91,7 +91,7 @@ GetCoordsAndLineages(MarginalTree& mtr, std::vector<float>& coordinates_tree, st
     it_num_lin++;
   }
   std::sort(coordinates_tree.begin(), coordinates_tree.end());
- 
+
 }
 
 void
@@ -101,46 +101,56 @@ GetBranchLengthsInEpoch(Data& data, std::vector<double>& epoch, std::vector<floa
   std::fill(branch_lengths_in_epoch.begin(), branch_lengths_in_epoch.end(), 0.0);
 
   int ep = 0;
+
+  for(ep = 0; ep < epoch.size(); ep++){
+    if(coordinates[0] < epoch[ep]) break;
+  }
+  ep--;
+
   branch_lengths_in_epoch[ep] = 0;
-  for(int i = data.N; i < 2*data.N-1; i++){
+  for(int i = 1; i < 2*data.N-1; i++){
 
-    if(coordinates[i] < epoch[ep+1]){
+    if(coordinates[i] > coordinates[i-1]){
 
-      if(coordinates[i-1] >= epoch[ep]){
-        // epoch[ep], coordinates[i-1], coordinates[i], epoch[ep+1]
-        branch_lengths_in_epoch[ep] += num_lineages[i-1] * (coordinates[i] - coordinates[i-1]); 
+      if(coordinates[i] < epoch[ep+1]){
+
+        if(coordinates[i-1] >= epoch[ep]){
+          // epoch[ep], coordinates[i-1], coordinates[i], epoch[ep+1]
+          branch_lengths_in_epoch[ep] += num_lineages[i-1] * (coordinates[i] - coordinates[i-1]); 
+        }else{
+          // coordinates[i-1], epoch[ep], coordinates[i], epoch[ep+1]
+          branch_lengths_in_epoch[ep]  = num_lineages[i-1] * (coordinates[i] - epoch[ep]);  
+        }
+
       }else{
-        // coordinates[i-1], epoch[ep], coordinates[i], epoch[ep+1]
-        branch_lengths_in_epoch[ep]  = num_lineages[i-1] * (coordinates[i] - epoch[ep]);  
-      }
 
-    }else{
+        if(coordinates[i-1] >= epoch[ep]){
+          // epoch[ep], coordinates[i-1], epoch[ep+1], coordinates[i]
+          branch_lengths_in_epoch[ep] += num_lineages[i-1] * (epoch[ep+1] - coordinates[i-1]);
+          ep++;
+        }else{
+          assert(0);
+          // coordinates[i-1], epoch[ep], epoch[ep+1], coordinates[i]
+          branch_lengths_in_epoch[ep]  = num_lineages[i-1] * (epoch[ep+1] - epoch[ep]);
+          ep++;
+        }
 
-      if(coordinates[i-1] >= epoch[ep]){
-        // epoch[ep], coordinates[i-1], epoch[ep+1], coordinates[i]
-        branch_lengths_in_epoch[ep] += num_lineages[i-1] * (epoch[ep+1] - coordinates[i-1]);
-        ep++;
-      }else{
-        assert(0);
-        // coordinates[i-1], epoch[ep], epoch[ep+1], coordinates[i]
-        branch_lengths_in_epoch[ep]  = num_lineages[i-1] * (epoch[ep+1] - epoch[ep]);
-        ep++;
-      }
+        if(ep == epoch.size()-1) break;
 
-      if(ep == epoch.size()-1) break;
+        while(epoch[ep+1] < coordinates[i] && ep < epoch.size()-1){
+          // coordinates[i-1], epoch[ep], epoch[ep+1], coordinates[i]
+          branch_lengths_in_epoch[ep]  = num_lineages[i-1] * (epoch[ep+1] - epoch[ep]);
+          ep++;
+        }
 
-      while(epoch[ep+1] < coordinates[i] && ep < epoch.size()-1){
-        // coordinates[i-1], epoch[ep], epoch[ep+1], coordinates[i]
-        branch_lengths_in_epoch[ep]  = num_lineages[i-1] * (epoch[ep+1] - epoch[ep]);
-        ep++;
-      }
+        if(ep < epoch.size()-1){
+          assert(coordinates[i] >= epoch[ep]);
+          assert(coordinates[i] <= epoch[ep+1]);
+          branch_lengths_in_epoch[ep]    = num_lineages[i-1] * (coordinates[i] - epoch[ep]); 
+        }else{
+          break;
+        }
 
-      if(ep < epoch.size()-1){
-        assert(coordinates[i] >= epoch[ep]);
-        assert(coordinates[i] <= epoch[ep+1]);
-        branch_lengths_in_epoch[ep]    = num_lineages[i-1] * (coordinates[i] - epoch[ep]); 
-      }else{
-        break;
       }
 
     }
@@ -162,7 +172,7 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
   }else{
     ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + chr + ".anc", options["input"].as<std::string>() + "_chr" + chr + ".mut");
   }   
-  
+
   int N = ancmut.NumTips();
   int L = ancmut.NumSnps();
   MarginalTree mtr;
@@ -234,7 +244,7 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
   if(options.count("years_per_gen")){
     years_per_gen = options["years_per_gen"].as<float>();
   } 
- 
+
   int num_epochs;
   std::vector<double> epochs;
   float log_10 = std::log(10);
@@ -299,7 +309,7 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
     }
     epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
     epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
-		num_epochs = epochs.size();
+    num_epochs = epochs.size();
 
   }else{
 
@@ -322,7 +332,7 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
 
   it_mut = mutations.info.begin();
   std::vector<int>::iterator it_dist = dist.begin(), it_pos = pos.begin();
-  
+
   //if first snp is included
   if((*it_mut).pos == (*it_pos)){
     *it_count_bases = 0.5 * (*it_dist)/total_num_bases;
@@ -464,8 +474,8 @@ void AvgMutationRate(cxxopts::Options& options){
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   if(options.count("chr")){
-		std::cerr << "Calculating average mutation rate for " << options["input"].as<std::string>() << "* ..." << std::endl;
-	}else if(options.count("first_chr") && options.count("last_chr")){
+    std::cerr << "Calculating average mutation rate for " << options["input"].as<std::string>() << "* ..." << std::endl;
+  }else if(options.count("first_chr") && options.count("last_chr")){
     std::cerr << "Calculating average mutation rate for " << options["input"].as<std::string>() << "_chr" << options["first_chr"].as<int>();
     std::cerr << " - " << options["input"].as<std::string>() << "_chr" << options["last_chr"].as<int>() << " ..." << std::endl;
   }else{
@@ -542,7 +552,7 @@ void AvgMutationRate(cxxopts::Options& options){
     }
     epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
     epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
-		num_epochs = epochs.size();
+    num_epochs = epochs.size();
 
   }else{
 
@@ -566,17 +576,17 @@ void AvgMutationRate(cxxopts::Options& options){
   std::fill(mutation_by_epoch.begin(), mutation_by_epoch.end(), 0.0);
   std::fill(opportunity_by_epoch.begin(), opportunity_by_epoch.end(), 0.0);
 
-	if(options.count("chr")){
-		igzstream is_chr(options["chr"].as<std::string>());
-		if(is_chr.fail()){
-			std::cerr << "Error while opening file " << options["chr"].as<std::string>() << std::endl;
-		}
-		std::string line;
-		while(getline(is_chr, line)){
-			CalculateAvgMutationRateForChromosome(options, mutation_by_epoch, opportunity_by_epoch, line);
-		}
-		is_chr.close();
-	}else if(options.count("first_chr") && options.count("last_chr")){
+  if(options.count("chr")){
+    igzstream is_chr(options["chr"].as<std::string>());
+    if(is_chr.fail()){
+      std::cerr << "Error while opening file " << options["chr"].as<std::string>() << std::endl;
+    }
+    std::string line;
+    while(getline(is_chr, line)){
+      CalculateAvgMutationRateForChromosome(options, mutation_by_epoch, opportunity_by_epoch, line);
+    }
+    is_chr.close();
+  }else if(options.count("first_chr") && options.count("last_chr")){
     for(int chr = options["first_chr"].as<int>(); chr <= options["last_chr"].as<int>(); chr++){
       CalculateAvgMutationRateForChromosome(options, mutation_by_epoch, opportunity_by_epoch, std::to_string(chr));
     } 

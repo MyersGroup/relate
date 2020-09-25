@@ -444,17 +444,26 @@ coal_tree::Dump(const std::string& filename, std::vector<double>& coal){
   } 
   mean /= size;
 
+  mean = 1.0;
+  double alpha = mean;
+  //double alpha = 1.0;
+  alpha = 1e3;
+
   std::vector<double> coal_rates(num_boot[0].size(), 0); 
-  double alpha = 1e-5;
   int i = 0;
-  coal_rates[i]   = num_boot[0][i]/(denom_boot[0][i] + alpha * mean/(coal[i]*coal[i]) * tanh(mean/coal[i+1] - mean/coal[i]));
+  coal_rates[i]   = num_boot[0][i]/(denom_boot[0][i] - alpha/mean * tanh(coal[i+1]/mean - coal[i]/mean));
   for(i = 1; i < num_boot[0].size()-1; i++){
-    coal_rates[i] = num_boot[0][i]/(denom_boot[0][i] + alpha * mean/(coal[i]*coal[i]) * tanh(mean/coal[i-1] - mean/coal[i]) + alpha * mean/(coal[i]*coal[i]) * tanh(mean/coal[i+1] - mean/coal[i]));
+    if(denom_boot[0][i] > 0){
+      coal_rates[i] = num_boot[0][i]/(denom_boot[0][i] - alpha/mean * ( tanh(coal[i-1]/mean - coal[i]/mean) + tanh(coal[i+1]/mean - coal[i]/mean) ));
+    }
   } 
-  coal_rates[i]   = num_boot[0][i]/(denom_boot[0][i] + alpha * mean/(coal[i]*coal[i]) * tanh(mean/coal[i-1] - mean/coal[i]));
+  if(denom_boot[0][i] > 0){
+    coal_rates[i]   = num_boot[0][i]/(denom_boot[0][i] - alpha/mean * tanh(coal[i-1]/mean - coal[i]/mean));
+  }
 
   os << "0 0 ";
   for(int i = 0; i < num_boot[0].size(); i++){
+    if(!std::isnan(coal_rates[i])) assert(coal_rates[i] >= 0.0);
     os << coal_rates[i] << " ";
   } 
   os << "\n";
