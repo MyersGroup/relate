@@ -51,6 +51,7 @@ ConvertToTreeSequenceTxt(cxxopts::Options& options){
   Muts::iterator it_mut;
   float num_bases_tree_persists = 0.0;
   Data data(N,L);
+  int root = 2*data.N - 2;
 
   Mutations mut;
   mut.Read(options["input"].as<std::string>() + ".mut");
@@ -100,8 +101,14 @@ ConvertToTreeSequenceTxt(cxxopts::Options& options){
   }
   os_node_table << "is_sample\tindividual\ttime\tmetadata" << std::endl;
 
-  for(int i = 0; i < data.N; i++){
-    os_node_table << "1\t" << i << "\t0.0\n";
+  if(ancmut.sample_ages.size() > 0){
+    for(int i = 0; i < data.N; i++){
+      os_node_table << "1\t" << i << "\t" << ancmut.sample_ages[i] << "\n";
+    }
+  }else{
+    for(int i = 0; i < data.N; i++){
+      os_node_table << "1\t" << i << "\t0.0\n";
+    }
   }
 
   //Edge table
@@ -124,17 +131,31 @@ ConvertToTreeSequenceTxt(cxxopts::Options& options){
 
   std::vector<float> coordinates(2*data.N-1,0.0);
  
-  int pos, snp, pos_end, snp_end, tree_count = 0, node, node_const, site_count = 0;
+  int pos, snp, pos_end, snp_end, tree_count = 0, node, node_const, site_count = 0, count = 0;
   num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
   while(num_bases_tree_persists >= 0.0){
 
     mtr.tree.GetCoordinates(coordinates);
+
+    for(int i = 0; i < mtr.tree.nodes.size()-1; i++){
+      if(!(coordinates[(*mtr.tree.nodes[i].parent).label] - coordinates[i] > 0.0)){
+        int parent = (*mtr.tree.nodes[i].parent).label, child = i;
+        while(coordinates[parent] - coordinates[child] < 1e-5){
+          coordinates[parent] = coordinates[child] + 1e-5;
+          if(parent == root) break;
+          child  = parent;
+          parent = (*mtr.tree.nodes[parent].parent).label;
+        }
+      }
+    }
+
+
     pos = mut.info[mtr.pos].pos;
     if(mtr.pos == 0) pos = 0;
     snp = mtr.pos;
 
     tree_count = mut.info[snp].tree;
-    node_const = tree_count * (data.N - 1);
+    node_const = count * (data.N - 1);
 
     //Mutation table
     int l = snp;
@@ -174,6 +195,7 @@ ConvertToTreeSequenceTxt(cxxopts::Options& options){
     }
 
     num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+    count++;
 
   } 
   os_mut_table.close();
@@ -255,9 +277,16 @@ ConvertToTreeSequence(cxxopts::Options& options){
     check_tsk_error(ret);
   }
 
-  for(int i = 0; i < data.N; i++){
-    ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, 0, TSK_NULL, i, NULL, 0);
-    check_tsk_error(ret);
+  if(ancmut.sample_ages.size() > 0){
+    for(int i = 0; i < data.N; i++){
+      ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, (float) ancmut.sample_ages[i], TSK_NULL, i, NULL, 0);
+      check_tsk_error(ret);
+    }
+  }else{
+    for(int i = 0; i < data.N; i++){
+      ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, 0.0, TSK_NULL, i, NULL, 0);
+      check_tsk_error(ret);
+    }
   }
 
   ///////////////////////////////////////////////////////////////////////////// 
@@ -271,13 +300,24 @@ ConvertToTreeSequence(cxxopts::Options& options){
   while(num_bases_tree_persists >= 0.0){
 
     mtr.tree.GetCoordinates(coordinates);
+    for(int i = 0; i < mtr.tree.nodes.size()-1; i++){
+      if(!(coordinates[(*mtr.tree.nodes[i].parent).label] - coordinates[i] > 0.0)){
+        int parent = (*mtr.tree.nodes[i].parent).label, child = i;
+        while(coordinates[parent] - coordinates[child] < 1e-5){
+          coordinates[parent] = coordinates[child] + 1e-5;
+          if(parent == root) break;
+          child  = parent;
+          parent = (*mtr.tree.nodes[parent].parent).label;
+        }
+      }
+    }
 
     pos = mut.info[mtr.pos].pos;
     if(mtr.pos == 0) pos = 0;
     snp = mtr.pos;
 
     tree_count = mut.info[snp].tree;
-    node_const = tree_count * (data.N - 1);
+    node_const = count * (data.N - 1);
 
     //Mutation table
     int l = snp;
@@ -325,6 +365,7 @@ ConvertToTreeSequence(cxxopts::Options& options){
     }
 
     num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+    count++;
 
   } 
 
