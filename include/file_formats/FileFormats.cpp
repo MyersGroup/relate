@@ -223,7 +223,7 @@ ConvertFromVcf(cxxopts::Options& options){
   bool help = false;
   if( !options.count("input") || !options.count("haps") || !options.count("sample")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: input, haps, sample." << std::endl;
+    std::cout << "Needed: input, haps, sample. Optional: flag (0: all variants, 1 only SNP)" << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -293,95 +293,105 @@ ConvertFromVcf(cxxopts::Options& options){
   //create haps file
   int N_prev = N;
 
+  bool only_snps = false;
+  if(options.count("flag")){
+    if(options["flag"].as<int>() == 1) only_snps = true;
+  }
+
   std::vector<char> sequence;
   do{
 
     sscanf(line.c_str(), "%s %d %s %s %s", chr, &bp, rsid, ancestral, alternative);
-    int c = 0;
-    for(int k = 0; k < 9; k++){
-      while(line[c] != '\t' && line[c] != ' '){
-        c++;
-      }
-      c++;
-    }
 
-    std::vector<char> seq(2*N_prev);
-    N = 0;
-    int freq = 0;
-    while(c < line.size()-2){
-      if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '0'){
-        if(N >= N_prev) break;
-        seq[2*N] = line[c];
-        seq[2*N+1] = line[c+2];
-        N++;
-        c += 2;
-      }else if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '1'){
-        if(N >= N_prev) break;
-        seq[2*N] = line[c];
-        seq[2*N+1] = line[c+2];
-        N++;
-        freq++;
-        c += 2;
-      }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '0'){
-        if(N >= N_prev) break;
-        seq[2*N] = line[c];
-        seq[2*N+1] = line[c+2];
-        N++;
-        freq++;
-        c += 2;
-      }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '1'){
-        if(N >= N_prev) break;
-        seq[2*N] = line[c];
-        seq[2*N+1] = line[c+2];
-        N++;
-        freq += 2;
-        c += 2;
-      }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '0'){
-        if(N >= N_prev) break;
-        seq[2*N] = line[c];
-        seq[2*N+1] = line[c+2];
-        N++;
-        c += 2;
-      }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '1'){
-        if(N >= N_prev) break;
-        seq[2*N] = line[c];
-        seq[2*N+1] = line[c+2];
-        N++;
-        freq++;
-        c += 2;
-      }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '0'){
-        if(N >= N_prev) break;
-        seq[2*N] = line[c];
-        seq[2*N+1] = line[c+2];
-        N++;
-        freq++;
-        c += 2;
-      }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '1'){
-        if(N >= N_prev) break;
-        seq[2*N] = line[c];
-        seq[2*N+1] = line[c+2];
-        N++;
-        freq += 2;
-        c += 2;
-      }
-      if(c < line.size()){
-        while(line[c] != ' ' && line[c] != '\t' && line[c] != '\n' && c < line.size()-1){
+    if(only_snps && strlen(ancestral) == 1 && strlen(alternative) == 1){
+
+      int c = 0;
+      for(int k = 0; k < 9; k++){
+        while(line[c] != '\t' && line[c] != ' '){
           c++;
         }
         c++;
       }
-    }
 
-    if(N == N_prev){
-
-			for(int i = 0; i < strlen(rsid); i++){
-        if(rsid[i] == ';') rsid[i] = ',';
-			}
-      fprintf(fp_haps, "%s %s %d %s %s", chr, rsid, bp, ancestral, alternative);
-      for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
-        fprintf(fp_haps, " %c", *it_seq);
+      std::vector<char> seq(2*N_prev);
+      N = 0;
+      int freq = 0;
+      while(c < line.size()-2){
+        if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '0'){
+          if(N >= N_prev) break;
+          seq[2*N] = line[c];
+          seq[2*N+1] = line[c+2];
+          N++;
+          c += 2;
+        }else if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '1'){
+          if(N >= N_prev) break;
+          seq[2*N] = line[c];
+          seq[2*N+1] = line[c+2];
+          N++;
+          freq++;
+          c += 2;
+        }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '0'){
+          if(N >= N_prev) break;
+          seq[2*N] = line[c];
+          seq[2*N+1] = line[c+2];
+          N++;
+          freq++;
+          c += 2;
+        }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '1'){
+          if(N >= N_prev) break;
+          seq[2*N] = line[c];
+          seq[2*N+1] = line[c+2];
+          N++;
+          freq += 2;
+          c += 2;
+        }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '0'){
+          if(N >= N_prev) break;
+          seq[2*N] = line[c];
+          seq[2*N+1] = line[c+2];
+          N++;
+          c += 2;
+        }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '1'){
+          if(N >= N_prev) break;
+          seq[2*N] = line[c];
+          seq[2*N+1] = line[c+2];
+          N++;
+          freq++;
+          c += 2;
+        }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '0'){
+          if(N >= N_prev) break;
+          seq[2*N] = line[c];
+          seq[2*N+1] = line[c+2];
+          N++;
+          freq++;
+          c += 2;
+        }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '1'){
+          if(N >= N_prev) break;
+          seq[2*N] = line[c];
+          seq[2*N+1] = line[c+2];
+          N++;
+          freq += 2;
+          c += 2;
+        }
+        if(c < line.size()){
+          while(line[c] != ' ' && line[c] != '\t' && line[c] != '\n' && c < line.size()-1){
+            c++;
+          }
+          c++;
+        }
       }
-      fprintf(fp_haps, "\n");
+
+      if(N == N_prev){
+
+        for(int i = 0; i < strlen(rsid); i++){
+          if(rsid[i] == ';') rsid[i] = ',';
+        }
+        fprintf(fp_haps, "%s %s %d %s %s", chr, rsid, bp, ancestral, alternative);
+        for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
+          fprintf(fp_haps, " %c", *it_seq);
+        }
+        fprintf(fp_haps, "\n");
+      }
+
     }
 
   }while(getline(is_vcf, line));
@@ -522,14 +532,14 @@ RemoveSamples(cxxopts::Options& options){
   std::cerr << "Removing samples specified in input.. " << std::endl;
 
   bool remove_fixed = true;
-	if(options.count("flag")){
-		if((options["flag"].as<std::string>() != "0") && (options["flag"].as<std::string>() != "1")){
+  if(options.count("flag")){
+    if((options["flag"].as<std::string>() != "0") && (options["flag"].as<std::string>() != "1")){
       std::cerr << "Error: flag does not exist." << std::endl;
-			std::cerr << "Use --flag 0: remove fixed mutations - default, --flag 1: output all mutations." << std::endl;
-			exit(1);
-		}
+      std::cerr << "Use --flag 0: remove fixed mutations - default, --flag 1: output all mutations." << std::endl;
+      exit(1);
+    }
     remove_fixed = (options["flag"].as<std::string>() == "0");
-	}
+  }
 
   haps m_hap(options["haps"].as<std::string>().c_str(), options["sample"].as<std::string>().c_str());
   FILE* fp = fopen((options["output"].as<std::string>() + ".haps").c_str(), "w");
@@ -605,16 +615,16 @@ RemoveSamples(cxxopts::Options& options){
       if(poplabels) os_pop << line2 << "\n";
       remaining_haps[i] = j;
       i++;
-			j++;
-			if(strcmp(id, id2) == 0){ //diploid
+      j++;
+      if(strcmp(id, id2) == 0){ //diploid
         remaining_haps[i] = j;
         i++;
-				j++;
-			}
+        j++;
+      }
     }else{
       j++;
-			if(strcmp(id, id2) == 0) j++;
-		}
+      if(strcmp(id, id2) == 0) j++;
+    }
 
   }
   assert(i == remaining_haps.size());
@@ -882,89 +892,89 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
     if(strlen(ancestral) == 1 || strlen(alternative) == 1){
       //if(ancestral_allele == 'A' || ancestral_allele == 'C' || ancestral_allele == 'G' || ancestral_allele == 'T'){
 
-        if(ancestral_allele == ancestral[0] && strlen(ancestral) == 1){
+      if(ancestral_allele == ancestral[0] && strlen(ancestral) == 1){
 
-          it_line = line.begin();
-          //chr
-          while(*it_line != ' ') it_line++;
-          it_line++;
-          //rsid
-          while(*it_line != ' ') it_line++;
-          it_line++;
-          //bp
-          while(*it_line != ' ') it_line++;
-          it_line++;
-          //ancestral
-          while(*it_line != ' ') it_line++;
-          it_line++;
-          //alternative
-          while(*it_line != ' ') it_line++;
-          it_line++;
+        it_line = line.begin();
+        //chr
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //rsid
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //bp
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //ancestral
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //alternative
+        while(*it_line != ' ') it_line++;
+        it_line++;
 
-          bool is_snp = false;
-          for(; it_line != line.end(); it_line++){
-            if(*it_line == '1'){
-              is_snp = true;
-              break;
-            }
+        bool is_snp = false;
+        for(; it_line != line.end(); it_line++){
+          if(*it_line == '1'){
+            is_snp = true;
+            break;
           }
+        }
 
-          if(is_snp){
-            os << line << "\n";
-          }else{
-            removed_snps++;
-          }
-
-        }else if(ancestral_allele == alternative[0] && strlen(alternative) == 1){
-
-          number_flipped++;
-          it_line = line.begin();
-          //chr
-          while(*it_line != ' ') it_line++;
-          it_line++;
-          //rsid
-          while(*it_line != ' ') it_line++;
-          it_line++;
-          //bp
-          while(*it_line != ' ') it_line++;
-          it_line++;
-          //ancestral
-          *it_line = alternative[0];
-          it_line++;
-          *it_line=' ';
-          it_line++;
-          //alternative
-          for(int c = 0; c < strlen(ancestral); c++){
-            *it_line=ancestral[c];
-            it_line++;
-          }
-          assert(*it_line == ' ');
-          it_line++;
-
-          bool is_snp = false;
-          for(; it_line != line.end(); it_line++){
-            if(*it_line == '0'){
-              *it_line = '1';
-              is_snp = true;
-            }else if(*it_line == '1'){
-              *it_line = '0';
-            }
-          }
-
-          if(is_snp){
-            os << line << "\n";
-          }else{
-            removed_snps++;
-          }
-
+        if(is_snp){
+          os << line << "\n";
         }else{
           removed_snps++;
-          //std::cerr << ancestral_allele << " " << ancestral << " " << alternative << " " << ancestor.seq[bp-1] << " " << ancestor.seq[bp+1] << std::endl;
+        }
+
+      }else if(ancestral_allele == alternative[0] && strlen(alternative) == 1){
+
+        number_flipped++;
+        it_line = line.begin();
+        //chr
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //rsid
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //bp
+        while(*it_line != ' ') it_line++;
+        it_line++;
+        //ancestral
+        *it_line = alternative[0];
+        it_line++;
+        *it_line=' ';
+        it_line++;
+        //alternative
+        for(int c = 0; c < strlen(ancestral); c++){
+          *it_line=ancestral[c];
+          it_line++;
+        }
+        assert(*it_line == ' ');
+        it_line++;
+
+        bool is_snp = false;
+        for(; it_line != line.end(); it_line++){
+          if(*it_line == '0'){
+            *it_line = '1';
+            is_snp = true;
+          }else if(*it_line == '1'){
+            *it_line = '0';
+          }
+        }
+
+        if(is_snp){
+          os << line << "\n";
+        }else{
+          removed_snps++;
         }
 
       }else{
         removed_snps++;
+        //std::cerr << ancestral_allele << " " << ancestral << " " << alternative << " " << ancestor.seq[bp-1] << " " << ancestor.seq[bp+1] << std::endl;
       }
+
+    }else{
+      removed_snps++;
+    }
 
     //}
 

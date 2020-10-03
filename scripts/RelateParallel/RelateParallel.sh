@@ -29,6 +29,8 @@ then
   echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB."
   echo "sample_ages: Optional. Filename of file containing sample ages (one per line)." 
   echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
+  echo "--painting: Optional. Copying and transition parameters in
+                    chromosome painting algorithm. Format: theta,rho. Default: 0.025,1." 
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
   echo "--threads:Optional. Maximum number of threads."
   exit 1;
@@ -42,6 +44,7 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/RelateParallel/RelatePa
 ######################## Read arguments from command line ###########################
 
 maxjobs=1
+painting="0.025,1"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -109,6 +112,11 @@ do
       shift # past argument
       shift # past value
       ;;
+		--painting)
+			painting="$2"
+			shift # past argument
+			shift # past value
+			;;
     --coal)
       coal="$2"
       shift # past argument
@@ -146,6 +154,10 @@ if [ ! -z "${memory-}" ];
 then
   echo "memory = $memory"
 fi
+if [ ! -z "${painting-}" ];
+then
+  echo "painting   = $painting"
+fi
 if [ ! -z "${sample_ages-}" ];
 then
   echo "sample_ages = $sample_ages"
@@ -169,6 +181,7 @@ RelateForChunk (){
   ## paint all sequences against each other
   ${PATH_TO_RELATE}/bin/Relate \
     --mode Paint \
+    --painting ${painting} \
     -o ${output} \
     --chunk_index ${chunk_index} 
 

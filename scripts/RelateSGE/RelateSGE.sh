@@ -24,7 +24,9 @@ then
   echo "--annot:  Optional. Filename of file containing additional annotation of snps. Can be generated using RelateFileFormats."
   echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB."
 	echo "--sample_ages: Optional. Filename of file containing sample ages (one per line)." 
-	echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
+	echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN."
+  echo "--painting: Optional. Copying and transition parameters in
+                    chromosome painting algorithm. Format: theta,rho. Default: 0.025,1." 
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
   exit 1;
 fi
@@ -38,6 +40,7 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/RelateSGE/RelateSGE.sh 
 
 pe="shmem 1"
 memory=5
+painting="0.025,1"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -100,6 +103,11 @@ do
 			shift # past argument
 			shift # past value
 			;;
+		--painting)
+			painting="$2"
+			shift # past argument
+			shift # past value
+			;;
     --coal)
       coal="$2"
       shift # past argument
@@ -155,6 +163,10 @@ fi
 if [ ! -z "${sample_ages-}" ];
 then
 	echo "sample_ages = $sample_ages"
+fi
+if [ ! -z "${painting-}" ];
+then
+  echo "painting   = $painting"
 fi
 if [ ! -z "${seed-}" ];
 then
@@ -278,9 +290,8 @@ else
 fi
 
 
-
 ###########GET NUMBER OF CHUNKS
-num_chunks=($(${PATH_TO_RELATE}/scripts/RelateSGE/read_bin.py "${output}/parameters.bin"))
+num_chunks=($(${PATH_TO_RELATE}/scripts/RelateSGE/read_bin.py "${output}/${output}/parameters.bin"))
 num_chunks=${num_chunks[2]}
 prev_chunk=-1
 
@@ -289,13 +300,14 @@ echo "Number of chunks: "$num_chunks
 
 ######################################################################################################
 #### Build trees for each chunk
+painting=$(echo ${painting} | awk '{ gsub(",", ";") ; print $0 }'CC)
 
 ## paint all sequences against each other
 for chunk in `seq 0 $(($num_chunks - 1))`;
 do
 
   #GET NUMBER OF WINDOWS
-  num_windows=($(${PATH_TO_RELATE}/scripts/RelateSGE/read_bin.py "${output}/parameters_c"${chunk}".bin"))
+  num_windows=($(${PATH_TO_RELATE}/scripts/RelateSGE/read_bin.py "${output}/${output}/parameters_c"${chunk}".bin"))
   num_windows=${num_windows[2]}
   num_batched_windows=$(($num_windows/$batch_windows + 1))
 
@@ -304,7 +316,7 @@ do
   qsub -hold_jid find_equivalent_branches_${output}_$(($chunk - 5)) \
        -N paint_${output}_${chunk} \
        -wd ${PWD}/${output} \
-       -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},output=${output} \
+       -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},painting=${painting},output=${output} \
        -e log/paint_c${chunk}.log \
        -o log/paint_c${chunk}.log \
        -P $p \
@@ -554,14 +566,16 @@ else
 		-pe ${pe} \
 		${PATH_TO_RELATE}/scripts/RelateSGE/Finalize.sh
 fi
+
 ##################################################################
 #clean up directory
-for chunk in `seq 0 $(($num_chunks - 1))`;
-do
-  mv ${output}/*.log ${output}/log/
-done
+mv ${output}/*.log ${output}/log/
 cd ${output}
 tar -cf log.tar log/
 rm -rf log/
+
+gzip ${output}.anc
+gzip ${output}.mut
+
 cd ..
 
