@@ -347,18 +347,33 @@ do
 				 -M ${min_mem} \
        ${PATH_TO_RELATE}/scripts/RelateLSF/Paint.sh
 	fi
-
-  ## build tree topologies
-  bsub -w paint_${output}_${chunk} \
-       -J build_topology_${output}_${chunk}[1-${num_batched_windows}] \
-       -cwd ${PWD}/${output} \
-       -env all,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows \
-       -e build_${output}.log \
-       -o build_${output}.log \
-       -P $p \
-       -q $q \
-       -M ${max_mem} \
-       ${PATH_TO_RELATE}/scripts/RelateLSF/BuildTopology.sh 
+	
+	if [ -z ${seed-} ]
+	then
+		## build tree topologies
+		bsub -w paint_${output}_${chunk} \
+				 -J build_topology_${output}_${chunk}[1-${num_batched_windows}] \
+				 -cwd ${PWD}/${output} \
+				 -env all,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting} \
+				 -e build_${output}.log \
+				 -o build_${output}.log \
+				 -P $p \
+				 -q $q \
+				 -M ${max_mem} \
+				 ${PATH_TO_RELATE}/scripts/RelateLSF/BuildTopology.sh 
+  else
+		## build tree topologies
+		bsub -w paint_${output}_${chunk} \
+			-J build_topology_${output}_${chunk}[1-${num_batched_windows}] \
+			-cwd ${PWD}/${output} \
+			-env all,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting} \
+			-e build_${output}.log \
+			-o build_${output}.log \
+			-P $p \
+			-q $q \
+			-M ${max_mem} \
+			${PATH_TO_RELATE}/scripts/RelateLSF/BuildTopology.sh 
+	fi
 
   ## find equivalent branches in adjacent trees 
   bsub -w build_topology_${output}_${chunk} \

@@ -39,7 +39,17 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     seed = std::time(0) + getpid();
   }else{
     seed = options["seed"].as<int>();
+		srand(seed);
+		std::string name = options["input"].as<std::string>();
+		int tmp = 0;
+		for(int i = 0; i < name.size(); i++){
+			if(std::isdigit(name[i])) tmp += name[i]-48; 
+		}
+		for(int i = 0; i < tmp; i++){
+			seed = rand();
+		}
   }
+	srand(seed);
 
   int Ne = 3e4;
   double mutation_rate = options["mutation_rate"].as<float>();
@@ -217,7 +227,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
         ShowProgress(progress); 
       }
       count_trees++; 
-      bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
+      bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
     }
   }else{
     EstimateBranchLengthsWithSampleAge bl(data, anc.sample_ages);
@@ -227,7 +237,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
         ShowProgress(progress); 
       }
       count_trees++; 
-      bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
+      bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
     }
   }
 
@@ -292,16 +302,25 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
 }
 
 ////////////////////////////
-//TODO: format: newick "n", anc "a", binary "b"
 
 int SampleBranchLengths(cxxopts::Options& options){
 
-  int seed;
-  if(!options.count("seed")){
-    seed = std::time(0) + getpid();
-  }else{
-    seed = options["seed"].as<int>();
-  }
+	int seed;
+	if(!options.count("seed")){
+		seed = std::time(0) + getpid();
+	}else{
+		seed = options["seed"].as<int>();
+		srand(seed);
+		std::string name = options["input"].as<std::string>();
+		int tmp = 0;
+		for(int i = 0; i < name.size(); i++){
+			if(std::isdigit(name[i])) tmp += name[i]-48; 
+		}
+		for(int i = 0; i < tmp; i++){
+			seed = rand();
+		}
+	}
+	srand(seed);
 
   int Ne = 2e4;
   double mutation_rate = options["mutation_rate"].as<float>();
@@ -548,7 +567,7 @@ int SampleBranchLengths(cxxopts::Options& options){
 
       int count = 0;
       if(count < num_samples){
-        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
+        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
 
         if(format == "n"){
           if(it_seq != std::prev(anc.seq.end(),1)){
@@ -565,7 +584,7 @@ int SampleBranchLengths(cxxopts::Options& options){
       }
       count++;
       for(;count < num_samples; count++){
-        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
+        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
 
         if(format == "n"){
           if(it_seq != std::prev(anc.seq.end(),1)){
@@ -595,6 +614,7 @@ int SampleBranchLengths(cxxopts::Options& options){
               char derived   = (*it_mut).mutation_type[2]; 
               //get list of descendants and output string
 
+							std::cerr << *(*it_mut).branch.begin() << std::endl;
               std::sort(leaves[*(*it_mut).branch.begin()].member.begin(), leaves[*(*it_mut).branch.begin()].member.end());
 
               std::vector<int>::iterator it_member = leaves[*(*it_mut).branch.begin()].member.begin();
@@ -659,7 +679,7 @@ int SampleBranchLengths(cxxopts::Options& options){
 
       int count = 0;
       if(count < num_samples){
-        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
+        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
 
         if(format == "n"){
           if(it_seq != std::prev(anc.seq.end(),1)){
@@ -676,7 +696,7 @@ int SampleBranchLengths(cxxopts::Options& options){
       }
       count++;
       for(;count < num_samples; count++){
-        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
+        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
 
         if(format == "n"){
           if(it_seq != std::prev(anc.seq.end(),1)){
@@ -876,12 +896,22 @@ GetCoords(int node, Tree& tree, int branch, float Ne, char m, std::vector<float>
 
 int SampleBranchLengthsBinary(cxxopts::Options& options){
 
-  int seed;
-  if(!options.count("seed")){
-    seed = std::time(0) + getpid();
-  }else{
-    seed = options["seed"].as<int>();
-  }
+	int seed;
+	if(!options.count("seed")){
+		seed = std::time(0) + getpid();
+	}else{
+		seed = options["seed"].as<int>();
+		srand(seed);
+		std::string name = options["input"].as<std::string>();
+		int tmp = 0;
+		for(int i = 0; i < name.size(); i++){
+			if(std::isdigit(name[i])) tmp += name[i] - 48; 
+		}
+		for(int i = 0; i < tmp; i++){
+			seed = rand();
+		}
+	}
+	srand(seed);
 
   int Ne = 3e4;
   double mutation_rate = options["mutation_rate"].as<float>();
@@ -1105,12 +1135,12 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 							int i = 0;
 							if(i < num_samples){
 								sampled_trees[i] = mtr.tree;
-								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
+								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
 							}
 							i++;
 							for(; i < num_samples; i++){
 								sampled_trees[i] = mtr.tree;
-								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
+								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
 							}
 							first_snp = false;
 						}
@@ -1253,12 +1283,12 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 							int i = 0;
 							if(i < num_samples){
 								sampled_trees[i] = mtr.tree;
-								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, seed); //this is estimating times
+								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
 							}
 							i++;
 							for(; i < num_samples; i++){
                 sampled_trees[i] = mtr.tree;
-								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, seed); //this is estimating times
+								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
 							}
 							first_snp = false;
 						}

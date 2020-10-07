@@ -16,7 +16,7 @@ if [ $# -le 0 ]
 then
   echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   echo "Not enough arguments supplied. Execute as"
-  echo "PATH_TO_RELATE/scripts/RelateParallel/RelateParallel.sh"
+  echo "PATH_TO_RELATE/scripts/RelateParallel/RelateParallelTopoOnly.sh"
   echo ""
   echo "--haps:   Filename of haps file (Output file format of Shapeit)."
   echo "--sample: Filename of sample file (Output file format of Shapeit)."
@@ -29,6 +29,8 @@ then
   echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB."
   echo "sample_ages: Optional. Filename of file containing sample ages (one per line)." 
   echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
+  echo "--painting: Optional. Copying and transition parameters in
+                    chromosome painting algorithm. Format: theta,rho. Default: 0.025,1." 
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
   echo "--threads:Optional. Maximum number of threads."
   exit 1;
@@ -42,6 +44,7 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/RelateParallel/RelatePa
 ######################## Read arguments from command line ###########################
 
 maxjobs=1
+painting="0.025,1"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -109,6 +112,11 @@ do
       shift # past argument
       shift # past value
       ;;
+		--painting)
+			painting="$2"
+			shift # past argument
+			shift # past value
+			;;
     --coal)
       coal="$2"
       shift # past argument
@@ -146,6 +154,10 @@ if [ ! -z "${memory-}" ];
 then
   echo "memory = $memory"
 fi
+if [ ! -z "${painting-}" ];
+then
+  echo "painting   = $painting"
+fi
 if [ ! -z "${sample_ages-}" ];
 then
   echo "sample_ages = $sample_ages"
@@ -163,12 +175,12 @@ echo "********************************"
 ########### Function that takes chunk_index and applies Relate stages 2-6 to it ######################
 
 RelateForChunk (){
-
   chunk_index=$1
 
   ## paint all sequences against each other
   ${PATH_TO_RELATE}/bin/Relate \
     --mode Paint \
+    --painting ${painting} \
     -o ${output} \
     --chunk_index ${chunk_index} 
 
@@ -180,14 +192,25 @@ RelateForChunk (){
     while [ $# -gt 0 ] ; do
       jobcnt=(`jobs -p`)
       if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-
-        ${PATH_TO_RELATE}/bin/Relate \
-          --mode BuildTopology \
-          --chunk_index ${chunk_index} \
-          --first_section $1 \
-          --last_section $1 \
-          -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
-
+				if [ -z "${seed-}" ];
+				then
+					${PATH_TO_RELATE}/bin/Relate \
+						--mode BuildTopology \
+						--chunk_index ${chunk_index} \
+						--first_section $1 \
+						--last_section $1 \
+						--painting ${painting} \
+						-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+				else
+					${PATH_TO_RELATE}/bin/Relate \
+						--mode BuildTopology \
+						--chunk_index ${chunk_index} \
+						--first_section $1 \
+						--last_section $1 \
+						--seed ${seed} \
+						--painting ${painting} \
+						-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+				fi
         shift
       fi
     done
@@ -205,7 +228,6 @@ RelateForChunk (){
   ${PATH_TO_RELATE}/bin/Relate \
     --mode FindEquivalentBranches \
     --chunk_index ${chunk_index} \
-    -o ${output} \
     -o ${output} 
 
   ## infer branch lengths
@@ -214,51 +236,109 @@ RelateForChunk (){
       jobcnt=(`jobs -p`)
       if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
 
-        if [ ! -z "${sample_ages-}" ]; then
+				if [ -z "${seed-}" ];
+				then
+          if [ ! -z "${sample_ages-}" ]; then
 
-          if [ ! -z "${coal-}" ]; then
-            ${PATH_TO_RELATE}/bin/Relate \
-              --mode InferBranchLengths \
-              -m $mu \
-              --coal $coal \
-              --chunk_index ${chunk_index} \
-              --first_section $1 \
-              --last_section $1 \
-              --sample_ages ${sample_ages} \
-              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
-          else
-            ${PATH_TO_RELATE}/bin/Relate \
-              --mode InferBranchLengths \
-              -m $mu \
-              -N $Ne \
-              --chunk_index ${chunk_index} \
-              --first_section $1 \
-              --last_section $1 \
-              --sample_ages ${sample_ages} \
-              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
-          fi
+						if [ ! -z "${coal-}" ]; then
+							${PATH_TO_RELATE}/bin/Relate \
+								--mode InferBranchLengths \
+								-m $mu \
+								--coal $coal \
+								--chunk_index ${chunk_index} \
+								--first_section $1 \
+								--last_section $1 \
+								--sample_ages ${sample_ages} \
+								-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+						else
+							${PATH_TO_RELATE}/bin/Relate \
+								--mode InferBranchLengths \
+								-m $mu \
+								-N $Ne \
+								--chunk_index ${chunk_index} \
+								--first_section $1 \
+								--last_section $1 \
+								--sample_ages ${sample_ages} \
+								-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+						fi
 
-        else
+					else
 
-          if [ ! -z "${coal-}" ]; then
-            ${PATH_TO_RELATE}/bin/Relate \
-              --mode InferBranchLengths \
-              -m $mu \
-              --coal $coal \
-              --chunk_index ${chunk_index} \
-              --first_section $1 \
-              --last_section $1 \
-              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
-          else
-            ${PATH_TO_RELATE}/bin/Relate \
-              --mode InferBranchLengths \
-              -m $mu \
-              -N $Ne \
-              --chunk_index ${chunk_index} \
-              --first_section $1 \
-              --last_section $1 \
-              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
-          fi
+						if [ ! -z "${coal-}" ]; then
+							${PATH_TO_RELATE}/bin/Relate \
+								--mode InferBranchLengths \
+								-m $mu \
+								--coal $coal \
+								--chunk_index ${chunk_index} \
+								--first_section $1 \
+								--last_section $1 \
+								-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+						else
+							${PATH_TO_RELATE}/bin/Relate \
+								--mode InferBranchLengths \
+								-m $mu \
+								-N $Ne \
+								--chunk_index ${chunk_index} \
+								--first_section $1 \
+								--last_section $1 \
+								-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+						fi
+
+					fi
+
+				else
+
+					if [ ! -z "${sample_ages-}" ]; then
+
+						if [ ! -z "${coal-}" ]; then
+							${PATH_TO_RELATE}/bin/Relate \
+								--mode InferBranchLengths \
+								-m $mu \
+								--coal $coal \
+								--chunk_index ${chunk_index} \
+								--first_section $1 \
+								--last_section $1 \
+								--sample_ages ${sample_ages} \
+								--seed ${seed} \
+								-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+						else
+							${PATH_TO_RELATE}/bin/Relate \
+								--mode InferBranchLengths \
+								-m $mu \
+								-N $Ne \
+								--chunk_index ${chunk_index} \
+								--first_section $1 \
+								--last_section $1 \
+								--sample_ages ${sample_ages} \
+								--seed ${seed} \
+								-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+						fi
+
+					else
+
+						if [ ! -z "${coal-}" ]; then
+							${PATH_TO_RELATE}/bin/Relate \
+								--mode InferBranchLengths \
+								-m $mu \
+								--coal $coal \
+								--chunk_index ${chunk_index} \
+								--first_section $1 \
+								--last_section $1 \
+								--seed ${seed} \
+								-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+						else
+						  ${PATH_TO_RELATE}/bin/Relate \
+							  --mode InferBranchLengths \
+								-m $mu \
+								-N $Ne \
+								--chunk_index ${chunk_index} \
+								--first_section $1 \
+								--last_section $1 \
+								--seed ${seed} \
+								-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+						fi
+
+					fi
 
         fi
 
@@ -271,8 +351,8 @@ RelateForChunk (){
 
   #for section in `seq 0 1 $(($num_sections - 1))`
   #do
-  #  cat chunk_${chunk_index}/sec${section}.log 
-  #  rm chunk_${chunk_index}/sec${section}.log 
+  #  cat ${output}/chunk_${chunk_index}/sec${section}.log 
+  #  rm ${output}/chunk_${chunk_index}/sec${section}.log 
   #done
 
 
@@ -282,7 +362,6 @@ RelateForChunk (){
     -N $Ne \
     --chunk_index ${chunk_index} \
     -o ${output} 
-
 } 
 
 
@@ -312,8 +391,6 @@ if [ -z "${dist-}" ];
 then
   if [ -z "${memory-}" ];
   then
-    if [ -z "${seed-}" ];
-    then
 
       # no optional arguments set
       ${PATH_TO_RELATE}/bin/Relate \
@@ -323,21 +400,7 @@ then
         -o ${output} \
         --map ${map}  
 
-    else
-
-      # only seed is set
-      ${PATH_TO_RELATE}/bin/Relate \
-        --mode "MakeChunks" \
-        --haps ${haps} \
-        --sample ${sample} \
-        --map ${map} \
-        -o ${output} \
-        --seed ${seed} 
-
-    fi
   else
-    if [ -z "${seed-}" ];
-    then
 
       # only memory is set
       ${PATH_TO_RELATE}/bin/Relate \
@@ -348,25 +411,10 @@ then
         -o ${output} \
         --memory ${memory}
 
-    else
-
-      # memory and seed are set
-      ${PATH_TO_RELATE}/bin/Relate \
-        --mode "MakeChunks" \
-        --haps ${haps} \
-        --sample ${sample} \
-        --map ${map} \
-        --memory ${memory} \
-        -o ${output} \
-        --seed ${seed}
-
-    fi
   fi
 else
   if [ -z "${memory-}" ];
   then
-    if [ -z "${seed-}" ];
-    then
 
       # only dist is set
       ${PATH_TO_RELATE}/bin/Relate \
@@ -376,23 +424,8 @@ else
         --map ${map} \
         -o ${output} \
         --dist ${dist}
-
-    else
-
-      # dist and seed are set
-      ${PATH_TO_RELATE}/bin/Relate \
-        --mode "MakeChunks" \
-        --haps ${haps} \
-        --sample ${sample} \
-        --map ${map} \
-        --dist ${dist} \
-        -o ${output} \
-        --seed ${seed}
-
-    fi
+ 
   else
-    if [ -z "${seed-}" ];
-    then
 
       # dist and memory are set
       ${PATH_TO_RELATE}/bin/Relate \
@@ -404,20 +437,6 @@ else
         -o ${output} \
         --memory ${memory}
 
-    else
-
-      # dist, memory, and seed are set
-      ${PATH_TO_RELATE}/bin/Relate \
-        --mode "MakeChunks" \
-        --haps ${haps} \
-        --sample ${sample} \
-        --map ${map} \
-        --dist ${dist} \
-        --memory ${memory} \
-        -o ${output} \
-        --seed ${seed}
-
-    fi
   fi
 fi
 

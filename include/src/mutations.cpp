@@ -352,7 +352,6 @@ Mutations::Read(const std::string& filename){
     exit(1);
   }
   std::getline(is, header); 
-
   std::string unused;
   L = 0;
   while( std::getline(is, unused) ){

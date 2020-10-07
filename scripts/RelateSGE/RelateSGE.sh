@@ -323,19 +323,35 @@ do
        -q $q \
        -pe ${pe} \
        ${PATH_TO_RELATE}/scripts/RelateSGE/Paint.sh
-
-  ## build tree topologies
-  qsub -hold_jid paint_${output}_${chunk} \
-       -N build_topology_${output}_${chunk} \
-       -wd ${PWD}/${output} \
-       -t 1-$num_batched_windows \
-       -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows \
-       -e build_${output}.log \
-       -o build_${output}.log \
-       -P $p \
-       -q $q \
-       -pe ${pe} \
-       ${PATH_TO_RELATE}/scripts/RelateSGE/BuildTopology.sh 
+				 
+	if [ -z ${seed-} ]			 
+	then
+		## build tree topologies
+		qsub -hold_jid paint_${output}_${chunk} \
+				 -N build_topology_${output}_${chunk} \
+				 -wd ${PWD}/${output} \
+				 -t 1-$num_batched_windows \
+				 -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting} \
+				 -e build_${output}.log \
+				 -o build_${output}.log \
+				 -P $p \
+				 -q $q \
+				 -pe ${pe} \
+				 ${PATH_TO_RELATE}/scripts/RelateSGE/BuildTopology.sh
+  else
+		## build tree topologies
+		qsub -hold_jid paint_${output}_${chunk} \
+			-N build_topology_${output}_${chunk} \
+			-wd ${PWD}/${output} \
+			-t 1-$num_batched_windows \
+			-v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting} \
+			-e build_${output}.log \
+			-o build_${output}.log \
+			-P $p \
+			-q $q \
+			-pe ${pe} \
+			${PATH_TO_RELATE}/scripts/RelateSGE/BuildTopology.sh
+	fi
 
   ## find equivalent branches in adjacent trees 
   qsub -hold_jid build_topology_${output}_${chunk} \

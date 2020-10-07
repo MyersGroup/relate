@@ -62,10 +62,15 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
 
   int seed;
   if(!options.count("seed")){
-    seed = std::time(0) + getpid();
+		seed = std::time(0) + getpid();
   }else{
     seed = options["seed"].as<int>();
+		srand(seed);
+		for(int i = 0; i < chunk_index + 100*first_section; i++){
+      seed = rand();
+		}
   }
+	srand(seed);
 
   bool ancestral_state = true;
   if(options.count("anc_allele_unknown")){
@@ -93,7 +98,7 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
     int section_endpos   = window_boundaries[section+1]-1;
     if(section_endpos >= data.L) section_endpos = data.L-1;
 
-    ancbuilder.BuildTopology(section, section_startpos, section_endpos, data, anc, seed, ancestral_state);
+    ancbuilder.BuildTopology(section, section_startpos, section_endpos, data, anc, rand(), ancestral_state);
 
     /////////////////////////////////////////// Dump AncesTree to File //////////////////////
 

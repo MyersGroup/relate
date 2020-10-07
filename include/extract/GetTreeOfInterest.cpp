@@ -175,9 +175,9 @@ MapMutation(cxxopts::Options& options){
 	mut.info.resize(ancmut.NumSnps() + data.L);
 
 	num_bases_tree_persists = ancmut.FirstSNP(mtr, it_mut);
-	mtr_prev = mtr;
-	mtr_prev.tree.GetCoordinates(coordinates);	
-	int snp = 0, num_not_mapping = 0, num_flipped = 0, snp_mut = 0, count_tree = 1;
+	//mtr_prev = mtr;
+	mtr.tree.GetCoordinates(coordinates);	
+	int snp = 0, num_not_mapping = 0, num_flipped = 0, snp_mut = 0, count_tree = 0;
 	while(snp < data.L){
 
 		mhaps.ReadSNP(sequence, bp);
@@ -188,12 +188,14 @@ MapMutation(cxxopts::Options& options){
 				mut.info[snp_mut] = (*it_mut);
 				//mut.info[snp_mut].snp_id = snp_mut;
 				snp_mut++;
-				if(count_tree < (*it_mut).tree){
-					mtr_prev = mtr;
-					count_tree = (*it_mut).tree;
-					mtr_prev.tree.GetCoordinates(coordinates);	
-				}
 				num_bases_tree_persists = ancmut.NextSNP(mtr, it_mut);
+
+				if(count_tree < (*it_mut).tree){
+					//mtr_prev = mtr;
+					count_tree = (*it_mut).tree;
+					mtr.tree.GetCoordinates(coordinates);	
+				}
+
 				if(num_bases_tree_persists < 0.0) break;
 			}
 		}
@@ -214,23 +216,38 @@ MapMutation(cxxopts::Options& options){
 
 			if(sequences_carrying_mutation.num_leaves == data.N){
 
-				mut.info[snp_mut].tree      = count_tree-1;
+				mut.info[snp_mut].tree      = count_tree;
 				mut.info[snp_mut].branch.resize(1);
 				mut.info[snp_mut].branch[0] = root;
 				mut.info[snp_mut].age_begin = coordinates[root];
 				mut.info[snp_mut].age_end   = std::numeric_limits<float>::infinity();
 
 			}else{
-				if(ab.IsSNPMapping(mtr_prev.tree, sequences_carrying_mutation, snp) == 2){
+				if(ab.IsSNPMapping(mtr.tree, sequences_carrying_mutation, snp) == 2){
 					num_not_mapping++;
 				}
-				mut.info[snp_mut].tree      = count_tree-1;
+				mut.info[snp_mut].tree      = count_tree;
 				mut.info[snp_mut].branch    = ab.mutations.info[snp].branch;
-				if(mut.info[snp_mut].branch.size() == 1){	
+				if(mut.info[snp_mut].branch.size() == 1){
+
 					int branch = mut.info[snp_mut].branch[0];
+
+					if(0){
+					std::vector<Leaves> leaves;
+					mtr.tree.FindAllLeaves(leaves);
+					std::vector<int> seq(data.N, 0);
+					for(std::vector<int>::iterator it_mem = leaves[branch].member.begin(); it_mem != leaves[branch].member.end(); it_mem++){
+            seq[*it_mem]++;
+					}
+					for(int i = 0; i < data.N; i++){
+            std::cerr << seq[i] << " ";
+					}
+					std::cerr << std::endl;
+					}
+
 					if(branch < root){
 						mut.info[snp_mut].age_begin = coordinates[branch];
-						mut.info[snp_mut].age_end   = coordinates[(*mtr_prev.tree.nodes[branch].parent).label];
+						mut.info[snp_mut].age_end   = coordinates[(*mtr.tree.nodes[branch].parent).label];
 					}else{
 						mut.info[snp_mut].age_begin = coordinates[branch];
 						mut.info[snp_mut].age_end   = std::numeric_limits<float>::infinity();
@@ -264,7 +281,7 @@ MapMutation(cxxopts::Options& options){
 		mut.info[snp_mut] = (*it_mut);
 		//mut.info[snp_mut].snp_id = snp_mut;
 		snp_mut++;
-		mtr_prev = mtr;
+		//mtr_prev = mtr;
 		num_bases_tree_persists = ancmut.NextSNP(mtr, it_mut);
 	}
 
@@ -284,6 +301,5 @@ MapMutation(cxxopts::Options& options){
 	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
 #endif
 	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
-
 
 }

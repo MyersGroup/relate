@@ -308,7 +308,6 @@ CreateAncesTreeFileForSubpopulation(cxxopts::Options& options){
     //exit(1);
   }
   MakeAncesTreeFile(options, mut, include_snp);
-
   ////////////////////////////////////////////////////////////////////////////////////////////////
   //Propagate mutations
 

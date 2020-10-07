@@ -301,7 +301,7 @@ then
           --coal ${output}.coal \
           --dist ${output}.dist \
           --num_samples 1 \
-          --seed $seed \
+					--seed $(($seed + $i)) \
           -m ${mu} \
           -i ${output} \
           -o ${output}
@@ -379,7 +379,7 @@ then
 					--mode ReEstimateBranchLengths \
 					--coal ${output}.coal \
 					--dist ${output}.dist \
-					--seed $seed \
+					--seed $(($seed + ${num_iter} + 1)) \
 					-m ${mu} \
 					-i ${filename} \
 					-o ${output}
@@ -531,7 +531,7 @@ then
             --coal ${output}.coal \
             --dist ${output}_chr${chr}.dist \
             --num_samples 1 \
-            --seed $seed \
+						--seed $(( $seed + $i )) \
             -m ${mu} \
             -i ${output}_chr${chr} \
             -o ${output}_chr${chr} 
@@ -617,7 +617,7 @@ then
 						--mode ReEstimateBranchLengths \
 						--coal ${output}.coal \
 						--dist ${output}_chr${chr}.dist \
-						--seed $seed \
+						--seed $(( $seed + ${num_iter}+1 )) \
 						-m ${mu} \
 						-i ${filename}_chr${chr} \
 						-o ${output}_chr${chr} 
@@ -748,7 +748,7 @@ else
             --coal ${output}.coal \
             --dist ${output}.dist \
             --num_samples 1 \
-            --seed $seed \
+						--seed $(( $seed + $i )) \
             -m ${mu} \
             -i ${output}_tmp_chr${chunk} \
             -o ${output}_tmp_chr${chunk} 2> ${output}_tmp_chr${chunk}.log 
@@ -871,7 +871,7 @@ else
 						--mode ReEstimateBranchLengths \
 						--coal ${output}.coal \
 						--dist ${output}.dist \
-						--seed $seed \
+						--seed $(( $seed + ${num_iter} + 1 )) \
 						-m ${mu} \
 						-i ${output}_tmp_chr${chunk} \
 						-o ${output}_tmp_chr${chunk} 2> ${output}_tmp_chr${chunk}.log 
@@ -1092,7 +1092,7 @@ else
 								--coal ${output}.coal \
 								--dist ${output}_chr${chr}.dist \
 								--num_samples 1 \
-								--seed $seed \
+								--seed $(( $seed + ${i} )) \
 								-m ${mu} \
 								-i ${output}_chr${chr}_tmp_chr${chunk} \
 								-o ${output}_chr${chr}_tmp_chr${chunk} 2> ${output}_chr${chr}_chr${chunk}.log 
@@ -1253,7 +1253,7 @@ else
 							--mode ReEstimateBranchLengths \
 							--coal ${output}.coal \
 							--dist ${output}_chr${chr}.dist \
-							--seed $seed \
+							--seed $(( $seed + ${num_iter} + 1 )) \
 							-m ${mu} \
 							-i ${output}_chr${chr}_tmp_chr${chunk} \
 							-o ${output}_chr${chr}_tmp_chr${chunk} 2> ${output}_chr${chr}_chr${chunk}.log 
