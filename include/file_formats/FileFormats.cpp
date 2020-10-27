@@ -293,9 +293,9 @@ ConvertFromVcf(cxxopts::Options& options){
   //create haps file
   int N_prev = N;
 
-  bool only_snps = false;
+  bool only_snps = true;
   if(options.count("flag")){
-    if(options["flag"].as<int>() == 1) only_snps = true;
+    if(options["flag"].as<int>() == 0) only_snps = false;
   }
 
   std::vector<char> sequence;
@@ -303,7 +303,7 @@ ConvertFromVcf(cxxopts::Options& options){
 
     sscanf(line.c_str(), "%s %d %s %s %s", chr, &bp, rsid, ancestral, alternative);
 
-    if(only_snps && strlen(ancestral) == 1 && strlen(alternative) == 1){
+    if(strlen(ancestral) == 1 && strlen(alternative) == 1){
 
       int c = 0;
       for(int k = 0; k < 9; k++){
@@ -382,14 +382,16 @@ ConvertFromVcf(cxxopts::Options& options){
 
       if(N == N_prev){
 
-        for(int i = 0; i < strlen(rsid); i++){
-          if(rsid[i] == ';') rsid[i] = ',';
-        }
-        fprintf(fp_haps, "%s %s %d %s %s", chr, rsid, bp, ancestral, alternative);
-        for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
-          fprintf(fp_haps, " %c", *it_seq);
-        }
-        fprintf(fp_haps, "\n");
+				if(!only_snps || (freq > 0 && freq < 2*N)){
+					for(int i = 0; i < strlen(rsid); i++){
+						if(rsid[i] == ';') rsid[i] = ',';
+					}
+					fprintf(fp_haps, "%s %s %d %s %s", chr, rsid, bp, ancestral, alternative);
+					for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
+						fprintf(fp_haps, " %c", *it_seq);
+					}
+					fprintf(fp_haps, "\n");
+				}
       }
 
     }
