@@ -3,6 +3,7 @@
 #include "RemoveTreesWithFewMutations.cpp"
 #include "AncMutChunks.cpp"
 #include "Convert.cpp"
+#include "Annotate.cpp"
 
 #include "filesystem.hpp"
 #include "cxxopts.hpp"
@@ -82,12 +83,16 @@ int main(int argc, char* argv[]){
 		GetDistFromMut(options);
 		MapMutation(options);
 
+	}else if(!mode.compare("GenerateSNPAnnotationsUsingTree")){
+
+		GenerateSNPAnnotationsUsingTree(options);
+
 	}else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "AncToNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb, MapMutations." << std::endl;
+    std::cout << "AncToNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb, MapMutations, GenerateSNPAnnotationsUsingTree." << std::endl;
   
   }
 
