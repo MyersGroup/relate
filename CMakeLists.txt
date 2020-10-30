@@ -26,9 +26,9 @@ set(TEST_DIR ${CMAKE_SOURCE_DIR}/include/test)
 set(GZSTREAM_DIR ${CMAKE_SOURCE_DIR}/include/src/gzstream)
 set(TSKIT_DIR ${CMAKE_SOURCE_DIR}/include/file_formats/tskit)
 
-#add_definitions(-static)
-#add_definitions(-static-libgcc)
-#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -static -static-libgcc")
+add_definitions(-static)
+add_definitions(-static-libgcc)
+set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -static -static-libgcc")
 
 # Set includes
 include_directories(${PROJECT_SOURCE_DIR} ${TEST_DIR})
