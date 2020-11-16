@@ -303,14 +303,21 @@ ConvertToTreeSequence(cxxopts::Options& options){
     for(int i = 0; i < mtr.tree.nodes.size()-1; i++){
       if(!(coordinates[(*mtr.tree.nodes[i].parent).label] - coordinates[i] > 0.0)){
         int parent = (*mtr.tree.nodes[i].parent).label, child = i;
-        while(coordinates[parent] - coordinates[child] < 1e-5){
-          coordinates[parent] = coordinates[child] + 1e-5;
+        while(coordinates[parent] - coordinates[child] < 1e-4){
+          coordinates[parent] = std::nextafter(coordinates[child], coordinates[child] + 1);
           if(parent == root) break;
           child  = parent;
           parent = (*mtr.tree.nodes[parent].parent).label;
         }
       }
     }
+
+		if(0){
+		for(int i = 0; i < mtr.tree.nodes.size() - 1; i++){
+			if(!( coordinates[i] < coordinates[(*mtr.tree.nodes[i].parent).label] )) std::cerr << i << " " << coordinates[i] << " " << coordinates[(*mtr.tree.nodes[i].parent).label] << " " << coordinates[(*mtr.tree.nodes[i].parent).label] - coordinates[i] << " " << mtr.tree.nodes[i].branch_length << std::endl;
+      assert(coordinates[i] < coordinates[(*mtr.tree.nodes[i].parent).label]);
+		}
+		}
 
     pos = mut.info[mtr.pos].pos;
     if(mtr.pos == 0) pos = 0;
