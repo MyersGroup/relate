@@ -614,7 +614,6 @@ int SampleBranchLengths(cxxopts::Options& options){
               char derived   = (*it_mut).mutation_type[2]; 
               //get list of descendants and output string
 
-							std::cerr << *(*it_mut).branch.begin() << std::endl;
               std::sort(leaves[*(*it_mut).branch.begin()].member.begin(), leaves[*(*it_mut).branch.begin()].member.end());
 
               std::vector<int>::iterator it_member = leaves[*(*it_mut).branch.begin()].member.begin();

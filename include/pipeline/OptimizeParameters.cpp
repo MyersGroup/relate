@@ -24,7 +24,7 @@ int OptimizeParameters(cxxopts::Options& options){
 	bool help = false;
 	if(!options.count("haps") || !options.count("sample") || !options.count("map") || !options.count("output")){
 		std::cout << "Not enough arguments supplied." << std::endl;
-		std::cout << "Needed: haps, sample, output. Optional: dist." << std::endl;
+		std::cout << "Needed: haps, sample, map, output. Optional: dist." << std::endl;
 		help = true;
 	}
 	if(options.count("help") || help){

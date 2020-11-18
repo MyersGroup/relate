@@ -178,6 +178,12 @@ coal_tree::populate(Tree& tree, double num_bases_tree_persists){
 		it2_denom++;
 
 	}
+
+  it2_num           = (*it1_num).begin();
+  it2_denom         = (*it1_denom).begin();
+
+  //std::cerr << *it2_num << " " << *it2_denom << std::endl;
+
 	if(0){
 	if(*it_num_lins != 1){
 		std::cerr << std::endl;

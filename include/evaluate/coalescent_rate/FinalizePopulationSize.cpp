@@ -54,8 +54,14 @@ int FinalizePopulationSize(cxxopts::Options& options){
 
   int N = coalescent_rate_data[0].size();
 
-  std::vector<CollapsedMatrix<float>> coalescent_rate(num_epochs);
-  for(std::vector<CollapsedMatrix<float>>::iterator it_c = coalescent_rate.begin(); it_c != coalescent_rate.end(); it_c++){
+  std::vector<CollapsedMatrix<float>> coalescent_rate_num(num_epochs);
+  for(std::vector<CollapsedMatrix<float>>::iterator it_c = coalescent_rate_num.begin(); it_c != coalescent_rate_num.end(); it_c++){
+    (*it_c).resize(1,1);
+    std::fill((*it_c).vbegin(), (*it_c).vend(), 0.0);
+  }
+
+  std::vector<CollapsedMatrix<float>> coalescent_rate_denom(num_epochs);
+  for(std::vector<CollapsedMatrix<float>>::iterator it_c = coalescent_rate_denom.begin(); it_c != coalescent_rate_denom.end(); it_c++){
     (*it_c).resize(1,1);
     std::fill((*it_c).vbegin(), (*it_c).vend(), 0.0);
   }
@@ -64,16 +70,20 @@ int FinalizePopulationSize(cxxopts::Options& options){
     for(int j = i+1; j < N; j++){
 
       //int i = 0, j = 1;
-      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_data = coalescent_rate_data.begin();
-      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate      = coalescent_rate.begin();
+      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_data  = coalescent_rate_data.begin();
+      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_num   = coalescent_rate_num.begin();
+      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_denom = coalescent_rate_denom.begin();
 
       for(; it_coalescent_rate_data != std::prev(coalescent_rate_data.end(),1);){
         //i < j always holds
-        if((*it_coalescent_rate_data)[i][j] > 0.0){
-          (*it_coalescent_rate)[0][0] += (*it_coalescent_rate_data)[i][j]/(*it_coalescent_rate_data)[j][i];
-        }
+        //if((*it_coalescent_rate_data)[i][j] > 0.0){
+        //  (*it_coalescent_rate)[0][0] += (*it_coalescent_rate_data)[i][j]/(*it_coalescent_rate_data)[j][i];
+        //}
+        (*it_coalescent_rate_num)[0][0] += (*it_coalescent_rate_data)[i][j];
+        (*it_coalescent_rate_denom)[0][0] += (*it_coalescent_rate_data)[j][i];
 
-        it_coalescent_rate++;
+        it_coalescent_rate_num++;
+        it_coalescent_rate_denom++;
         it_coalescent_rate_data++;
       }    
 
@@ -97,7 +107,8 @@ int FinalizePopulationSize(cxxopts::Options& options){
 
   os << 0 << " " << 0 << " ";
   for(int e = 0; e < num_epochs; e++){
-    coal[e] =  2.0 * coalescent_rate[e][0][0]/((float) (N*(N-1.0)));
+    //coal[e] =  2.0 * coalescent_rate[e][0][0]/((float) (N*(N-1.0)));
+    coal[e] = coalescent_rate_num[e][0][0]/coalescent_rate_denom[e][0][0];
     os << coal[e] << " ";
   }
   os << "\n"; 
@@ -177,8 +188,12 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 
   /////////////////// SUMMARIZE //////////////////////
 
-  std::vector<CollapsedMatrix<float>> coalescent_rate(num_epochs);
-  for(std::vector<CollapsedMatrix<float>>::iterator it_c = coalescent_rate.begin(); it_c != coalescent_rate.end(); it_c++){
+  std::vector<CollapsedMatrix<float>> coalescent_rate_num(num_epochs), coalescent_rate_denom(num_epochs);
+  for(std::vector<CollapsedMatrix<float>>::iterator it_c = coalescent_rate_num.begin(); it_c != coalescent_rate_num.end(); it_c++){
+    (*it_c).resize(sample.groups.size(), sample.groups.size());
+    std::fill((*it_c).vbegin(), (*it_c).vend(), 0.0);
+  }
+  for(std::vector<CollapsedMatrix<float>>::iterator it_c = coalescent_rate_denom.begin(); it_c != coalescent_rate_denom.end(); it_c++){
     (*it_c).resize(sample.groups.size(), sample.groups.size());
     std::fill((*it_c).vbegin(), (*it_c).vend(), 0.0);
   }
@@ -196,18 +211,23 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
         group_j = foo;
       }
 
-      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_data = coalescent_rate_data.begin();
-      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate      = coalescent_rate.begin();
+      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_data   = coalescent_rate_data.begin();
+      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_num    = coalescent_rate_num.begin();
+      std::vector<CollapsedMatrix<float>>::iterator it_coalescent_rate_denom  = coalescent_rate_denom.begin();
 
       for(; it_coalescent_rate_data != std::prev(coalescent_rate_data.end(),1);){
         //i < j always holds 
-        if((*it_coalescent_rate_data)[i][j] == 0.0){
-          (*it_coalescent_rate)[group_i][group_j] += 0.0;
-        }else{ 
-          (*it_coalescent_rate)[group_i][group_j] += (*it_coalescent_rate_data)[i][j]/(*it_coalescent_rate_data)[j][i];
-        }
+        
+        //if((*it_coalescent_rate_data)[i][j] == 0.0){
+        //  (*it_coalescent_rate)[group_i][group_j] += 0.0;
+        //}else{ 
+        //  (*it_coalescent_rate)[group_i][group_j] += (*it_coalescent_rate_data)[i][j]/(*it_coalescent_rate_data)[j][i];
+        //}
+        (*it_coalescent_rate_num)[group_i][group_j]   += (*it_coalescent_rate_data)[i][j];
+        (*it_coalescent_rate_denom)[group_i][group_j] += (*it_coalescent_rate_data)[j][i];
 
-        it_coalescent_rate++;
+        it_coalescent_rate_num++;
+        it_coalescent_rate_denom++;
         it_coalescent_rate_data++;
       }    
 
@@ -237,11 +257,17 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
       os << i << " " << j << " ";
       for(int e = 0; e < num_epochs; e++){
         if(i == j){
-          os << 2.0 * coalescent_rate[e][i][j]/((float) (sample.group_sizes[i] * (sample.group_sizes[j]-1.0))) << " ";
+          double rate = coalescent_rate_num[e][i][j]/coalescent_rate_denom[e][i][j];
+          os << rate << " ";
+          //os << 2.0 * rate/((float) (sample.group_sizes[i] * (sample.group_sizes[j]-1.0))) << " ";
         }else if(i < j){
-          os << coalescent_rate[e][i][j]/((float) (sample.group_sizes[i] * sample.group_sizes[j])) << " ";
+          double rate = coalescent_rate_num[e][i][j]/coalescent_rate_denom[e][i][j];
+          os << rate << " ";
+          //os << rate/((float) (sample.group_sizes[i] * sample.group_sizes[j])) << " ";
         }else{
-          os << coalescent_rate[e][j][i]/((float) (sample.group_sizes[j] * sample.group_sizes[i])) << " ";
+          double rate = coalescent_rate_num[e][j][i]/coalescent_rate_denom[e][j][i];
+          os << rate << " ";
+          //os << rate/((float) (sample.group_sizes[j] * sample.group_sizes[i])) << " ";
         }
       }
       os << "\n"; 

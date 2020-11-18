@@ -195,9 +195,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
       }
 
       if( dkj != dki || djk != dik ){ //If *std::next(dj_it,*k) and *std::next(dk_it,j) have not changed, the next candidate for *k will be unchanged
-
         if(min_value_changed || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i){
-
           updated_cluster[updated_cluster_size] = *k; //This is to keep track of which candidates have been changed in current iteration. Needed when I decide that candidates for *k don't change (but candidates of *l might change and could be *k) 
           updated_cluster_size++;
 
@@ -480,6 +478,7 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
   best_sym_candidate.dist = std::numeric_limits<float>::infinity();
 
   Initialize(d, dist_unif);
+  std::random_shuffle(cluster_index.begin(), cluster_index.end());
 
   //////////////////////////
 
@@ -528,15 +527,21 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
 
     cluster_size[j]  = cluster_size[i] + cluster_size[j]; //update size of new cluster
     convert_index[j] = num_nodes; //update index of this cluster to new merged one
-    //delete cluster i    
+    
+    //delete cluster j    
+    bool found = false;
     for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){ //using deques instead of lists, which makes this loop slower but iteration faster
       if(*it == i){
         cluster_index.erase(it); //invalidates iterators
+        found = true;
         break;
       }
     }
+    assert(found);
+    //std::random_shuffle(cluster_index.begin(), cluster_index.end());
 
   }
+
 
   //std::cerr << "Warning: no candidates " << no_candidate << std::endl;
   //if(no_candidate > N/5.0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;

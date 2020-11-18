@@ -15,12 +15,10 @@
 
 int CombineSections(cxxopts::Options& options, int chunk_index = 0){
 
-  bool popsize = false;
-  if(!options.count("effectiveN") && !options.count("coal")) popsize = true;
   bool help = false;
-  if(popsize || !options.count("output")){
+  if(!options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: effectiveN, output. Optional: coal." << std::endl;
+    std::cout << "Needed: output. Optional: effectiveN (should be consistent across Relate run)" << std::endl;
     help = true;
   }
   if(options.count("help") || help){
