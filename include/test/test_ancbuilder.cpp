@@ -92,13 +92,14 @@ TEST_CASE( "Testing code that finds equivalent branches" ){
 
   // build tree
 
-  tb.QuickBuild(d,tree);
+  std::vector<double> sample_ages(N,0);
+  tb.QuickBuild(d,tree, sample_ages);
 
   // I will find equivalent branches between the same tree.
 
   Tree same_tree = tree;
 
-  AncesTreeBuilder ancbuilder(data);
+  AncesTreeBuilder ancbuilder(data, sample_ages);
   ancbuilder.PreCalcPotentialBranches(); 
 
   std::vector<int> equivalent_branches;

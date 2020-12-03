@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
     if(!options.count("chunk_index") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
       //std::cout << "Needed: chunk_index, output. Optional: first_section, last_section, anc_allele_unknown, seed." << std::endl;
-      std::cout << "Needed: chunk_index, output. Optional: first_section, last_section, seed." << std::endl; 
+      std::cout << "Needed: chunk_index, output. Optional: first_section, last_section, effectiveN, seed." << std::endl; 
       help = true;
     }
     if(options.count("help") || help){

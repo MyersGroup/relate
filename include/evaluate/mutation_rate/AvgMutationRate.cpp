@@ -95,6 +95,88 @@ GetCoordsAndLineages(MarginalTree& mtr, std::vector<float>& coordinates_tree, st
 }
 
 void
+GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<Leaves>& descendants, std::vector<float>& coordinates_tree, std::vector<int>& num_lineages){
+
+  mtr.tree.GetCoordinates(coordinates_tree); 
+  std::vector<int> sorted_indices(coordinates_tree.size());
+  int N = (sorted_indices.size() + 1.0)/2.0; 
+
+  std::size_t m1(0);
+  std::generate(std::begin(sorted_indices), std::end(sorted_indices), [&]{ return m1++; });
+  std::sort(std::begin(sorted_indices), std::end(sorted_indices), [&](int i1, int i2) {
+      return std::tie(coordinates_tree[i1],i1) < std::tie(coordinates_tree[i2],i2); } ); 
+
+  int num_lins = 0;
+  double age = coordinates_tree[*sorted_indices.begin()];
+  std::vector<int>::iterator it_sorted_indices_start = sorted_indices.begin();
+  for(std::vector<int>::iterator it_sorted_indices = sorted_indices.begin(); it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
+
+    if(coordinates_tree[*it_sorted_indices] > age){
+      for(; it_sorted_indices_start != it_sorted_indices; it_sorted_indices_start++){
+        num_lineages[*it_sorted_indices_start] = num_lins;          
+      }
+      age = coordinates_tree[*it_sorted_indices_start];
+    }
+
+    bool ignore = true;
+    if(*it_sorted_indices < N){
+
+      for(int i = 0; i < samples.group_of_interest.size(); i++){
+        std::vector<int>::iterator it_desc = descendants[*it_sorted_indices].member.begin();
+        for(; it_desc != descendants[*it_sorted_indices].member.end(); it_desc++ ){
+          if(samples.group_of_haplotype[*it_desc] == samples.group_of_interest[i]){
+            ignore = false;
+            break;
+          }
+        }
+      }
+      if(!ignore) num_lins++;
+
+    }else{
+
+      int child = (*mtr.tree.nodes[*it_sorted_indices].child_left).label;
+      for(int i = 0; i < samples.group_of_interest.size(); i++){
+        std::vector<int>::iterator it_desc = descendants[child].member.begin();
+        for(; it_desc != descendants[child].member.end(); it_desc++ ){
+          if(samples.group_of_haplotype[*it_desc] == samples.group_of_interest[i]){
+            ignore = false;
+            break;
+          }
+        }
+      }
+      if(!ignore){
+        ignore = true;
+        child = (*mtr.tree.nodes[*it_sorted_indices].child_right).label;
+        for(int i = 0; i < samples.group_of_interest.size(); i++){
+          std::vector<int>::iterator it_desc = descendants[child].member.begin();
+          for(; it_desc != descendants[child].member.end(); it_desc++){
+            if(samples.group_of_haplotype[*it_desc] == samples.group_of_interest[i]){
+              ignore = false;
+              break;
+            }
+          }
+        }
+      }
+      if(!ignore) num_lins--;
+    }
+    assert(num_lins >= 0);
+
+  }
+  assert(num_lins >= 0);
+
+  //jointly sort coordinates and num_lineages
+  std::vector<int> num_lineages_tmp = num_lineages;
+  std::vector<int>::iterator it_num_lin = num_lineages.begin();
+  for(std::vector<int>::iterator it_sorted_indices = sorted_indices.begin(); it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
+    *it_num_lin = num_lineages_tmp[*it_sorted_indices];
+    it_num_lin++;
+  }
+  std::sort(coordinates_tree.begin(), coordinates_tree.end());
+
+}
+
+
+void
 GetBranchLengthsInEpoch(Data& data, std::vector<double>& epoch, std::vector<float>& coordinates, std::vector<int>& num_lineages, std::vector<double>& branch_lengths_in_epoch){
 
   branch_lengths_in_epoch.resize(epoch.size()-1);

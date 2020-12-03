@@ -78,7 +78,7 @@ gzip::close(FILE* fp){
 
 
 Data::Data(int N, int L, int Ne, double mu): N(N), L(L), Ne(Ne), mu(mu){ 
-  theta    = 0.025;
+  theta    = 0.001;
   ntheta   = 1.0 - theta;
   name     = "relate"; 
 }
@@ -90,7 +90,7 @@ Data::Data(const char* filename_sequence, const char* filename_pos, const char* 
   ReadVectorFromBin(rpos, filename_rpos);
 
   name     = "relate"; 
-  theta    = 0.025;
+  theta    = 0.001;
   ntheta   = 1.0 - theta;
 }
 
@@ -105,7 +105,7 @@ Data::Data(const char* filename_pos, const char* filename_param, int Ne, double 
   ReadVectorFromBin(pos, filename_pos);
 
   name     = "relate"; 
-  theta    = 0.025;
+  theta    = 0.001;
   ntheta   = 1.0 - theta;
 }
 

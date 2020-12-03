@@ -28,7 +28,8 @@ TEST_CASE( "Testing tree builder" ){
       d[n][m] = 0.0;
     }
   }
-  tb.QuickBuild(d,tree);
+  std::vector<double> sample_ages(N,0);
+  tb.QuickBuild(d,tree, sample_ages);
 
   //built tree in case where I know the correct tree
 
@@ -60,7 +61,7 @@ TEST_CASE( "Testing tree builder" ){
 
   //build tree
 
-  tb.QuickBuild(d,tree);
+  tb.QuickBuild(d,tree,sample_ages);
 
   //compare to true tree
 
@@ -115,7 +116,7 @@ TEST_CASE( "Testing tree builder" ){
   d2[3][3] = 0;
 
   //build tree
-  tb2.QuickBuild(d2,tree);
+  tb2.QuickBuild(d2,tree, sample_ages);
 
   //compare to true tree
   true_tree.nodes.resize(2*N-1);
@@ -199,9 +200,9 @@ TEST_CASE( "Testing inference of branch lengths" ){
   d[4][3] = 0;
   d[4][4] = 0;
 
-  // build tree
-
-  tb.QuickBuild(d,tree);
+  // build tree  
+  std::vector<double> sample_ages(N,0);
+  tb.QuickBuild(d,tree, sample_ages);
 
   InferBranchLengths bl(data);
   bl.MCMC(data,tree); //tree is an empty tree, so branch lengths should be given by prior
@@ -293,8 +294,8 @@ TEST_CASE( "Testing MCMC of branch lengths" ){
   d[4][4] = 0;
 
   // build tree
-
-  tb.QuickBuild(d,tree);
+  std::vector<double> sample_ages(N,0);
+  tb.QuickBuild(d,tree,sample_ages);
   bl.EM(data,tree,true); //tree is an empty tree, so branch lengths should be given by prior
   bl.MCMC(data,tree);
 
@@ -350,7 +351,8 @@ TEST_CASE( "Testing MCMC of branch lengths (2)" ){
 
   // build tree
 
-  tb.QuickBuild(d,tree);
+  std::vector<double> sample_ages(N,0);
+  tb.QuickBuild(d,tree, sample_ages);
   bl.MCMC(data,tree);
 
   for(int i = 0; i < 2*N-1; i++){

@@ -1,8 +1,5 @@
 #!/bin/bash
 
-#$ -V
-#$ -j y
-
 echo "***********************************************"
 echo "Slurm job ID: "$SLURM_JOBID
 echo "Slurm task ID: "$SLURM_ARRAY_TASK_ID

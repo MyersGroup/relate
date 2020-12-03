@@ -30,7 +30,10 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   fclose(fp);
   num_windows--;
 
-  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str()); //struct data is defined in data.hpp
+  int Ne = 30000;
+  if(options.count("effectiveN")) Ne = (int) options["effectiveN"].as<float>();
+
+  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str(), Ne); //struct data is defined in data.hpp
   data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
   const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
   if(first_section >= num_windows) return 1;
@@ -77,6 +80,20 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
      ancestral_state = false;
   }
 
+  std::vector<double> sample_ages(N);
+  if(options.count("sample_ages")){
+    igzstream is_ages(options["sample_ages"].as<std::string>());
+    int i = 0; 
+    while(is_ages >> sample_ages[i]){
+      i++;
+      if(i == N) break;
+    }
+    if(i < N) sample_ages.clear();
+  }else{
+    sample_ages.clear(); 
+  }
+  //sample_ages.clear();
+
   ///////////////////////////////////////////// Build AncesTree //////////////////////////
   //input:  Data and distance matrix
   //output: AncesTree (tree sequence)
@@ -92,7 +109,7 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
     std::cerr.flush(); 
 
     AncesTree anc;
-    AncesTreeBuilder ancbuilder(data);
+    AncesTreeBuilder ancbuilder(data, sample_ages);
 
     int section_startpos = window_boundaries[section];
     int section_endpos   = window_boundaries[section+1]-1;

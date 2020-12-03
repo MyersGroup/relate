@@ -5,7 +5,7 @@ Sample::Read(const std::string& filename){
 
 	bool diploid = true;
 
-  std::string line, read, ploidy;
+  std::string line, read, read2, ploidy;
   bool exists;
 
   //Read all possible labels
@@ -17,24 +17,24 @@ Sample::Read(const std::string& filename){
     while(line[i] != ' ' && line[i] != '\t') i++;
     i++;
     read.clear();
-    while(line[i] != ' ' && line[i] != '\t'){
+    while(line[i] != ' ' && line[i] != '\t' && i < line.size()){
       read += line[i];
       i++;
     }
     i++;
-		ploidy.clear();
-		while(line[i] != ' ' && line[i] != '\t'){
+		read2.clear();
+		while(line[i] != ' ' && line[i] != '\t' && i < line.size()){
+      read2 += line[i];
 			i++;
 		}
 		i++;
 		ploidy.clear();
-		while(line[i] != ' ' && line[i] != '\t'){
+		while(line[i] != ' ' && line[i] != '\t' && i < line.size()){
 			ploidy += line[i];
 			i++;
 			if(i == line.size()) break;
 		}
-		i++;
-   
+		i++;   
 		if(ploidy != "NA"){
       if(ploidy == "1"){
 				diploid = false;
@@ -54,14 +54,7 @@ Sample::Read(const std::string& filename){
     }
     if(!exists){
       groups.push_back(read);
-
-      read.clear();
-      while(line[i] != ' ' && line[i] != '\t'){
-        read += line[i];
-        i++;
-      }
-
-      region_of_group[*std::prev(groups.end(),1)] = read;
+      region_of_group.insert(std::pair<std::string, std::string>( read , read2 ));
     }
 
   }

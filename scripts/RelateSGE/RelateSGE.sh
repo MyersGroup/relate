@@ -40,7 +40,8 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/RelateSGE/RelateSGE.sh 
 
 pe="shmem 1"
 memory=5
-painting="0.025,1"
+painting="0.001,1"
+Ne=30000
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -143,6 +144,10 @@ echo "map    = $map"
 if [ ! -z "${coal-}" ];
 then
   echo "coal   = $coal"
+  if [[ "$coal" != /* ]]; 
+  then
+    coal="../${coal}"
+  fi
 else 
   echo "Ne     = $Ne"
 fi
@@ -163,6 +168,10 @@ fi
 if [ ! -z "${sample_ages-}" ];
 then
 	echo "sample_ages = $sample_ages"
+  if [[ "$sample_ages" != /* ]]; 
+  then
+    sample_ages="../${sample_ages}"
+  fi
 fi
 if [ ! -z "${painting-}" ];
 then
@@ -323,35 +332,71 @@ do
        -q $q \
        -pe ${pe} \
        ${PATH_TO_RELATE}/scripts/RelateSGE/Paint.sh
-				 
-	if [ -z ${seed-} ]			 
+
+  if [ -z ${sample_ages-} ]
 	then
-		## build tree topologies
-		qsub -hold_jid paint_${output}_${chunk} \
-				 -N build_topology_${output}_${chunk} \
-				 -wd ${PWD}/${output} \
-				 -t 1-$num_batched_windows \
-				 -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting} \
-				 -e build_${output}.log \
-				 -o build_${output}.log \
-				 -P $p \
-				 -q $q \
-				 -pe ${pe} \
-				 ${PATH_TO_RELATE}/scripts/RelateSGE/BuildTopology.sh
+
+    if [ -z ${seed-} ]			 
+    then
+      ## build tree topologies
+      qsub -hold_jid paint_${output}_${chunk} \
+           -N build_topology_${output}_${chunk} \
+           -wd ${PWD}/${output} \
+           -t 1-$num_batched_windows \
+           -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting},Ne=${Ne} \
+           -e build_${output}.log \
+           -o build_${output}.log \
+           -P $p \
+           -q $q \
+           -pe ${pe} \
+           ${PATH_TO_RELATE}/scripts/RelateSGE/BuildTopology.sh
+    else
+      ## build tree topologies
+      qsub -hold_jid paint_${output}_${chunk} \
+        -N build_topology_${output}_${chunk} \
+        -wd ${PWD}/${output} \
+        -t 1-$num_batched_windows \
+        -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting},Ne=${Ne} \
+        -e build_${output}.log \
+        -o build_${output}.log \
+        -P $p \
+        -q $q \
+        -pe ${pe} \
+        ${PATH_TO_RELATE}/scripts/RelateSGE/BuildTopology.sh
+    fi
+
   else
-		## build tree topologies
-		qsub -hold_jid paint_${output}_${chunk} \
-			-N build_topology_${output}_${chunk} \
-			-wd ${PWD}/${output} \
-			-t 1-$num_batched_windows \
-			-v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting} \
-			-e build_${output}.log \
-			-o build_${output}.log \
-			-P $p \
-			-q $q \
-			-pe ${pe} \
-			${PATH_TO_RELATE}/scripts/RelateSGE/BuildTopology.sh
-	fi
+
+    if [ -z ${seed-} ]			 
+    then
+      ## build tree topologies
+      qsub -hold_jid paint_${output}_${chunk} \
+           -N build_topology_${output}_${chunk} \
+           -wd ${PWD}/${output} \
+           -t 1-$num_batched_windows \
+           -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting},sample_ages=${sample_ages},Ne=${Ne}  \
+           -e build_${output}.log \
+           -o build_${output}.log \
+           -P $p \
+           -q $q \
+           -pe ${pe} \
+           ${PATH_TO_RELATE}/scripts/RelateSGE/BuildTopology.sh
+    else
+      ## build tree topologies
+      qsub -hold_jid paint_${output}_${chunk} \
+        -N build_topology_${output}_${chunk} \
+        -wd ${PWD}/${output} \
+        -t 1-$num_batched_windows \
+        -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting},sample_ages=${sample_ages},Ne=${Ne} \
+        -e build_${output}.log \
+        -o build_${output}.log \
+        -P $p \
+        -q $q \
+        -pe ${pe} \
+        ${PATH_TO_RELATE}/scripts/RelateSGE/BuildTopology.sh
+    fi
+
+  fi
 
   ## find equivalent branches in adjacent trees 
   qsub -hold_jid build_topology_${output}_${chunk} \
@@ -411,11 +456,6 @@ do
 
 		else
 
-			if [[ "$coal" != /* ]]; 
-			then
-				coal="../${coal}"
-			fi
-
 			if [ -z ${seed-} ]
 			then
 				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
@@ -447,7 +487,7 @@ do
 			qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
 					 -N combine_args_${output} \
 					 -wd ${PWD}/${output} \
-					 -v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
+					 -v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},output=${output} \
 					 -e log/combine_args_c${chunk}.log \
 					 -o log/combine_args_c${chunk}.log \
 					 -P $p \
@@ -502,11 +542,6 @@ do
 
 		else
 
-			if [[ "$coal" != /* ]]; 
-			then
-				coal="../${coal}"
-			fi
-
 			if [ -z ${seed-} ]
 			then
 				qsub -hold_jid find_equivalent_branches_${output}_${chunk} \
@@ -538,7 +573,7 @@ do
 			qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
 				-N combine_args_${output} \
 				-wd ${PWD}/${output} \
-				-v PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
+				-v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},output=${output} \
 				-e log/combine_args_c${chunk}.log \
 				-o log/combine_args_c${chunk}.log \
 				-P $p \
@@ -574,7 +609,7 @@ else
 		-hold_jid combine_args_${output} \
 		-wd ${PWD}/${output} \
 		-N finalize_${output} \
-		-v PATH_TO_RELATE=${PATH_TO_RELATE}, sample_ages=${sample_ages},output=${output} \
+		-v PATH_TO_RELATE=${PATH_TO_RELATE},sample_ages=${sample_ages},output=${output} \
 		-e log/combine_args.log \
 		-o log/combine_args.log \
 		-P $p \

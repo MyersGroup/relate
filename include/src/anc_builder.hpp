@@ -136,6 +136,8 @@ class AncesTreeBuilder{
     float threshold_brancheq; //threshold for R2 value for regarding two branches as equivalent
     std::vector<std::vector<int>> potential_branches;
 
+    std::vector<double> sample_ages;
+
     //for random flipping
     std::mt19937 rng;
 
@@ -156,6 +158,7 @@ class AncesTreeBuilder{
 
     Mutations mutations;
     AncesTreeBuilder(Data& data);
+    AncesTreeBuilder(Data& data, std::vector<double>& sample_ages);
 
     /////////////////////////////////////////////////////
     //This is using the painting to calculate a distance measure

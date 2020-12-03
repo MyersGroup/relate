@@ -37,7 +37,8 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/RelateSlurm/RelateSlurm
 ######################## Read arguments from command line ###########################
 
 memory=5
-painting="0.025,1"
+painting="0.001,1"
+Ne=30000
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -311,31 +312,63 @@ do
        -o log/paint_c${chunk}.log \
        ${slurm_options} \
        ${PATH_TO_RELATE}/scripts/RelateSlurm/Paint.sh)
-				 
-	if [ -z ${seed-} ]			 
+
+  if [ -z ${sample_ages-} ]
 	then
-		## build tree topologies
-		jid=$(sbatch --depend afterok:${jid} \
-				 --parsable \
-				 -J build_topology_${output}_${chunk} \
-				 --array 1-$num_batched_windows \
-				 --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting} \
-				 -e build_${output}.log \
-				 -o build_${output}.log \
-				 ${slurm_options} \
-				 ${PATH_TO_RELATE}/scripts/RelateSlurm/BuildTopology.sh)
-	else
-		## build tree topologies
-		jid=$(sbatch --depend afterok:${jid} \
-			--parsable \
-			-J build_topology_${output}_${chunk} \
-			--array 1-$num_batched_windows \
-			--export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting} \
-			-e build_${output}.log \
-			-o build_${output}.log \
-			${slurm_options} \
-			${PATH_TO_RELATE}/scripts/RelateSlurm/BuildTopology.sh)
-	fi
+
+    if [ -z ${seed-} ]			 
+    then
+      ## build tree topologies
+      jid=$(sbatch --depend afterok:${jid} \
+           --parsable \
+           -J build_topology_${output}_${chunk} \
+           --array 1-$num_batched_windows \
+           --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting},Ne=${Ne} \
+           -e build_${output}.log \
+           -o build_${output}.log \
+           ${slurm_options} \
+           ${PATH_TO_RELATE}/scripts/RelateSlurm/BuildTopology.sh)
+    else
+      ## build tree topologies
+      jid=$(sbatch --depend afterok:${jid} \
+        --parsable \
+        -J build_topology_${output}_${chunk} \
+        --array 1-$num_batched_windows \
+        --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting},Ne=${Ne} \
+        -e build_${output}.log \
+        -o build_${output}.log \
+        ${slurm_options} \
+        ${PATH_TO_RELATE}/scripts/RelateSlurm/BuildTopology.sh)
+    fi
+
+  else
+
+    if [ -z ${seed-} ]			 
+    then
+      ## build tree topologies
+      jid=$(sbatch --depend afterok:${jid} \
+           --parsable \
+           -J build_topology_${output}_${chunk} \
+           --array 1-$num_batched_windows \
+           --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting},sample_ages=${sample_ages},Ne=${Ne} \
+           -e build_${output}.log \
+           -o build_${output}.log \
+           ${slurm_options} \
+           ${PATH_TO_RELATE}/scripts/RelateSlurm/BuildTopology.sh)
+    else
+      ## build tree topologies
+      jid=$(sbatch --depend afterok:${jid} \
+        --parsable \
+        -J build_topology_${output}_${chunk} \
+        --array 1-$num_batched_windows \
+        --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting},sample_ages=${sample_ages},Ne=${Ne} \
+        -e build_${output}.log \
+        -o build_${output}.log \
+        ${slurm_options} \
+        ${PATH_TO_RELATE}/scripts/RelateSlurm/BuildTopology.sh)
+    fi
+
+  fi
 
   ## find equivalent branches in adjacent trees 
   jid=$(sbatch --depend afterok:${jid} \

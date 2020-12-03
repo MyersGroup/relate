@@ -44,7 +44,8 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/RelateParallel/RelatePa
 ######################## Read arguments from command line ###########################
 
 maxjobs=1
-painting="0.025,1"
+painting="0.001,1"
+Ne=30000
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -192,25 +193,58 @@ RelateForChunk (){
     while [ $# -gt 0 ] ; do
       jobcnt=(`jobs -p`)
       if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-				if [ -z "${seed-}" ];
-				then
-					${PATH_TO_RELATE}/bin/Relate \
-						--mode BuildTopology \
-						--chunk_index ${chunk_index} \
-						--first_section $1 \
-						--last_section $1 \
-						--painting ${painting} \
-						-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
-				else
-					${PATH_TO_RELATE}/bin/Relate \
-						--mode BuildTopology \
-						--chunk_index ${chunk_index} \
-						--first_section $1 \
-						--last_section $1 \
-						--seed ${seed} \
-						--painting ${painting} \
-						-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
-				fi
+        if [ ! -z "${sample_ages-}" ]; then
+
+          if [ -z "${seed-}" ];
+          then
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode BuildTopology \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --painting ${painting} \
+							-N ${Ne} \
+              --sample_ages ${sample_ages} \
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+          else
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode BuildTopology \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --seed ${seed} \
+							-N ${Ne} \
+              --painting ${painting} \
+              --sample_ages ${sample_ages} \
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+          fi
+
+        else
+
+          if [ -z "${seed-}" ];
+          then
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode BuildTopology \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --painting ${painting} \
+							-N ${Ne} \
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+          else
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode BuildTopology \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --seed ${seed} \
+              --painting ${painting} \
+							-N ${Ne} \
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+          fi
+
+        fi
+
         shift
       fi
     done

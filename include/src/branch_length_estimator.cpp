@@ -2502,6 +2502,7 @@ EstimateBranchLengthsWithSampleAge::UpdateOneEventVP(Tree& tree, int node_k, con
 
     //mutation and recombination part
 
+    if(1){
     if(tb_child_left == 0.0){
       log_likelihood_ratio  = std::numeric_limits<float>::infinity();
     }else if(tb_child_left <= -delta_tau){
@@ -2519,6 +2520,7 @@ EstimateBranchLengthsWithSampleAge::UpdateOneEventVP(Tree& tree, int node_k, con
         if(child_left_num_events >= 1.0)  log_likelihood_ratio += child_left_num_events * log_deltat(delta_tau/tb_child_left);
 
       }
+    }
     }
 
     //decide whether to accept proposal or not.
@@ -2862,7 +2864,7 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
   ////////////////// Transient /////////////////
 
   count = 0;
-  for(; count < 1000*delta; count++){
+  for(; count < 100*delta; count++){
 
     for(int i = 0; i < N_total-1; i++){
       assert(tree.nodes[i].branch_length >= 0.0);
@@ -2963,7 +2965,7 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
       if(!is_count_threshold){
         //assert(is_avg_increasing);
         for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-          if(*it_count < 100){
+          if(*it_count < 50){
             is_avg_increasing = false;
             break;
           }
@@ -3141,7 +3143,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSize(const Data& data,
   ////////////////// Transient /////////////////
 
   count = 0;
-  for(; count < 1000*delta; count++){
+  for(; count < 100*delta; count++){
 
     //Either switch order of coalescent event or extent time while k ancestors 
     uniform_rng = dist_unif(rng);
@@ -3239,7 +3241,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSize(const Data& data,
       if(!is_count_threshold){
         //assert(is_avg_increasing);
         for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-          if(*it_count < 100){
+          if(*it_count < 50){
             is_avg_increasing = false;
             break;
           }
@@ -3329,10 +3331,12 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
     assert(coordinates[sorted_indices[i]] <= coordinates[sorted_indices[i+1]]);
   }
 
+  if(1){
+
   ////////////////// Transient /////////////////
 
   count = 0;
-  for(; count < 1000*delta; count++){
+  for(; count < 100*delta; count++){
 
     for(int i = 0; i < N_total-1; i++){
       assert(tree.nodes[i].branch_length >= 0.0);
@@ -3434,7 +3438,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
       if(!is_count_threshold){
         //assert(is_avg_increasing);
         for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-          if(*it_count < 100){
+          if(*it_count < 50){
             is_avg_increasing = false;
             break;
           }
@@ -3482,11 +3486,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
     (*it_n).branch_length = ((double) Ne) * (avg[(*(*it_n).parent).label] - avg[(*it_n).label]);
   }
 
-  /*
-     for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-     (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
-     }
-     */
+  }
 
 }  
 
@@ -3505,12 +3505,19 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
   p1 = 0.0;
   p2 = 0.6;
 
-  if(init == 1){
+  double total_bl = 0.0;
+  for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != tree.nodes.end(); it_n++){
+    total_bl += (*it_n).branch_length;
+  }
+
+  if(init == 1 && total_bl > 0){
     rng.seed(seed);
     root = N_total - 1;
 
     InitializeMCMC(data, tree); 
     coordinates.resize(N_total);
+
+    GetCoordinates(tree.nodes[root], coordinates);
 
     //as a sanity check that branch lengths are consistent with sample_ages, calculate branch lengths to root + sample_age
     double dist_to_root, dist_to_root_0 = 0.0;
@@ -3529,8 +3536,6 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
       }
       assert(dist_to_root - dist_to_root_0 < 1e-1);
     }
-
-    GetCoordinates(tree.nodes[root], coordinates);
 
     std::size_t m1(0);
     std::generate(std::begin(sorted_indices), std::end(sorted_indices), [&]{ return m1++; });
@@ -3576,9 +3581,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
       assert(order[sorted_indices[i]] == i);
       assert(order[i] < order[(*tree.nodes[i].parent).label]);
     }
-  }
-
-  if(0){
+  }else if(total_bl == 0){
     ///////////////
     int delta = std::max(data.N/10.0, 10.0);
     root = N_total - 1;

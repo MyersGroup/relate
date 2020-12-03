@@ -1,8 +1,34 @@
 #include "tree_builder.hpp"
 
 
-bool operator <(const Candidate& a, const Candidate& b){
-  return a.dist < b.dist;
+//dist contains symmetric distance
+//dist2 contains random number
+//dist3 contains sample age
+bool operator >(const Candidate& a, const Candidate& b){
+
+  if(a.replace == true && a.dist3 >= b.dist3){
+    if(a.dist3 > b.dist3) return 1;
+    if(a.dist > b.dist || (a.dist == b.dist && a.dist2 > b.dist2)){
+      return 1;
+    }
+  }
+
+  if(a.dist > b.dist || (a.dist == b.dist && a.dist2 > b.dist2)){
+    return 1;
+  }
+
+  return 0;
+
+}
+
+Candidate& Candidate::operator =(const Candidate& a){
+  lin1    = a.lin1;
+  lin2    = a.lin2;
+  dist    = a.dist;
+  dist2   = a.dist2;
+  dist3   = a.dist3;
+  replace = a.replace;
+  return *this;
 }
 
 
@@ -63,6 +89,8 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
       if( *it_min_values_it >= *it_d_it_jt){        
         if( *it_min_values_jt >= d[*jt][*it]){ //it, jt is a candidate
 
+          //sym_dist = *it_d_it_jt + d[*jt][*it] + std::max(sample_ages[*it], sample_ages[*jt]);
+          //sym_dist = *it_d_it_jt + d[*jt][*it] + (sample_ages[*it] * cluster_size[*it] + sample_ages[*jt] * cluster_size[*jt])/(cluster_size[*it] + cluster_size[*jt]);
           sym_dist = *it_d_it_jt + d[*jt][*it];
           dist_random = dist_unif(rng);
           if(mcandidates[*it].dist > sym_dist || (mcandidates[*it].dist == sym_dist && mcandidates[*it].dist2 > dist_random)){
@@ -98,13 +126,100 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
 }
 
 void
+MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages){
+
+  //I have to go thourgh every pair of clusters and check if they are matching mins.
+  //I am also filling in the vector min_values.
+  it_min_values_it = min_values.begin(); //iterator for min_values[i]
+
+  std::deque<int>::iterator jt;  //iterator for j
+  for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+
+    mcandidates[*it].dist = std::numeric_limits<float>::infinity();
+    mcandidates[*it].dist2 = std::numeric_limits<float>::infinity();
+    mcandidates[*it].dist3 = std::numeric_limits<float>::infinity();
+    mcandidates[*it].replace = false;
+    d_it = d.rowbegin(*it);
+    for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+      if(*it_min_values_it > *d_it && *l != *it){
+        *it_min_values_it = *d_it;
+      }
+      d_it++;
+    }
+    *it_min_values_it += threshold;
+    it_min_values_it++;
+
+  }
+
+  it_min_values_it = min_values.begin();
+  for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+
+    jt                    = std::next(it,1);
+    it_d_it_jt            = std::next(d.rowbegin(*it), *jt);
+    it_min_values_jt      = std::next(it_min_values_it,1);
+
+    for(; jt != cluster_index.end(); jt++){
+
+      //check if jt is a min value entry, and for each min entry, check if 'it' is also min entry. 
+      if( *it_min_values_it >= *it_d_it_jt){        
+        if( *it_min_values_jt >= d[*jt][*it]){ //it, jt is a candidate
+
+
+          cand.dist = *it_d_it_jt + d[*jt][*it];
+          //cand.dist3 = (sample_ages[*it] * cluster_size[*it] + sample_ages[*jt] * cluster_size[*jt])/(cluster_size[*it] + cluster_size[*jt]);
+          cand.dist3 = std::max(sample_ages[*it], sample_ages[*jt]);
+          cand.dist2 = dist_unif(rng);
+          if( (mcandidates[*it].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*it] > cand){
+            if(cand.dist3 > age){
+              cand.replace = true;
+            }else{
+              cand.replace = false;
+            }
+            mcandidates[*it] = cand;
+            mcandidates[*it].lin1 = *it;
+            mcandidates[*it].lin2 = *jt;
+          }
+          if( (mcandidates[*jt].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*jt] > cand){
+            if(cand.dist3 > age){  
+              cand.replace = true;
+            }else{
+              cand.replace = false;
+            }
+            mcandidates[*jt] = cand;
+            mcandidates[*jt].lin1 = *it;
+            mcandidates[*jt].lin2 = *jt;
+          }
+          if( (best_candidate.dist == std::numeric_limits<float>::infinity() || mcandidates[*jt].dist3 <= age) && best_candidate > mcandidates[*jt]){ //only need to check for *jt because if it is the absolute minimum, it would also be *it's candidate
+            best_candidate = mcandidates[*jt];
+            if(best_candidate.dist3 > age){
+              best_candidate.replace = true;
+            }else{
+              best_candidate.replace = false;
+            }
+          }
+          //std::cerr << best_candidate.dist3 << " " << best_candidate.dist << " " << best_candidate.replace << " " << age << " " << mcandidates[*jt].dist3 << " " << best_candidate.lin1 << " " << best_candidate.lin2 << std::endl;
+
+        }
+      }
+
+      it_d_it_jt++;
+      it_min_values_jt++;
+
+    }
+
+    it_min_values_it++;
+  }
+
+}
+
+void
 MinMatch::InitializeSym(CollapsedMatrix<float>& sym_d, CollapsedMatrix<float>& d){
 
   std::deque<int>::iterator jt;  //iterator for j
   for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
     jt                = std::next(it,1);
     for(; jt != cluster_index.end(); jt++){
-      sym_d[*it][*jt] = d[*it][*jt] + d[*jt][*it]; 
+      sym_d[*it][*jt] = d[*it][*jt] + d[*jt][*it];// + (sample_ages[*it] + sample_ages[*jt])/2.0; 
       sym_d[*jt][*it] = sym_d[*it][*jt];
     }
   }
@@ -195,7 +310,9 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
       }
 
       if( dkj != dki || djk != dik ){ //If *std::next(dj_it,*k) and *std::next(dk_it,j) have not changed, the next candidate for *k will be unchanged
+
         if(min_value_changed || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i){
+
           updated_cluster[updated_cluster_size] = *k; //This is to keep track of which candidates have been changed in current iteration. Needed when I decide that candidates for *k don't change (but candidates of *l might change and could be *k) 
           updated_cluster_size++;
 
@@ -210,7 +327,10 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
                 //add potential candidates
                 if(d[*l][*k] <= min_value_l){ 
+                  //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*k], sample_ages[*l]);
+                  //sym_dist = d[*l][*k] + d[*k][*l] + (sample_ages[*k] * cluster_size[*k] + sample_ages[*l] * cluster_size[*l])/(cluster_size[*k] + cluster_size[*l]);
                   sym_dist = d[*l][*k] + d[*k][*l];
+                  //sym_dist = sample_ages[*k] + sample_ages[*l];
                   dist_random = dist_unif(rng);
                   if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
                     mcandidates[*k].lin1 = *k;
@@ -239,7 +359,10 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
               //add potential candidates
               if(d[*l][*k] <= min_value_l){ 
+                //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*l], sample_ages[*k]);
+                //sym_dist = d[*l][*k] + d[*k][*l] + (sample_ages[*l] * cluster_size[*l] + sample_ages[*k] * cluster_size[*k])/(cluster_size[*l] + cluster_size[*k]);
                 sym_dist = d[*l][*k] + d[*k][*l]; 
+                //sym_dist = sample_ages[*l] + sample_ages[*k]; 
                 dist_random = dist_unif(rng);
                 if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
                   mcandidates[*l].lin1 = *k;
@@ -276,7 +399,10 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
             //add potential candidates
             if(d[*l][*k] <= min_value_l){ 
-              sym_dist = d[*l][*k] + d[*k][*l]; 
+              //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*l], sample_ages[*k]);
+              //sym_dist = d[*l][*k] + d[*k][*l] + (sample_ages[*l] * cluster_size[*l] + sample_ages[*k] * cluster_size[*k])/(cluster_size[*k] + cluster_size[*l]);
+              sym_dist = d[*l][*k] + d[*k][*l];
+              //sym_dist = sample_ages[*l] + sample_ages[*k]; 
               dist_random = dist_unif(rng);
               if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
                 mcandidates[*l].lin1 = *k;
@@ -312,12 +438,16 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
   //add candidates with new cluster j 
   mcandidates[j].dist = std::numeric_limits<float>::infinity();
+  mcandidates[j].dist2 = std::numeric_limits<float>::infinity();
   for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){ 
     if(*std::next(dj_it,*k) <= min_value_j){ 
       if(d[*k][j] <= min_values[*k]){
         if(*k != i && *k != j){
 
+          //sym_dist = d[j][*k] + d[*k][j] + std::max(sample_ages[j], sample_ages[*k]);
+          //sym_dist = d[j][*k] + d[*k][j] + (sample_ages[j] + cluster_size[j] + sample_ages[*k] * cluster_size[*k])/(cluster_size[j] + cluster_size[*k]);
           sym_dist = d[j][*k] + d[*k][j];
+          //sym_dist = sample_ages[j] + sample_ages[*k];
           dist_random = dist_unif(rng);
           if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
             mcandidates[*k].lin1 = *k;
@@ -339,6 +469,283 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
   if(best_candidate.dist > mcandidates[j].dist || (best_candidate.dist == mcandidates[j].dist && best_candidate.dist2 > mcandidates[j].dist2)){
     best_candidate   = mcandidates[j];
+  }
+
+}
+
+void
+MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages){
+
+  /////////////
+  //now I have to update the distance matrix. I am simultaneously updating min_values[j], where j is the new cluster     
+  float added_cluster_size = cluster_size[i] + cluster_size[j];
+  float min_value_k, min_value_j = std::numeric_limits<float>::infinity();
+  int updated_cluster_size = 0;
+
+  dj_it = d.rowbegin(j);
+  di_it = d.rowbegin(i);
+  best_candidate.dist = std::numeric_limits<float>::infinity();
+  best_candidate.dist2 = std::numeric_limits<float>::infinity();
+  best_candidate.dist3 = std::numeric_limits<float>::infinity();
+  best_candidate.replace = false;
+  for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
+    if(j != *k && i != *k){
+      dk_it = d.rowbegin(*k);
+      dkj   = *std::next(dk_it,j);
+      dki   = *std::next(dk_it,i);
+      dik   = *std::next(di_it,*k);
+      djk   = *std::next(dj_it,*k);
+      min_value_k = min_values[*k];
+      if(mcandidates[*k].dist3 <= age) mcandidates[*k].replace = false;
+
+      if(dik != djk){ //if dik == djk, the distance of j to k does not change
+        *std::next(dj_it,*k) = (cluster_size[i] * dik + cluster_size[j] * djk)/added_cluster_size;
+      }
+      if(dki != dkj){ //if dki == dkj, the distance of k to j does not change
+        *std::next(dk_it,j)  = (cluster_size[i] * dki + cluster_size[j] * dkj)/added_cluster_size;
+      }
+
+      bool min_value_changed = false;
+      if(dkj != dki){ // if dkj == dki, min_values for k'th row will not change
+
+        if(std::fabs(min_value_k - threshold - dkj) < 1e-4 || std::fabs(min_value_k - threshold - dki) < 1e-4){ //if distance to j or i was minimum distance, we need to update min_values[*k]
+
+          //Note that min_values can only increase. Therefore, if it is the same as before we can break
+          min_value_old     = min_value_k - threshold;
+          min_value_k       = std::numeric_limits<float>::infinity();
+          min_value_changed = true;
+          for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+            if(*l != i && *l != *k){  
+              if(min_value_k > *std::next(dk_it,*l)){ //update min_values
+                min_value_k    = *std::next(dk_it,*l);
+                if(min_value_k == min_value_old){
+                  break; // same as before, so break 
+                }
+              }
+            }
+          }
+
+          min_value_k   += threshold; //add threshold
+          min_values[*k] = min_value_k;
+
+        }
+
+      }
+
+      if( dkj != dki || djk != dik ){ //If *std::next(dj_it,*k) and *std::next(dk_it,j) have not changed, the next candidate for *k will be unchanged
+
+        if(min_value_changed || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i){
+
+          updated_cluster[updated_cluster_size] = *k; //This is to keep track of which candidates have been changed in current iteration. Needed when I decide that candidates for *k don't change (but candidates of *l might change and could be *k) 
+          updated_cluster_size++;
+
+          //count2++;
+          mcandidates[*k].dist = std::numeric_limits<float>::infinity();
+          mcandidates[*k].dist2 = std::numeric_limits<float>::infinity();
+          mcandidates[*k].dist3 = std::numeric_limits<float>::infinity();
+          mcandidates[*k].replace = false;
+          for(std::deque<int>::iterator l = cluster_index.begin(); l != k; l++){ //only need *l < *k to avoid going through the same pair twice
+            if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
+              const float min_value_l = min_values[*l];
+              if(*l != j && *l != i){
+
+                //add potential candidates
+                if(d[*l][*k] <= min_value_l){ 
+                  //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*k], sample_ages[*l]);
+                  cand.dist = d[*l][*k] + d[*k][*l];
+                  //cand.dist3 = (sample_ages[*k] * cluster_size[*k] + sample_ages[*l] * cluster_size[*l])/(cluster_size[*k] + cluster_size[*l]);
+                  cand.dist3 = std::max(sample_ages[*k], sample_ages[*l]);
+                  //sym_dist = d[*l][*k] + d[*k][*l];
+                  //sym_dist = sample_ages[*k] + sample_ages[*l];
+                  cand.dist2 = dist_unif(rng);
+                  if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand){
+                    if(cand.dist3 > age){
+                      cand.replace = true;
+                    }else{
+                      cand.replace = false;
+                    }
+                    mcandidates[*k] = cand;
+                    mcandidates[*k].lin1 = *k;
+                    mcandidates[*k].lin2 = *l;
+                  }
+                  if( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand){
+                    if(cand.dist3 > age){
+                      cand.replace = true;  
+                    }else{
+                      cand.replace = false;
+                    }
+                    mcandidates[*l] = cand;
+                    mcandidates[*l].lin1 = *k;
+                    mcandidates[*l].lin2 = *l;
+                  }
+                }
+
+              }
+            }
+          }
+
+        }else{
+
+          //need to check if *k is a candidate for some *l
+          for(std::vector<int>::iterator l = updated_cluster.begin(); l != std::next(updated_cluster.begin(),updated_cluster_size); l++){ 
+            if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
+              const float min_value_l = min_values[*l];
+
+              //add potential candidates
+              if(d[*l][*k] <= min_value_l){ 
+                //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*l], sample_ages[*k]);
+                cand.dist = d[*l][*k] + d[*k][*l];
+                //cand.dist3 = (sample_ages[*l] * cluster_size[*l] + sample_ages[*k] * cluster_size[*k])/(cluster_size[*l] + cluster_size[*k]);
+                cand.dist3 = std::max(sample_ages[*k], sample_ages[*l]);
+                //sym_dist = d[*l][*k] + d[*k][*l]; 
+                //sym_dist = sample_ages[*l] + sample_ages[*k]; 
+                cand.dist2 = dist_unif(rng);
+                if( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand){
+                  if(cand.dist3 > age){
+                    cand.replace = true;     
+                  }else{
+                    cand.replace = false;
+                  }
+                  mcandidates[*l] = cand;
+                  mcandidates[*l].lin1 = *k;
+                  mcandidates[*l].lin2 = *l;
+                }
+                if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() ||cand.dist3 <= age) && mcandidates[*k] > cand){
+                  if(cand.dist3 > age){
+                    cand.replace = true; 
+                  }else{
+                    cand.replace = false;
+                  }
+                  mcandidates[*k] = cand;
+                  mcandidates[*k].lin1 = *k;
+                  mcandidates[*k].lin2 = *l;
+                }
+              }
+
+            }
+          }
+
+        }
+
+      }else{
+        //The candidate of *k is unchanged, but it might have been (*k,i), so have to change that to (*k,j)
+        if(mcandidates[*k].lin1 == i){
+          mcandidates[*k].lin1 = j;
+        }
+        if(mcandidates[*k].lin2 == i){
+          mcandidates[*k].lin2 = j;
+        }
+
+        //need to check if *k is a candidate for some *l
+        for(std::vector<int>::iterator l = updated_cluster.begin(); l != std::next(updated_cluster.begin(),updated_cluster_size); l++){ 
+          if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
+            const float min_value_l = min_values[*l];
+
+            //add potential candidates
+            if(d[*l][*k] <= min_value_l){ 
+              //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*l], sample_ages[*k]);
+              cand.dist = d[*l][*k] + d[*k][*l];
+              //cand.dist3 = (sample_ages[*l] * cluster_size[*l] + sample_ages[*k] * cluster_size[*k])/(cluster_size[*k] + cluster_size[*l]);
+              cand.dist3 = std::max(sample_ages[*l], sample_ages[*k]);
+              //sym_dist = d[*l][*k] + d[*k][*l];
+              //sym_dist = sample_ages[*l] + sample_ages[*k]; 
+              cand.dist2 = dist_unif(rng);
+              if( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand){
+                if(cand.dist3 > age){
+                  cand.replace = true; 
+                }else{
+                  cand.replace = false;
+                }
+                mcandidates[*l] = cand;
+                mcandidates[*l].lin1 = *k;
+                mcandidates[*l].lin2 = *l;
+              }
+              if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand){
+                if(cand.dist3 > age){
+                  cand.replace = true; 
+                }else{
+                  cand.replace = false;
+                }
+                mcandidates[*k] = cand;
+                mcandidates[*k].lin1 = *k;
+                mcandidates[*k].lin2 = *l;
+              }
+            }
+
+          }
+        }
+
+      }
+
+      //I might have updated mcandidates[*l] for *l < *k, but if it was the absolute minimum, it has also updated mcandidates[*k]
+      if( (best_candidate.dist == std::numeric_limits<float>::infinity() || mcandidates[*k].dist3 <= age) && best_candidate > mcandidates[*k]){ 
+        best_candidate   = mcandidates[*k];
+        if(best_candidate.dist3 > age){
+          best_candidate.replace = true;
+        }else{
+          best_candidate.replace = false;
+        }
+      }
+
+      if(*std::next(dj_it,*k) < min_value_j){
+        min_value_j   = *std::next(dj_it,*k);
+      }
+    }
+  }
+  min_value_j  += threshold;
+  min_values[j] = min_value_j;
+
+  //add candidates with new cluster j 
+  mcandidates[j].dist = std::numeric_limits<float>::infinity();
+  mcandidates[j].dist2 = std::numeric_limits<float>::infinity();
+  mcandidates[j].dist3 = std::numeric_limits<float>::infinity();
+  mcandidates[j].replace = false;
+  for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){ 
+    if(*std::next(dj_it,*k) <= min_value_j){ 
+      if(d[*k][j] <= min_values[*k]){
+        if(*k != i && *k != j){
+
+          //sym_dist = d[j][*k] + d[*k][j] + std::max(sample_ages[j], sample_ages[*k]);
+          cand.dist = d[j][*k] + d[*k][j];
+          //cand.dist3 = (sample_ages[j] + cluster_size[j] + sample_ages[*k] * cluster_size[*k])/(cluster_size[j] + cluster_size[*k]);
+          cand.dist3 = std::max(sample_ages[j], sample_ages[*k]);
+
+          //sym_dist = d[j][*k] + d[*k][j];
+          //sym_dist = sample_ages[j] + sample_ages[*k];
+          cand.dist2 = dist_unif(rng);
+          if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand){
+            if(cand.dist3 > age){
+              cand.replace = true;
+            }else{
+              cand.replace = false;
+            }
+            mcandidates[*k] = cand;
+            mcandidates[*k].lin1 = *k;
+            mcandidates[*k].lin2 = j;
+          }
+          if( (mcandidates[j].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[j] > cand){
+            if(cand.dist3 > age){
+              cand.replace = true; 
+            }else{
+              cand.replace = false;
+            }
+            mcandidates[j] = cand;
+            mcandidates[j].lin1 = *k;
+            mcandidates[j].lin2 = j;
+          }
+
+        }
+      }
+    }
+  }
+
+  if( (best_candidate.dist == std::numeric_limits<float>::infinity() || mcandidates[j].dist3 <= age) && best_candidate > mcandidates[j]){
+    best_candidate   = mcandidates[j];
+    if(best_candidate.dist3 > age){
+      best_candidate.replace = true;
+    }else{
+      best_candidate.replace = false;
+    }
   }
 
 }
@@ -437,10 +844,232 @@ MinMatch::CoalesceSym(const int i, const int j, CollapsedMatrix<float>& sym_d){
 }
 
 void
-MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
+MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& i_sample_ages){
 
   rng.seed(1);
   std::uniform_real_distribution<double> dist_unif(0,1);
+
+  std::vector<double> sample_ages = i_sample_ages;
+
+  int root = N_total-1;
+  tree.nodes.resize(N_total);
+  tree.nodes[root].label  = root;
+
+  assert(d.size() > 0);
+  assert(d.subVectorSize(0) == d.size());
+
+  //Initialize tree builder
+
+  cluster_index.resize(N); //the cluster index will always stay between 0 - N-1 so that I can access the distance matrix.
+  std::deque<int>::iterator it_cluster_index    = cluster_index.begin();
+  std::vector<int>::iterator it_convert_index   = convert_index.begin();
+  std::vector<float>::iterator it_cluster_size  = cluster_size.begin();
+  std::vector<Node>::iterator it_nodes          = tree.nodes.begin();
+  int count = 0;
+  for(; it_cluster_index != cluster_index.end();){
+    *it_cluster_index = count;  //every leaf is in its own cluster
+    *it_convert_index = count;
+    *it_cluster_size  = 1.0;
+    (*it_nodes).label = count;
+
+    it_cluster_index++;
+    it_convert_index++;
+    it_cluster_size++;
+    it_nodes++;
+    count++;
+  }
+  //std::random_shuffle( cluster_index.begin(), cluster_index.end() );
+
+  std::fill(min_values.begin(), min_values.end(), std::numeric_limits<float>::infinity());  //Stores the min values of each row of the distance matrix
+  std::fill(min_values_sym.begin(), min_values_sym.end(), std::numeric_limits<float>::infinity());  //Stores the min values of each row of the distance matrix
+
+  best_candidate.dist = std::numeric_limits<float>::infinity();
+  best_candidate.dist2 = std::numeric_limits<float>::infinity();
+  best_candidate.dist3 = std::numeric_limits<float>::infinity(); 
+  best_sym_candidate.dist = std::numeric_limits<float>::infinity();
+
+  if(sample_ages.size() == N){
+
+    if(unique_sample_ages.size() == 0){
+      std::vector<double> foo = sample_ages;
+      std::sort(foo.begin(), foo.end());
+      //get vector with unique sample ages and counts
+      age = foo[0];
+      int i = 0;
+
+      unique_sample_ages.resize(foo.size());
+      sample_ages_count.resize(foo.size());
+      unique_sample_ages[0] = age;
+      sample_ages_count[0]  = 0;
+      for(std::vector<double>::iterator it_sam = foo.begin(); it_sam != foo.end(); it_sam++){
+        if(*it_sam == age){
+          sample_ages_count[i]++;
+        }else{
+          age = *it_sam;
+          i++;
+          unique_sample_ages[i] = age;
+          sample_ages_count[i]++;
+        }
+      }
+      i++;
+      unique_sample_ages.resize(i);
+      sample_ages_count.resize(i);
+      //for(int k = 0; k < unique_sample_ages.size(); k++){
+      //  std::cerr << unique_sample_ages[k] << " " << sample_ages_count[k] << std::endl;
+      //}
+    }
+    int level    = 0;
+    int num_lins = sample_ages_count[level];
+    age      = unique_sample_ages[level];
+
+    Initialize(d, dist_unif, sample_ages);
+
+    //////////////////////////
+
+    //Now I need to coalesce clusters until there is only one lance cluster left
+    int no_candidate = 0;
+    int updated_cluster_size = 0;
+    bool use_sym = false;
+    for(int num_nodes = N; num_nodes < N_total; num_nodes++){
+
+      //assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
+      if(best_candidate.dist == std::numeric_limits<float>::infinity()){ //This is a backup-solution for when MinMatch fails, usually rare
+
+        no_candidate++;
+        if(!use_sym){
+          sym_d.resize(N,N); //inefficient 
+          InitializeSym(sym_d, d);
+          use_sym = true;
+        }
+        assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
+        i = best_sym_candidate.lin1;
+        j = best_sym_candidate.lin2;
+
+      }else{
+        i = best_candidate.lin1;
+        j = best_candidate.lin2;
+      }
+      conv_i = convert_index[i];
+      conv_j = convert_index[j];
+      assert(i != j);
+      //i and j are now the cluster indices that are closest to each other.
+
+      //merge these two into one new cluster
+      tree.nodes[conv_i].parent            = &tree.nodes[num_nodes];
+      tree.nodes[conv_j].parent            = &tree.nodes[num_nodes];  
+      tree.nodes[conv_j].num_events        = 0.0;
+      tree.nodes[conv_i].num_events        = 0.0;
+      tree.nodes[num_nodes].child_left     = &tree.nodes[conv_i];
+      tree.nodes[num_nodes].child_right    = &tree.nodes[conv_j];
+      tree.nodes[num_nodes].label          = num_nodes; 
+
+      Coalesce(i, j, d, dist_unif, sample_ages);
+      if(use_sym) CoalesceSym(i, j, sym_d);
+
+      //sample_ages[j]   = (sample_ages[i] * cluster_size[i] + sample_ages[j] * cluster_size[j])/(cluster_size[i] + cluster_size[j]);
+      sample_ages[j] = std::max(sample_ages[i], sample_ages[j]);
+      age           += 2.0/((double) num_lins * (num_lins - 1.0)) * Ne;
+      //std::cerr << num_nodes << " " << age << " " << Ne << " " << sample_ages[j] << " " << num_lins << " " << level << std::endl;
+      num_lins--;
+      if(unique_sample_ages[level] < sample_ages[j]){
+        while(unique_sample_ages[level] < sample_ages[j]){
+          level++;
+          num_lins += sample_ages_count[level];
+        }
+      }
+      //if(age < sample_ages[j]){
+      //  age = sample_ages[j];
+      //}
+      assert(num_lins >= 1); 
+      
+      cluster_size[j]  = cluster_size[i] + cluster_size[j]; //update size of new cluster
+      convert_index[j] = num_nodes; //update index of this cluster to new merged one
+      //delete cluster i    
+      for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){ //using deques instead of lists, which makes this loop slower but iteration faster
+        if(*it == i){
+          cluster_index.erase(it); //invalidates iterators
+          break;
+        }
+      }
+
+    }
+
+  }else{
+
+    Initialize(d, dist_unif);
+
+    //////////////////////////
+
+    //Now I need to coalesce clusters until there is only one lance cluster left
+    int no_candidate = 0;
+    int updated_cluster_size = 0;
+    bool use_sym = false;
+    for(int num_nodes = N; num_nodes < N_total; num_nodes++){
+
+      //assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
+      if(best_candidate.dist == std::numeric_limits<float>::infinity()){ //This is a backup-solution for when MinMatch fails, usually rare
+
+        no_candidate++;
+        if(!use_sym){
+          sym_d.resize(N,N); //inefficient 
+          InitializeSym(sym_d, d);
+          use_sym = true;
+        }
+        assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
+        i = best_sym_candidate.lin1;
+        j = best_sym_candidate.lin2;
+
+      }else{
+        i = best_candidate.lin1;
+        j = best_candidate.lin2;
+      }
+      conv_i = convert_index[i];
+      conv_j = convert_index[j];
+      assert(i != j);
+      //i and j are now the cluster indices that are closest to each other.
+
+      //merge these two into one new cluster
+      tree.nodes[conv_i].parent            = &tree.nodes[num_nodes];
+      tree.nodes[conv_j].parent            = &tree.nodes[num_nodes];  
+      tree.nodes[conv_j].num_events        = 0.0;
+      tree.nodes[conv_i].num_events        = 0.0;
+      tree.nodes[num_nodes].child_left     = &tree.nodes[conv_i];
+      tree.nodes[num_nodes].child_right    = &tree.nodes[conv_j];
+      tree.nodes[num_nodes].label          = num_nodes; 
+
+      Coalesce(i, j, d, dist_unif);
+      if(use_sym) CoalesceSym(i, j, sym_d);
+
+      cluster_size[j]  = cluster_size[i] + cluster_size[j]; //update size of new cluster
+      convert_index[j] = num_nodes; //update index of this cluster to new merged one
+      //delete cluster i    
+      for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){ //using deques instead of lists, which makes this loop slower but iteration faster
+        if(*it == i){
+          cluster_index.erase(it); //invalidates iterators
+          break;
+        }
+      }
+
+    } 
+
+  }
+
+  //std::cerr << "Warning: no candidates " << no_candidate << std::endl;
+  //if(no_candidate > N/5.0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
+  //if(no_candidate > 0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
+}
+
+void
+MinMatch::SlowBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& i_sample_ages){
+
+  rng.seed(1);
+  std::uniform_real_distribution<double> dist_unif(0,1);
+
+  std::vector<double> sample_ages = i_sample_ages;
+  if(sample_ages.size() != N){
+    sample_ages.resize(N);
+    std::fill(sample_ages.begin(), sample_ages.end(), 0.0);
+  }
 
   int root = N_total-1;
   tree.nodes.resize(N_total);
@@ -477,8 +1106,7 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
   best_candidate.dist2 = std::numeric_limits<float>::infinity();
   best_sym_candidate.dist = std::numeric_limits<float>::infinity();
 
-  Initialize(d, dist_unif);
-  std::random_shuffle(cluster_index.begin(), cluster_index.end());
+  Initialize(d, dist_unif, sample_ages);
 
   //////////////////////////
 
@@ -519,7 +1147,62 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
     tree.nodes[num_nodes].child_right    = &tree.nodes[conv_j];
     tree.nodes[num_nodes].label          = num_nodes; 
 
-    Coalesce(i, j, d, dist_unif);
+
+    //coalesce in CF distance matrix
+    float added_cluster_size = cluster_size[i] + cluster_size[j];
+    dj_it = d.rowbegin(j);
+    di_it = d.rowbegin(i);
+    for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
+      if(j != *k && i != *k){
+        dk_it = d.rowbegin(*k);
+        dkj   = *std::next(dk_it,j);
+        dki   = *std::next(dk_it,i);
+        dik   = *std::next(di_it,*k);
+        djk   = *std::next(dj_it,*k);
+
+        if(dik != djk){ //if dik == djk, the distance of j to k does not change
+          *std::next(dj_it,*k) = (cluster_size[i] * dik + cluster_size[j] * djk)/added_cluster_size;
+        }
+        if(dki != dkj){ //if dki == dkj, the distance of k to j does not change
+          *std::next(dk_it,j)  = (cluster_size[i] * dki + cluster_size[j] * dkj)/added_cluster_size;
+        }
+      }
+    }
+
+    std::fill(min_values.begin(), min_values.end(), std::numeric_limits<float>::infinity());
+    for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+      for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+        if(min_values[*it] > d[*it][*l] && *l != *it && *l != i){
+          min_values[*it] = d[*it][*l];
+        }
+      }
+      min_values[*it] += threshold;
+    }
+
+    best_candidate.dist = std::numeric_limits<float>::infinity();
+    best_candidate.dist2 = std::numeric_limits<float>::infinity();
+    for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+      if(*it != i){
+        for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+          if(min_values[*it] >= d[*it][*l] && *l != *it && *l != i){
+            if(min_values[*l] >= d[*l][*it]){
+              //double sym_dist = d[*l][*it] + d[*it][*l];
+              sym_dist = std::max(sample_ages[*it], sample_ages[*l]) + d[*l][*it] + d[*it][*l];
+              //sym_dist = d[*l][*it] + d[*it][*l];
+              dist_random = dist_unif(rng);
+              if( best_candidate.dist > sym_dist || (best_candidate.dist == sym_dist && dist_random < best_candidate.dist2) ){
+                best_candidate.lin1 = *it;
+                best_candidate.lin2 = *l; 
+                best_candidate.dist = sym_dist;
+                best_candidate.dist2 = dist_random;
+              }
+            }	
+          }
+        }
+      }
+    }
+
+    //Coalesce(i, j, d, dist_unif, sample_ages);
     if(use_sym) CoalesceSym(i, j, sym_d);
 
     //if(best_candidate.dist == std::numeric_limits<float>::infinity() && no_candidate == 0) no_candidate = num_nodes;
@@ -527,26 +1210,22 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree){
 
     cluster_size[j]  = cluster_size[i] + cluster_size[j]; //update size of new cluster
     convert_index[j] = num_nodes; //update index of this cluster to new merged one
-    
-    //delete cluster j    
-    bool found = false;
+    sample_ages[j]   = (sample_ages[i] + sample_ages[j])/2.0;
+    //delete cluster i    
     for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){ //using deques instead of lists, which makes this loop slower but iteration faster
       if(*it == i){
         cluster_index.erase(it); //invalidates iterators
-        found = true;
         break;
       }
     }
-    assert(found);
-    //std::random_shuffle(cluster_index.begin(), cluster_index.end());
 
   }
-
 
   //std::cerr << "Warning: no candidates " << no_candidate << std::endl;
   //if(no_candidate > N/5.0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
   //if(no_candidate > 0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
 }
+
 
 void
 MinMatch::UPGMA(CollapsedMatrix<float>& d, Tree& tree){
@@ -2106,7 +2785,7 @@ InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tre
   }
 
   ////////////////// Sample branch lengths /////////////////
- 
+
   count = 0;
   for(; count < num_proposals; count++){
 
@@ -2114,34 +2793,34 @@ InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tre
     uniform_rng = dist_unif(rng);
     if(uniform_rng < 0.5){
       SwitchOrder(tree, dist_switch(rng), dist_unif);
-    //}else if(uniform_rng < 0.0){
-    //  int k = (*tree.nodes[dist_k2(rng)].parent).label;
-    //  float tmp1 = ChangeTimeWhilekAncestorsVP(tree, k, epoch, coal_rate, dist_unif);
-    }else{
+      //}else if(uniform_rng < 0.0){
+      //  int k = (*tree.nodes[dist_k2(rng)].parent).label;
+      //  float tmp1 = ChangeTimeWhilekAncestorsVP(tree, k, epoch, coal_rate, dist_unif);
+  }else{
 
-      /*
-         std::fill(coal_rate.begin(), coal_rate.end(), 1.0);
-         Tree tree2 = tree;
-         std::vector<int> sorted_indices2 = sorted_indices;
-         std::vector<int> order2 = order;
-         std::vector<double> coordinates2 = coordinates;
+    /*
+       std::fill(coal_rate.begin(), coal_rate.end(), 1.0);
+       Tree tree2 = tree;
+       std::vector<int> sorted_indices2 = sorted_indices;
+       std::vector<int> order2 = order;
+       std::vector<double> coordinates2 = coordinates;
 
-         std::mt19937 rng2 = rng;
-         */
+       std::mt19937 rng2 = rng;
+       */
 
-      float tmp1 = ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
-      //float tmp2 = ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
-      /*
-         rng = rng2;
-         order = order2;
-         coordinates = coordinates2;
-         sorted_indices = sorted_indices2;
-         float tmp2 = ChangeTimeWhilekAncestors(tree2, k, dist_unif);
-         std::cerr << tmp1 << " " << tmp2 << std::endl;
-         exit(1);
-         */
-      //ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
-    }
+    float tmp1 = ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
+    //float tmp2 = ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
+    /*
+       rng = rng2;
+       order = order2;
+       coordinates = coordinates2;
+       sorted_indices = sorted_indices2;
+       float tmp2 = ChangeTimeWhilekAncestors(tree2, k, dist_unif);
+       std::cerr << tmp1 << " " << tmp2 << std::endl;
+       exit(1);
+       */
+    //ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
+  }
 
   }
 

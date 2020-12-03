@@ -151,8 +151,8 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
 
       if(is_coal){
         for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
-          //bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, seed); //this is estimating times
           bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
+          //bl2.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, 2e4, 1, rand());
         }
       }else{
         int count = 0;
@@ -197,6 +197,10 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
       if(is_coal){
         for(CorrTrees::iterator it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
           bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
+          //bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, 2e4, 1, rand());
+          //for(std::vector<Node>::iterator it_n = (*it_seq).tree.nodes.begin(); it_n != (*it_seq).tree.nodes.end(); it_n++){
+          //  (*it_n).branch_length *= 2e4;
+          //}
         }
       }else{
         int count = 0;

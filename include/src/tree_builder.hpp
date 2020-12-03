@@ -24,9 +24,13 @@ struct Candidate{
   int lin2 = -1;
   double dist = std::numeric_limits<float>::infinity();
   double dist2 = std::numeric_limits<float>::infinity();
+  double dist3 = std::numeric_limits<float>::infinity();
+  bool replace = false;
 
   Candidate(){};
   Candidate(int lin1, int lin2, double dist): lin1(lin1), lin2(lin2), dist(dist){};
+
+  Candidate& operator =(const Candidate& a);
 
 };
 
@@ -51,7 +55,10 @@ class MinMatch{
 
     CollapsedMatrix<float> sym_d;
     float sym_dist, dist_random;
-    Candidate best_candidate, best_sym_candidate;
+    double age;
+    Candidate best_candidate, best_sym_candidate, cand;
+    std::vector<double> unique_sample_ages;
+    std::vector<int> sample_ages_count;
 
     std::vector<float> min_values, min_values_sym;  //Stores the min values of each row of the distance matrix
     std::vector<int> min_updated; //0: not updated, 1:updated but unchanged, 2: updated and changed
@@ -72,15 +79,18 @@ class MinMatch{
     std::vector<int> updated_cluster;
 
 		void Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif);
+		void Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages);
     void InitializeSym(CollapsedMatrix<float>& sym_d, CollapsedMatrix<float>& d);
 		void Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif);
+		void Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages);
     void CoalesceSym(const int i, const int j, CollapsedMatrix<float>& sym_d); 
 
   public:
 
     MinMatch(Data& data);
  
-    void QuickBuild(CollapsedMatrix<float>& d, Tree& tree);
+    void QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& sample_ages);   
+    void SlowBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& sample_ages);
     void UPGMA(CollapsedMatrix<float>& d, Tree& tree);
 
 };

@@ -769,7 +769,9 @@ MutationsOnBranches(cxxopts::Options& options){
 				if(min_snp > mtr.tree.nodes[i].SNP_begin) min_snp = mtr.tree.nodes[i].SNP_begin;
 				if(max_snp < mtr.tree.nodes[i].SNP_end) max_snp = mtr.tree.nodes[i].SNP_end;
 			}
-			int min_bp = pos[min_snp], max_bp = pos[max_snp];
+      int min_bp = pos[min_snp], max_bp = pos[max_snp];
+
+      //std::cerr << min_snp << " " << max_snp << " " << min_bp << " " << max_bp << std::endl;
 
 			haps m_hap(options["haps"].as<std::string>().c_str(), options["sample"].as<std::string>().c_str());
 			Data data(m_hap.GetN(), m_hap.GetL());
@@ -777,6 +779,7 @@ MutationsOnBranches(cxxopts::Options& options){
 				std::cerr << "Haps file and anc/mut have different number of samples" << std::endl;
 				exit(1);
 			}
+      int num_snps = mut.info.size();
 			Leaves sequences_carrying_mutation;
 			sequences_carrying_mutation.member.resize(data.N);
 			AncesTreeBuilder ancbuilder(data);
@@ -787,8 +790,7 @@ MutationsOnBranches(cxxopts::Options& options){
 			Tree tr = mtr.tree;
 			do{
 				m_hap.ReadSNP(sequence, bp);
-				snp++;
-			}while(bp < min_bp && snp < data.L);
+			}while(bp < min_bp);
 			/*
 				 if(bp != min_bp){
 				 std::cerr << bp << " " << min_bp << std::endl;
@@ -796,43 +798,57 @@ MutationsOnBranches(cxxopts::Options& options){
 				 exit(1);
 				 } 
 				 */
+     
+      //while(mut.info[snp].pos < bp){
+      //  snp++;
+      //  if(snp == num_snps) break;
+      //}
 
-			while(bp <= max_bp && snp < data.L){
+			while(bp <= max_bp){
 
-				//map sequence to tree
-				sequences_carrying_mutation.num_leaves = 0; //this stores the number of nodes with a mutation at this snp.
-				for(int i = 0; i < data.N; i++){
-					if(sequence[i] == '1'){
-						sequences_carrying_mutation.member[i] = 1; //member stores a sequence of 0 and 1, where 1 at position i means that i carries a mutation.
-						sequences_carrying_mutation.num_leaves++;
-					}else{
-						sequences_carrying_mutation.member[i] = 0;
-					}
-				}
+        //while(mut.info[snp].pos < bp){
+        //  snp++;
+        //  if(snp == num_snps) break;
+        //}
+        //if(snp == num_snps) break;
+        //if(mut.info[snp].pos == bp){
+          //map sequence to tree
+          sequences_carrying_mutation.num_leaves = 0; //this stores the number of nodes with a mutation at this snp.
+          for(int i = 0; i < data.N; i++){
+            if(sequence[i] == '1'){
+              sequences_carrying_mutation.member[i] = 1; //member stores a sequence of 0 and 1, where 1 at position i means that i carries a mutation.
+              sequences_carrying_mutation.num_leaves++;
+            }else{
+              sequences_carrying_mutation.member[i] = 0;
+            }
+          }
 
-				if(sequences_carrying_mutation.num_leaves > 0 && sequences_carrying_mutation.num_leaves < data.N){
-					//if(bp == 236591955) std::cerr << "SNP exists" << std::endl; 
-					if(ancbuilder.IsSNPMapping(tr, sequences_carrying_mutation, snp) == 1){
+          //std::cerr << snp <<  " " << bp << " " << min_bp << " " << max_bp << " " << ancbuilder.IsSNPMapping(tr, sequences_carrying_mutation, snp) << std::endl;
 
-						if(is_mask){
-							if(std::toupper(mask.seq[bp-1]) == 'P'){           
-								int branch = ancbuilder.mutations.info[snp].branch[0];
-								if(pos[mtr.tree.nodes[branch].SNP_begin] <= bp && pos[mtr.tree.nodes[branch].SNP_end] >= bp && mtr.tree.nodes[branch].num_events > 0){
-									mut_on_branches[branch].push_back(bp);
-								}
-							}
-						}else{ 
-							int branch = ancbuilder.mutations.info[snp].branch[0];
-							if(pos[mtr.tree.nodes[branch].SNP_begin] <= bp && pos[mtr.tree.nodes[branch].SNP_end] >= bp){
-								mut_on_branches[branch].push_back(bp);
-							}
-						}
-					}
-				}
+          if(sequences_carrying_mutation.num_leaves > 0 && sequences_carrying_mutation.num_leaves < data.N){
+            if(ancbuilder.IsSNPMapping(tr, sequences_carrying_mutation, snp) == 1){
 
+              if(is_mask){
+                if(std::toupper(mask.seq[bp-1]) == 'P'){           
+                  int branch = ancbuilder.mutations.info[snp].branch[0];
+                  if(pos[mtr.tree.nodes[branch].SNP_begin] <= bp && pos[mtr.tree.nodes[branch].SNP_end] >= bp && mtr.tree.nodes[branch].num_events > 0){
+                    mut_on_branches[branch].push_back(bp);
+                  }
+                }
+              }else{ 
+                int branch = ancbuilder.mutations.info[snp].branch[0];
+                //std::cerr << bp << " " << pos[mtr.tree.nodes[branch].SNP_begin] << " " << pos[mtr.tree.nodes[branch].SNP_end] << std::endl;
+                if(pos[mtr.tree.nodes[branch].SNP_begin] <= bp && pos[mtr.tree.nodes[branch].SNP_end] >= bp){
+                  //std::cerr << bp << std::endl;
+                  mut_on_branches[branch].push_back(bp);
+                }
+              }
+            }
+          }
+        //}
+
+        snp++;
 				m_hap.ReadSNP(sequence, bp);  
-
-				snp++;
 			}
 			m_hap.CloseFile();
 

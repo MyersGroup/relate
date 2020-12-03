@@ -262,6 +262,31 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data){
 
   threshold_brancheq = 0.95;
   thr = (int) (0.03 * N) + 1;
+
+  //sample_ages.resize(N);
+  //std::fill(sample_ages.begin(), sample_ages.end(), 0.0);
+ 
+}
+
+
+AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_ages){
+
+	N       = data.N;
+  N_total = 2*N-1;
+  root    = N_total - 1;
+  L       = data.L;
+
+  mutations.Init(data); 
+
+  threshold_brancheq = 0.95;
+  thr = (int) (0.03 * N) + 1;
+
+  sample_ages = i_sample_ages;
+  if(sample_ages.size() != N){
+    sample_ages.clear();
+    //sample_ages.resize(N);
+    //std::fill(sample_ages.begin(), sample_ages.end(), 0.0);
+  }
  
 }
 
@@ -303,7 +328,7 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
     }  
   }
 
-  tb.QuickBuild(d.matrix, (*it_seq).tree); //build tree topology and store in (*it_seq).tree
+  tb.QuickBuild(d.matrix, (*it_seq).tree, sample_ages); //build tree topology and store in (*it_seq).tree
   (*it_seq).pos = section_startpos; //record position for this tree along the genome
   UpdateBranchSNPbegin((*it_seq).tree, section_startpos);
 
@@ -378,7 +403,7 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
         }  
       }
 
-      tb.QuickBuild(d.matrix, (*it_seq).tree); //uses distance matrix d to build tree
+      tb.QuickBuild(d.matrix, (*it_seq).tree, sample_ages); //uses distance matrix d to build tree
       (*it_seq).pos = snp; //store position
 
       if(ancestral_state){
@@ -646,7 +671,7 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
       }
     }
 
-    tb.QuickBuild(d.matrix, tree); //build tree topology and store in (*it_seq).tree
+    tb.QuickBuild(d.matrix, tree, sample_ages); //build tree topology and store in (*it_seq).tree
 
     if(MapMutation(tree, sequences_carrying_mutation, snp, min_value) > 1){
       if(sequences_carrying_mutation.num_leaves == 2 || sequences_carrying_mutation.num_leaves == 3) num_nonmapping_rare_snps++;
@@ -722,7 +747,7 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
 			}
 			*/
 	
-      tb.QuickBuild(d.matrix, tree); //build tree topology and store in (*it_seq).tree
+      tb.QuickBuild(d.matrix, tree, sample_ages); //build tree topology and store in (*it_seq).tree
 
       if(MapMutation(tree, sequences_carrying_mutation, snp, min_value) > 1){
         if(sequences_carrying_mutation.num_leaves == 2 || sequences_carrying_mutation.num_leaves == 3) num_nonmapping_rare_snps++;

@@ -45,7 +45,7 @@ struct Data{
   int N, L; //number of sequences, number of SNPs
   int Ne; //effective population size
   double mu; //mutation rate
-  double theta, ntheta; //mutation probability for painting. set to 0.025
+  double theta, ntheta; //mutation probability for painting. set to 0.001
 
   CollapsedMatrix<char> sequence; //sequence matrix, containing 0 and 1
   std::vector<int> pos;    //vector specifying location of each SNP along the genome
