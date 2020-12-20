@@ -63,10 +63,9 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
 
   plotcoords      <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
   plotcoords[3:4] <- plotcoords[3:4] * years_per_gen
-
+  
   mut_on_branches     <- read.table(paste(filename_plot,".plotcoords.mut", sep = ""), header = T)
   all_mut_on_branches <- table(mut_on_branches[,2])
-
   muts <- subset(plotcoords, seg_type == "m")
   mut_on_branches <- read.table(paste(filename_plot,".plotcoords.mut", sep = ""), header = T)
   for(i in 1:nrow(all_mut_on_branches)){

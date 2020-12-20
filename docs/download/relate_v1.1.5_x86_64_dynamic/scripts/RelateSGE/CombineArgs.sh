@@ -27,11 +27,9 @@ fi
 
 if [ -z ${Ne-} ]
 then
-  check_file_existence ${coal} 
 
   ${PATH_TO_RELATE}/bin/Relate \
     --mode "CombineSections" \
-    --coal ${coal} \
     --chunk_index ${chunk_index} \
     -o ${output} 2>> log/combine_args.log
 else

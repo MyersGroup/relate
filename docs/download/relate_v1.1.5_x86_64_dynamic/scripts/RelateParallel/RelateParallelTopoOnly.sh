@@ -45,6 +45,7 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/RelateParallel/RelatePa
 
 maxjobs=1
 painting="0.025,1"
+Ne=30000
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -200,6 +201,7 @@ RelateForChunk (){
 						--first_section $1 \
 						--last_section $1 \
 						--painting ${painting} \
+						-N ${Ne} \
 						-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
 				else
 					${PATH_TO_RELATE}/bin/Relate \
@@ -209,6 +211,7 @@ RelateForChunk (){
 						--last_section $1 \
 						--seed ${seed} \
 						--painting ${painting} \
+						-N ${Ne} \
 						-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
 				fi
         shift

@@ -16,6 +16,7 @@ then
   echo "--poplabels:      Optional: Filename of file containing population labels. Samples must be listed in the same order as the .sample file."
   echo "--anc:            Filename of anc file."
   echo "--mut:            Filename of mut file."
+	echo "--dist:           Optional: Filename of dist file."
   echo "--bp_of_interest: Base pair position at which tree will be plotted."
   echo "--years_per_gen : Years per generation."
   echo "-o, --output:     Filename of plot without file extension."
@@ -31,6 +32,7 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/TreeView/TreeViewMutati
 ######################## Read arguments from command line ###########################
 
 maxjobs=1
+filename_dist="nodist"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -58,6 +60,11 @@ do
       shift # past argument
       shift # past value
       ;;
+		--dist)
+			filename_dist="$2"
+			shift # past argument
+			shift # past value
+			;;
     --bp_of_interest)
       bp_of_interest="$2"
       shift # past argument
@@ -99,5 +106,5 @@ echo "output         = ${filename_output}.pdf"
 echo "********************************"
 
 Rscript ${PATH_TO_RELATE}/scripts/TreeView/treeview_mutation.R \
-  ${PATH_TO_RELATE} ${filename_haps} ${filename_sample} $filename_poplabels ${filename_anc} ${filename_mut} ${years_per_gen} ${bp_of_interest} ${filename_output}
+  ${PATH_TO_RELATE} ${filename_haps} ${filename_sample} $filename_poplabels ${filename_anc} ${filename_mut} ${filename_dist} ${years_per_gen} ${bp_of_interest} ${filename_output}
 

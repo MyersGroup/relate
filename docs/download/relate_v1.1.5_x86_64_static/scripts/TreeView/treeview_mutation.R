@@ -12,14 +12,14 @@ while(!require(cowplot)) install.packages("cowplot", repos = "http://cran.us.r-p
 height              <- 30
 width               <- 40
 #ratio of tree to poplabels
-ratio               <- c(6,1)
+ratio               <- c(6,1.5)
 
 #tree linewidth
 tree_lwd            <- 3
 #mutation size
 mut_size            <- 8
 #size of | indicating population label
-poplabels_shapesize <- 10 
+poplabels_shapesize <- 15 
 #population label text size
 poplabels_textsize  <- 50
 
@@ -95,7 +95,8 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
   mutation_file <- read.table(filename_mut, header = T, sep = ";")  
   colnames(mutation_file)[2] <- "pos"
 
-  muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos")
+  muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos", all.x = T)
+  muts$is_flipped[is.na(muts$is_flipped)] <- 0
   muts$is_flipped[muts$is_flipped == 0] <- "unflipped"
   muts$is_flipped[muts$is_flipped == 1] <- "flipped"
   muts$is_flipped <- factor(muts$is_flipped, levels = c("unflipped", "flipped"))
@@ -147,20 +148,30 @@ filename_sample      <- argv[3]
 filename_poplabels   <- argv[4]
 filename_anc         <- argv[5]
 filename_mut         <- argv[6]
-years_per_gen        <- as.numeric(argv[7])
-snp                  <- argv[8]
-filename_plot        <- argv[9]
+filename_dist        <- argv[7]
+years_per_gen        <- as.numeric(argv[8])
+snp                  <- argv[9]
+filename_plot        <- argv[10]
 
 ##################################################################################
 
 # run RelateTreeView to extract tmp files for plotting tree
 system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode TreeView --anc ", filename_anc," --mut ", filename_mut," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
-system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode BranchesBelowMutation --anc ", filename_anc," --mut ", filename_mut," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
-
+if(filename_dist != "nodist"){
+  system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode BranchesBelowMutation --anc ", filename_anc," --mut ", filename_mut," --dist ",filename_dist," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
+}else{
+  system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode BranchesBelowMutation --anc ", filename_anc," --mut ", filename_mut," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
+}
 # plot tree
 p1 <- TreeView(filename_plot, years_per_gen, lwd = tree_lwd) 
 
-system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --anc ", filename_anc," --mut ", filename_mut," --haps ", filename_haps," --sample ", filename_sample," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
+if(filename_dist != "nodist"){
+  system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --anc ", filename_anc," --mut ", filename_mut," --haps ", filename_haps," --sample ", filename_sample," --dist ",filename_dist," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
+}else{
+  system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --anc ", filename_anc," --mut ", filename_mut," --haps ", filename_haps," --sample ", filename_sample," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
+}
+
+
 p1 <- p1 + AddMutations(filename_plot, years_per_gen, size = mut_size) #+ scale_y_continuous(trans = "log10") 
       
 # some modifications to theme
