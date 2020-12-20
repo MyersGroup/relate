@@ -95,7 +95,7 @@ GetCoordsAndLineages(MarginalTree& mtr, std::vector<float>& coordinates_tree, st
 }
 
 void
-GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<Leaves>& descendants, std::vector<float>& coordinates_tree, std::vector<int>& num_lineages){
+GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>& exclude_groups, std::vector<Leaves>& descendants, std::vector<float>& coordinates_tree, std::vector<int>& num_lineages){
 
   mtr.tree.GetCoordinates(coordinates_tree); 
   std::vector<int> sorted_indices(coordinates_tree.size());
@@ -107,18 +107,22 @@ GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<Leave
       return std::tie(coordinates_tree[i1],i1) < std::tie(coordinates_tree[i2],i2); } ); 
 
   int num_lins = 0;
+  int num_terminal = 0;
+  int num_exclude = 0;
+  std::vector<int> exclude_lineages(mtr.tree.nodes.size(), 0);
   double age = coordinates_tree[*sorted_indices.begin()];
   std::vector<int>::iterator it_sorted_indices_start = sorted_indices.begin();
   for(std::vector<int>::iterator it_sorted_indices = sorted_indices.begin(); it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
 
     if(coordinates_tree[*it_sorted_indices] > age){
       for(; it_sorted_indices_start != it_sorted_indices; it_sorted_indices_start++){
-        num_lineages[*it_sorted_indices_start] = num_lins;          
+        assert(num_lins >= num_terminal + num_exclude);
+        num_lineages[*it_sorted_indices_start] = num_lins - num_terminal - num_exclude;          
       }
       age = coordinates_tree[*it_sorted_indices_start];
     }
 
-    bool ignore = true;
+    bool ignore = true, ignore2 = true, exclude = false;
     if(*it_sorted_indices < N){
 
       for(int i = 0; i < samples.group_of_interest.size(); i++){
@@ -130,36 +134,78 @@ GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<Leave
           }
         }
       }
-      if(!ignore) num_lins++;
+      if(!ignore){
+        num_lins++;
+        num_terminal++;
+      }
+
+      for(int i = 0; i < exclude_groups.size(); i++){
+        std::vector<int>::iterator it_desc = descendants[*it_sorted_indices].member.begin();
+        for(; it_desc != descendants[*it_sorted_indices].member.end(); it_desc++ ){
+          if(samples.group_of_haplotype[*it_desc] == exclude_groups[i]){
+            exclude_lineages[*it_desc] = 1;
+            break;
+          }
+        }
+      }
 
     }else{
 
-      int child = (*mtr.tree.nodes[*it_sorted_indices].child_left).label;
+      int child1 = (*mtr.tree.nodes[*it_sorted_indices].child_left).label;
       for(int i = 0; i < samples.group_of_interest.size(); i++){
-        std::vector<int>::iterator it_desc = descendants[child].member.begin();
-        for(; it_desc != descendants[child].member.end(); it_desc++ ){
+        std::vector<int>::iterator it_desc = descendants[child1].member.begin();
+        for(; it_desc != descendants[child1].member.end(); it_desc++ ){
           if(samples.group_of_haplotype[*it_desc] == samples.group_of_interest[i]){
             ignore = false;
             break;
           }
         }
       }
-      if(!ignore){
-        ignore = true;
-        child = (*mtr.tree.nodes[*it_sorted_indices].child_right).label;
-        for(int i = 0; i < samples.group_of_interest.size(); i++){
-          std::vector<int>::iterator it_desc = descendants[child].member.begin();
-          for(; it_desc != descendants[child].member.end(); it_desc++){
-            if(samples.group_of_haplotype[*it_desc] == samples.group_of_interest[i]){
-              ignore = false;
-              break;
-            }
+
+      if(!ignore && child1 < N){
+        num_terminal--;
+      }
+
+      ignore2 = true;
+      int child2 = (*mtr.tree.nodes[*it_sorted_indices].child_right).label;
+      for(int i = 0; i < samples.group_of_interest.size(); i++){
+        std::vector<int>::iterator it_desc = descendants[child2].member.begin();
+        for(; it_desc != descendants[child2].member.end(); it_desc++){
+          if(samples.group_of_haplotype[*it_desc] == samples.group_of_interest[i]){
+            ignore2 = false;
+            break;
           }
         }
       }
-      if(!ignore) num_lins--;
+      if(!ignore2 && child2 < N){
+        num_terminal--;
+      }
+
+      if(!ignore && !ignore2) num_lins--;
+
+      if(exclude_lineages[child1] == 1 || exclude_lineages[child2] == 1){
+        exclude_lineages[*it_sorted_indices] = 1;
+      }
+      if(ignore && !ignore2){
+        if(exclude_lineages[child1] == 1 && exclude_lineages[child2] == 0){
+          num_exclude++;
+        }
+      }
+      if(ignore2 && !ignore){
+        if(exclude_lineages[child2] == 1 && exclude_lineages[child1] == 0){
+          num_exclude++;
+        }
+      }
+      if(!ignore2 && !ignore){
+        if(exclude_lineages[child1] == 1 && exclude_lineages[child2] == 1){
+          num_exclude--;
+        }
+      }
+ 
+
     }
     assert(num_lins >= 0);
+    assert(num_terminal >= 0);
 
   }
   assert(num_lins >= 0);

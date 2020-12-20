@@ -29,6 +29,7 @@ int main(int argc, char* argv[]){
     ("num_proposals", "Optional: Number of proposals between samples in SampleBranchLengths", cxxopts::value<int>())
     ("num_samples", "Optional: Number of samples in SampleBranchLengths", cxxopts::value<int>())
 		("format", "Optional: Output file format when sampling branch. a: anc/mut, n: newick, b:binary. Default: a.", cxxopts::value<std::string>())
+    ("mask", "Filename of file containing mask", cxxopts::value<std::string>())
     ("seed", "Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
   
   options.parse(argc, argv);

@@ -252,6 +252,16 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
   ////////////////////////
   //read in anc file
 
+  fasta mask;
+  double cutoff = 0.9;
+  if(options.count("mask")){
+    if(chr == "NA"){
+      mask.Read(options["mask"].as<std::string>());
+    }else{
+      mask.Read(options["mask"].as<std::string>() + "_chr" + chr + ".fa");
+    }
+  }
+
   AncMutIterators ancmut;
   if(options.count("dist")){
     if(chr == "NA"){
@@ -265,7 +275,7 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
     }else{
       ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + chr + ".anc", options["input"].as<std::string>() + "_chr" + chr + ".mut");
     } 
-  }
+  } 
 
   int N = ancmut.NumTips();
   int L = ancmut.NumSnps();
@@ -384,20 +394,86 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
   if(ancmut.sample_ages.size() > 0){
     float factor = 0.0;
     num_bases_tree_persists = 0.0;
+    double num_passing = 1.0;
     while(num_bases_tree_persists >= 0.0){
       num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
-      std::vector<int> leaves;
-      factor = num_bases_tree_persists;
-      GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epochs, ancmut.sample_ages, coalescence_rate_data, leaves);
+
+      num_passing = 1.0;
+      if(options.count("mask") > 0){
+
+        int tree_index = (*it_mut).tree;
+        int pos_start = (*it_mut).pos;
+        int pos_end = pos_start;
+        if(it_mut != ancmut.mut_end()){
+          while((*it_mut).tree == tree_index){
+            pos_end = (*it_mut).pos;
+            it_mut++;
+            if(it_mut == ancmut.mut_end()) break;
+          }
+        }
+        num_passing = 0.0;
+        if(pos_start < mask.seq.size() && pos_end < mask.seq.size()){
+          for(int bp = pos_start; bp < pos_end; bp++){
+            if(mask.seq[bp-1] == 'P') num_passing++; 
+          }
+        }
+
+        if(pos_end - pos_start + 1 <= 0){ 
+          num_passing = 0.0;
+        }else{
+          num_passing /= (pos_end - pos_start + 1);
+        }
+
+      }
+
+      if(num_passing >= cutoff){
+        std::vector<int> leaves;
+        factor = num_bases_tree_persists;
+        GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epochs, ancmut.sample_ages, coalescence_rate_data, leaves);
+      }
+
     }  
   }else{
     float factor = 0.0;
     num_bases_tree_persists = 0.0;
+    double num_passing = 1.0;
     while(num_bases_tree_persists >= 0.0){
       num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
-      std::vector<int> leaves;
-      factor = num_bases_tree_persists;
-      GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epochs, coalescence_rate_data, leaves);
+
+      num_passing = 1.0;
+      num_passing = 1.0;
+      if(options.count("mask") > 0){
+
+        int tree_index = (*it_mut).tree;
+        int pos_start = (*it_mut).pos;
+        int pos_end = pos_start;
+        if(it_mut != ancmut.mut_end()){
+          while((*it_mut).tree == tree_index){
+            pos_end = (*it_mut).pos;
+            it_mut++;
+            if(it_mut == ancmut.mut_end()) break;
+          }
+        }
+        num_passing = 0.0;
+        if(pos_start < mask.seq.size() && pos_end < mask.seq.size()){
+          for(int bp = pos_start; bp < pos_end; bp++){
+            if(mask.seq[bp-1] == 'P') num_passing++; 
+          }
+        }
+
+        if(pos_end - pos_start + 1 <= 0){ 
+          num_passing = 0.0;
+        }else{
+          num_passing /= (pos_end - pos_start + 1);
+        }
+
+      }
+
+      if(num_passing >= cutoff){
+        std::vector<int> leaves;
+        factor = num_bases_tree_persists;
+        GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epochs, coalescence_rate_data, leaves);
+      }
     }  
   }
 
@@ -690,7 +766,7 @@ CoalescenceRateForTree(cxxopts::Options& options){
 
     }
   }else{
-    
+
     for(int chr = 0; chr < chromosomes.size(); chr++){
 
       AncMutIterators ancmut(filename_anc[chr], filename_mut[chr], filename_dist[chr]);

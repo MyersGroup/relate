@@ -1569,11 +1569,33 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
   int num_epochs;
   std::vector<double> epochs;
   float log_10 = std::log(10);
-  if(options.count("bins")){
-
-    double log_age = std::log(0);
-    double age = 0;
+  if(options.count("binsfile")){
   
+    std::ifstream is(options["binsfile"].as<std::string>());
+    std::string line;
+    while(getline(is, line)){
+      if(epochs.size() == 0){
+        if(std::stof(line) > 0){
+          epochs.push_back(0);
+        }
+      }
+      epochs.push_back(std::stof(line));
+    }
+    if(epochs[epochs.size()-1] < 1e8) epochs.push_back(1e8);
+    num_epochs = epochs.size();
+
+    for(int i = 0; i < num_epochs - 1; i++){
+      assert(epochs[i] >= 0);
+      assert(epochs[i] <= epochs[i+1]);
+    }
+
+  }else if(options.count("bins")){
+
+    double age = 0.0;
+    if(options.count("sample_age") > 0) age = options["sample_age"].as<float>();
+    double count = 0.0;
+    double log_age = std::log(age * years_per_gen)/log_10;
+
     double epoch_lower, epoch_upper, epoch_step;
     std::string str_epochs = options["bins"].as<std::string>();
     std::string tmp;
@@ -1615,23 +1637,30 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
     epochs[ep] = 0.0;
     ep++; 
     double epoch_boundary = 0.0;
+    epoch_boundary = epoch_lower;
+    
     if(log_age < epoch_lower && age != 0.0){
       epochs.push_back(age);
+      if(epoch_boundary - log_age < 0.5*epoch_step) epoch_boundary += epoch_step;
       ep++;
     }
-    epoch_boundary = epoch_lower;
     while(epoch_boundary < epoch_upper){
       if(log_age < epoch_boundary){
-        if(ep == 1 && age != 0.0) epochs.push_back(age);
-        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        if(ep == 1 && age != 0.0){
+          epochs.push_back(age);
+          if(epoch_boundary - log_age < 0.5*epoch_step) epoch_boundary += epoch_step;
+        }
+        if(std::fabs(log_age - epoch_boundary) > 1e-3){
+          epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        }
         ep++;
       }
       epoch_boundary += epoch_step;
     }
     epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
-    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
-		num_epochs = epochs.size();
-
+    epochs.push_back( std::max(1e8, 10*epochs[epochs.size()-1])/years_per_gen );
+    num_epochs = epochs.size();	
+    
   }else{
 
     num_epochs = 31;
@@ -1645,6 +1674,10 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
 
   }
 
+  //for(int i = 0; i < num_epochs; i++){
+  //  std::cerr << epochs[i] << " ";
+  //}
+  //std::cerr << std::endl;
 
   /////////////////////////////////////////////////////////////////
   //Mutation specific
@@ -1775,13 +1808,27 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
   double total_branch_length = 0.0;
   int count_snps = 0;
 
+  std::vector<int> exclude;
+  if(0){
+  std::string id = "LBK";
+  i = 0;
+  for(; i < samples.groups.size(); i++){
+    if(samples.groups[i] == id) break;
+  }
+  if(i == 0 && samples.groups[0] != id){
+    std::cerr << "Group to exclude not found" << std::endl;
+    exit(1);
+  }
+  exclude.push_back(i);
+  }
+
   int snp = 0;
   while(num_bases_tree_persists >= 0){
 
     //need to get branch lengths in epoch for only the pop of interest
     mtr.tree.GetCoordinates(coordinates_tree);
     mtr.tree.FindAllLeaves(descendants);
-    GetCoordsAndLineagesForPop(mtr, samples, descendants, coordinates_tree, num_lineages);
+    GetCoordsAndLineagesForPop(mtr, samples, exclude, descendants, coordinates_tree, num_lineages);
     GetBranchLengthsInEpoch(data, epochs, coordinates_tree, num_lineages, branch_lengths_in_epoch);
     num_tree = mutations.info[snp].tree;
 
@@ -1798,15 +1845,28 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
 
         assert(ancmut.get_treecount() == snp_info.tree);
         //check for mutation whether it is segregating in pop_of_interest
-        bool use = false;
-        for(int i = 0; i < samples.group_of_interest.size(); i++){
-          for(std::vector<int>::iterator it_mem = descendants[snp_info.branch[0]].member.begin(); it_mem != descendants[snp_info.branch[0]].member.end(); it_mem++){
-            if(samples.group_of_haplotype[*it_mem] == samples.group_of_interest[i]){
-              use = true;
-              break;
+        bool use = false, excl = false;
+
+        if(descendants[snp_info.branch[0]].num_leaves > 1){
+          for(int i = 0; i < samples.group_of_interest.size(); i++){
+            for(std::vector<int>::iterator it_mem = descendants[snp_info.branch[0]].member.begin(); it_mem != descendants[snp_info.branch[0]].member.end(); it_mem++){
+              for(int j = 0; j < exclude.size(); j++){
+                if(samples.group_of_haplotype[*it_mem] == exclude[j]){
+                  excl = true;
+                  break;
+                }
+              }
+              if(excl){
+                use = false;
+                break;
+              }
+              if(samples.group_of_haplotype[*it_mem] == samples.group_of_interest[i]){
+                use = true;
+                break;
+              }
             }
-          }
-        } 
+          } 
+        }
 
         //if statements to make sure we have a well defined biallelic SNP
         if(use && snp_info.upstream_base != "NA" && snp_info.downstream_base != "NA" && snp_info.mutation_type[0] != snp_info.mutation_type[2]){
@@ -1893,6 +1953,9 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
 
   std::random_device rd;  //Will be used to obtain a seed for the random number engine
   std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+  if(options.count("seed") > 0){
+    gen.seed(options["seed"].as<int>());
+  }
   std::uniform_int_distribution<> sam(0, (ancmut.NumTrees()-1.0)/1000.0);
 
   int n_boot = 100;
@@ -1917,12 +1980,14 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
     int size = 0;
     for(std::vector<int>::iterator it_boot_trees = boot_trees.begin(); it_boot_trees != boot_trees.end();){
       int start = 1000*sam(gen);
+      std::cerr << start << " ";
       for(int k = start; k < start + 1000 && size < boot_trees.size() && k < boot_trees.size(); k++){
         *it_boot_trees = k;
         it_boot_trees++;
         size++;
       }
     }
+    std::cerr << std::endl;
     boot_trees.resize(size);
     //std::sort(boot_trees.begin(), boot_trees.end());
 
@@ -3347,6 +3412,8 @@ int main(int argc, char* argv[]){
     ("last_chr", "Index of last chr", cxxopts::value<int>())
     ("years_per_gen", "Years per generation (float). Default: 28.", cxxopts::value<float>())
     ("bins", "Specify epoch bins. Format: lower, upper, stepsize for function c(0,10^seq(lower, upper, stepsize)).", cxxopts::value<std::string>())
+    ("binsfile", "Filename containing bins. One per line in generations.", cxxopts::value<std::string>())
+    ("sample_age", "Sample age in generations.", cxxopts::value<float>())
     ("dist", "Filename of file containing dist.", cxxopts::value<std::string>())
     ("mask", "Filename of file containing mask", cxxopts::value<std::string>())
     ("ancestor", "Filename of file containing human ancestor genome.", cxxopts::value<std::string>())
@@ -3354,7 +3421,8 @@ int main(int argc, char* argv[]){
     ("poplabels", "Optional: Filename of file containing population labels. If ='hap', each haplotype is in its own group.", cxxopts::value<std::string>()) 
     ("pop_of_interest", "Optional: Name of pop of interest.", cxxopts::value<std::string>()) 
     ("i,input", "Filename of .anc and .mut file without file extension", cxxopts::value<std::string>())
-    ("o,output", "Output file", cxxopts::value<std::string>());
+    ("o,output", "Output file", cxxopts::value<std::string>())
+    ("seed", "Optional. Random seed.", cxxopts::value<int>());
 
   options.parse(argc, argv);
   std::string mode = options["mode"].as<std::string>();
