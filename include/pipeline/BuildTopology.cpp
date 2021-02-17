@@ -36,7 +36,7 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   if(options.count("effectiveN")){
     data.Ne = options["effectiveN"].as<float>();
   }
-  data.Ne *= 100;
+  data.Ne *= 50;
 
   const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
   if(first_section >= num_windows) return 1;
