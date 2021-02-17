@@ -30,11 +30,14 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   fclose(fp);
   num_windows--;
 
-  int Ne = 30000;
-  if(options.count("effectiveN")) Ne = (int) options["effectiveN"].as<float>();
-
-  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str(), Ne); //struct data is defined in data.hpp
+  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".state").c_str()); //struct data is defined in data.hpp
   data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
+
+  if(options.count("effectiveN")){
+    data.Ne = options["effectiveN"].as<float>();
+  }
+  data.Ne *= 100;
+
   const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
   if(first_section >= num_windows) return 1;
 

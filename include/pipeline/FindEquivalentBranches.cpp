@@ -60,6 +60,7 @@ int FindEquivalentBranches(cxxopts::Options& options, int chunk_index){
   std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str());
   std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str());
   std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str());
+  std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".state").c_str());
   //////////////////
 
 

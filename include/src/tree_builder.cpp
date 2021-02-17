@@ -846,6 +846,8 @@ MinMatch::CoalesceSym(const int i, const int j, CollapsedMatrix<float>& sym_d){
 void
 MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& i_sample_ages){
 
+  //Ne = 5e5;
+
   rng.seed(1);
   std::uniform_real_distribution<double> dist_unif(0,1);
 

@@ -54,14 +54,14 @@ gzip::open(const char* filename, const char* mode){
     return(fp);
 
   }else{
-  
+
     FILE* fp = fopen(filename, mode);
     if(fp == NULL){
       std::cerr << "Failed to open file " << filename << std::endl;
       exit(1);
     }
     return(fp);
-  
+
   }
 
 }
@@ -83,11 +83,12 @@ Data::Data(int N, int L, int Ne, double mu): N(N), L(L), Ne(Ne), mu(mu){
   name     = "relate"; 
 }
 
-Data::Data(const char* filename_sequence, const char* filename_pos, const char* filename_rec, const char* filename_rpos, int Ne, double mu): Ne(Ne), mu(mu){
+Data::Data(const char* filename_sequence, const char* filename_pos, const char* filename_rec, const char* filename_rpos, const char* filename_state, int Ne, double mu): Ne(Ne), mu(mu){
   ReadSequenceFromBin(filename_sequence);
   ReadVectorFromBin(pos, filename_pos);
   ReadVectorFromBin(r, filename_rec);
   ReadVectorFromBin(rpos, filename_rpos);
+  ReadVectorFromBin(state, filename_state);
 
   name     = "relate"; 
   theta    = 0.001;
@@ -113,7 +114,7 @@ Data::Data(const char* filename_pos, const char* filename_param, int Ne, double 
 /////////////////////////////////////
 
 void 
-Data::MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist, const std::string& file_out, float min_memory){
+Data::MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist, const std::string& file_out, bool use_transitions, float min_memory){
 
   haps m_haps(filename_haps.c_str(), filename_sample.c_str());
   N = m_haps.GetN();
@@ -135,7 +136,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   int overlap = 20000;
   int max_chunk_size = std::min(L+1, (int) (min_memory_size/N)); //can store 
   if(min_memory >= 100) max_chunk_size = 2500000; 
- 
+
   std::vector<std::vector<char> > p_seq(max_chunk_size), p_overlap(overlap);
   std::vector<std::vector<char> >::iterator it_p = p_seq.begin(), it_poverlap;
   for(; it_p != p_seq.end(); it_p++){
@@ -147,6 +148,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   std::vector<int>::iterator it_window_boundaries, it_window_overlap;
   std::vector<int> section_boundary_start, section_boundary_end;
   section_boundary_start.push_back(0);
+  int state_val = 1;
   int min_snps_in_window = max_chunk_size;
   float mean_snps_in_window = 0.0;
   int num_windows, num_windows_overlap = 0;
@@ -157,6 +159,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   while(snp < L){ 
 
     FILE* fp_haps_chunk = fopen((file_out + "/chunk_" + std::to_string(chunk_index) + ".hap").c_str(), "wb");
+    FILE* fp_state = fopen((file_out + "/chunk_" + std::to_string(chunk_index) + ".state").c_str(), "wb");
     assert(fp_haps_chunk);
     //output chunk bed into fp_haps_chunk and chunk pos, rpos into fp_pos
 
@@ -246,6 +249,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
 
     section_boundary_end.push_back(snp);
 
+    int snp_tmp = *std::prev(section_boundary_start.end(),1);
     if(snp_begin == 0){
 
       std::vector<char>::size_type uL_chunk = chunk_size; 
@@ -261,6 +265,8 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
       fwrite(&num_windows_in_section, sizeof(int), 1, fp);
       fwrite(&window_boundaries[0], sizeof(int), num_windows_in_section, fp);
       fclose(fp);
+
+      fwrite(&chunk_size, sizeof(int), 1, fp_state);
 
     }else{
 
@@ -294,7 +300,23 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
         *it_window_boundaries += window_start;
       }
 
+      fwrite(&L_chunk, sizeof(int), 1, fp_state);
       for(it_p = p_overlap.begin(); it_p != std::next(p_overlap.begin(), overlap_in_section); it_p++){
+
+        if(use_transitions){
+          fwrite(&state_val, sizeof(int), 1, fp_state);
+        }else{
+          if( (ancestral[snp_tmp] == "C" && alternative[snp_tmp] == "T") || (ancestral[snp_tmp] == "T" && alternative[snp_tmp] == "C") || 
+              (ancestral[snp_tmp] == "G" && alternative[snp_tmp] == "A") || (ancestral[snp_tmp] == "A" && alternative[snp_tmp] == "G") ){
+            state_val = 0;
+            fwrite(&state_val, sizeof(int), 1, fp_state);
+          }else{
+            state_val = 1;
+            fwrite(&state_val, sizeof(int), 1, fp_state);
+          }
+        }
+        snp_tmp++;
+
         for(std::vector<char>::iterator it_row = (*it_p).begin(); it_row != (*it_p).end(); it_row++){ 
           fwrite(&(*it_row), sizeof(char), 1, fp_haps_chunk);
         }
@@ -303,12 +325,28 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
     }
 
     for(it_p = p_seq.begin(); it_p != std::next(p_seq.begin(), chunk_size); it_p++){
+
+      if(use_transitions){
+        fwrite(&state_val, sizeof(int), 1, fp_state);
+      }else{
+        if( (ancestral[snp_tmp] == "C" && alternative[snp_tmp] == "T") || (ancestral[snp_tmp] == "T" && alternative[snp_tmp] == "C") || 
+            (ancestral[snp_tmp] == "G" && alternative[snp_tmp] == "A") || (ancestral[snp_tmp] == "A" && alternative[snp_tmp] == "G") ){
+          state_val = 0;
+          fwrite(&state_val, sizeof(int), 1, fp_state);
+        }else{
+          state_val = 1;
+          fwrite(&state_val, sizeof(int), 1, fp_state);
+        }
+      }
+      snp_tmp++;
+
       for(std::vector<char>::iterator it_row = (*it_p).begin(); it_row != (*it_p).end(); it_row++){ 
         fwrite(&(*it_row), sizeof(char), 1, fp_haps_chunk);
       }
     }
 
     fclose(fp_haps_chunk);
+    fclose(fp_state);
     chunk_index++;
 
   }

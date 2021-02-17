@@ -139,14 +139,17 @@ GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>&
         num_terminal++;
       }
 
+      bool exclude = false;
       for(int i = 0; i < exclude_groups.size(); i++){
         std::vector<int>::iterator it_desc = descendants[*it_sorted_indices].member.begin();
         for(; it_desc != descendants[*it_sorted_indices].member.end(); it_desc++ ){
           if(samples.group_of_haplotype[*it_desc] == exclude_groups[i]){
             exclude_lineages[*it_desc] = 1;
+            exclude = true;
             break;
           }
         }
+        if(exclude) break;
       }
 
     }else{

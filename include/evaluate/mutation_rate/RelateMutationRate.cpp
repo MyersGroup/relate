@@ -1810,16 +1810,20 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
 
   std::vector<int> exclude;
   if(0){
-  std::string id = "LBK";
-  i = 0;
-  for(; i < samples.groups.size(); i++){
-    if(samples.groups[i] == id) break;
-  }
-  if(i == 0 && samples.groups[0] != id){
-    std::cerr << "Group to exclude not found" << std::endl;
-    exit(1);
-  }
-  exclude.push_back(i);
+    std::vector<std::string> id = {"LBK", "NE1", "BR2", "JP14", "NG10", "PB675", "atp016"};
+    //std::vector<std::string> id = {"KK1", "Loschbour", "sf12", "SRA62"};
+    //std::vector<std::string> id = {"WestEurasia"};
+    for(int j = 0; j < id.size(); j++){
+      i = 0;
+      for(; i < samples.groups.size(); i++){
+        if(samples.groups[i] == id[j]) break;
+      }
+      if(i == 0 && samples.groups[0] != id[j]){
+        std::cerr << "Group to exclude not found" << std::endl;
+        exit(1);
+      }
+      exclude.push_back(i);
+    }
   }
 
   int snp = 0;
@@ -1850,20 +1854,25 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
         if(descendants[snp_info.branch[0]].num_leaves > 1){
           for(int i = 0; i < samples.group_of_interest.size(); i++){
             for(std::vector<int>::iterator it_mem = descendants[snp_info.branch[0]].member.begin(); it_mem != descendants[snp_info.branch[0]].member.end(); it_mem++){
-              for(int j = 0; j < exclude.size(); j++){
-                if(samples.group_of_haplotype[*it_mem] == exclude[j]){
-                  excl = true;
+              if(i == 0){
+                for(int j = 0; j < exclude.size(); j++){
+                  if(samples.group_of_haplotype[*it_mem] == exclude[j]){
+                    excl = true;
+                    break;
+                  }
+                }
+                if(excl){
                   break;
                 }
               }
-              if(excl){
-                use = false;
-                break;
-              }
               if(samples.group_of_haplotype[*it_mem] == samples.group_of_interest[i]){
                 use = true;
-                break;
+                if(i != 0) break;
               }
+            }
+            if(excl){
+              use = false;
+              break;
             }
           } 
         }
@@ -1876,6 +1885,20 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
             if(snp_info.mutation_type[0] == 'A' || snp_info.mutation_type[0] == 'C' || snp_info.mutation_type[0] == 'G' || snp_info.mutation_type[0] == 'T'){
 
               if(snp_info.mutation_type[2] == 'A' || snp_info.mutation_type[2] == 'C' || snp_info.mutation_type[2] == 'G' || snp_info.mutation_type[2] == 'T'){
+
+                if(0){
+                if(snp_info.upstream_base == "T" && snp_info.downstream_base == "C" && snp_info.mutation_type == "C/T"){
+                  std::cerr << snp_info.pos << " " << snp_info.tree << " " << snp_info.branch[0] << std::endl;
+
+                  std::cerr << "Excl: " << exclude[0] << std::endl;
+                  for(int i = 0; i < descendants[snp_info.branch[0]].member.size(); i++){
+                    std::cerr << samples.group_of_haplotype[descendants[snp_info.branch[0]].member[i]] << " ";
+                  }
+                  std::cerr << std::endl;
+
+
+                }
+                }
 
                 // identify category of mutation
                 pattern = snp_info.upstream_base + snp_info.downstream_base + snp_info.mutation_type[0] + snp_info.mutation_type[2];

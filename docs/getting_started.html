@@ -205,6 +205,8 @@ gtag('config', 'UA-115753061-1');
                 <dd>Specifies the approximate memory allowance (in GB) used for storing the distance matrices in memory. <b>Relate</b> will exceed this amount, as it also stores trees and other information in memory; however the option allows to approximately control memory usage. Default is 5GB. <b>Relate</b> can become more efficient (in runtime and hard disk usage) with more memory, particularly for large sample sizes.</dd>
                 <dt>--seed</dt>
                 <dd>Optional: Seed for random number generator used for branch lengths estimation.</dd>
+								<dt>--transversion</dt>
+								<dd>Optional: Only use transversions for bl estimation.</dd>
                 <dt>other arguments</dt>
                 <dd>Arguments --chunk_index, --first_section, --last_section are only relevant when executing <b>Relate</b> in a mode other than <b>All</b>. This is needed for parallelising <b>Relate</b> (<a href="parallelise.html">more info</a>).</dd>
               </dl>

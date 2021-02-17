@@ -34,7 +34,8 @@ int main(int argc, char* argv[]){
     ("last_section", "Optional. Index of last section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("coal", "Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN.", cxxopts::value<std::string>()) 
     //("anc_allele_unknown", "Specify if ancestral allele is unknown.") 
-		("i,input", "Filename of input.", cxxopts::value<std::string>())
+		("transversion", "Only use transversion for bl estimation.")
+    ("i,input", "Filename of input.", cxxopts::value<std::string>())
 		("painting", "Optional. Copying and transition parameters in chromosome painting algorithm. Format: theta,rho. Default: 0.025,1.", cxxopts::value<std::string>())
     ("seed", "Optional. Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
 
@@ -78,7 +79,7 @@ int main(int argc, char* argv[]){
     if(!options.count("chunk_index") || !options.count("output")){
       std::cout << "Not enough arguments supplied." << std::endl;
       //std::cout << "Needed: chunk_index, output. Optional: first_section, last_section, anc_allele_unknown, seed." << std::endl;
-      std::cout << "Needed: chunk_index, output. Optional: first_section, last_section, effectiveN, seed." << std::endl; 
+      std::cout << "Needed: chunk_index, output. Optional: first_section, last_section, seed." << std::endl; 
       help = true;
     }
     if(options.count("help") || help){

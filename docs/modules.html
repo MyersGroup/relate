@@ -142,8 +142,17 @@ gtag('config', 'UA-115753061-1');
                     <li>estimates an average mutation rate.</li>
                   </ol>
                   To run the script, all you need are the inferred .anc/.mut files and a .poplabels file (see <a href="input_data.html#.poplabels">here</a> for the file format).<br/> 
-                  You can test the code on the toy data set in <b>example/data</b>. Note however that the data set is too small (in terms of sequence length, not sample size) to obtain reliable estimates.<br/>
+ 									<p>Please note that two versions of coalescence rates/population sizes are outputted:
+									<ul>
+										<li> output.coal: Treats all samples as one group. </li>
+										<li> *.pairwise.coal/.bin, reflects grouping in poplabels file. You can rerun <a href="#FinalizePopulationSize">RelateCoalescenceRates --mode FinalizePopulationSize</a> to extract coalescence rates for any .poplabels file. </li>
+                  </ul>
+									</p>
+
+								  <p>You can test the code on the toy data set in <b>example/data</b>.<br/>
                   Do not move the script - we are extracting the path to the binaries from the location of the script!</p>
+
+
 
                   <pre><code>PATH_TO_RELATE/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
               -i example \

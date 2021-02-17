@@ -143,8 +143,8 @@ class AncesTreeBuilder{
 
     //////////////////
     //A few helper functions used for building AncesTrees 
-    int MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, std::uniform_real_distribution<double>& dist_unif, const int snp, float& min_value);
-    int MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, float& min_value);
+    int MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, std::uniform_real_distribution<double>& dist_unif, const int snp, float& min_value, bool use = true);
+    int MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, float& min_value, bool use = true);
     int ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, const bool force = false);
     
     int PropagateMutationExact(Node& node, std::deque<int>& branches, std::deque<int>& branches_flipped, Leaves& sequences_carrying_mutations);

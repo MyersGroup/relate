@@ -6,6 +6,7 @@ ${PATH_TO_RELATE}/bin/Relate --mode All \
 	--haps ./data/example.haps.gz \
 	--sample ./data/example.sample.gz \
 	--map ./data/genetic_map_GRCh37_chr1.txt \
+	--sample_ages ./data/sample_ages.txt \
 	-N 30000 \
 	-m 1.25e-8 \
 	-o example \

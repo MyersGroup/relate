@@ -15,7 +15,7 @@ int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
   bool help = false;
   if(!options.count("haps") || !options.count("sample") || !options.count("map") || !options.count("output")){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: haps, sample, map, output. Optional: memory, dist." << std::endl;
+    std::cout << "Needed: haps, sample, map, output. Optional: memory, dist, transversion." << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -27,6 +27,9 @@ int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Parsing data.." << std::endl;
 
+  bool use_transitions = true;
+  if(options.count("transversion")) use_transitions = false;
+ 
   //////////////////////////////////
   //Parse Data
 
@@ -56,15 +59,15 @@ int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
 
   if(options.count("memory")){
     if(options.count("dist")){
-      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), options["dist"].as<std::string>(), options["output"].as<std::string>(), options["memory"].as<float>());
+      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), options["dist"].as<std::string>(), options["output"].as<std::string>(), use_transitions, options["memory"].as<float>());
     }else{
-      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), "unspecified", options["output"].as<std::string>(), options["memory"].as<float>());
+      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), "unspecified", options["output"].as<std::string>(), use_transitions, options["memory"].as<float>());
     }
   }else{
     if(options.count("dist")){
-      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), options["dist"].as<std::string>(), options["output"].as<std::string>());
+      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), options["dist"].as<std::string>(), options["output"].as<std::string>(), use_transitions);
     }else{
-      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), "unspecified", options["output"].as<std::string>());
+      data.MakeChunks(options["haps"].as<std::string>(), options["sample"].as<std::string>(), options["map"].as<std::string>(), "unspecified", options["output"].as<std::string>(), use_transitions);
     }
   }
   

@@ -90,7 +90,7 @@ EstimateBranchLengthsWithSampleAge::InitializeBranchLengths(Tree& tree){
       if(coordinates[node_i] > 0){
         double tmp = coordinates[node_i];
         assert(tmp >= coordinates[sorted_indices[i-1]]);
-        coordinates[node_i] = (tmp + coordinates[sorted_indices[i-1]])/10.0;
+        coordinates[node_i] = (tmp - coordinates[sorted_indices[i-1]])/10.0 + coordinates[sorted_indices[i-1]];
         //coordinates[node_i] = (tmp + coordinates[sorted_indices[i-1]])/sorted_indices.size();
         //coordinates[node_i] = coordinates[sorted_indices[i-1]];
         assert(coordinates[node_i] <= tmp);
@@ -103,7 +103,7 @@ EstimateBranchLengthsWithSampleAge::InitializeBranchLengths(Tree& tree){
   }
 
   for(int i = 0; i < N_total-1; i++){
-    //std::cerr << coordinates[sorted_indices[i+1]] << " ";
+    //std::cerr << i << "," << coordinates[sorted_indices[i+1]] << " ";
     assert(coordinates[sorted_indices[i]] <= coordinates[sorted_indices[i+1]]);
   }
   //std::cerr << std::endl;

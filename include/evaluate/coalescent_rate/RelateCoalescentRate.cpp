@@ -30,6 +30,7 @@ int main(int argc, char* argv[]){
     ("num_samples", "Optional: Number of samples in SampleBranchLengths", cxxopts::value<int>())
 		("format", "Optional: Output file format when sampling branch. a: anc/mut, n: newick, b:binary. Default: a.", cxxopts::value<std::string>())
     ("mask", "Filename of file containing mask", cxxopts::value<std::string>())
+    ("groups", "Names of groups of interest for conditional coalescence rates", cxxopts::value<std::string>())
     ("seed", "Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
   
   options.parse(argc, argv);
@@ -95,45 +96,9 @@ int main(int argc, char* argv[]){
   
     GenerateConstCoal(options);
   
-  }else if(!mode.compare("EstimateDirPopulationSize")){
- 
-    //variable population size.
-    //Do this for whole chromosome
-    //The Final Finalize should be a FinalizeByGroup  
-    bool help = false;
-    if(!options.count("input") || !options.count("output") || !options.count("poplabels")){
-      std::cout << "Not enough arguments supplied." << std::endl;
-      std::cout << "Needed: poplabels, input, output. Optional: first_chr, last_chr, years_per_gen, bins." << std::endl;
-      help = true;
-    }
-    if(options.count("help") || help){
-      std::cout << options.help({""}) << std::endl;
-      std::cout << "Estimate population size and directional migration." << std::endl;
-      exit(0);
-    }  
-
-    if(options.count("first_chr") && options.count("last_chr")){
-      if(options["first_chr"].as<int>() < 0 || options["last_chr"].as<int>() < 0){
-        std::cerr << "Do not use negative chr indices." << std::endl;
-        exit(1);
-      }
-      for(int chr = options["first_chr"].as<int>(); chr <= options["last_chr"].as<int>(); chr++){ 
-        CoalescentRateDir(options, chr);
-      }
-      SummarizeCoalescentRateForGenome(options);  
-    }else{
-      CoalescentRateDir(options);
-    }    
-
-    FinalizePopulationSizeDir(options);
-
   }else if(!mode.compare("CoalescentRateForSection")){
   
     CoalescentRateForSection(options);
-  
-  }else if(!mode.compare("ConditionalCoalescentRateForSection")){
- 
-    ConditionalCoalescenceRateForSection(options);
   
   }else if(!mode.compare("SummarizeCoalescentRateForGenome")){
 

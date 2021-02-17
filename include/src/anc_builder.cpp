@@ -45,43 +45,43 @@ Correlation::Pearson(const Leaves& set1, const Leaves& set2){
 void 
 DistanceMeasure::Assign(std::vector<CollapsedMatrix<float>>& itop, std::vector<std::vector<float>>& ilog, const int isection_startpos, const int isection_endpos, const int snp){
 
-	CollapsedMatrix<float> alpha_begin, beta_end;
-	float logscale_alpha, logscale_beta;
-	int boundarySNP_begin, boundarySNP_end;
+  CollapsedMatrix<float> alpha_begin, beta_end;
+  float logscale_alpha, logscale_beta;
+  int boundarySNP_begin, boundarySNP_end;
 
-	section_startpos = isection_startpos;
-	section_endpos   = isection_endpos;
-	topology  = &itop; 
-	logscales = &ilog;
+  section_startpos = isection_startpos;
+  section_endpos   = isection_endpos;
+  topology  = &itop; 
+  logscales = &ilog;
 
-	//Reset v_snp_prev. I need to know which derivedSNP 'snp' is.
-	//Iterate backwards until I get to section_startpos. 
-	//I am always including one SNP prior to section_startpos, so the number of derived SNPs to section startpos gives me the previous derived SNP.
-	//This is because when accessing matrices, it is 0 based.
-	std::fill(v_snp_prev.begin(), v_snp_prev.end(), 0);
-	if(snp > 0){
-		int tsnp = snp;
-		while(tsnp >= section_startpos){
-			for(int n = 0; n < N; n++){
-				if((*data).sequence[tsnp][n] == '1'){
-					v_snp_prev[n]++;
-					assert(v_snp_prev[n] < (int)top[n].size());
-				}
-			}
-			tsnp--;
-		} 
-	}
+  //Reset v_snp_prev. I need to know which derivedSNP 'snp' is.
+  //Iterate backwards until I get to section_startpos. 
+  //I am always including one SNP prior to section_startpos, so the number of derived SNPs to section startpos gives me the previous derived SNP.
+  //This is because when accessing matrices, it is 0 based.
+  std::fill(v_snp_prev.begin(), v_snp_prev.end(), 0);
+  if(snp > 0){
+    int tsnp = snp;
+    while(tsnp >= section_startpos){
+      for(int n = 0; n < N; n++){
+        if((*data).sequence[tsnp][n] == '1'){
+          v_snp_prev[n]++;
+          assert(v_snp_prev[n] < (int)top[n].size());
+        }
+      }
+      tsnp--;
+    } 
+  }
 
-	//get v_rpos_prev[n] to the last snp with derived mutation
-	for(int n = 0; n < N; n++){
-		int tsnp = snp;
-		while((*data).sequence[tsnp][n] != '1' && tsnp > 0) tsnp--;  //tsnp > 0 is correct, because I want the previous SNP before section_startpos if there is no derived mutation after that
-		v_rpos_prev[n] = (*data).rpos[tsnp];
-		v_rpos_next[n] = v_rpos_prev[n];
-	}
-	assert(section_startpos <= snp);
-	assert(section_endpos >= snp);
-	section++;
+  //get v_rpos_prev[n] to the last snp with derived mutation
+  for(int n = 0; n < N; n++){
+    int tsnp = snp;
+    while((*data).sequence[tsnp][n] != '1' && tsnp > 0) tsnp--;  //tsnp > 0 is correct, because I want the previous SNP before section_startpos if there is no derived mutation after that
+    v_rpos_prev[n] = (*data).rpos[tsnp];
+    v_rpos_next[n] = v_rpos_prev[n];
+  }
+  assert(section_startpos <= snp);
+  assert(section_endpos >= snp);
+  section++;
 
 }
 
@@ -235,15 +235,15 @@ DistanceMeasure::GetMatrix(const int snp){
 
 
   /* 
-  std::cout << snp << std::endl; 
-  for(int i = 0; i < (*data).N; i++){
-    for(int j = 0; j < (*data).N; j++){
-      std::cout << matrix[i][j] << " " ;
-    }
-    std::cout << std::endl;
-  }
-  */
-  
+     std::cout << snp << std::endl; 
+     for(int i = 0; i < (*data).N; i++){
+     for(int j = 0; j < (*data).N; j++){
+     std::cout << matrix[i][j] << " " ;
+     }
+     std::cout << std::endl;
+     }
+     */
+
 }
 
 
@@ -253,7 +253,7 @@ DistanceMeasure::GetMatrix(const int snp){
 
 AncesTreeBuilder::AncesTreeBuilder(Data& data){
 
-	N       = data.N;
+  N       = data.N;
   N_total = 2*N-1;
   root    = N_total - 1;
   L       = data.L;
@@ -265,13 +265,13 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data){
 
   //sample_ages.resize(N);
   //std::fill(sample_ages.begin(), sample_ages.end(), 0.0);
- 
+
 }
 
 
 AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_ages){
 
-	N       = data.N;
+  N       = data.N;
   N_total = 2*N-1;
   root    = N_total - 1;
   L       = data.L;
@@ -287,7 +287,7 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_age
     //sample_ages.resize(N);
     //std::fill(sample_ages.begin(), sample_ages.end(), 0.0);
   }
- 
+
 }
 
 
@@ -343,11 +343,11 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   }
 
   mutations.info[section_startpos].tree = 0;
-  
+
   if(ancestral_state){
-    is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, section_startpos, min_value); 
+    is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, section_startpos, min_value, data.state[section_startpos]); 
   }else{
-    is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, section_startpos, min_value);
+    is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, section_startpos, min_value, data.state[section_startpos]);
   } 
   if(is_mapping > 2){
     ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, section_startpos, true);
@@ -372,20 +372,20 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
 
     mutations.info[snp].tree = num_tree-1;
     //if mutation does not fall on current tree, I need to build new tree
-   
+
     if(ancestral_state){
-      is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value);
+      is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value, data.state[snp]);
     }else{ 
-      is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, snp, min_value);
+      is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, snp, min_value, data.state[snp]);
     }
-    
+
     if(is_mapping > 1){
 
       //if SNP was flipped, it is mapped to current tree (branch prev_branch)
       int prev_branch;
       if(is_mapping == 2){
         assert(mutations.info[snp].branch.size() == 1.0);
-        assert((*it_seq).tree.nodes[*mutations.info[snp].branch.begin()].num_events >= 1.0);
+        //assert((*it_seq).tree.nodes[*mutations.info[snp].branch.begin()].num_events >= 1.0);
         prev_branch = *mutations.info[snp].branch.begin();
       }
 
@@ -407,9 +407,9 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
       (*it_seq).pos = snp; //store position
 
       if(ancestral_state){
-        is_mapping_alt = MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value_alt);
+        is_mapping_alt = MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value_alt, data.state[snp]);
       }else{
-        is_mapping_alt = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, snp, min_value_alt);
+        is_mapping_alt = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, snp, min_value_alt, data.state[snp]);
       } 
       if(is_mapping_alt > 1 && min_value_alt >= min_value){ 
         //mutation not mapping to a unique branch and new tree is worse than old tree
@@ -423,7 +423,7 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
         //in other words: mutation is mapping, or new tree is better than old tree
         if(is_mapping == 2){
           //need to subtract from prev tree
-          (*std::prev(it_seq)).tree.nodes[prev_branch].num_events -= 1.0;
+          if(data.state[snp]) (*std::prev(it_seq)).tree.nodes[prev_branch].num_events -= 1.0;
         }
         if(is_mapping_alt > 2){
           ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, snp, true);
@@ -460,7 +460,7 @@ AncesTreeBuilder::AssociateTrees(std::vector<AncesTree>& v_anc, const std::strin
   std::vector<std::vector<int>> equivalent_branches;
   std::vector<std::vector<int>>::iterator it_equivalent_branches;
   std::vector<std::vector<int>>::reverse_iterator rit_equivalent_branches;
-  
+
   int size, total_size = 0;
   for(int k = 0; k <= v_anc_size; k++){
     std::string output_filename = dirname + "equivalent_branches_" + std::to_string(k) + ".bin";
@@ -594,15 +594,15 @@ AncesTreeBuilder::AssociateTrees(std::vector<AncesTree>& v_anc, const std::strin
   /* 
   //add two recombination events to every branch
   for(int i = v_anc_size; i >= 0; i--){
-    rit_seq = v_anc[i].seq.rbegin();
-    for(; rit_seq != v_anc[i].seq.rend(); rit_seq++){
-      for(std::vector<Node>::iterator it_nodes = (*rit_seq).tree.nodes.begin(); it_nodes != (*rit_seq).tree.nodes.end(); it_nodes++){
-        (*it_nodes).num_events += 2;
-      }
-    }
+  rit_seq = v_anc[i].seq.rbegin();
+  for(; rit_seq != v_anc[i].seq.rend(); rit_seq++){
+  for(std::vector<Node>::iterator it_nodes = (*rit_seq).tree.nodes.begin(); it_nodes != (*rit_seq).tree.nodes.end(); it_nodes++){
+  (*it_nodes).num_events += 2;
+  }
+  }
   }
   */
-  
+
   assert(rit_equivalent_branches == equivalent_branches.rend());
 
 }
@@ -612,19 +612,19 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
 
   int num_nonmapping_snps = 0;
   int num_nonmapping_rare_snps = 0;
- 
-	/////////////////////////////////////////////
-	//Tree Building
-	//input:  Data and distance matrix
-	//output: AncesTree (tree sequence) 
 
-	rng.seed(seed);  
-	std::uniform_real_distribution<double> dist_unif(0,1);
+  /////////////////////////////////////////////
+  //Tree Building
+  //input:  Data and distance matrix
+  //output: AncesTree (tree sequence) 
 
-	DistanceMeasure d(data, section); //this will calculate the distance measure. Needed because we only painted derived sites, so need to recover d by averaging entries of topology
+  rng.seed(seed);  
+  std::uniform_real_distribution<double> dist_unif(0,1);
 
-	//build tree topology for snp = section_startpos
-	d.GetMatrix(section_startpos); //calculate d
+  DistanceMeasure d(data, section); //this will calculate the distance measure. Needed because we only painted derived sites, so need to recover d by averaging entries of topology
+
+  //build tree topology for snp = section_startpos
+  d.GetMatrix(section_startpos); //calculate d
 
   /////////////////////////////////////////////
   //Tree Building
@@ -699,18 +699,18 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
     if(sequences_carrying_mutation.num_leaves >= 0){
       d.GetMatrix(snp); //calculate d
 
-			/*
-			if(snp == 402){
-				std::cerr << log_ratio << std::endl << std::endl;
-				for(int i = 0; i < 10; i++){
-					for(int j = 0; j < 10; j++){
-						std::cerr << -d.matrix[i][j]/log_ratio << "\t";
-					}
-					std::cerr << std::endl;
-				}
-				std::cerr << std::endl << std::endl;
-			}
-			*/
+      /*
+         if(snp == 402){
+         std::cerr << log_ratio << std::endl << std::endl;
+         for(int i = 0; i < 10; i++){
+         for(int j = 0; j < 10; j++){
+         std::cerr << -d.matrix[i][j]/log_ratio << "\t";
+         }
+         std::cerr << std::endl;
+         }
+         std::cerr << std::endl << std::endl;
+         }
+         */
 
       //modify distance matrix so that current SNP is cancelled
       for(int i = 0; i < data.N; i++){
@@ -728,25 +728,25 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
         }
       }
 
-			/*
-			for(int i = 0; i < data.N; i++){
-			  for(int j = 0; j < data.N; j++){
-					d.matrix[i][j] = std::round(d.matrix[i][j]*10)/10;
-				}
-			}
-			*/
-			
-			/*
-			if(snp == 402){
-				for(int i = 0; i < 10; i++){
-					for(int j = 0; j < 10; j++){
-						std::cerr << -d.matrix[i][j]/log_ratio << "\t";
-					}
-					std::cerr << std::endl;
-				}
-			}
-			*/
-	
+      /*
+         for(int i = 0; i < data.N; i++){
+         for(int j = 0; j < data.N; j++){
+         d.matrix[i][j] = std::round(d.matrix[i][j]*10)/10;
+         }
+         }
+         */
+
+      /*
+         if(snp == 402){
+         for(int i = 0; i < 10; i++){
+         for(int j = 0; j < 10; j++){
+         std::cerr << -d.matrix[i][j]/log_ratio << "\t";
+         }
+         std::cerr << std::endl;
+         }
+         }
+         */
+
       tb.QuickBuild(d.matrix, tree, sample_ages); //build tree topology and store in (*it_seq).tree
 
       if(MapMutation(tree, sequences_carrying_mutation, snp, min_value) > 1){
@@ -758,7 +758,7 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
   }
 
   //return std::make_pair(num_nonmapping_snps, num_nonmapping_rare_snps);
-	return num_nonmapping_snps;
+  return num_nonmapping_snps;
 
 }
 
@@ -769,23 +769,23 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
 
 //////////
 int 
-AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, std::uniform_real_distribution<double>& dist_unif, const int snp, float& min_value){
+AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, std::uniform_real_distribution<double>& dist_unif, const int snp, float& min_value, bool use){
 
   if(sequences_carrying_mutations.num_leaves == N){
     min_value = 0.0;
-		mutations.info[snp].branch.resize(1);
-		mutations.info[snp].flipped = false;
-		mutations.info[snp].branch[0] = 2*N-2;
-		tree.nodes[2*N-2].num_events += 1.0;
-		return 1;
-	}
+    mutations.info[snp].branch.resize(1);
+    mutations.info[snp].flipped = false;
+    mutations.info[snp].branch[0] = 2*N-2;
+    tree.nodes[2*N-2].num_events += 1.0;
+    return 1;
+  }
 
   if(sequences_carrying_mutations.num_leaves == 0){
-		min_value = 0.0;
-		mutations.info[snp].branch.resize(0);
-		mutations.info[snp].flipped = false;
-		return 1;
-	}
+    min_value = 0.0;
+    mutations.info[snp].branch.resize(0);
+    mutations.info[snp].flipped = false;
+    return 1;
+  }
 
   //I want to place the mutation on all branches necessary for no loss of information
   //start with all leaves
@@ -794,9 +794,9 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
 
   PropagateStructGlobal report;
   PropagateMutationGlobal(tree.nodes[root], sequences_carrying_mutations, report);
- 
+
   if(report.min == report.flipped_min && report.min <= thr){
-  
+
     //bool flag = true; //default flag
     bool flag = (dist_unif(rng) < 0.5); 
 
@@ -805,7 +805,7 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
       mutations.info[snp].branch.resize(1);
       mutations.info[snp].branch[0] = report.best_branch; 
       mutations.info[snp].flipped = false;
-      tree.nodes[report.best_branch].num_events += 1.0;
+      if(use) tree.nodes[report.best_branch].num_events += 1.0;
       assert(mutations.info[snp].branch.size() == 1);
       return 1;
     }else{
@@ -813,7 +813,7 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
       mutations.info[snp].branch.resize(1);
       mutations.info[snp].branch[0] = report.best_flipped_branch;
       mutations.info[snp].flipped = true;
-      tree.nodes[report.best_flipped_branch].num_events += 1.0;
+      if(use) tree.nodes[report.best_flipped_branch].num_events += 1.0;
       assert(mutations.info[snp].branch.size() == 1);
       return 2;
     }
@@ -825,7 +825,7 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
       mutations.info[snp].branch.resize(1);
       mutations.info[snp].branch[0] = report.best_branch; 
       mutations.info[snp].flipped = false;
-      tree.nodes[report.best_branch].num_events += 1.0;
+      if(use) tree.nodes[report.best_branch].num_events += 1.0;
       assert(mutations.info[snp].branch.size() == 1);
       return 1;
     }
@@ -838,7 +838,7 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
       mutations.info[snp].branch.resize(1);
       mutations.info[snp].branch[0] = report.best_flipped_branch;
       mutations.info[snp].flipped = true;
-      tree.nodes[report.best_flipped_branch].num_events += 1.0;
+      if(use) tree.nodes[report.best_flipped_branch].num_events += 1.0;
       assert(mutations.info[snp].branch.size() == 1);
       return 2;
     }
@@ -851,80 +851,80 @@ AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, 
 //////////
 //version without random flipping
 int 
-AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, float& min_value){
+AncesTreeBuilder::MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, float& min_value, bool use){
 
-	if(sequences_carrying_mutations.num_leaves == N){
-		min_value = 0.0;
-		mutations.info[snp].branch.resize(1);
-		mutations.info[snp].flipped = false;
-		mutations.info[snp].branch[0] = 2*N-2;
-		tree.nodes[2*N-2].num_events += 1.0;
-		return 1;
-	}
+  if(sequences_carrying_mutations.num_leaves == N){
+    min_value = 0.0;
+    mutations.info[snp].branch.resize(1);
+    mutations.info[snp].flipped = false;
+    mutations.info[snp].branch[0] = 2*N-2;
+    tree.nodes[2*N-2].num_events += 1.0;
+    return 1;
+  }
 
-	if(sequences_carrying_mutations.num_leaves == 0){
-		min_value = 0.0;
-		mutations.info[snp].branch.resize(0);
-		mutations.info[snp].flipped = false;
-		return 1;
-	}
+  if(sequences_carrying_mutations.num_leaves == 0){
+    min_value = 0.0;
+    mutations.info[snp].branch.resize(0);
+    mutations.info[snp].flipped = false;
+    return 1;
+  }
 
-	//I want to place the mutation on all branches necessary for no loss of information
-	//start with all leaves
-	//propagate up and count number of nodes needed.
-	//choose flipped or non-flipped depending on which is less.
+  //I want to place the mutation on all branches necessary for no loss of information
+  //start with all leaves
+  //propagate up and count number of nodes needed.
+  //choose flipped or non-flipped depending on which is less.
 
-	PropagateStructGlobal report;
-	PropagateMutationGlobal(tree.nodes[root], sequences_carrying_mutations, report);
+  PropagateStructGlobal report;
+  PropagateMutationGlobal(tree.nodes[root], sequences_carrying_mutations, report);
 
-	if(report.min == report.flipped_min && report.min <= thr){
+  if(report.min == report.flipped_min && report.min <= thr){
 
-		bool flag = true; //default flag
-		if(flag){// not flipped
-			min_value = report.min;
-			mutations.info[snp].branch.resize(1);
-			mutations.info[snp].branch[0] = report.best_branch; 
-			mutations.info[snp].flipped = false;
-			tree.nodes[report.best_branch].num_events += 1.0;
-			assert(mutations.info[snp].branch.size() == 1);
-			return 1;
-		}else{
-			min_value = report.flipped_min;
-			mutations.info[snp].branch.resize(1);
-			mutations.info[snp].branch[0] = report.best_flipped_branch;
-			mutations.info[snp].flipped = true;
-			tree.nodes[report.best_flipped_branch].num_events += 1.0;
-			assert(mutations.info[snp].branch.size() == 1);
-			return 2;
-		}
+    bool flag = true; //default flag
+    if(flag){// not flipped
+      min_value = report.min;
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_branch; 
+      mutations.info[snp].flipped = false;
+      if(use) tree.nodes[report.best_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 1;
+    }else{
+      min_value = report.flipped_min;
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_flipped_branch;
+      mutations.info[snp].flipped = true;
+      if(use) tree.nodes[report.best_flipped_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 2;
+    }
 
-	}else if( report.min <= report.flipped_min ){
+  }else if( report.min <= report.flipped_min ){
 
-		min_value = report.min;
-		if( report.min <= thr ){
-			mutations.info[snp].branch.resize(1);
-			mutations.info[snp].branch[0] = report.best_branch; 
-			mutations.info[snp].flipped = false;
-			tree.nodes[report.best_branch].num_events += 1.0;
-			assert(mutations.info[snp].branch.size() == 1);
-			return 1;
-		}
-		return 3;
+    min_value = report.min;
+    if( report.min <= thr ){
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_branch; 
+      mutations.info[snp].flipped = false;
+      if(use) tree.nodes[report.best_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 1;
+    }
+    return 3;
 
-	}else{
+  }else{
 
-		min_value = report.flipped_min;
-		if( report.flipped_min <= thr ){
-			mutations.info[snp].branch.resize(1);
-			mutations.info[snp].branch[0] = report.best_flipped_branch;
-			mutations.info[snp].flipped = true;
-			tree.nodes[report.best_flipped_branch].num_events += 1.0;
-			assert(mutations.info[snp].branch.size() == 1);
-			return 2;
-		}
-		return 3;
+    min_value = report.flipped_min;
+    if( report.flipped_min <= thr ){
+      mutations.info[snp].branch.resize(1);
+      mutations.info[snp].branch[0] = report.best_flipped_branch;
+      mutations.info[snp].flipped = true;
+      if(use) tree.nodes[report.best_flipped_branch].num_events += 1.0;
+      assert(mutations.info[snp].branch.size() == 1);
+      return 2;
+    }
+    return 3;
 
-	}
+  }
 
 }
 
@@ -952,11 +952,11 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
     if(branches.size() == 1 || force){
       mutations.info[snp].branch  = branches;
       /*
-			float weight = 1.0/((float) branches.size());
-      for(std::deque<int>::iterator it = branches.begin(); it != branches.end(); it++){
-        tree.nodes[*it].num_events += weight;
-      }
-			*/
+         float weight = 1.0/((float) branches.size());
+         for(std::deque<int>::iterator it = branches.begin(); it != branches.end(); it++){
+         tree.nodes[*it].num_events += weight;
+         }
+         */
     }
 
     return branches.size();
@@ -967,11 +967,11 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
       if(branches.size() == 1 || force){
         mutations.info[snp].branch  = branches;
         /*
-				float weight = 1.0/((float) branches.size());
-        for(std::deque<int>::iterator it = branches.begin(); it != branches.end(); it++){
-          tree.nodes[*it].num_events += weight;
-        }
-				*/
+           float weight = 1.0/((float) branches.size());
+           for(std::deque<int>::iterator it = branches.begin(); it != branches.end(); it++){
+           tree.nodes[*it].num_events += weight;
+           }
+           */
       }
 
       return branches.size();
@@ -979,12 +979,12 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
       if(branches_flipped.size() == 1 || force){
         mutations.info[snp].flipped = true;
         mutations.info[snp].branch  = branches_flipped;
-				/*
-        float weight = 1.0/((float) branches_flipped.size());
-        for(std::deque<int>::iterator it = branches_flipped.begin(); it != branches_flipped.end(); it++){
-          tree.nodes[*it].num_events += weight;
-        }
-				*/
+        /*
+           float weight = 1.0/((float) branches_flipped.size());
+           for(std::deque<int>::iterator it = branches_flipped.begin(); it != branches_flipped.end(); it++){
+           tree.nodes[*it].num_events += weight;
+           }
+           */
       }
 
       return branches_flipped.size();
@@ -1063,7 +1063,7 @@ AncesTreeBuilder::PropagateMutationGlobal(Node& node, Leaves& sequences_carrying
     } 
 
     sum = report.num_correct_carriers + report.num_correct_noncarriers;
-    
+
     necessary_condition = (((float) report.num_correct_carriers)/total_carriers < 0.3);
     necessary_condition *= (((float) report.num_correct_noncarriers)/total_noncarriers < 0.3);
     if(report.num_incorrect_carriers + report.num_correct_noncarriers > 0.0){

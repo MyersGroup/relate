@@ -48,6 +48,7 @@ struct Data{
   double theta, ntheta; //mutation probability for painting. set to 0.001
 
   CollapsedMatrix<char> sequence; //sequence matrix, containing 0 and 1
+  std::vector<int> state; //vector specifying state of SNP (e.g., whether to use or not for bl estimation)
   std::vector<int> pos;    //vector specifying location of each SNP along the genome
   std::vector<double> r;   //vector of recombination distances from one SNP to the next
   std::vector<double> rpos; //vector of cumulative recombination distances
@@ -59,13 +60,13 @@ struct Data{
   Data(int N, int L, int Ne = 3e4, double mu = 1.25e-8);
 
   //Constructor, which reads files in binary format for fast io
-  Data(const char* filename_sequence, const char* filename_pos, const char* filename_rec, const char* filename_rpos, int Ne = 3e4, double mu = 1.25e-8);
+  Data(const char* filename_sequence, const char* filename_pos, const char* filename_rec, const char* filename_rpos, const char* filename_state, int Ne = 3e4, double mu = 1.25e-8);
   //Constructor, which reads pos, and param files in bin format
   Data(const char* filename_pos, const char* filename_param, int Ne = 3e4, double mu = 1.25e-8);
  
   ///////////
 
-  void MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist, const std::string& file_out, float max_memory = 5);
+  void MakeChunks(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist, const std::string& file_out, bool use_transition, float max_memory = 5);
   //void MakeChunks2(const std::string& filename_haps, const std::string& filename_sample, const std::string& filename_map, const std::string& filename_dist);
 
   ///////////

@@ -42,6 +42,7 @@ Mutations::GetAge(AncesTree& anc){
       Node n = (*it_seq).tree.nodes[*(*it).branch.begin()];
       //traverse this node down to the bottom
       (*it).age_begin = 0.0;
+      if(anc.sample_ages.size() > 0) (*it).age_begin = anc.sample_ages[n.label];
       (*it).age_end = n.branch_length;
       while(n.child_left != NULL){
         n = *n.child_left;
