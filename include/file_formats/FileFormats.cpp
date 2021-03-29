@@ -263,9 +263,7 @@ ConvertFromVcf(cxxopts::Options& options){
   }
 
 
-  //create sample file (not dependent on input)
-  std::ofstream os_sample(options["sample"].as<std::string>());
-
+	//count number of samples
   int c = 0;
   for(int k = 0; k < 9; k++){
     while(line_id[c] != '\t' && line_id[c] != ' '){
@@ -273,22 +271,17 @@ ConvertFromVcf(cxxopts::Options& options){
     }
     c++;
   }
-
-  os_sample << "ID_1\tID_2\tmissing\n";
-  os_sample << "0\t0\t0\n";
-
-  char id[1024];
   int N = 0;
+	char id[1024];
   while(c < line_id.size()){
     N++;
     sscanf(&(line_id.c_str())[c], "%s", id);
-    os_sample << id << "\t" << id << "\t0\n";
     while(line_id[c] != '\t' && line_id[c] != ' ' && c < line_id.size()){
       c++;
     }
     c++;
   }
-  os_sample.close();
+
 
   //create haps file
   int N_prev = N;
@@ -298,7 +291,9 @@ ConvertFromVcf(cxxopts::Options& options){
     if(options["flag"].as<int>() == 0) only_snps = false;
   }
 
+	bool is_haploid = false, is_this_haploid = false;
   std::vector<char> sequence;
+	std::vector<char> seq(2*N_prev);
   do{
 
     sscanf(line.c_str(), "%s %d %s %s %s", chr, &bp, rsid, ancestral, alternative);
@@ -313,10 +308,14 @@ ConvertFromVcf(cxxopts::Options& options){
         c++;
       }
 
-      std::vector<char> seq(2*N_prev);
+			//I am at start of genotypes here
+			std::fill(seq.begin(), seq.end(), '.');
       N = 0;
+			is_this_haploid = false;
       int freq = 0;
-      while(c < line.size()-2){
+      while(c < line.size()){
+
+				if(!is_haploid && c >= line.size()-2) break;
         if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '0'){
           if(N >= N_prev) break;
           seq[2*N] = line[c];
@@ -371,7 +370,22 @@ ConvertFromVcf(cxxopts::Options& options){
           N++;
           freq += 2;
           c += 2;
-        }
+        }else if( (line[c-1] == ' ' || line[c-1] == '\t') && line[c] == '0'){
+					if(!is_haploid) is_haploid = true;
+					is_this_haploid = true;
+					seq[N] = line[c];
+					N++;
+					c++;
+				}else if( (line[c-1] == ' ' || line[c-1] == '\t') && line[c] == '1'){
+					if(!is_haploid) is_haploid = true;
+					is_this_haploid = true;
+					seq[N] = line[c];
+					freq++;
+					N++;
+					c++;
+				}
+
+				assert(is_haploid == is_this_haploid);
         if(c < line.size()){
           while(line[c] != ' ' && line[c] != '\t' && line[c] != '\n' && c < line.size()-1){
             c++;
@@ -379,6 +393,10 @@ ConvertFromVcf(cxxopts::Options& options){
           c++;
         }
       }
+
+			if(is_haploid){
+        seq.resize(N);
+			}
 
       if(N == N_prev){
 
@@ -399,6 +417,38 @@ ConvertFromVcf(cxxopts::Options& options){
   }while(getline(is_vcf, line));
   fclose(fp_haps);
   is_vcf.close();
+
+
+  //create sample file
+  std::ofstream os_sample(options["sample"].as<std::string>());
+
+  c = 0;
+  for(int k = 0; k < 9; k++){
+    while(line_id[c] != '\t' && line_id[c] != ' '){
+      c++;
+    }
+    c++;
+  }
+
+  os_sample << "ID_1\tID_2\tmissing\n";
+  os_sample << "0\t0\t0\n";
+
+  while(c < line_id.size()){
+    sscanf(&(line_id.c_str())[c], "%s", id);
+		if(is_haploid){
+      os_sample << id << "\tNA" << "\t0\n";
+		}else{
+      os_sample << id << "\t" << id << "\t0\n";
+		}
+    while(line_id[c] != '\t' && line_id[c] != ' ' && c < line_id.size()){
+      c++;
+    }
+    c++;
+  }
+  os_sample.close();
+
+
+
 
   std::cerr << "Output written to " << options["haps"].as<std::string>() << " and " << options["sample"].as<std::string>() << "." << std::endl;
 

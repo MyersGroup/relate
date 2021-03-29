@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 
 #include "data.hpp"
 #include "fast_painting.hpp"
