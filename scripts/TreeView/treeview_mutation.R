@@ -1,6 +1,8 @@
 if(as.numeric(version$major) < 3 || (as.numeric(version$major) == 3 && as.numeric(version$minor) < 3.1)) {
     stop("Please update your R version to at least 3.3.1.")
 }
+
+while(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
 while(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
 while(!require(cowplot)) install.packages("cowplot", repos = "http://cran.us.r-project.org")
 
@@ -17,7 +19,7 @@ ratio               <- c(6,1.5)
 #tree linewidth
 tree_lwd            <- 3
 #mutation size
-mut_size            <- 8
+mut_size            <- 10
 #size of | indicating population label
 poplabels_shapesize <- 10 
 #population label text size
@@ -64,49 +66,22 @@ TreeView <- function(filename_plot, years_per_gen, ...){
 
 AddMutations <- function(filename_plot, years_per_gen, ...){
 
-  plotcoords      <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
-  plotcoords[3:4] <- plotcoords[3:4] * years_per_gen
+	plotcoords      <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
+	plotcoords[3:4] <- plotcoords[3:4] * years_per_gen
 
-  mut_on_branches     <- read.table(paste(filename_plot,".plotcoords.mut", sep = ""), header = T)
-  all_mut_on_branches <- table(mut_on_branches[,2])
+	mut_on_branches     <- read.table(paste(filename_plot,".plotcoords.mut", sep = ""), header = T)
 
-  muts <- subset(plotcoords, seg_type == "m")
-  mut_on_branches <- read.table(paste(filename_plot,".plotcoords.mut", sep = ""), header = T)
-  for(i in 1:nrow(all_mut_on_branches)){
-    index                   <- which(mut_on_branches$branchID == rownames(all_mut_on_branches)[i])
-    mut_on_branches[index,"branchID"] <- paste(rownames(all_mut_on_branches)[i], 1:length(index))
-  }
-  all_mut_on_branches <- table(muts$branchID)
-  for(i in 1:nrow(all_mut_on_branches)){
-    index                   <- which(muts$branchID == rownames(all_mut_on_branches)[i])
-    muts[index,"branchID"]  <- paste(rownames(all_mut_on_branches)[i], 1:length(index))
-  }
-  muts <- merge(muts, mut_on_branches, by = "branchID")
-  ord           <- order(muts$pos, decreasing = F)
-  muts          <- muts[ord,]
-  muts          <- cbind(muts, id = 1:nrow(muts))
-  muts$id       <- muts$id - muts$id[min(which(muts$pos >= snp))]
+	muts <- subset(plotcoords, seg_type == "v")
+	muts <- merge(mut_on_branches, muts, by = "branchID")
 
-  #if(filetype(filename_mut) != "gzfile"){
-    #mutation_file <- as.data.frame(fread(filename_mut, sep = ";"))
-  #}else{
-    #mutation_file <- as.data.frame(fread(paste("zcat",filename_mut), sep = ";"))
-  #}
-  mutation_file <- read.table(filename_mut, header = T, sep = ";")  
-  colnames(mutation_file)[2] <- "pos"
+  muts %>% group_by(branchID) %>% mutate(y_begin = (1:length(y_begin)) * (max(y_end) - min(y_begin))/(1+length(y_begin)) + min(y_begin), y_end = y_begin ) -> muts
 
-  muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos", all.x = T)
-  muts$is_flipped[is.na(muts$is_flipped)] <- 0
-  muts$is_flipped[muts$is_flipped == 0] <- "unflipped"
-  muts$is_flipped[muts$is_flipped == 1] <- "flipped"
-  muts$is_flipped <- factor(muts$is_flipped, levels = c("unflipped", "flipped"))
+	p <- geom_point(data = muts, aes(x = x_begin, y = y_begin), color = "#6564db", ...)
 
-  p <- geom_point(data = muts, aes(x = x_begin, y = y_begin, shape = is_flipped), color = "#6564db", alpha = 0.7, ...)
-
-  return(p)
-  #geom_text(data = muts, aes(x = x_begin + 6, y = y_begin, label = id), size = 8) +
+	return(p)
 
 }
+
 
 
 PopLabels <- function(filename_plot, filename_poplabels, text_size = 100, ...){
@@ -123,7 +98,8 @@ PopLabels <- function(filename_plot, filename_poplabels, text_size = 100, ...){
   unique_region <- unique(poplabels[,2])
   p <- ggplot() + geom_point(data = tips, aes(x = x_begin, y = population, color = population), ...) +
                    theme(text = element_text(size=text_size),
-                                  axis.line=element_blank(),axis.text.x=element_blank(),
+                                  axis.line=element_blank(),
+																	axis.text.x=element_blank(),
                                   axis.ticks=element_blank(),
                                   axis.title.x=element_blank(),
                                   axis.title.y=element_blank(),legend.position="bottom",
@@ -154,7 +130,7 @@ snp                  <- argv[9]
 filename_plot        <- argv[10]
 
 ##################################################################################
-
+if(1){
 # run RelateTreeView to extract tmp files for plotting tree
 system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode TreeView --anc ", filename_anc," --mut ", filename_mut," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
 if(filename_dist != "nodist"){
@@ -162,15 +138,17 @@ if(filename_dist != "nodist"){
 }else{
   system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode BranchesBelowMutation --anc ", filename_anc," --mut ", filename_mut," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
 }
+}
 # plot tree
 p1 <- TreeView(filename_plot, years_per_gen, lwd = tree_lwd) 
 
+if(1){
 if(filename_dist != "nodist"){
   system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --anc ", filename_anc," --mut ", filename_mut," --haps ", filename_haps," --sample ", filename_sample," --dist ",filename_dist," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
 }else{
   system(paste0(PATH_TO_RELATE, "/bin/RelateTreeView --mode MutationsOnBranches --anc ", filename_anc," --mut ", filename_mut," --haps ", filename_haps," --sample ", filename_sample," --snp_of_interest ", as.integer(snp)," -o ", filename_plot))
 }
-
+}
 
 p1 <- p1 + AddMutations(filename_plot, years_per_gen, size = mut_size) #+ scale_y_continuous(trans = "log10") 
       
@@ -180,7 +158,7 @@ p1 <- p1 + theme(axis.text.y = element_text(size = rel(2.3)),
                  legend.text = element_text(size = rel(1)))  +  
            scale_shape_manual(labels = c("unflipped", "flipped"), values = c(16, 17), drop = FALSE) +
            scale_color_manual(labels = c("ancestral", "derived"), values = c("black", "#f24236"), drop = FALSE) +
-           guides(color = guide_legend(nrow = 2, title = ""), shape = guide_legend(nrow = 2, title = "")) 
+           guides(color = guide_legend(nrow = 2, title = ""), shape = guide_legend(nrow = 2, title = ""))
            
 # plot population labels
 p2 <- PopLabels(filename_plot, filename_poplabels, text_size = poplabels_textsize, size = poplabels_shapesize, shape = "|")

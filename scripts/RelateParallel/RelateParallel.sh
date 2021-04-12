@@ -109,7 +109,7 @@ do
       shift # past value
       ;;
     --transversion)
-      use_transv="$2"
+      transversion="$2"
       shift # past argument
       shift # past value
       ;;
@@ -172,7 +172,7 @@ if [ ! -z "${seed-}" ];
 then
   echo "seed   = $seed"
 fi
-if [ ! -z "${use_transv-}" ];
+if [ ! -z "${transversion-}" ];
 then
   echo "Only use transversions"
 fi

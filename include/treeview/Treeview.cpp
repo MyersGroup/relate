@@ -806,6 +806,7 @@ MutationsOnBranches(cxxopts::Options& options){
 
 			while(bp <= max_bp){
 
+				//std::cerr << bp << " " << max_bp << std::endl;
         //while(mut.info[snp].pos < bp){
         //  snp++;
         //  if(snp == num_snps) break;
@@ -848,6 +849,7 @@ MutationsOnBranches(cxxopts::Options& options){
         //}
 
         snp++;
+				if(snp == data.L) break;
 				m_hap.ReadSNP(sequence, bp);  
 			}
 			m_hap.CloseFile();

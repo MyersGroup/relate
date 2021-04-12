@@ -426,6 +426,10 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
 
       }
 
+			//std::vector<float> coords;
+			//mtr.tree.GetCoordinates(coords);
+			//if(coords[coords.size() - 1] < 5e5/28) num_passing = 0;
+
       if(num_passing >= cutoff){
         std::vector<int> leaves;
         factor = num_bases_tree_persists;
@@ -440,7 +444,6 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
     while(num_bases_tree_persists >= 0.0){
       num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
 
-      num_passing = 1.0;
       num_passing = 1.0;
       if(options.count("mask") > 0){
 

@@ -30,6 +30,7 @@ int main(int argc, char* argv[]){
     ("threshold", "Threshold used in RemoveTreesWithFewMutations.", cxxopts::value<float>())
 		("anc_genome", "Fasta file containing ancestral genome.", cxxopts::value<std::string>())
     ("threads", "Optional: Number of threads used (only used to decide chunk size in DivideAncMut)", cxxopts::value<int>())
+		("transversion", "Only use transversion for bl estimation.")
 		("i,input", "Filename of input (excl file extension).", cxxopts::value<std::string>())
     ("o,output", "Filename of output (excl file extension).", cxxopts::value<std::string>());
 
@@ -86,6 +87,10 @@ int main(int argc, char* argv[]){
 	}else if(!mode.compare("GenerateSNPAnnotationsUsingTree")){
 
 		GenerateSNPAnnotationsUsingTree(options);
+
+	}else if(!mode.compare("UnlinkTips")){
+
+		UnlinkTips(options);
 
 	}else{
 

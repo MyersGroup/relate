@@ -1,6 +1,8 @@
 if(as.numeric(version$major) < 3 || (as.numeric(version$major) == 3 && as.numeric(version$minor) < 3.1)) {
     stop("Please update your R version to at least 3.3.1.")
 }
+
+while(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
 while(!require(ggplot2)) install.packages("ggplot2", repos = "http://cran.us.r-project.org")
 while(!require(cowplot)) install.packages("cowplot", repos = "http://cran.us.r-project.org")
 
@@ -17,7 +19,7 @@ ratio               <- c(6,2)
 #tree linewidth
 tree_lwd            <- 3
 #mutation size
-mut_size            <- 8
+mut_size            <- 10
 #size of | indicating population label
 poplabels_shapesize <- 10 
 #population label text size
@@ -61,45 +63,19 @@ TreeView <- function(filename_plot, years_per_gen, ...){
 
 AddMutations <- function(filename_plot, years_per_gen, ...){
 
-  plotcoords      <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
-  plotcoords[3:4] <- plotcoords[3:4] * years_per_gen
-  
-  mut_on_branches     <- read.table(paste(filename_plot,".plotcoords.mut", sep = ""), header = T)
-  all_mut_on_branches <- table(mut_on_branches[,2])
-  muts <- subset(plotcoords, seg_type == "m")
-  mut_on_branches <- read.table(paste(filename_plot,".plotcoords.mut", sep = ""), header = T)
-  for(i in 1:nrow(all_mut_on_branches)){
-    index                   <- which(mut_on_branches$branchID == rownames(all_mut_on_branches)[i])
-    mut_on_branches[index,"branchID"] <- paste(rownames(all_mut_on_branches)[i], 1:length(index))
-  }
-  all_mut_on_branches <- table(muts$branchID)
-  for(i in 1:nrow(all_mut_on_branches)){
-    index                   <- which(muts$branchID == rownames(all_mut_on_branches)[i])
-    muts[index,"branchID"]  <- paste(rownames(all_mut_on_branches)[i], 1:length(index))
-  }
-  muts <- merge(muts, mut_on_branches, by = "branchID")
-  ord           <- order(muts$pos, decreasing = F)
-  muts          <- muts[ord,]
-  muts          <- cbind(muts, id = 1:nrow(muts))
-  muts$id       <- muts$id - muts$id[min(which(muts$pos >= snp))]
+	plotcoords      <- read.table(paste(filename_plot,".plotcoords", sep = ""), header = T)
+	plotcoords[3:4] <- plotcoords[3:4] * years_per_gen
 
-  #if(filetype(filename_mut) != "gzfile"){
-    #mutation_file <- as.data.frame(fread(filename_mut, sep = ";"))
-  #}else{
-    #mutation_file <- as.data.frame(fread(paste("zcat",filename_mut), sep = ";"))
-  #}
-  mutation_file <- read.table(filename_mut, header = T, sep = ";")  
-  colnames(mutation_file)[2] <- "pos"
+	mut_on_branches     <- read.table(paste(filename_plot,".plotcoords.mut", sep = ""), header = T)
 
-  muts <- merge(muts, mutation_file[,c("pos","is_flipped")], by = "pos")
-  muts$is_flipped[muts$is_flipped == 0] <- "unflipped"
-  muts$is_flipped[muts$is_flipped == 1] <- "flipped"
-  muts$is_flipped <- factor(muts$is_flipped, levels = c("unflipped", "flipped"))
+	muts <- subset(plotcoords, seg_type == "v")
+	muts <- merge(mut_on_branches, muts, by = "branchID")
 
-  p <- geom_point(data = muts, aes(x = x_begin, y = y_begin, color = is_flipped), ...)
+  muts %>% group_by(branchID) %>% mutate(y_begin = (1:length(y_begin)) * (max(y_end) - min(y_begin))/(1+length(y_begin)) + min(y_begin), y_end = y_begin ) -> muts
 
-  return(p)
-  #geom_text(data = muts, aes(x = x_begin + 6, y = y_begin, label = id), size = 8) +
+	p <- geom_point(data = muts, aes(x = x_begin, y = y_begin), color = "#6564db", ...)
+
+	return(p)
 
 }
 

@@ -285,5 +285,143 @@ MapMutation(cxxopts::Options& options){
 #endif
 	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
+}
+
+void
+UnlinkTips(cxxopts::Options& options){
+
+	//////////////////////////////////
+	//Program options
+
+	bool help = false;
+	if(!options.count("anc") || !options.count("mut") || !options.count("output")){
+		std::cout << "Not enough arguments supplied." << std::endl;
+		std::cout << "Needed: anc, mut, output" << std::endl;
+		help = true;
+	}
+	if(options.count("help") || help){
+		std::cout << options.help({""}) << std::endl;
+		std::cout << "Unlink Tips." << std::endl;
+		exit(0);
+	}  
+
+	std::cerr << "---------------------------------------------------------" << std::endl;
+	std::cerr << "Unlink tips of " << options["anc"].as<std::string>() << "..." << std::endl;
+
+	bool use_transitions = true;
+	if(options.count("transversion")) use_transitions = false;
+
+	std::string line;
+
+	std::ofstream os(options["output"].as<std::string>() + ".anc");
+
+	igzstream is(options["anc"].as<std::string>());
+	if(is.fail()){
+		std::cerr << "Error opening .anc file" << std::endl;
+		exit(1);
+	}
+	assert(getline(is,line));
+	os << line << "\n";
+	assert(getline(is,line));
+	os << line << "\n";
+	is.close();
+
+	AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+	int N = ancmut.NumTips();
+	int N_total = 2*N-1;
+	int root = N_total - 1;
+	MarginalTree mtr;
+	Muts::iterator it_mut;
+	float num_bases_tree_persists = 0.0;
+
+
+	igzstream is_in(options["input"].as<std::string>());
+	if(is_in.fail()){
+		std::cerr << "Error opening input file" << std::endl;
+		exit(1);
+	}
+	std::vector<int> tips;
+	while(getline(is_in,line)){
+		int i = std::stoi(line);
+		assert(i < 2*ancmut.NumTips()-1);
+		tips.push_back(i);
+	}
+	std::sort(tips.begin(), tips.end());
+	is_in.close();
+
+
+
+	std::vector<Node>::iterator n_it;
+	num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+	int snp = 0;
+	while(num_bases_tree_persists >= 0){
+  
+		int tree_index = (*it_mut).tree;
+		float dist = 0.0;
+		int SNP_begin = (*it_mut).snp_id;
+
+		for(std::vector<int>::iterator it_tip = tips.begin(); it_tip != tips.end(); it_tip++){
+      mtr.tree.nodes[*it_tip].num_events = 0.0;
+			mtr.tree.nodes[*it_tip].SNP_begin = SNP_begin;
+		}
+
+		while((*it_mut).tree == tree_index){
+		  dist += (*it_mut).dist;
+			if((*it_mut).branch.size() == 1){
+				if((*it_mut).branch[0] < ancmut.NumTips()){
+
+					bool use = true;
+					if(!use_transitions){
+						if((*it_mut).mutation_type == "C/T" || (*it_mut).mutation_type == "T/C" || (*it_mut).mutation_type == "G/A" || (*it_mut).mutation_type == "A/G") use = false;
+					}
+
+					if(use){
+						for(std::vector<int>::iterator it_tip = tips.begin(); it_tip != tips.end(); it_tip++){
+							if((*it_mut).branch[0] == *it_tip){
+								mtr.tree.nodes[(*it_mut).branch[0]].num_events += 1.0;
+								break;
+							}
+						}
+					}
+				}
+			}
+			it_mut++;
+		}
+    int SNP_end   = (*it_mut).snp_id;
+		for(std::vector<int>::iterator it_tip = tips.begin(); it_tip != tips.end(); it_tip++){
+			mtr.tree.nodes[*it_tip].SNP_end = SNP_end;
+		}
+
+		int parent;
+		n_it = mtr.tree.nodes.begin();
+		os << mtr.pos << ": ";
+		for(; n_it != mtr.tree.nodes.end(); n_it++){
+			if((*n_it).parent == NULL){
+				parent = -1;
+			}else{
+				parent = (*(*n_it).parent).label;
+			}
+			os << parent << ":(";
+			os << std::fixed << std::setprecision(5) << (*n_it).branch_length << " ";
+			os << std::setprecision(2) << (*n_it).num_events << " " << (*n_it).SNP_begin << " " << (*n_it).SNP_end << ") ";
+		}
+		os << "\n";
+
+		num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+	}
+
+	/////////////////////////////////////////////
+	//Resource Usage
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
 }

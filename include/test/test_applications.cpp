@@ -1,6 +1,5 @@
 #include "catch_amalgamated.hpp"
 
-
 TEST_CASE( "Testing Mutation Cathegories "){
 
   //define mutation types

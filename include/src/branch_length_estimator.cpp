@@ -3042,7 +3042,12 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSize(const Data& data,
 
   InitializeMCMC(data, tree); //Initialize using coalescent prior 
 
-  if(0){
+	double total_bl = 0.0;
+	for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != tree.nodes.end(); it_n++){
+		total_bl += (*it_n).branch_length;
+	}
+
+  if(total_bl == 0){
 
     InitializeOrder(tree); 
 

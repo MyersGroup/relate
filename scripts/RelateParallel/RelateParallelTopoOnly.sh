@@ -16,7 +16,7 @@ if [ $# -le 0 ]
 then
   echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
   echo "Not enough arguments supplied. Execute as"
-  echo "PATH_TO_RELATE/scripts/RelateParallel/RelateParallelTopoOnly.sh"
+  echo "PATH_TO_RELATE/scripts/RelateParallel/RelateParallel.sh"
   echo ""
   echo "--haps:   Filename of haps file (Output file format of Shapeit)."
   echo "--sample: Filename of sample file (Output file format of Shapeit)."
@@ -27,10 +27,11 @@ then
   echo "--dist:   Optional but recommended. Distance in BP between SNPs. Can be generated using RelateFileFormats. If unspecified, distances in haps are used."
   echo "--annot:  Optional. Filename of file containing additional annotation of snps. Can be generated using RelateFileFormats."
   echo "--memory: Optional. Approximate memory allowance in GB for storing distance matrices. Default is 5GB."
-  echo "sample_ages: Optional. Filename of file containing sample ages (one per line)." 
+  echo "--sample_ages: Optional. Filename of file containing sample ages (one per line)." 
   echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
   echo "--painting: Optional. Copying and transition parameters in
                     chromosome painting algorithm. Format: theta,rho. Default: 0.025,1." 
+  echo "--transversion: Only use transversion for bl estimation."
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
   echo "--threads:Optional. Maximum number of threads."
   exit 1;
@@ -44,7 +45,7 @@ PATH_TO_RELATE=$(echo ${PATH_TO_RELATE} | awk -F\scripts/RelateParallel/RelatePa
 ######################## Read arguments from command line ###########################
 
 maxjobs=1
-painting="0.025,1"
+painting="0.001,1"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -107,6 +108,11 @@ do
       shift # past argument
       shift # past value
       ;;
+    --transversion)
+      transversion="$2"
+      shift # past argument
+      shift # past value
+      ;;
     --sample_ages)
       sample_ages="$2"
       shift # past argument
@@ -166,6 +172,10 @@ if [ ! -z "${seed-}" ];
 then
   echo "seed   = $seed"
 fi
+if [ ! -z "${transversion-}" ];
+then
+  echo "Only use transversions"
+fi
 echo "Maximum number of threads: $maxjobs" 
 echo "********************************"
 
@@ -192,25 +202,56 @@ RelateForChunk (){
     while [ $# -gt 0 ] ; do
       jobcnt=(`jobs -p`)
       if [ ${#jobcnt[@]} -lt $maxjobs ] ; then
-				if [ -z "${seed-}" ];
-				then
-					${PATH_TO_RELATE}/bin/Relate \
-						--mode BuildTopology \
-						--chunk_index ${chunk_index} \
-						--first_section $1 \
-						--last_section $1 \
-						--painting ${painting} \
-						-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
-				else
-					${PATH_TO_RELATE}/bin/Relate \
-						--mode BuildTopology \
-						--chunk_index ${chunk_index} \
-						--first_section $1 \
-						--last_section $1 \
-						--seed ${seed} \
-						--painting ${painting} \
-						-o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
-				fi
+        if [ ! -z "${sample_ages-}" ]; then
+
+          if [ -z "${seed-}" ];
+          then
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode BuildTopology \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --painting ${painting} \
+              --sample_ages ${sample_ages} \
+              -N $Ne \
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+          else
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode BuildTopology \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --seed ${seed} \
+              --painting ${painting} \
+              --sample_ages ${sample_ages} \
+              -N $Ne \
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+          fi
+
+        else
+
+          if [ -z "${seed-}" ];
+          then
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode BuildTopology \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --painting ${painting} \
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+          else
+            ${PATH_TO_RELATE}/bin/Relate \
+              --mode BuildTopology \
+              --chunk_index ${chunk_index} \
+              --first_section $1 \
+              --last_section $1 \
+              --seed ${seed} \
+              --painting ${painting} \
+              -o ${output} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
+          fi
+
+        fi
+
         shift
       fi
     done
@@ -387,56 +428,100 @@ parallelize () {
 ########## Divide data into chunks (the chunks are overlapping to avoid edge effects) ################
 # If statements for optional arguments passed to Relate
 
-if [ -z "${dist-}" ];
+if [ -z ${transversion-} ];
 then
-  if [ -z "${memory-}" ];
+  if [ -z "${dist-}" ];
   then
-
-      # no optional arguments set
-      ${PATH_TO_RELATE}/bin/Relate \
-        --mode "MakeChunks" \
-        --haps ${haps} \
-        --sample ${sample} \
-        -o ${output} \
-        --map ${map}  
-
+    if [ -z "${memory-}" ];
+    then
+        # no optional arguments set
+        ${PATH_TO_RELATE}/bin/Relate \
+          --mode "MakeChunks" \
+          --haps ${haps} \
+          --sample ${sample} \
+          -o ${output} \
+          --map ${map}  
+    else
+        # only memory is set
+        ${PATH_TO_RELATE}/bin/Relate \
+          --mode "MakeChunks" \
+          --haps ${haps} \
+          --sample ${sample} \
+          --map ${map} \
+          -o ${output} \
+          --memory ${memory}
+    fi
   else
-
-      # only memory is set
-      ${PATH_TO_RELATE}/bin/Relate \
-        --mode "MakeChunks" \
-        --haps ${haps} \
-        --sample ${sample} \
-        --map ${map} \
-        -o ${output} \
-        --memory ${memory}
-
+    if [ -z "${memory-}" ];
+    then
+        # only dist is set
+        ${PATH_TO_RELATE}/bin/Relate \
+          --mode "MakeChunks" \
+          --haps ${haps} \
+          --sample ${sample} \
+          --map ${map} \
+          -o ${output} \
+          --dist ${dist}
+    else
+        # dist and memory are set
+        ${PATH_TO_RELATE}/bin/Relate \
+          --mode "MakeChunks" \
+          --haps ${haps} \
+          --sample ${sample} \
+          --map ${map} \
+          --dist ${dist} \
+          -o ${output} \
+          --memory ${memory}
+    fi
   fi
 else
-  if [ -z "${memory-}" ];
+  if [ -z "${dist-}" ];
   then
-
-      # only dist is set
-      ${PATH_TO_RELATE}/bin/Relate \
-        --mode "MakeChunks" \
-        --haps ${haps} \
-        --sample ${sample} \
-        --map ${map} \
-        -o ${output} \
-        --dist ${dist}
- 
+    if [ -z "${memory-}" ];
+    then
+        # no optional arguments set
+        ${PATH_TO_RELATE}/bin/Relate \
+          --mode "MakeChunks" \
+          --haps ${haps} \
+          --sample ${sample} \
+          -o ${output} \
+          --transversion \
+          --map ${map}  
+    else
+        # only memory is set
+        ${PATH_TO_RELATE}/bin/Relate \
+          --mode "MakeChunks" \
+          --haps ${haps} \
+          --sample ${sample} \
+          --map ${map} \
+          -o ${output} \
+          --transversion \
+          --memory ${memory}
+    fi
   else
-
-      # dist and memory are set
-      ${PATH_TO_RELATE}/bin/Relate \
-        --mode "MakeChunks" \
-        --haps ${haps} \
-        --sample ${sample} \
-        --map ${map} \
-        --dist ${dist} \
-        -o ${output} \
-        --memory ${memory}
-
+    if [ -z "${memory-}" ];
+    then
+        # only dist is set
+        ${PATH_TO_RELATE}/bin/Relate \
+          --mode "MakeChunks" \
+          --haps ${haps} \
+          --sample ${sample} \
+          --map ${map} \
+          -o ${output} \
+          --transversion \
+          --dist ${dist}
+    else
+        # dist and memory are set
+        ${PATH_TO_RELATE}/bin/Relate \
+          --mode "MakeChunks" \
+          --haps ${haps} \
+          --sample ${sample} \
+          --map ${map} \
+          --dist ${dist} \
+          -o ${output} \
+          --transversion \
+          --memory ${memory}
+    fi
   fi
 fi
 

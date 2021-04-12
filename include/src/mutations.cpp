@@ -116,7 +116,7 @@ Mutations::ReadShortFormat(const std::vector<std::string>& filenames){
         inread += line[i];
         i++;
       } 
-      info[snp].age_begin = std::stof(inread);
+      info[snp].age_begin = std::stod(inread);
       inread.clear();
       i++;
 
@@ -124,7 +124,7 @@ Mutations::ReadShortFormat(const std::vector<std::string>& filenames){
         inread += line[i];
         i++;
       } 
-      info[snp].age_end = std::stof(inread);
+      info[snp].age_end = std::stod(inread);
       inread.clear();
 
       if(info[snp].flipped) num_flips++;
@@ -273,7 +273,7 @@ Mutations::Read(igzstream& is){
       inread += line[i];
       i++;
     } 
-    info[snp].age_begin = std::stof(inread);
+    info[snp].age_begin = std::stod(inread);
     inread.clear();
     i++;
 
@@ -281,7 +281,7 @@ Mutations::Read(igzstream& is){
       inread += line[i];
       i++;
     } 
-    info[snp].age_end = std::stof(inread);
+    info[snp].age_end = std::stod(inread);
     inread.clear();
     i++;
 
