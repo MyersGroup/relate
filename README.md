@@ -1,6 +1,5 @@
 # Relate 
 ### Software to estimate genome-wide genealogies with recombination for thousands of samples
-Leo Speidel, Simon Myers <br/> Department of Statistics, University of Oxford, Oxford, UK
 
 **The version here is under constant development and may differ slightly from the published version available at [https://myersgroup.github.io/relate/](https://myersgroup.github.io/relate/).**
 
