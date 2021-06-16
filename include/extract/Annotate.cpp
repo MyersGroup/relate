@@ -100,6 +100,7 @@ GenerateSNPAnnotationsUsingTree(cxxopts::Options& options){
 		//calculate number of carriers in each population
 		std::fill(carriers_by_pop.begin(), carriers_by_pop.end(), 0);
 		if((*it_mut).branch.size() == 1){
+			//std::cerr << (*it_mut).pos << " " << *(*it_mut).branch.begin() << " " << desc[*(*it_mut).branch.begin()].num_leaves << std::endl;
 			for(std::vector<int>::iterator it_mem = desc[*(*it_mut).branch.begin()].member.begin(); it_mem != desc[*(*it_mut).branch.begin()].member.end(); it_mem++){
 				carriers_by_pop[sample.group_of_haplotype[*it_mem]]++;
 			}
@@ -115,7 +116,7 @@ GenerateSNPAnnotationsUsingTree(cxxopts::Options& options){
 		}
 
 		//it_mut points to a SNP, mtr stores the marginal tree corresponding to that SNP.
-		num_bases_SNP_persists = ancmut.NextTree(mtr, it_mut);
+		num_bases_SNP_persists = ancmut.NextSNP(mtr, it_mut);
 		snp++;
 	}
 

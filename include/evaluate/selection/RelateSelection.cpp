@@ -1189,8 +1189,6 @@ Quality(cxxopts::Options& options){
 #endif
   std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
-
-
 }
 
 

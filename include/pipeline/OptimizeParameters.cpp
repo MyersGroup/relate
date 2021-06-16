@@ -73,36 +73,43 @@ int OptimizeParameters(cxxopts::Options& options){
 	std::cerr << "Expected minimum memory usage: " << memory_size << "Gb." << std::endl;
 	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
-	std::vector<float> theta;//      = {1e-4, 1e-3, 1e-2, 1e-1};
-	std::vector<float> rec_factor;// = {0.001, 0.1, 1, 10, 100};
+	std::vector<float> theta = {1e-4, 1e-3, 1e-2, 1e-1};
+	std::vector<float> rec_factor = {0.001, 0.1, 1, 10, 100};
 
 	float val;
 	std::string line;
-  std::ifstream is(options["input"].as<std::string>());
-  
-	getline(is, line);
-	std::istringstream itheta;
-	itheta.str(line);
-  while(itheta >> val){
-		if(val >= 1.0 || val <= 0){
-      std::cerr << "Error: theta value has to be in (0,1)" << std::endl;
-			exit(1);
-		}
-    theta.push_back(val);
-	}
+	if(options.count("input")){
+			
+		std::ifstream is(options["input"].as<std::string>());
+	
+		theta.clear();
+		rec_factor.clear();
 
-	getline(is, line);
-	std::istringstream irec;
-	irec.str(line);
-	while(irec >> val){
-		if(val <= 0){
-      std::cerr << "Error: rho value has to be positive" << std::endl;
-			exit(1);
+		getline(is, line);
+		std::istringstream itheta;
+		itheta.str(line);
+		while(itheta >> val){
+			if(val >= 1.0 || val <= 0){
+				std::cerr << "Error: theta value has to be in (0,1)" << std::endl;
+				exit(1);
+			}
+			theta.push_back(val);
 		}
-		rec_factor.push_back(val);
-	}
 
-	is.close();
+		getline(is, line);
+		std::istringstream irec;
+		irec.str(line);
+		while(irec >> val){
+			if(val <= 0){
+				std::cerr << "Error: rho value has to be positive" << std::endl;
+				exit(1);
+			}
+			rec_factor.push_back(val);
+		}
+
+		is.close();
+
+	}
 
   std::vector<std::vector<int>> num_notmapping(theta.size());
 	for(int i = 0; i < num_notmapping.size(); i++){
