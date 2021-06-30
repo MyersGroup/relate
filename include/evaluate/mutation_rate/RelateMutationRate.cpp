@@ -497,8 +497,9 @@ void SummarizeWholeGenome(cxxopts::Options& options){
   int num_epochs;
   std::vector<double> epochs;
   fread(&num_epochs, sizeof(int), 1, fp);
+
   epochs.resize(num_epochs);
-  fread(&epochs[0], sizeof(float), num_epochs, fp);
+  fread(&epochs[0], sizeof(double), num_epochs, fp);
 
   CollapsedMatrix<double> mut_by_type_and_epoch, mut_by_type_and_epoch_tmp;
   mut_by_type_and_epoch.ReadFromFile(fp);
@@ -508,7 +509,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
     fp = fopen(filenames[i].c_str(),"rb");
 
     fread(&num_epochs, sizeof(int), 1, fp);
-    fread(&epochs[0], sizeof(float), num_epochs, fp);
+    fread(&epochs[0], sizeof(double), num_epochs, fp);
 
     mut_by_type_and_epoch_tmp.ReadFromFile(fp);
     fclose(fp);
@@ -552,7 +553,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
 
   fp = fopen((options["output"].as<std::string>() + "_mut" + ".bin" ).c_str(), "wb"); 
   fwrite(&num_epochs, sizeof(int), 1, fp);
-  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
+  fwrite(&epochs[0], sizeof(double), epochs.size(), fp);
   mut_by_type_and_epoch.DumpToFile(fp);
   fclose(fp);
   fp = fopen((options["output"].as<std::string>() + "_opp" + ".bin" ).c_str(), "wb");  
