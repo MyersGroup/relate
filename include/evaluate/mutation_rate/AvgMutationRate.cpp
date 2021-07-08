@@ -95,7 +95,7 @@ GetCoordsAndLineages(MarginalTree& mtr, std::vector<float>& coordinates_tree, st
 }
 
 void
-GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>& exclude_groups, std::vector<Leaves>& descendants, std::vector<float>& coordinates_tree, std::vector<int>& num_lineages){
+GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>& exclude_groups, std::vector<Leaves>& descendants, bool ignore_tips, std::vector<float>& coordinates_tree, std::vector<int>& num_lineages){
 
   mtr.tree.GetCoordinates(coordinates_tree); 
   std::vector<int> sorted_indices(coordinates_tree.size());
@@ -136,7 +136,7 @@ GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>&
       }
       if(!ignore){
         num_lins++;
-        num_terminal++;
+        if(ignore_tips) num_terminal++;
       }
 
       bool exclude = false;
@@ -166,7 +166,7 @@ GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>&
       }
 
       if(!ignore && child1 < N){
-        num_terminal--;
+        if(ignore_tips) num_terminal--;
       }
 
       ignore2 = true;
@@ -181,7 +181,7 @@ GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>&
         }
       }
       if(!ignore2 && child2 < N){
-        num_terminal--;
+        if(ignore_tips) num_terminal--;
       }
 
       if(!ignore && !ignore2) num_lins--;
