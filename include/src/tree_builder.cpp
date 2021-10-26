@@ -922,7 +922,7 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
     }
     int level    = 0;
     int num_lins = sample_ages_count[level];
-    age      = unique_sample_ages[level];
+		age      = unique_sample_ages[level] + 2.0/((double) num_lins * (num_lins - 1.0)) * Ne;
 
     Initialize(d, dist_unif, sample_ages);
 
@@ -970,7 +970,6 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
 
       //sample_ages[j]   = (sample_ages[i] * cluster_size[i] + sample_ages[j] * cluster_size[j])/(cluster_size[i] + cluster_size[j]);
       sample_ages[j] = std::max(sample_ages[i], sample_ages[j]);
-      age           += 2.0/((double) num_lins * (num_lins - 1.0)) * Ne;
       //std::cerr << num_nodes << " " << age << " " << Ne << " " << sample_ages[j] << " " << num_lins << " " << level << std::endl;
       num_lins--;
       if(unique_sample_ages[level] < sample_ages[j]){
@@ -979,6 +978,8 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
           num_lins += sample_ages_count[level];
         }
       }
+
+			age           += 2.0/((double) num_lins * (num_lins - 1.0)) * Ne;
       //if(age < sample_ages[j]){
       //  age = sample_ages[j];
       //}

@@ -21,7 +21,7 @@ tree_lwd            <- 3
 #mutation size
 mut_size            <- 10
 #size of | indicating population label
-poplabels_shapesize <- 10 
+poplabels_shapesize <- 20 
 #population label text size
 poplabels_textsize  <- 50
 

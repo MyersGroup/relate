@@ -490,6 +490,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
 
   //open files and add together
 
+  std::cerr << filenames[0] << std::endl;
   FILE* fp = fopen(filenames[0].c_str(),"rb");
   assert(fp != NULL);  
 
@@ -497,7 +498,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
   std::vector<double> epochs;
   fread(&num_epochs, sizeof(int), 1, fp);
   epochs.resize(num_epochs);
-  fread(&epochs[0], sizeof(double), num_epochs, fp);
+  fread(&epochs[0], sizeof(float), num_epochs, fp);
 
   CollapsedMatrix<double> mut_by_type_and_epoch, mut_by_type_and_epoch_tmp;
   mut_by_type_and_epoch.ReadFromFile(fp);
@@ -507,7 +508,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
     fp = fopen(filenames[i].c_str(),"rb");
 
     fread(&num_epochs, sizeof(int), 1, fp);
-    fread(&epochs[0], sizeof(double), num_epochs, fp);
+    fread(&epochs[0], sizeof(float), num_epochs, fp);
 
     mut_by_type_and_epoch_tmp.ReadFromFile(fp);
     fclose(fp);
@@ -551,7 +552,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
 
   fp = fopen((options["output"].as<std::string>() + "_mut" + ".bin" ).c_str(), "wb"); 
   fwrite(&num_epochs, sizeof(int), 1, fp);
-  fwrite(&epochs[0], sizeof(double), epochs.size(), fp);
+  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
   mut_by_type_and_epoch.DumpToFile(fp);
   fclose(fp);
   fp = fopen((options["output"].as<std::string>() + "_opp" + ".bin" ).c_str(), "wb");  
@@ -1465,15 +1466,6 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
 
   //////////// PARSE DATA ///////////
 
-  std::cerr << "------------------------------------------------------" << std::endl;
-  std::cerr << "Calculating mutation rate for categories " << options["input"].as<std::string>() << " ..." << std::endl;
-
-
-  bool ignore_tips = false;
-  if(options.count("ignore_tips")){
-    ignore_tips = true;
-  }
-
   MarginalTree mtr, prev_mtr; //stores marginal trees. mtr.pos is SNP position at which tree starts, mtr.tree stores the tree
   Muts::iterator it_mut; //iterator for mut file
   float num_bases_tree_persists = 0.0;
@@ -1513,6 +1505,9 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
   int L = ancmut.NumSnps();
   Data data(N,L);
   int N_total = 2*data.N-1;
+
+  std::cerr << "------------------------------------------------------" << std::endl;
+  std::cerr << "Calculating mutation rate for categories " << options["input"].as<std::string>() << " ..." << std::endl;
 
   ////////// read mutations file ///////////
 
@@ -1837,7 +1832,7 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
     //need to get branch lengths in epoch for only the pop of interest
     mtr.tree.GetCoordinates(coordinates_tree);
     mtr.tree.FindAllLeaves(descendants);
-    GetCoordsAndLineagesForPop(mtr, samples, exclude, descendants, ignore_tips, coordinates_tree, num_lineages);
+    GetCoordsAndLineagesForPop(mtr, samples, exclude, descendants, coordinates_tree, num_lineages);
     GetBranchLengthsInEpoch(data, epochs, coordinates_tree, num_lineages, branch_lengths_in_epoch);
     num_tree = mutations.info[snp].tree;
 
@@ -1856,7 +1851,7 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
         //check for mutation whether it is segregating in pop_of_interest
         bool use = false, excl = false;
 
-        if(descendants[snp_info.branch[0]].num_leaves > 1 || !ignore_tips){
+        if(descendants[snp_info.branch[0]].num_leaves > 1){
           for(int i = 0; i < samples.group_of_interest.size(); i++){
             for(std::vector<int>::iterator it_mem = descendants[snp_info.branch[0]].member.begin(); it_mem != descendants[snp_info.branch[0]].member.end(); it_mem++){
               if(i == 0){
@@ -1891,6 +1886,19 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
 
               if(snp_info.mutation_type[2] == 'A' || snp_info.mutation_type[2] == 'C' || snp_info.mutation_type[2] == 'G' || snp_info.mutation_type[2] == 'T'){
 
+                if(0){
+                if(snp_info.upstream_base == "T" && snp_info.downstream_base == "C" && snp_info.mutation_type == "C/T"){
+                  std::cerr << snp_info.pos << " " << snp_info.tree << " " << snp_info.branch[0] << std::endl;
+
+                  std::cerr << "Excl: " << exclude[0] << std::endl;
+                  for(int i = 0; i < descendants[snp_info.branch[0]].member.size(); i++){
+                    std::cerr << samples.group_of_haplotype[descendants[snp_info.branch[0]].member[i]] << " ";
+                  }
+                  std::cerr << std::endl;
+
+
+                }
+                }
 
                 // identify category of mutation
                 pattern = snp_info.upstream_base + snp_info.downstream_base + snp_info.mutation_type[0] + snp_info.mutation_type[2];
@@ -2121,11 +2129,11 @@ void SummarizeWholeGenomeForCategory(cxxopts::Options& options){
   epochs.resize(num_epochs);
   fread(&epochs[0], sizeof(double), num_epochs, fp);
 
-  //std::cerr << num_epochs << std::endl;
-  //for(int e = 0; e < num_epochs; e++){
-  //  std::cerr << epochs[e] << " ";
-  //}
-  //std::cerr << std::endl;
+  std::cerr << num_epochs << std::endl;
+  for(int e = 0; e < num_epochs; e++){
+    std::cerr << epochs[e] << " ";
+  }
+  std::cerr << std::endl;
 
   int n_boot = 100;
   std::vector<CollapsedMatrix<double>> mut_by_type_and_epoch(n_boot);
@@ -3435,7 +3443,6 @@ int main(int argc, char* argv[]){
     ("mutcat", "Filename of file containing mutation categories.", cxxopts::value<std::string>())
     ("poplabels", "Optional: Filename of file containing population labels. If ='hap', each haplotype is in its own group.", cxxopts::value<std::string>()) 
     ("pop_of_interest", "Optional: Name of pop of interest.", cxxopts::value<std::string>()) 
-    ("ignore_tips", "Optional: Ignore tip branches (and singletons) when calculating mutation rates")
     ("i,input", "Filename of .anc and .mut file without file extension", cxxopts::value<std::string>())
     ("o,output", "Output file", cxxopts::value<std::string>())
     ("seed", "Optional. Random seed.", cxxopts::value<int>());
@@ -3517,7 +3524,7 @@ int main(int argc, char* argv[]){
 			}
 			std::string line;
 			while(getline(is_chr, line)){
-				MutationRateForCategoryForGroup(options, line);
+				MutationRateForCategory(options, line);
 			}
 			is_chr.close();
 			SummarizeWholeGenomeForCategory(options);      
@@ -3528,19 +3535,19 @@ int main(int argc, char* argv[]){
         exit(1);
       }
       for(int chr = options["first_chr"].as<int>(); chr <= options["last_chr"].as<int>(); chr++){ 
-        MutationRateForCategoryForGroup(options, std::to_string(chr));
+        MutationRateForCategory(options, std::to_string(chr));
       }
       SummarizeWholeGenomeForCategory(options);      
       FinalizeMutationRateForCategory(options);
     }else{
-      MutationRateForCategoryForGroup(options);
+      MutationRateForCategory(options);
       FinalizeMutationRateForCategory(options);
     }
 
 
-  //}else if(!mode.compare("ForCategoryForChromosome")){
+  }else if(!mode.compare("ForCategoryForChromosome")){
 
-  //  MutationRateForCategory(options);
+    MutationRateForCategory(options);
 
   }else if(!mode.compare("ForCategoryForPopForChromosome")){
 
@@ -3584,19 +3591,19 @@ int main(int argc, char* argv[]){
     }
     FinalizeMutationRateForCategory(options);
 
-  //}else if(!mode.compare("FinalizeMutationCount")){
+  }else if(!mode.compare("FinalizeMutationCount")){
 
-	//	if(options.count("chr")){
-	//		SummarizeWholeGenome(options);
-	//	}else if(options.count("first_chr") && options.count("last_chr")){
-  //    if(options["first_chr"].as<int>() < 0 || options["last_chr"].as<int>() < 0){
-  //      std::cerr << "Do not use negative chr indices." << std::endl;
-  //      exit(1);
-  //    }
-  //    SummarizeWholeGenome(options);
-  //  }
+		if(options.count("chr")){
+			SummarizeWholeGenome(options);
+		}else if(options.count("first_chr") && options.count("last_chr")){
+      if(options["first_chr"].as<int>() < 0 || options["last_chr"].as<int>() < 0){
+        std::cerr << "Do not use negative chr indices." << std::endl;
+        exit(1);
+      }
+      SummarizeWholeGenome(options);
+    }
 
-  //  FinalizeMutationCount(options);
+    FinalizeMutationCount(options);
 
   }else if(!mode.compare("FinalizeAvg")){
 
@@ -3616,16 +3623,20 @@ int main(int argc, char* argv[]){
 
     AvgMutationRate(options);
 
-  //}else if(!mode.compare("XY")){
+  }else if(!mode.compare("MutationDensity")){
 
-  //  BranchLengthVsMutations(options);
+    MutationDensity(options);
+
+  }else if(!mode.compare("XY")){
+
+    BranchLengthVsMutations(options);
 
   }else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "Avg, MutationRateForCategory, ForCategoryForPopForChromosome, SummarizeForGenomeForCategory, WithContext, FinalizeForCategory, WithContextForChromosome, SummarizeForGenome, Finalize." << std::endl;
+    std::cout << "Avg, MutationRateForCategory, ForCategoryForChromosome, WithContext, WithContextForChromosome, SummarizeForGenome, SummarizeForGenomeForCategory, Finalize, FinalizeForCategory, FinalizeMutationCount, MutationDensity, XY." << std::endl;
 
   }
 

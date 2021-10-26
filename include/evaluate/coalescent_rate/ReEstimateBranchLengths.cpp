@@ -227,7 +227,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
         ShowProgress(progress); 
       }
       count_trees++; 
-      bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
+      bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
     }
   }else{
     EstimateBranchLengthsWithSampleAge bl(data, anc.sample_ages);

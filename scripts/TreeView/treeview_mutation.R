@@ -150,7 +150,7 @@ if(filename_dist != "nodist"){
 }
 }
 
-p1 <- p1 + AddMutations(filename_plot, years_per_gen, size = mut_size) + scale_y_continuous(trans = "log10") 
+p1 <- p1 + AddMutations(filename_plot, years_per_gen, size = mut_size) #+ scale_y_continuous(trans = "log10") 
       
 # some modifications to theme
 p1 <- p1 + theme(axis.text.y = element_text(size = rel(2.3)), 

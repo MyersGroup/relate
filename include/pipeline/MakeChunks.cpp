@@ -74,18 +74,23 @@ int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
   std::vector<double> sample_ages(data.N);
   if(options.count("sample_ages")){
     igzstream is_ages(options["sample_ages"].as<std::string>());
-    int i = 0; 
-    while(is_ages >> sample_ages[i]){
-      i++;
-      //sample_ages[i] = sample_ages[i-1];
-      //i++;
-      if(i == data.N) break;
-    }
-    if(i < data.N){
-      std::cerr << "Warning: sample ages specified but number of samples does not agree with other input files. Ignoring sample ages." << std::endl;
-      sample_ages.clear();
-    }
+		if(is_ages.fail()){
+			std::cerr << "Warning: unable to open sample ages file" << std::endl;
+		}else{
+			int i = 0; 
+			while(is_ages >> sample_ages[i]){
+				i++;
+				//sample_ages[i] = sample_ages[i-1];
+				//i++;
+				if(i == data.N) break;
+			}
+			if(i != data.N){
+				std::cerr << "Warning: sample ages specified but number of samples does not agree with other input files. Ignoring sample ages." << std::endl;
+				sample_ages.clear();
+			}
+		}
   }else{
+
     sample_ages.clear(); 
   }
 

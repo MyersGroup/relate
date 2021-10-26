@@ -615,7 +615,7 @@ RemoveSamples(cxxopts::Options& options){
 
   igzstream is(options["sample"].as<std::string>());
   std::ofstream os(options["output"].as<std::string>() + ".sample");
-  std::vector<int> remaining_haps(data.N - 2*id_remove.size());
+  std::vector<int> remaining_haps;//(data.N - 2*id_remove.size());
 
   if(is.fail()){
     std::cerr << "Error while opening file " << options["sample"].as<std::string>() << "." << std::endl;
@@ -665,11 +665,13 @@ RemoveSamples(cxxopts::Options& options){
     if(remove == false){
       os << line << "\n";
       if(poplabels) os_pop << line2 << "\n";
-      remaining_haps[i] = j;
+      //remaining_haps[i] = j;
+			remaining_haps.push_back(j);
       i++;
       j++;
       if(strcmp(id, id2) == 0){ //diploid
-        remaining_haps[i] = j;
+        //remaining_haps[i] = j;
+				remaining_haps.push_back(j);
         i++;
         j++;
       }

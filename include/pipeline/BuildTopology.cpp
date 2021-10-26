@@ -86,12 +86,16 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   std::vector<double> sample_ages(N);
   if(options.count("sample_ages")){
     igzstream is_ages(options["sample_ages"].as<std::string>());
-    int i = 0; 
-    while(is_ages >> sample_ages[i]){
-      i++;
-      if(i == N) break;
-    }
-    if(i < N) sample_ages.clear();
+		if(is_ages.fail()){
+			std::cerr << "Warning: unable to open sample ages file" << std::endl;
+		}else{
+			int i = 0; 
+			while(is_ages >> sample_ages[i]){
+				i++;
+				if(i == N) break;
+			}
+			if(i < N) sample_ages.clear();
+		}
   }else{
     sample_ages.clear(); 
   }

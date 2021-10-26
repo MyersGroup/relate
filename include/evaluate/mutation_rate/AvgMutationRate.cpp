@@ -95,7 +95,7 @@ GetCoordsAndLineages(MarginalTree& mtr, std::vector<float>& coordinates_tree, st
 }
 
 void
-GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>& exclude_groups, std::vector<Leaves>& descendants, bool ignore_tips, std::vector<float>& coordinates_tree, std::vector<int>& num_lineages){
+GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>& exclude_groups, std::vector<Leaves>& descendants, std::vector<float>& coordinates_tree, std::vector<int>& num_lineages){
 
   mtr.tree.GetCoordinates(coordinates_tree); 
   std::vector<int> sorted_indices(coordinates_tree.size());
@@ -136,7 +136,7 @@ GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>&
       }
       if(!ignore){
         num_lins++;
-        if(ignore_tips) num_terminal++;
+        num_terminal++;
       }
 
       bool exclude = false;
@@ -166,7 +166,7 @@ GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>&
       }
 
       if(!ignore && child1 < N){
-        if(ignore_tips) num_terminal--;
+        num_terminal--;
       }
 
       ignore2 = true;
@@ -181,7 +181,7 @@ GetCoordsAndLineagesForPop(MarginalTree& mtr, Sample& samples, std::vector<int>&
         }
       }
       if(!ignore2 && child2 < N){
-        if(ignore_tips) num_terminal--;
+        num_terminal--;
       }
 
       if(!ignore && !ignore2) num_lins--;
@@ -589,6 +589,242 @@ CalculateAvgMutationRateForChromosome(cxxopts::Options& options, std::vector<dou
 
 }
 
+void 
+CalculateMutationDensity(cxxopts::Options& options, std::ofstream& os, int sample, std::vector<double>& mutation_by_epoch, std::vector<double>& opportunity_by_epoch, std::string chr = "NA"){
+
+  std::string line, read;
+
+  AncMutIterators ancmut;
+  if(chr == "NA"){
+    ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
+  }else{
+    ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + chr + ".anc", options["input"].as<std::string>() + "_chr" + chr + ".mut");
+  }   
+
+  int N = ancmut.NumTips();
+  int L = ancmut.NumSnps();
+  MarginalTree mtr;
+  Muts::iterator it_mut;
+  float num_bases_tree_persists = 0.0; 
+
+  Data data(N,L);
+  int N_total = 2*data.N-1;
+
+  ///////// read mutations file ///////////
+
+  Mutations mutations(data);
+  if(chr == "NA"){
+    mutations.Read(options["input"].as<std::string>() + ".mut");
+  }else{
+    mutations.Read(options["input"].as<std::string>() + "_chr" + chr + ".mut");
+  }
+
+  std::vector<int> pos, dist;
+  if(options.count("dist")){
+
+    int L_allsnps = 0;
+
+    std::string filename_dist = options["dist"].as<std::string>();
+    if(chr != "NA"){
+      filename_dist += "_chr" + chr + ".dist";
+    }
+
+    igzstream is_L(filename_dist);
+    std::string unused;
+    std::getline(is_L, unused); 
+    while ( std::getline(is_L, unused) ){
+      ++L_allsnps;
+    }
+    is_L.close();
+
+    pos.resize(L_allsnps);
+    dist.resize(L_allsnps);
+    igzstream is_dist(filename_dist);
+    if(is_dist.fail()) is_dist.open(filename_dist + ".gz");
+    if(is_dist.fail()){
+      std::cerr << "Error while opening " << filename_dist << std::endl;
+      exit(1);
+    }
+    getline(is_dist, line); 
+    int snp = 0;
+    while(std::getline(is_dist, line)){
+      sscanf(line.c_str(), "%d %d", &pos[snp], &dist[snp]);
+      snp++;
+    }
+    is_dist.close();
+
+  }else{
+
+    pos.resize(data.L);
+    dist.resize(data.L);
+    int snp = 0;
+    for(std::vector<SNPInfo>::iterator it_mut = mutations.info.begin(); it_mut != mutations.info.end(); it_mut++){
+      pos[snp]   = (*it_mut).pos;
+      dist[snp]  = (*it_mut).dist;
+      snp++;
+    }
+
+  }
+
+
+  ///////// EPOCHES /////////
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  } 
+
+  int num_epochs;
+  std::vector<double> epochs;
+  float log_10 = std::log(10);
+  if(options.count("bins")){
+
+    double log_age = std::log(0);
+    double age = 0;
+
+    double epoch_lower, epoch_upper, epoch_step;
+    std::string str_epochs = options["bins"].as<std::string>();
+    std::string tmp;
+    int i = 0;
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_lower = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_upper = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_step = std::stof(tmp);
+
+    int ep = 0;
+    epochs.resize(1);
+    epochs[ep] = 0.0;
+    ep++; 
+    double epoch_boundary = 0.0;
+    if(log_age < epoch_lower && age != 0.0){
+      epochs.push_back(age);
+      ep++;
+    }
+    epoch_boundary = epoch_lower;
+    while(epoch_boundary < epoch_upper){
+      if(log_age < epoch_boundary){
+        if(ep == 1 && age != 0.0) epochs.push_back(age);
+        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        ep++;
+      }
+      epoch_boundary += epoch_step;
+    }
+    epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
+    num_epochs = epochs.size();
+
+  }else{
+
+    num_epochs = 31;
+    epochs.resize(num_epochs);
+    epochs[0] = 0.0;
+    epochs[1] = 1e3/years_per_gen;
+    for(int e = 2; e < num_epochs-1; e++){
+      epochs[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+    }
+    epochs[num_epochs-1] = 1e8/years_per_gen;
+
+  }
+
+  ////////// Count number of bases by type ///////////
+  //double total_num_bases = (*std::prev(mutations.info.end(),1)).pos - (*mutations.info.begin()).pos;
+  
+
+  ////////////////////
+  // Estimate mutation rate through time
+
+  std::vector<double> num_muts_in_epoch(num_epochs), opportunity_in_epoch(num_epochs);
+  std::vector<int> num_lineages(N_total);
+  double bl, persistence, total_age, prev_age, num_events;
+  int node = sample, ep = 0, ep_start = 0;
+  int root = N_total-1;
+  int i = 0;
+
+  while(epochs[ep_start+1] < ancmut.sample_ages[sample]){
+    ep_start++;
+  }
+
+  //read tree
+  while(num_bases_tree_persists >= 0){
+    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+
+    std::fill(num_muts_in_epoch.begin(), num_muts_in_epoch.end(), 0.0);
+    std::fill(opportunity_in_epoch.begin(), opportunity_in_epoch.end(), 0.0);
+  
+    node = sample;
+    ep = ep_start;
+    total_age = ancmut.sample_ages[sample];
+    while(node != root){
+
+      bl          = mtr.tree.nodes[node].branch_length;
+      prev_age    = total_age;
+      total_age  += bl;
+      num_events  = mtr.tree.nodes[node].num_events;
+      persistence = 0.0;
+      for(int snp = mtr.tree.nodes[node].SNP_begin; snp <= mtr.tree.nodes[node].SNP_end; snp++){
+        persistence += dist[snp];   
+      }
+
+      if(total_age < epochs[ep+1]){
+        num_muts_in_epoch[ep] += num_events;
+        opportunity_in_epoch[ep] += persistence * bl;
+      }else{
+        while(epochs[ep+1] < total_age){
+          num_muts_in_epoch[ep] += num_events * (epochs[ep+1] - prev_age)/bl;
+          opportunity_in_epoch[ep] += persistence * (epochs[ep+1] - prev_age);
+          prev_age = epochs[ep+1];
+          ep++;
+        }
+        num_muts_in_epoch[ep] += num_events * (total_age - prev_age)/bl;
+        opportunity_in_epoch[ep] += persistence * (total_age - prev_age);
+      }
+
+      node = (*mtr.tree.nodes[node].parent).label;
+
+    }
+
+    for(int ep = 0; ep < num_epochs; ep++){
+      os << num_muts_in_epoch[ep] << " ";
+    }
+    for(int ep = 0; ep < num_epochs; ep++){
+      os << opportunity_in_epoch[ep] << " ";
+    }
+    os << "\n";
+
+  
+  }
+
+  ancmut.CloseFiles(); 
+
+}
+
+
 void AvgMutationRate(cxxopts::Options& options){
 
   bool help = false;
@@ -755,6 +991,177 @@ void AvgMutationRate(cxxopts::Options& options){
   plot p(60,10);
   p.draw(epochs, rate);
 
+  /////////////////////////////////////////////
+  //Resource Usage
+
+  rusage usage;
+  getrusage(RUSAGE_SELF, &usage);
+
+  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+}
+
+void MutationDensity(cxxopts::Options& options){
+
+  bool help = false;
+  if(!options.count("input") || !options.count("output") || !options.count("pop_of_interest")){
+    std::cout << "Not enough arguments supplied." << std::endl;
+    std::cout << "Needed: input, output, pop_of_interest.  Optional: chr, first_chr, last_chr, years_per_gen, bins, dist." << std::endl;
+    help = true;
+  }
+  if(options.count("help") || help){
+    std::cout << options.help({""}) << std::endl;
+    std::cout << "Calculate density of mutations for each tree." << std::endl;
+    exit(0);
+  }  
+
+  std::cerr << "---------------------------------------------------------" << std::endl;
+  if(options.count("chr")){
+    std::cerr << "Calculating mutation density for " << options["input"].as<std::string>() << "* and sample " << options["pop_of_interest"].as<std::string>() << " ..." << std::endl;
+  }else if(options.count("first_chr") && options.count("last_chr")){
+    std::cerr << "Calculating mutation density for " << options["input"].as<std::string>() << "_chr" << options["first_chr"].as<int>();
+    std::cerr << " - " << options["input"].as<std::string>() << "_chr" << options["last_chr"].as<int>() << "* and sample " << options["pop_of_interest"].as<std::string>() << " ..." << std::endl;
+  }else{
+    std::cerr << "Calculating mutation density for " << options["input"].as<std::string>() << "* and sample " << options["pop_of_interest"].as<std::string>() << " ..." << std::endl;
+  }
+
+  ///////// EPOCHES /////////
+  float years_per_gen = 28.0;
+  if(options.count("years_per_gen")){
+    years_per_gen = options["years_per_gen"].as<float>();
+  }
+
+  int num_epochs;
+  std::vector<float> epochs;
+  float log_10 = std::log(10);
+  if(options.count("bins")){
+
+    double log_age = std::log(0);
+    double age = 0;
+
+    double epoch_lower, epoch_upper, epoch_step;
+    std::string str_epochs = options["bins"].as<std::string>();
+    std::string tmp;
+    int i = 0;
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_lower = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_upper = std::stof(tmp);
+    i++;
+    if(i >= str_epochs.size()){
+      std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+      exit(1);
+    }
+    tmp = "";
+    while(str_epochs[i] != ','){
+      tmp += str_epochs[i];
+      i++;
+      if(i == str_epochs.size()) break;
+    }
+    epoch_step = std::stof(tmp);
+
+    int ep = 0;
+    epochs.resize(1);
+    epochs[ep] = 0.0;
+    ep++; 
+    double epoch_boundary = 0.0;
+    if(log_age < epoch_lower && age != 0.0){
+      epochs.push_back(age);
+      ep++;
+    }
+    epoch_boundary = epoch_lower;
+    while(epoch_boundary < epoch_upper){
+      if(log_age < epoch_boundary){
+        if(ep == 1 && age != 0.0) epochs.push_back(age);
+        epochs.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+        ep++;
+      }
+      epoch_boundary += epoch_step;
+    }
+    epochs.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+    epochs.push_back( std::max(1e8, 10.0*epochs[epochs.size()-1])/years_per_gen );
+    num_epochs = epochs.size();
+
+  }else{
+
+    num_epochs = 31;
+    epochs.resize(num_epochs);
+    epochs[0] = 0.0;
+    epochs[1] = 1e3/years_per_gen;
+    for(int e = 2; e < num_epochs-1; e++){
+      epochs[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs-3.0) ))/years_per_gen;
+    }
+    epochs[num_epochs-1] = 1e8/years_per_gen;
+
+  }
+
+  int sample = stoi(options["pop_of_interest"].as<std::string>());
+
+  ///////////////////////////////
+
+  std::vector<double> mutation_by_epoch;
+  std::vector<double> opportunity_by_epoch;
+  mutation_by_epoch.resize(num_epochs);
+  opportunity_by_epoch.resize(num_epochs);
+  std::fill(mutation_by_epoch.begin(), mutation_by_epoch.end(), 0.0);
+  std::fill(opportunity_by_epoch.begin(), opportunity_by_epoch.end(), 0.0);
+
+  std::ofstream os(options["output"].as<std::string>() + ".mutden");
+  if(os.fail()){
+    std::cerr << "Error while opening file." << std::endl;
+    exit(1);
+  }
+  //header
+  
+  for(int ep = 0; ep < num_epochs; ep++){
+    os << epochs[ep] << " ";
+  }
+  for(int ep = 0; ep < num_epochs; ep++){
+    os << epochs[ep] << " ";
+  }
+  os << "\n";
+
+  if(options.count("chr")){
+    igzstream is_chr(options["chr"].as<std::string>());
+    if(is_chr.fail()){
+      std::cerr << "Error while opening file " << options["chr"].as<std::string>() << std::endl;
+    }
+    std::string line;
+    while(getline(is_chr, line)){
+      CalculateMutationDensity(options, os, sample, mutation_by_epoch, opportunity_by_epoch, line);
+    }
+    is_chr.close();
+  }else if(options.count("first_chr") && options.count("last_chr")){
+    for(int chr = options["first_chr"].as<int>(); chr <= options["last_chr"].as<int>(); chr++){
+      CalculateMutationDensity(options, os, sample, mutation_by_epoch, opportunity_by_epoch, std::to_string(chr));
+    } 
+  }else{
+    CalculateMutationDensity(options, os, sample, mutation_by_epoch, opportunity_by_epoch);
+  }
+
+  os.close();
+ 
   /////////////////////////////////////////////
   //Resource Usage
 
