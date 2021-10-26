@@ -218,7 +218,7 @@ then
          --parsable \
          --error=log/make_chunks.log \
          --output=log/make_chunks.log \
-         --export PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},output=${output} \
+         --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},output=${output} \
          ${slurm_options} \
          "${PATH_TO_RELATE}/scripts/RelateSlurm/MakeChunks.sh")
 
@@ -234,7 +234,7 @@ then
          --parsable \
          --error=log/make_chunks.log \
          --output=log/make_chunks.log \
-         --export PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},annot=${annot},output=${output} \
+         --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},dist=${dist},annot=${annot},output=${output} \
          ${slurm_options} \
          "${PATH_TO_RELATE}/scripts/RelateSlurm/MakeChunks.sh")
 
@@ -248,7 +248,7 @@ else
          --parsable \
          --error=log/make_chunks.log \
          --output=log/make_chunks.log \
-         --export=PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},output=${output} \
+         --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},output=${output} \
          ${slurm_options} \
          "${PATH_TO_RELATE}/scripts/RelateSlurm/MakeChunks.sh")
  
@@ -264,7 +264,7 @@ else
          --parsable \
          --error=log/make_chunks.log \
          --output=log/make_chunks.log \
-         --export PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},annot=${annot},output=${output} \
+         --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},haps=${haps},sample=${sample},map=${map},memory=${memory},annot=${annot},output=${output} \
          ${slurm_options} \
          "${PATH_TO_RELATE}/scripts/RelateSlurm/MakeChunks.sh")
 
@@ -306,7 +306,7 @@ do
   jid=$(sbatch --depend afterok:${wait_jid} \
        --parsable \
        -J paint_${output}_${chunk} \
-       --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},painting=${painting},output=${output} \
+       --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},painting=${painting},output=${output} \
        -e log/paint_c${chunk}.log \
        -o log/paint_c${chunk}.log \
        ${slurm_options} \
@@ -322,7 +322,7 @@ do
            --parsable \
            -J build_topology_${output}_${chunk} \
            --array 1-$num_batched_windows \
-           --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting} \
+           --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting} \
            -e build_${output}.log \
            -o build_${output}.log \
            ${slurm_options} \
@@ -333,7 +333,7 @@ do
         --parsable \
         -J build_topology_${output}_${chunk} \
         --array 1-$num_batched_windows \
-        --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting} \
+        --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting} \
         -e build_${output}.log \
         -o build_${output}.log \
         ${slurm_options} \
@@ -349,7 +349,7 @@ do
            --parsable \
            -J build_topology_${output}_${chunk} \
            --array 1-$num_batched_windows \
-           --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting},sample_ages=${sample_ages},Ne=${Ne} \
+           --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting},sample_ages=${sample_ages},Ne=${Ne} \
            -e build_${output}.log \
            -o build_${output}.log \
            ${slurm_options} \
@@ -360,7 +360,7 @@ do
         --parsable \
         -J build_topology_${output}_${chunk} \
         --array 1-$num_batched_windows \
-        --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting},sample_ages=${sample_ages},Ne=${Ne} \
+        --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting},sample_ages=${sample_ages},Ne=${Ne} \
         -e build_${output}.log \
         -o build_${output}.log \
         ${slurm_options} \
@@ -373,7 +373,7 @@ do
   jid=$(sbatch --depend afterok:${jid} \
        --parsable \
        -J find_equivalent_branches_${output}_${chunk} \
-       --export PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output} \
+       --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output} \
        -e log/find_equivalent_branches_c${chunk}.log \
        -o log/find_equivalent_branches_c${chunk}.log \
        ${slurm_options} \
@@ -392,7 +392,7 @@ do
              --parsable \
 						 -J infer_branch_lengths_${output}_${chunk} \
 						 --array 1-$num_batched_windows \
-						 --export PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output} \
+						 --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output} \
 						 -e infer_branch_length_c${chunk}.log \
 						 -o infer_branch_length_c${chunk}.log \
              ${slurm_options} \
@@ -402,7 +402,7 @@ do
              --parsable \
 						 -J infer_branch_lengths_${output}_${chunk} \
 						 --array 1-$num_batched_windows \
-						 --export PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output},seed=${seed} \
+						 --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output},seed=${seed} \
 						 -e infer_branch_length_c${chunk}.log \
 						 -o infer_branch_length_c${chunk}.log \
              ${slurm_options} \
@@ -413,7 +413,7 @@ do
 			jid=$(sbatch --depend afterok:${jid} \
            --parsable \
 					 -J combine_args_${output} \
-					 --export PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
+					 --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
 					 -e log/combine_args_c${chunk}.log \
 					 -o log/combine_args_c${chunk}.log \
            ${slurm_options} \
@@ -432,7 +432,7 @@ do
              --parsable \
 						 -J infer_branch_lengths_${output}_${chunk} \
 						 --array 1-$num_batched_windows \
-						 --export PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output} \
+						 --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output} \
 						 -e infer_branch_length_c${chunk}.log \
 						 -o infer_branch_length_c${chunk}.log \
              ${slurm_options} \
@@ -442,7 +442,7 @@ do
              --parsable \
 						 -J infer_branch_lengths_${output}_${chunk} \
 						 --array 1-$num_batched_windows \
-						 --export PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output},seed=${seed} \
+						 --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,output=${output},seed=${seed} \
 						 -e infer_branch_length_c${chunk}.log \
 						 -o infer_branch_length_c${chunk}.log \
              ${slurm_options} \
@@ -453,7 +453,7 @@ do
 			jid=$(sbatch --depend afterok:${jid} \
            --parsable \
 					 -J combine_args_${output} \
-					 --export PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
+					 --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
 					 -e log/combine_args_c${chunk}.log \
 					 -o log/combine_args_c${chunk}.log \
            ${slurm_options} \
@@ -471,7 +471,7 @@ do
           --parsable \
 					-J infer_branch_lengths_${output}_${chunk} \
 					--array 1-$num_batched_windows \
-					--export PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output} \
+					--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output} \
 					-e infer_branch_length_c${chunk}.log \
 					-o infer_branch_length_c${chunk}.log \
           ${slurm_options} \
@@ -481,7 +481,7 @@ do
           --parsable \
 					-J infer_branch_lengths_${output}_${chunk} \
 					--array 1-$num_batched_windows \
-					--export PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output},seed=${seed} \
+					--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output},seed=${seed} \
 					-e infer_branch_length_c${chunk}.log \
 					-o infer_branch_length_c${chunk}.log \
           ${slurm_options} \
@@ -493,7 +493,7 @@ do
         --parsable \
 				-J combine_args_${output} \
 				--array ${PWD}/${output} \
-				--export PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
+				--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
 				-e log/combine_args_c${chunk}.log \
 				-o log/combine_args_c${chunk}.log \
         ${slurm_options} \
@@ -512,7 +512,7 @@ do
           --parsable \
 					-J infer_branch_lengths_${output}_${chunk} \
 					--array 1-$num_batched_windows \
-					--export PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output} \
+					--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output} \
 					-e infer_branch_length_c${chunk}.log \
 					-o infer_branch_length_c${chunk}.log \
           ${slurm_options} \
@@ -522,7 +522,7 @@ do
           --parsable \
 					-J infer_branch_lengths_${output}_${chunk} \
 					--array 1-$num_batched_windows \
-					--export PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output},seed=${seed} \
+					--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},mu=$mu,chunk_index=$chunk,batch_windows=$batch_windows,sample_ages=${sample_ages},output=${output},seed=${seed} \
 					-e infer_branch_length_c${chunk}.log \
 					-o infer_branch_length_c${chunk}.log \
           ${slurm_options} \
@@ -533,7 +533,7 @@ do
 			jid=$(sbatch --depend afterok:${jid} \
         --parsable \
 				-J combine_args_${output} \
-				--export PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
+				--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
 				-e log/combine_args_c${chunk}.log \
 				-o log/combine_args_c${chunk}.log \
         ${slurm_options} \
@@ -555,7 +555,7 @@ then
        --parsable \
 			 --depend afterok:${jid} \
 			 -J finalize_${output} \
-			 --export PATH_TO_RELATE=${PATH_TO_RELATE},output=${output} \
+			 --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},output=${output} \
 			 -e log/combine_args.log \
 			 -o log/combine_args.log \
        ${slurm_options} \
@@ -565,7 +565,7 @@ else
     --parsable \
 		--depend afterok:${jid} \
 		-J finalize_${output} \
-		--export PATH_TO_RELATE=${PATH_TO_RELATE}, sample_ages=${sample_ages},output=${output} \
+		--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},sample_ages=${sample_ages},output=${output} \
 		-e log/combine_args.log \
 		-o log/combine_args.log \
     ${slurm_options} \

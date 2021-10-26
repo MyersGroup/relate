@@ -856,7 +856,7 @@ void AvgMutationRate(cxxopts::Options& options){
   }
 
   int num_epochs;
-  std::vector<float> epochs;
+  std::vector<double> epochs;
   float log_10 = std::log(10);
   if(options.count("bins")){
 
@@ -975,7 +975,7 @@ void AvgMutationRate(cxxopts::Options& options){
   //divide every entry by epoch delta time and length of genome
   std::vector<double>::iterator it_mutation = mutation_by_epoch.begin();
   std::vector<double>::iterator it_opportunity = opportunity_by_epoch.begin();
-  std::vector<float>::iterator it_epoch  = epochs.begin();
+  std::vector<double>::iterator it_epoch  = epochs.begin();
   double total_num_bases = 1e9;
   int e = 0;
   while(it_epoch != epochs.end()){
@@ -989,7 +989,10 @@ void AvgMutationRate(cxxopts::Options& options){
   os.close();
 
   plot p(60,10);
-  p.draw(epochs, rate);
+
+	std::vector<float> fepochs(epochs.begin(), epochs.end());
+  
+	p.draw(fepochs, rate);
 
   /////////////////////////////////////////////
   //Resource Usage
@@ -1038,7 +1041,7 @@ void MutationDensity(cxxopts::Options& options){
   }
 
   int num_epochs;
-  std::vector<float> epochs;
+  std::vector<double> epochs;
   float log_10 = std::log(10);
   if(options.count("bins")){
 

@@ -292,7 +292,7 @@ void FinalizeAvg(cxxopts::Options& options){
 
   fread(&num_epochs, sizeof(int), 1, fp);
   epoch.resize(num_epochs);
-  fread(&epoch[0], sizeof(float), num_epochs, fp);
+  fread(&epoch[0], sizeof(double), num_epochs, fp);
 
   mutation_by_type_and_epoch.ReadFromFile(fp);
   fclose(fp);
@@ -498,7 +498,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
   std::vector<double> epochs;
   fread(&num_epochs, sizeof(int), 1, fp);
   epochs.resize(num_epochs);
-  fread(&epochs[0], sizeof(float), num_epochs, fp);
+  fread(&epochs[0], sizeof(double), num_epochs, fp);
 
   CollapsedMatrix<double> mut_by_type_and_epoch, mut_by_type_and_epoch_tmp;
   mut_by_type_and_epoch.ReadFromFile(fp);
@@ -508,7 +508,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
     fp = fopen(filenames[i].c_str(),"rb");
 
     fread(&num_epochs, sizeof(int), 1, fp);
-    fread(&epochs[0], sizeof(float), num_epochs, fp);
+    fread(&epochs[0], sizeof(double), num_epochs, fp);
 
     mut_by_type_and_epoch_tmp.ReadFromFile(fp);
     fclose(fp);
@@ -552,7 +552,7 @@ void SummarizeWholeGenome(cxxopts::Options& options){
 
   fp = fopen((options["output"].as<std::string>() + "_mut" + ".bin" ).c_str(), "wb"); 
   fwrite(&num_epochs, sizeof(int), 1, fp);
-  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
+  fwrite(&epochs[0], sizeof(double), epochs.size(), fp);
   mut_by_type_and_epoch.DumpToFile(fp);
   fclose(fp);
   fp = fopen((options["output"].as<std::string>() + "_opp" + ".bin" ).c_str(), "wb");  
@@ -1200,7 +1200,7 @@ void MutationRateForCategory(cxxopts::Options& options, std::string chr = "NA"){
         std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
         exit(1);
       }
-      if ( dict_mutation_pattern.find(pattern + "CT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "AG") == dict_mutation_pattern.end() ) {
+      if ( dict_mutation_pattern.find(pattern + "CT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "GA") == dict_mutation_pattern.end() ) {
         // not found
         std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
         exit(1);
@@ -1711,7 +1711,7 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
   while(getline(is_cat, line)){
     sscanf(line.c_str(), "%c %c %c %c %d", &mutation_type[0], &mutation_type[1], &mutation_type[2], &mutation_type[3], &category);
     pattern = mutation_type;
-    dict_mutation_pattern[pattern] = category;
+		dict_mutation_pattern[pattern] = category;
     pattern = complement[mutation_type[1]] + complement[mutation_type[0]] + complement[mutation_type[2]] + complement[mutation_type[3]];
     dict_mutation_pattern[pattern] = category;
     if(category >= num_categories){
@@ -1750,24 +1750,24 @@ void MutationRateForCategoryForGroup(cxxopts::Options& options, std::string chr 
         std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
         exit(1);
       }
-      if ( dict_mutation_pattern.find(pattern + "CT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "AG") == dict_mutation_pattern.end() ) {
+      if ( dict_mutation_pattern.find(pattern + "CT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "GA") == dict_mutation_pattern.end() ) {
         // not found
-        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+				std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
         exit(1);
       }
       if ( dict_mutation_pattern.find(pattern + "AT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "TA") == dict_mutation_pattern.end() ) {
         // not found
-        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+				std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
         exit(1);
       }
       if ( dict_mutation_pattern.find(pattern + "AG") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "TC") == dict_mutation_pattern.end() ) {
         // not found
-        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+				std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
         exit(1);
       }
       if ( dict_mutation_pattern.find(pattern + "AC") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "TG") == dict_mutation_pattern.end() ) {
         // not found
-        std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
+				std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
         exit(1);
       }
     }   
@@ -2574,7 +2574,7 @@ void MutationRateForPattern(cxxopts::Options& options, std::string chr = "NA"){
         std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
         exit(1);
       }
-      if ( dict_mutation_pattern.find(pattern + "CT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "AG") == dict_mutation_pattern.end() ) {
+      if ( dict_mutation_pattern.find(pattern + "CT") == dict_mutation_pattern.end() && dict_mutation_pattern.find(reverse_pattern + "GA") == dict_mutation_pattern.end() ) {
         // not found
         std::cerr << "Error: not all 96 mutation categories provided." << std::endl;
         exit(1);
@@ -2788,7 +2788,7 @@ void MutationRateForPattern(cxxopts::Options& options, std::string chr = "NA"){
     fp = fopen((options["output"].as<std::string>() + "_chr" + chr + "_mut" + ".bin" ).c_str(), "wb");  
   }
   fwrite(&num_epochs, sizeof(int), 1, fp);
-  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
+  fwrite(&epochs[0], sizeof(double), epochs.size(), fp);
   for(int n = 0; n < n_boot; n++){
     boot_mutation_by_type_and_epoch[n].DumpToFile(fp);
   }
@@ -2874,7 +2874,7 @@ void SummarizeWholeGenomeForPattern(cxxopts::Options& options){
   std::vector<double> epochs;
   fread(&num_epochs, sizeof(int), 1, fp);
   epochs.resize(num_epochs);
-  fread(&epochs[0], sizeof(float), num_epochs, fp);
+  fread(&epochs[0], sizeof(double), num_epochs, fp);
 
   int n_boot = 1000;
   std::vector<CollapsedMatrix<double>> mut_by_type_and_epoch(n_boot);
@@ -2887,7 +2887,7 @@ void SummarizeWholeGenomeForPattern(cxxopts::Options& options){
     fp = fopen(filenames[i].c_str(),"rb");
 
     fread(&num_epochs, sizeof(int), 1, fp);
-    fread(&epochs[0], sizeof(float), num_epochs, fp);
+    fread(&epochs[0], sizeof(double), num_epochs, fp);
 
     for(int n = 0; n < n_boot; n++){
       mut_by_type_and_epoch_tmp.ReadFromFile(fp);
@@ -2939,7 +2939,7 @@ void SummarizeWholeGenomeForPattern(cxxopts::Options& options){
 
   fp = fopen((options["output"].as<std::string>() + "_mut" + ".bin" ).c_str(), "wb"); 
   fwrite(&num_epochs, sizeof(int), 1, fp);
-  fwrite(&epochs[0], sizeof(float), epochs.size(), fp);
+  fwrite(&epochs[0], sizeof(double), epochs.size(), fp);
   for(int n = 0; n < n_boot; n++){
     mut_by_type_and_epoch[n].DumpToFile(fp);
   }
@@ -3008,7 +3008,7 @@ void FinalizeMutationRateForPattern(cxxopts::Options& options){
 
   fread(&num_epochs, sizeof(int), 1, fp);
   epoch.resize(num_epochs);
-  fread(&epoch[0], sizeof(float), num_epochs, fp);
+  fread(&epoch[0], sizeof(double), num_epochs, fp);
 
   for(int n = 0; n < n_boot; n++){
     boot_mutation_by_type_and_epoch[n].ReadFromFile(fp);
@@ -3371,7 +3371,7 @@ void FinalizeMutationCount(cxxopts::Options& options){
 
   fread(&num_epochs, sizeof(int), 1, fp);
   epoch.resize(num_epochs);
-  fread(&epoch[0], sizeof(float), num_epochs, fp);
+  fread(&epoch[0], sizeof(double), num_epochs, fp);
   mutation_by_type_and_epoch.ReadFromFile(fp);
   fclose(fp);
 
