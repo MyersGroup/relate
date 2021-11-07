@@ -5,6 +5,11 @@ set(CMAKE_CXX_FLAGS "-O3")        ## Optimize
 set (CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_OSX_ARCHITECTURES "x86_64")
+#add_definitions(-static)
+#add_definitions(-static-libgcc)
+#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -static -static-libgcc -static-libstdc++")
+
 find_package( ZLIB REQUIRED )
 if ( ZLIB_FOUND )
     include_directories( ${ZLIB_INCLUDE_DIRS} ) 
@@ -24,10 +29,6 @@ set(TREEVIEW_DIR ${CMAKE_SOURCE_DIR}/include/treeview)
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/include/test)
 set(GZSTREAM_DIR ${CMAKE_SOURCE_DIR}/include/src/gzstream)
 set(TSKIT_DIR ${CMAKE_SOURCE_DIR}/include/file_formats/tskit)
-
-#add_definitions(-static)
-#add_definitions(-static-libgcc)
-#set(CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -static -static-libgcc -static-libstdc++")
 
 # Set includes
 include_directories(${PROJECT_SOURCE_DIR} ${TEST_DIR})

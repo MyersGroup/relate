@@ -133,7 +133,7 @@ MapMutation(cxxopts::Options& options){
 	bool help = false;
 	if(!options.count("anc") || !options.count("mut") || !options.count("haps") || !options.count("sample") || !options.count("output")){
 		std::cout << "Not enough arguments supplied." << std::endl;
-		std::cout << "Needed: anc, mut, output, bp_of_interest or (first_bp and last_bp). Optional: years_per_gen (Default: 28)" << std::endl;
+		std::cout << "Needed: anc, mut, haps, sample, output." << std::endl;
 		help = true;
 	}
 	if(options.count("help") || help){

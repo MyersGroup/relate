@@ -239,145 +239,209 @@ ConvertToTreeSequence(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Converting anc/mut file format (Relate) to tree sequence file format (tskit).." << std::endl;
 
-  ////////////////////////
-  //read in anc file
-  AncMutIterators ancmut(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
-  int N = ancmut.NumTips();
-  int L = ancmut.NumSnps();
-  MarginalTree mtr;
-  Muts::iterator it_mut;
-  float num_bases_tree_persists = 0.0;
-  Data data(N,L);
-  int root = 2*data.N - 2;
+ 
+	////////////////////////
+	//read in anc file
 
-  Mutations mut;
-  mut.Read(options["input"].as<std::string>() + ".mut");
+	MarginalTree mtr, prev_mtr; //stores marginal trees. mtr.pos is SNP position at which tree starts, mtr.tree stores the tree
+	Muts::iterator it_mut, it_mut_first, it_mut_tmp; //iterator for mut file
+	float num_bases_tree_persists = 0.0;
 
-  //////////////////////////////////////////////////////////////////////////////////////////////
+	////////// 1. Read one tree at a time /////////
 
-  int ret;
-  tsk_table_collection_t tables;
-  ret = tsk_table_collection_init(&tables, 0);
-  check_tsk_error(ret);
+	//We open anc file and read one tree at a time. File remains open until all trees have been read OR ancmut.CloseFiles() is called.
+	//The mut file is read once, file is closed after constructor is called.
+	AncMutIterators ancmut(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
 
-  tables.sequence_length = mut.info[data.L-1].pos + 1;
-  //tables.individuals.num_rows = data.N; //individuals table
-  for(int i = 0; i < data.N; i++){
-    tsk_individual_table_add_row(&tables.individuals, 0, NULL, 0 , NULL, 0);
-  }
+	num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+	it_mut_first = it_mut;
+	int N = (mtr.tree.nodes.size() + 1)/2.0, root = 2*N - 2, L = ancmut.NumSnps();
+	Data data(N,L);
+	std::vector<float> coordinates(2*data.N-1,0.0);
 
-  //population table
+	Mutations mut;
+	mut.Read(options["input"].as<std::string>() + ".mut");
+	
+	//........................................................................
+	//Populate ts tables
 
-  //sites table
-  char ancestral_allele[1];
-  //tsk_site_table_add_row(&tables.sites, 1, ancestral_allele, sizeof(ancestral_allele), NULL, 0);
-  for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
-    ancestral_allele[0] = (*it_mut).mutation_type[0];
-    ret = tsk_site_table_add_row(&tables.sites, (*it_mut).pos, ancestral_allele, 1, NULL, 0);
-    check_tsk_error(ret);
-  }
+	int ret;
+	tsk_table_collection_t tables;
+	ret = tsk_table_collection_init(&tables, 0);
+	check_tsk_error(ret);
 
-  if(ancmut.sample_ages.size() > 0){
-    for(int i = 0; i < data.N; i++){
-      ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, (float) ancmut.sample_ages[i], TSK_NULL, i, NULL, 0);
-      check_tsk_error(ret);
-    }
-  }else{
-    for(int i = 0; i < data.N; i++){
-      ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, 0.0, TSK_NULL, i, NULL, 0);
-      check_tsk_error(ret);
-    }
-  }
+	tables.sequence_length = (*std::prev(ancmut.mut_end(),1)).pos + 1;
+	for(int i = 0; i < N; i++){
+		tsk_individual_table_add_row(&tables.individuals, 0, NULL, 0 , NULL, 0);
+	}
 
-  ///////////////////////////////////////////////////////////////////////////// 
 
-  std::vector<float> coordinates(2*data.N-1,0.0);
-  int pos, snp, pos_end, snp_end, tree_count = 0, node, node_const, site_count = 0;
 
-	int count = 0;
-  char derived_allele[1];
-  num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
-  while(num_bases_tree_persists >= 0.0){
 
-    mtr.tree.GetCoordinates(coordinates);
-    for(int i = 0; i < mtr.tree.nodes.size()-1; i++){
-      if(!(coordinates[(*mtr.tree.nodes[i].parent).label] - coordinates[i] > 0.0)){
-        int parent = (*mtr.tree.nodes[i].parent).label, child = i;
-        while(coordinates[parent] - coordinates[child] < 1e-4){
-          coordinates[parent] = std::nextafter(coordinates[child], coordinates[child] + 1);
-          if(parent == root) break;
-          child  = parent;
-          parent = (*mtr.tree.nodes[parent].parent).label;
-        }
-      }
-    }
+	//population table
 
-		if(0){
-		for(int i = 0; i < mtr.tree.nodes.size() - 1; i++){
-			if(!( coordinates[i] < coordinates[(*mtr.tree.nodes[i].parent).label] )) std::cerr << i << " " << coordinates[i] << " " << coordinates[(*mtr.tree.nodes[i].parent).label] << " " << coordinates[(*mtr.tree.nodes[i].parent).label] - coordinates[i] << " " << mtr.tree.nodes[i].branch_length << std::endl;
-      assert(coordinates[i] < coordinates[(*mtr.tree.nodes[i].parent).label]);
+	//sites table
+	char ancestral_allele[1];
+	double pos, pos_begin, pos_end;
+	std::vector<double> bps(L);
+	int bps_index = 0;
+	//tsk_site_table_add_row(&tables.sites, 1, ancestral_allele, sizeof(ancestral_allele), NULL, 0);
+	for(; it_mut != ancmut.mut_end();){
+		ancestral_allele[0] = (*it_mut).mutation_type[0];
+		pos = (*it_mut).pos;
+		int count = 0;
+
+		it_mut_tmp = it_mut;
+		while((*it_mut_tmp).pos == pos){
+			it_mut_tmp++;
+			count++;
+			if(it_mut_tmp == ancmut.mut_end()) break;
 		}
+		assert(count > 0);
+
+		if(count == 1){
+			ret = tsk_site_table_add_row(&tables.sites, (*it_mut).pos, ancestral_allele, 1, NULL, 0);
+			bps[bps_index] = (*it_mut).pos;
+			bps_index++;
+			it_mut++;
+		}else{
+
+			if(it_mut_tmp != ancmut.mut_end()){
+				pos_end = ((*it_mut_tmp).pos + (*std::prev(it_mut_tmp)).pos)/2.0;
+			}else{
+				pos_end = (*std::prev(it_mut_tmp)).pos;
+			}
+			it_mut_tmp = it_mut;
+			if(it_mut_tmp != it_mut_first){
+				pos_begin = ((*it_mut_tmp).pos + (*std::prev(it_mut_tmp)).pos)/2.0;
+			}else{
+				pos_begin = pos;
+			}
+			int i = 0;
+			while((*it_mut_tmp).pos == pos){
+				ret = tsk_site_table_add_row(&tables.sites, ((i+1.0)/(count+1.0))*(pos_end - pos_begin) + pos_begin, ancestral_allele, 1, NULL, 0);
+				bps[bps_index] = ((i+1.0)/(count+1.0))*(pos_end - pos_begin) + pos_begin;
+				bps_index++;
+				it_mut_tmp++;
+				i++;
+				if(it_mut_tmp == ancmut.mut_end()) break;
+			}
+			it_mut = it_mut_tmp;
+
 		}
 
-    pos = mut.info[mtr.pos].pos;
-    if(mtr.pos == 0) pos = 0;
-    snp = mtr.pos;
+		//std::cerr << (*it_mut).pos << " " << count << " " << bps_index-1 << " " << bps[bps_index-1] << std::endl;
+		check_tsk_error(ret);
+	}
+	assert(bps_index == L);
 
-    tree_count = mut.info[snp].tree;
-    node_const = count * (data.N - 1);
+	if(ancmut.sample_ages.size() > 0){
+		for(int i = 0; i < data.N; i++){
+			ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, ancmut.sample_ages[i], TSK_NULL, i, NULL, 0);
+			check_tsk_error(ret);
+		}
+	}else{
+		for(int i = 0; i < data.N; i++){
+			ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, 0, TSK_NULL, i, NULL, 0);
+			check_tsk_error(ret);
+		}
+	}
 
-    //Mutation table
-    int l = snp;
-    while(mut.info[l].tree == tree_count){
-      if(mut.info[l].branch.size() == 1){
-        node = (*mut.info[l].branch.begin());
-        if(node < data.N){
-          derived_allele[0] = mut.info[l].mutation_type[2];
-          ret = tsk_mutation_table_add_row(&tables.mutations, l, node, TSK_NULL, derived_allele, 1, NULL, 0);
-          check_tsk_error(ret);
-        }else{
-          derived_allele[0] = mut.info[l].mutation_type[2];
-          ret = tsk_mutation_table_add_row(&tables.mutations, l, node + node_const, TSK_NULL, derived_allele, 1, NULL, 0);
-          check_tsk_error(ret);
-        }
-        site_count++;
-      }
+	///////////////////////////////////////////////////////////////////////////// 
 
-      l++; 
-      if(l == data.L) break;
-    }
-    snp_end = l;
-    if(snp_end < data.L){
-      pos_end = mut.info[snp_end].pos;
-    }else{
-      pos_end = mut.info[data.L-1].pos + 1;
-    }
+	it_mut = it_mut_first; 
+	int snp, snp_end, tree_count = 0, node, node_const, site_count = 0, count = 0;
+	int node_count = data.N, edge_count = 0;
 
-    //Node table
-    std::vector<Node>::iterator it_node = std::next(mtr.tree.nodes.begin(), data.N);
-    int n = N;
-    for(std::vector<float>::iterator it_coords = std::next(coordinates.begin(), data.N); it_coords != coordinates.end(); it_coords++){   
-      ret = tsk_node_table_add_row(&tables.nodes, 0, *it_coords, TSK_NULL, TSK_NULL, NULL, 0);   
-      //ret = tsk_node_table_add_row(&tables.nodes, TSK_NODE_IS_SAMPLE, leaves[n].num_leaves, TSK_NULL, TSK_NULL, NULL, 0);    
-      check_tsk_error(ret);
-      n++;
-    }
+	char derived_allele[1];
+	while(num_bases_tree_persists >= 0.0){
 
-    //Edge table
-    for(it_node = mtr.tree.nodes.begin(); it_node != std::prev(mtr.tree.nodes.end(),1); it_node++){
-      node = (*it_node).label;
-      if(node >= data.N) node += node_const;
-      ret = tsk_edge_table_add_row(&tables.edges, pos, pos_end, (*(*it_node).parent).label + node_const, node);    
-      check_tsk_error(ret);
-    }
+		mtr.tree.GetCoordinates(coordinates);
+		for(int i = 0; i < mtr.tree.nodes.size()-1; i++){
+			if(!(coordinates[(*mtr.tree.nodes[i].parent).label] - coordinates[i] > 0.0)){
+				int parent = (*mtr.tree.nodes[i].parent).label, child = i;
+				while(coordinates[parent] <= coordinates[child] + std::nextafter(coordinates[child], coordinates[child] + 1)){
+					coordinates[parent] = coordinates[child] + std::nextafter(coordinates[child], coordinates[child] + 1);
+					if(parent == root) break;
+					child  = parent;
+					parent = (*mtr.tree.nodes[parent].parent).label;
+				}
+			}
+		}
 
-    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
-    count++;
+		for(int i = 0; i < mtr.tree.nodes.size()-1; i++){	
+			assert(coordinates[i] < coordinates[(*mtr.tree.nodes[i].parent).label]);
+		}
 
-  } 
+		snp = mtr.pos;
+		if(snp == 0){
+			pos = 0;
+		}else{
+			pos = (bps[snp] + bps[snp-1])/2.0;
+		}
 
-  tsk_table_collection_sort(&tables, NULL, 0);
-  check_tsk_error(ret);
+		tree_count = (*it_mut).tree;
+		node_const = tree_count * (data.N - 1);
+
+		//Mutation table
+		int l = snp;
+		while((*it_mut).tree == tree_count){
+			if((*it_mut).branch.size() == 1){
+				node = *(*it_mut).branch.begin();
+				if(node < N){
+					derived_allele[0] = (*it_mut).mutation_type[2];
+					ret = tsk_mutation_table_add_row(&tables.mutations, l, node, TSK_NULL, derived_allele, 1, NULL, 0);
+					check_tsk_error(ret);
+				}else{
+					derived_allele[0] = (*it_mut).mutation_type[2];
+					ret = tsk_mutation_table_add_row(&tables.mutations, l, node + node_const, TSK_NULL, derived_allele, 1, NULL, 0);
+					check_tsk_error(ret);
+				}
+				site_count++;
+			}
+
+			l++;
+			it_mut++; 
+			if(l == L) break;
+		}
+
+		snp_end = l;
+		if(snp_end < L){
+			pos_end = (bps[snp_end-1] + bps[snp_end])/2.0;
+		}else{
+			pos_end = bps[L-1] + 1;
+		}
+
+		assert(pos != pos_end);
+		assert(pos <= bps[snp]);
+		assert(pos_end >= bps[snp]);
+
+		//Node table
+		std::vector<Node>::iterator it_node = std::next(mtr.tree.nodes.begin(), data.N);
+		int n = N;
+		for(std::vector<float>::iterator it_coords = std::next(coordinates.begin(), data.N); it_coords != coordinates.end(); it_coords++){   
+			ret = tsk_node_table_add_row(&tables.nodes, 0, *it_coords, TSK_NULL, TSK_NULL, NULL, 0);   
+			check_tsk_error(ret);
+			n++;
+			node_count++;
+		}
+
+		//Edge table
+		for(it_node = mtr.tree.nodes.begin(); it_node != std::prev(mtr.tree.nodes.end(),1); it_node++){
+			node = (*it_node).label;
+			if(node >= data.N) node += node_const;
+			ret = tsk_edge_table_add_row(&tables.edges, pos, pos_end, (*(*it_node).parent).label + node_const, node);    
+			check_tsk_error(ret);
+			edge_count++;
+		}
+
+		num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+		count++;
+
+	} 
+
+	tsk_table_collection_sort(&tables, NULL, 0);
+	check_tsk_error(ret);
 
   //////////////////////////
 

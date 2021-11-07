@@ -771,8 +771,9 @@ CalculateMutationDensity(cxxopts::Options& options, std::ofstream& os, int sampl
   }
 
   //read tree
+	
+	num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
   while(num_bases_tree_persists >= 0){
-    num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
 
     std::fill(num_muts_in_epoch.begin(), num_muts_in_epoch.end(), 0.0);
     std::fill(opportunity_in_epoch.begin(), opportunity_in_epoch.end(), 0.0);
@@ -817,6 +818,7 @@ CalculateMutationDensity(cxxopts::Options& options, std::ofstream& os, int sampl
     }
     os << "\n";
 
+		num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
   
   }
 

@@ -104,7 +104,7 @@ ga('send', 'pageview');
 
                 <p><b>Relate</b> is available for academic use. To see rules for non-academic use, please read the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf" download>LICENCE</a> file, which is included with each software download.</p>
 
-                <h5 id="Binaries">Pre-compiled binaries (last updated: 16/06/2021)</h5> 
+                <h5 id="Binaries">Pre-compiled binaries (last updated: 7/11/2021)</h5> 
                 <form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
                   <div class="form-group">
                     <div class="checkbox">
@@ -118,22 +118,28 @@ ga('send', 'pageview');
                   <div class="form-group">
                     <button type="submit" 
                             class="btn btn-link" 
-                            formaction="download/relate_v1.1.7_x86_64_dynamic.tgz"   
+                            formaction="download/relate_v1.1.8_x86_64_dynamic.tgz"   
                             data-on="click"
                             data-event-category="Relate download (x86_64, dynamic)"
-                            data-event-action="click">Linux (x86_64, dynamic) - v1.1.7</button><br/>
+                            data-event-action="click">Linux (x86_64, dynamic) - v1.1.8</button><br/>
                           <button type="submit" 
                                   class="btn btn-link" 
-                                  formaction="download/relate_v1.1.7_x86_64_static.tgz"
+                                  formaction="download/relate_v1.1.8_x86_64_static.tgz"
                                   data-on="click"
                                   data-event-category="Relate download (x86_64, static)"
-                                  data-event-action="click">Linux (x86_64, static) - v1.1.7</button><br/>
+                                  data-event-action="click">Linux (x86_64, static) - v1.1.8</button><br/>
                                 <button type="submit" 
                                         class="btn btn-link" 
-                                        formaction="download/relate_v1.1.7_MacOSX.tgz"
+                                        formaction="download/relate_v1.1.8_MacOSX_Intel.tgz"
                                         data-on="click"
                                         data-event-category="Relate download (Mac_OSX)"
-                                        data-event-action="click">Mac OSX - v1.1.7</button>                   
+																				data-event-action="click">Mac OSX (Intel) - v1.1.8</button><br/>     
+																<button type="submit" 
+																				class="btn btn-link" 
+																				formaction="download/relate_v1.1.8_MacOSX_M1.tgz"
+																				data-on="click"
+																				data-event-category="Relate download (Mac_OSX)"
+																				data-event-action="click">Mac OSX (M1) - v1.1.8</button>     
                   </div>
                 </form>
 
@@ -347,6 +353,25 @@ devtools::install_github("leospeidel/relater")</code></pre>
             <hr/>
 
             <div class="panel-group" id="accordion2">
+
+							<div class="panel panel-default">
+								<div class="panel-heading">
+									<h4 class="panel-title">
+										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse27">
+											v1.1.7
+										</a>
+									</h4>
+								</div>
+								<div id="collapse27" class="panel-collapse collapse">
+									<div class="panel-body">
+										Date: 7 November 2021 <br/>     
+										<ul>
+											<li>Made ConvertToTreeSequence consistent with relate\_lib version.</li>
+											<li>Bug fix in SummarizeMutationRates (assumed float instead of double, leading to Segfault).</li>
+										</ul>
+									</div>
+								</div>
+							</div>
 
           		<div class="panel panel-default">
 								<div class="panel-heading">
