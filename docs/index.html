@@ -71,7 +71,13 @@ ga('send', 'pageview');
           <h4 id="Overview">Software to estimate genome-wide genealogies for thousands of samples</h4>
           <p><b>Relate</b> estimates genome-wide genealogies in the form of trees that adapt to changes in local ancestry caused by recombination. The method, which is scalable to thousands of samples, is described in the following paper. Please cite this paper if you use our software in your study.</p>   
           <p>
-          <b>Citation:</b> Leo Speidel, Marie Forest, Sinan Shi, Simon Myers. A method for estimating genome-wide genealogies for thousands of samples. <a href="https://www.nature.com/articles/s41588-019-0484-x">Nature Genetics 51: 1321-1329, 2019</a>.</b><br/>
+          <b>Citations:</b> 
+          <ul>
+						<li>(original Relate paper) Leo Speidel, Marie Forest, Sinan Shi, Simon Myers.<br>
+							A method for estimating genome-wide genealogies for thousands of samples. <a href="https://www.nature.com/articles/s41588-019-0484-x">Nature Genetics 51: 1321-1329, 2019</a>.</b></li>
+						<li>(update, v1.1.*) Leo Speidel, Lara Cassidy, Robert W. Davies, Garrett Hellenthal, Pontus Skoglund, Simon R. Myers.<br>
+							Inferring population histories for ancient genomes using genome-wide genealogies. <a href="https://academic.oup.com/mbe/article/38/9/3497/6299394">Molecular Biology and Evolution 38: 3497–3511, 2021</a>.</b></li>
+				</ul>
         <b>Contact:</b> leo.speidel@outlook.com<br/> 
         <b>Website:</b> <a href = "https://leospeidel.com">https://leospeidel.com</a>
           </p>
@@ -366,7 +372,7 @@ devtools::install_github("leospeidel/relater")</code></pre>
 									<div class="panel-body">
 										Date: 7 November 2021 <br/>     
 										<ul>
-											<li>Made ConvertToTreeSequence consistent with relate\_lib version.</li>
+											<li>Made ConvertToTreeSequence consistent with relate_lib version.</li>
 											<li>Bug fix in SummarizeMutationRates (assumed float instead of double, leading to Segfault).</li>
 										</ul>
 									</div>
