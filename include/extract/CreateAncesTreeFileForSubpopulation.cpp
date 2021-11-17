@@ -171,7 +171,7 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
               mut.info[snp].tree      = count_included_tree;
             }
           }
-          for(std::deque<int>::iterator it_branch = mut.info[snp].branch.begin(); it_branch != mut.info[snp].branch.end(); it_branch++){
+          for(std::vector<int>::iterator it_branch = mut.info[snp].branch.begin(); it_branch != mut.info[snp].branch.end(); it_branch++){
             branch = convert_index[*it_branch];
             if(branch != -1){
               (*it_subseq).tree.nodes[branch].num_events += 1.0/((float) mut.info[snp].branch.size());
@@ -200,7 +200,7 @@ MakeAncesTreeFile(cxxopts::Options& options, Mutations& mut, std::vector<int>& i
               mut.info[snp].tree      = count_included_tree;
             }
           }
-          for(std::deque<int>::iterator it_branch = mut.info[snp].branch.begin(); it_branch != mut.info[snp].branch.end(); it_branch++){
+          for(std::vector<int>::iterator it_branch = mut.info[snp].branch.begin(); it_branch != mut.info[snp].branch.end(); it_branch++){
             branch = convert_index[*it_branch];
             if(branch != -1){
               (*it_subseq).tree.nodes[branch].num_events += 1.0/((float) mut.info[snp].branch.size());

@@ -939,8 +939,8 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
   //propagate up and count number of nodes needed.
   //choose flipped or non-flipped depending on which is less.
 
-  std::deque<int> branches;
-  std::deque<int> branches_flipped; 
+  std::vector<int> branches;
+  std::vector<int> branches_flipped; 
 
   PropagateStructLocal report;
   PropagateMutationLocal(tree.nodes[root], branches, branches_flipped, sequences_carrying_mutations, report);
@@ -953,7 +953,7 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
       mutations.info[snp].branch  = branches;
       /*
          float weight = 1.0/((float) branches.size());
-         for(std::deque<int>::iterator it = branches.begin(); it != branches.end(); it++){
+         for(std::vector<int>::iterator it = branches.begin(); it != branches.end(); it++){
          tree.nodes[*it].num_events += weight;
          }
          */
@@ -968,7 +968,7 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
         mutations.info[snp].branch  = branches;
         /*
            float weight = 1.0/((float) branches.size());
-           for(std::deque<int>::iterator it = branches.begin(); it != branches.end(); it++){
+           for(std::vector<int>::iterator it = branches.begin(); it != branches.end(); it++){
            tree.nodes[*it].num_events += weight;
            }
            */
@@ -981,7 +981,7 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
         mutations.info[snp].branch  = branches_flipped;
         /*
            float weight = 1.0/((float) branches_flipped.size());
-           for(std::deque<int>::iterator it = branches_flipped.begin(); it != branches_flipped.end(); it++){
+           for(std::vector<int>::iterator it = branches_flipped.begin(); it != branches_flipped.end(); it++){
            tree.nodes[*it].num_events += weight;
            }
            */
@@ -994,7 +994,7 @@ AncesTreeBuilder::ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutati
 }
 
 int
-AncesTreeBuilder::PropagateMutationExact(Node& node, std::deque<int>& branches, std::deque<int>& branches_flipped, Leaves& sequences_carrying_mutations){
+AncesTreeBuilder::PropagateMutationExact(Node& node, std::vector<int>& branches, std::vector<int>& branches_flipped, Leaves& sequences_carrying_mutations){
 
   if(node.child_left != NULL){
 
@@ -1131,7 +1131,7 @@ AncesTreeBuilder::PropagateMutationGlobal(Node& node, Leaves& sequences_carrying
 }
 
 void
-AncesTreeBuilder::PropagateMutationLocal(Node& node, std::deque<int>& branches, std::deque<int>& branches_flipped, Leaves& sequences_carrying_mutations, PropagateStructLocal& report){
+AncesTreeBuilder::PropagateMutationLocal(Node& node, std::vector<int>& branches, std::vector<int>& branches_flipped, Leaves& sequences_carrying_mutations, PropagateStructLocal& report){
 
   if(node.child_left != NULL){
 

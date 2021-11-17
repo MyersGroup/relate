@@ -15,7 +15,7 @@ struct SNPInfo{
   int pos, dist;
 
   int tree;
-  std::deque<int> branch;
+  std::vector<int> branch;
   std::vector<int> freq;
   bool flipped = false;
   float age_begin = 0.0, age_end = 0.0;

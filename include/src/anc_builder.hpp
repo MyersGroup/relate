@@ -147,9 +147,9 @@ class AncesTreeBuilder{
     int MapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, float& min_value, bool use = true);
     int ForceMapMutation(Tree& tree, Leaves& sequences_carrying_mutations, const int snp, const bool force = false);
     
-    int PropagateMutationExact(Node& node, std::deque<int>& branches, std::deque<int>& branches_flipped, Leaves& sequences_carrying_mutations);
+    int PropagateMutationExact(Node& node, std::vector<int>& branches, std::vector<int>& branches_flipped, Leaves& sequences_carrying_mutations);
     void PropagateMutationGlobal(Node& node, Leaves& sequences_carrying_mutations, PropagateStructGlobal& report);
-    void PropagateMutationLocal(Node& node, std::deque<int>& branches, std::deque<int>& branches_flipped, Leaves& sequences_carrying_mutations, PropagateStructLocal& report);
+    void PropagateMutationLocal(Node& node, std::vector<int>& branches, std::vector<int>& branches_flipped, Leaves& sequences_carrying_mutations, PropagateStructLocal& report);
 
     void UpdateBranchSNPbegin(Tree& tree, int snp);
     void UpdateBranchSNPend(Tree& tree, int snp);

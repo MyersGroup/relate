@@ -156,8 +156,7 @@ Mutations::Read(igzstream& is){
   //snp;pos_of_snp;rs-id;tree_index;branch_indices;is_mapping;is_flipped;(age_begin,age_end);ancestral_allele/alternative_allele;downstream_allele;upstream_allele;ACB;ASW;BEB;CDX;CEU;CHB;CHS;CLM;ESN;FIN;GBR;GIH;GWD;IBS;ITU;JPT;KHV;LWK;MSL;MXL;PEL;PJL;PUR;STU;TSI;YRI
 
   int i = 0;
-  while(getline(is, line)){ 
-
+	while(getline(is, line)){ 
     i = 0;
 
     //snp-id
@@ -291,6 +290,7 @@ Mutations::Read(igzstream& is){
       while(line[i] != ';' && i < line.size()){
         inread += line[i];
         i++;
+				if(i == line.size()) break;
       } 
       info[snp].mutation_type = inread;
       i++;
@@ -386,7 +386,7 @@ Mutations::Dump(const std::string& filename){
 
     for(std::vector<SNPInfo>::iterator it = info.begin(); it != info.end(); it++){
       os << (*it).snp_id << ";" << (*it).pos << ";" << (*it).dist << ";" << (*it).rs_id << ";" << (*it).tree << ";";
-      std::deque<int>::iterator it_branch = (*it).branch.begin();
+      std::vector<int>::iterator it_branch = (*it).branch.begin();
       if((*it).branch.size() > 0){
         os << *it_branch;
         it_branch++;
@@ -435,7 +435,7 @@ Mutations::DumpShortFormat(const std::string& filename){
 
     for(std::vector<SNPInfo>::iterator it = info.begin(); it != info.end(); it++){
       os << (*it).tree << ";";
-      std::deque<int>::iterator it_branch = (*it).branch.begin();
+      std::vector<int>::iterator it_branch = (*it).branch.begin();
       if((*it).branch.size() > 0){
         os << *it_branch;
         it_branch++;
@@ -471,7 +471,7 @@ Mutations::DumpShortFormat(const std::string& filename, const int section_startp
 
     for(std::vector<SNPInfo>::iterator it = std::next(info.begin(),section_startpos); it != std::next(info.begin(), section_endpos+1); it++){
       os << (*it).tree << ";";
-      std::deque<int>::iterator it_branch = (*it).branch.begin();
+      std::vector<int>::iterator it_branch = (*it).branch.begin();
       if((*it).branch.size() > 0){
         os << *it_branch;
         it_branch++;
@@ -533,7 +533,7 @@ AncMutIterators::AncMutIterators(const std::string& filename_anc, const std::str
   is_header >> num_trees;
 
   mut.Read(filename_mut);
-  pit_mut           = mut.info.begin();
+	pit_mut           = mut.info.begin();
   tree_index_in_mut = (*pit_mut).tree;
   tree_index_in_anc = -1;
 
