@@ -22,22 +22,6 @@
 
 //////////////////////////////////////////////////////
 
-class Correlation{
-
-  private:
-
-    int N;
-    float N_float;
-
-  public:
-
-    Correlation(int N): N(N){
-      N_float = (float) N;
-    }
-    float Pearson(const Leaves& set1, const Leaves& set2);
-
-};
-
 struct PropagateStructLocal{
 
   int num_carriers = 0;
@@ -53,21 +37,6 @@ struct PropagateStructGlobal{
   int num_incorrect_carriers, num_incorrect_noncarriers;
   int best_branch, best_flipped_branch;
   int min, flipped_min;
-
-};
-
-struct EquivalentNode{
-
-  int node1;
-  int node2;
-  float corr;
-
-  EquivalentNode(){};
-  EquivalentNode(int node1, int node2, float corr): node1(node1), node2(node2), corr(corr){};
-
-  bool operator > (const EquivalentNode& n) const{
-    return (corr > n.corr);
-  }
 
 };
 

@@ -1,45 +1,5 @@
 #include "anc_builder.hpp"
 
-//////////////////////////////////////////
-
-float 
-Correlation::Pearson(const Leaves& set1, const Leaves& set2){
-
-  if(set1.num_leaves == N || set2.num_leaves == N){
-    if(set1.num_leaves == set2.num_leaves) return 1;
-    return 0;
-  }
-
-  float prod = 0.0; 
-  std::vector<int>::const_iterator it_set1_member = set1.member.begin();
-  std::vector<int>::const_iterator it_set2_member = set2.member.begin();
-
-  const std::vector<int>::const_iterator it_set1_member_end = set1.member.end();
-  const std::vector<int>::const_iterator it_set2_member_end = set2.member.end();
-
-  while(it_set1_member != it_set1_member_end && it_set2_member != it_set2_member_end){
-    if(*it_set1_member == *it_set2_member){
-      prod += 1.0;
-      it_set1_member++;
-      it_set2_member++;
-    }else if(*it_set1_member < *it_set2_member){
-      it_set1_member++;
-    }else{
-      it_set2_member++;
-    }
-  }
-
-  if(prod == set1.num_leaves && prod == set2.num_leaves) return 1.0;
-  float r = prod - set1.num_leaves * (((float) set2.num_leaves)/N_float);
-  if(r <= 0.0) return 0.0;
-
-  r /= sqrt( ((((float)set1.num_leaves)/N_float) * (N_float - set1.num_leaves)) * ((((float)set2.num_leaves)/N_float) * (N_float - set2.num_leaves)) );
-  assert(!std::isnan(r));
-
-  return r;
-
-}
-
 //////////////////////// DistanceMeasure //////////////////
 
 void 

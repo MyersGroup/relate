@@ -183,6 +183,41 @@ struct MarginalTree{
 
 typedef std::list<MarginalTree> CorrTrees; //I could change this to deque but deque has no splice
 
+
+//Used to find equivalent nodes across trees
+struct EquivalentNode{
+
+	int node1;
+	int node2;
+	float corr;
+
+	EquivalentNode(){};
+	EquivalentNode(int node1, int node2, float corr): node1(node1), node2(node2), corr(corr){};
+
+	bool operator > (const EquivalentNode& n) const{
+		return (corr > n.corr);
+	}
+
+};
+
+//Calculates the Pearson correlation between two sets
+class Correlation{
+
+	private:
+
+		int N;
+		float N_float;
+
+	public:
+
+		Correlation(int N): N(N){
+			N_float = (float) N;
+		}
+		float Pearson(const Leaves& set1, const Leaves& set2);
+
+};
+
+
 //Data structure for AncesTrees/Tree sequences
 class AncesTree{
 
@@ -211,6 +246,10 @@ class AncesTree{
     void ReadArgweaverSMC(const std::string& filename);
     void ReadRent(const std::string& filename, float Ne);
     void ReadNewick(const std::string& filename, float Ne = 1.0);
+
+		//Associate equivalent branches in seq
+		void BranchAssociation(const Tree& ref_tree, const Tree& tree, std::vector<int>& equivalent_branches, std::vector<std::vector<int>>& potential_branches, int N, int N_total, float threshold_brancheq);
+		void AssociateEquivalentBranches();
 
 };
 

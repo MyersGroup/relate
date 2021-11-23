@@ -145,5 +145,194 @@ GenerateSNPAnnotationsUsingTree(cxxopts::Options& options){
 }
 
 
+void
+PropagateMutations(cxxopts::Options& options){
+
+	//////////////////////////////////
+	//Program options
+
+	bool help = false;
+	if(!options.count("anc") || !options.count("mut") || !options.count("output")){
+		std::cout << "Not enough arguments supplied." << std::endl;
+		std::cout << "Needed: anc, mut, output." << std::endl;
+		help = true;
+	}
+	if(options.count("help") || help){
+		std::cout << options.help({""}) << std::endl;
+		std::cout << "Example code for converting from tree sequence file format." << std::endl;
+		exit(0);
+	}  
+
+	std::cerr << "---------------------------------------------------------" << std::endl;
+	std::cerr << "Propagate mutations " << options["anc"].as<std::string>() << " and " << options["mut"].as<std::string>() << "..." << std::endl;
+
+	//Read anc/mut 
+	AncesTree anc;
+	anc.Read(options["anc"].as<std::string>());
+	Mutations mut;
+	mut.Read(options["mut"].as<std::string>());
+
+
+	CorrTrees::iterator it_seq_prev;
+	CorrTrees::iterator it_seq; 
+
+	int N_total = (*anc.seq.begin()).tree.nodes.size();
+	int N       = (N_total+1.0)/2.0;
+
+	//Associate branches
+	//Pre calculate how many descendants a branch needs to be equivalent
+	float threshold_brancheq = 0.95;
+	//float threshold_brancheq = 1.0;
+	std::vector<std::vector<int>> potential_branches;
+	//the number of leaves a branch needs to be equivalent
+	potential_branches.resize(N);
+	float threshold_inv = 1/(threshold_brancheq * threshold_brancheq);
+	float N_float = N;
+	for(int i = 1; i <= N; i++){
+		potential_branches[i-1].push_back(i);
+		//for branches with i+1 leaves, list the number of leaves a potential equivalent branch needs
+		for(int j = i+1; j <= N; j++){
+			if(threshold_inv >= j/(N_float-j) * ((N_float-i)/i) ){
+				potential_branches[i-1].push_back(j);
+				potential_branches[j-1].push_back(i);
+			}
+		}
+	}
+
+	/////
+	// Find equivalent branches
+
+	//for each tree, I want a
+	std::vector<std::vector<std::vector<int>>> tree_mutations;
+	std::vector<std::vector<std::vector<int>>>::iterator it_muts, it_muts_prev;
+
+	tree_mutations.resize(anc.L);
+	int snp = 0;
+	int tree_index = mut.info[snp].tree;
+
+	for(std::vector<std::vector<std::vector<int>>>::iterator it_muts = tree_mutations.begin(); it_muts != tree_mutations.end(); it_muts++){
+		(*it_muts).resize(2*N-1);
+	}
+
+	for(int snp = 0; snp < mut.info.size(); snp++){
+		tree_mutations[mut.info[snp].tree][*mut.info[snp].branch.begin()].push_back(snp);
+	}
+
+	it_seq_prev = anc.seq.begin();
+	it_seq      = std::next(it_seq_prev,1); 
+
+	std::vector<std::vector<int>> equivalent_branches;
+	std::vector<std::vector<int>>::iterator it_equivalent_branches;
+	std::vector<std::vector<int>>::reverse_iterator rit_equivalent_branches;
+
+	for(; it_seq != anc.seq.end();){
+		equivalent_branches.emplace_back();
+		it_equivalent_branches = std::prev(equivalent_branches.end(),1);
+		anc.BranchAssociation((*it_seq_prev).tree, (*it_seq).tree, *it_equivalent_branches, potential_branches, N, N_total, threshold_brancheq); //O(N^2) 
+		it_seq++;
+		it_seq_prev++;
+	}  
+
+	///////////////////////////////////////////
+	//Now carry over information on branches, starting from the first tree.
+
+	it_equivalent_branches = equivalent_branches.begin();
+	std::vector<Node>::iterator it_nodes;
+
+	it_seq_prev = anc.seq.begin();
+	it_seq      = std::next(it_seq_prev,1); 
+	it_muts_prev = tree_mutations.begin();
+	it_muts      = std::next(it_muts_prev,1); 
+
+	for(; it_seq != anc.seq.end();){
+		it_nodes = (*it_seq).tree.nodes.begin();
+		for(std::vector<int>::iterator it = (*it_equivalent_branches).begin(); it != (*it_equivalent_branches).end(); it++){
+			if(*it != -1){
+				(*it_nodes).num_events += (*it_seq_prev).tree.nodes[*it].num_events;
+				(*it_nodes).SNP_begin   = (*it_seq_prev).tree.nodes[*it].SNP_begin;
+				for(std::vector<int>::iterator it_snps = (*it_muts_prev)[*it].begin(); it_snps != (*it_muts_prev)[*it].end(); it_snps++){
+					(*it_muts)[(*it_nodes).label].push_back(*it_snps);
+				}
+			}
+			it_nodes++;
+		}
+		it_equivalent_branches++;
+
+		it_seq++;
+		it_seq_prev++;
+		it_muts++;
+		it_muts_prev++;
+	}
+	assert(it_equivalent_branches == equivalent_branches.end());
+
+	///////////////////////////////////////////
+	//Now go from the last tree to the first
+
+	rit_equivalent_branches = equivalent_branches.rbegin();
+
+	CorrTrees::reverse_iterator rit_seq_next;
+	CorrTrees::reverse_iterator rit_seq; 
+	std::vector<std::vector<std::vector<int>>>::reverse_iterator rit_muts, rit_muts_next;
+
+
+
+	rit_seq_next = anc.seq.rbegin();
+	rit_seq      = std::next(rit_seq_next,1); 
+	rit_muts_next = tree_mutations.rbegin();
+	rit_muts     = std::next(rit_muts_next,1);
+
+	for(; rit_seq != anc.seq.rend();){
+		it_nodes = (*rit_seq_next).tree.nodes.begin();
+		for(std::vector<int>::iterator it = (*rit_equivalent_branches).begin(); it != (*rit_equivalent_branches).end(); it++){
+			if(*it != -1){
+				(*rit_seq).tree.nodes[*it].num_events = (*it_nodes).num_events;
+				(*rit_seq).tree.nodes[*it].SNP_end    = (*it_nodes).SNP_end;
+				(*rit_muts)[*it] = (*rit_muts_next)[(*it_nodes).label];	
+				std::sort((*rit_muts)[*it].begin(), (*rit_muts)[*it].end());
+			}
+			it_nodes++;
+		}
+		rit_equivalent_branches++;
+
+		rit_seq++;
+		rit_seq_next++;
+		rit_muts++;
+		rit_muts_next++;
+	}
+
+	assert(rit_equivalent_branches == equivalent_branches.rend());
+
+
+	std::ofstream os(options["output"].as<std::string>() + ".allmuts");
+	os << "treeID branchID SNPID\n";
+	int tree = 0;
+	for(std::vector<std::vector<std::vector<int>>>::iterator it_muts = tree_mutations.begin(); it_muts != tree_mutations.end(); it_muts++){
+		for(int b = 0; b < 2*N-1; b++){
+			if((*it_muts)[b].size() > 0){
+				for(std::vector<int>::iterator it_snps = (*it_muts)[b].begin(); it_snps != (*it_muts)[b].end(); it_snps++){
+					os << tree << " " << b << " " << *it_snps << "\n";
+				}
+			}
+		}
+		tree++;
+	}
+	os.close();
+
+	/////////////////////////////////////////////
+	//Resource Usage
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+}
+
 
 

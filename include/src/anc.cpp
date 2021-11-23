@@ -811,7 +811,49 @@ MarginalTree::Dump(FILE *pfile){
 }
 
 
+
+///////////////////////////////////
+
+float 
+Correlation::Pearson(const Leaves& set1, const Leaves& set2){
+
+	if(set1.num_leaves == N || set2.num_leaves == N){
+		if(set1.num_leaves == set2.num_leaves) return 1;
+		return 0;
+	}
+
+	float prod = 0.0; 
+	std::vector<int>::const_iterator it_set1_member = set1.member.begin();
+	std::vector<int>::const_iterator it_set2_member = set2.member.begin();
+
+	const std::vector<int>::const_iterator it_set1_member_end = set1.member.end();
+	const std::vector<int>::const_iterator it_set2_member_end = set2.member.end();
+
+	while(it_set1_member != it_set1_member_end && it_set2_member != it_set2_member_end){
+		if(*it_set1_member == *it_set2_member){
+			prod += 1.0;
+			it_set1_member++;
+			it_set2_member++;
+		}else if(*it_set1_member < *it_set2_member){
+			it_set1_member++;
+		}else{
+			it_set2_member++;
+		}
+	}
+
+	if(prod == set1.num_leaves && prod == set2.num_leaves) return 1.0;
+	float r = prod - set1.num_leaves * (((float) set2.num_leaves)/N_float);
+	if(r <= 0.0) return 0.0;
+
+	r /= sqrt( ((((float)set1.num_leaves)/N_float) * (N_float - set1.num_leaves)) * ((((float)set2.num_leaves)/N_float) * (N_float - set2.num_leaves)) );
+	assert(!std::isnan(r));
+
+	return r;
+
+}
+
 ////////////////////////////////
+
 
 void 
 AncesTree::Read(igzstream& is){
@@ -1642,5 +1684,274 @@ AncesTree::ReadNewick(const std::string& filename, float Ne){
   seq.pop_back();
 
 }
+
+
+
+//Functions for assiciating equivalent branches across adjacent trees
+void
+AncesTree::BranchAssociation(const Tree& ref_tree, const Tree& tree, std::vector<int>& equivalent_branches, std::vector<std::vector<int>>& potential_branches, int N, int N_total, float threshold_brancheq){
+
+	////
+	equivalent_branches.resize(N_total);
+	std::fill(equivalent_branches.begin(), equivalent_branches.end(), -1);
+	std::vector<int> equivalent_branches_ref(N_total, -1);
+
+	Correlation cor(N);
+
+	//1. calculate leaves
+	std::vector<Leaves> tr_leaves;
+	std::vector<Leaves> rtr_leaves;
+
+	tree.FindAllLeaves(tr_leaves);
+	ref_tree.FindAllLeaves(rtr_leaves);
+
+	//2. Sort nodes according to number of leaves and store in std::vector of size(N_total)
+
+	std::vector<int> sorted_branches(N_total);
+	std::size_t n(0);
+	std::generate(std::begin(sorted_branches), std::end(sorted_branches), [&]{ return n++; });
+	std::sort(std::begin(sorted_branches), std::end(sorted_branches), [&](int i1, int i2) { return rtr_leaves[i1].num_leaves < rtr_leaves[i2].num_leaves; } );
+
+	std::vector<int> index_sorted_branches(N,0); //this vector is for accessing sorted_branches
+	for(std::vector<Leaves>::iterator it = rtr_leaves.begin(); it != std::prev(rtr_leaves.end(),1); it++){
+		index_sorted_branches[(*it).num_leaves]++;
+	}
+	int cum = 0;
+	for(std::vector<int>::iterator it = index_sorted_branches.begin(); it != index_sorted_branches.end(); it++){
+		*it += cum;
+		cum = *it;
+	}
+
+	//3. For each branch, search for exact equivalent branch in ref_tree
+	//   record which branches are unpaired
+
+	std::vector<int> unpaired_branches;
+
+	Node parent, ref_parent;
+
+	//treat leaves separately (this is faster)
+	for(int i = 0; i < N; i++){
+
+		if(equivalent_branches[i] == -1){
+
+			parent = *tree.nodes[i].parent;
+			ref_parent = *ref_tree.nodes[i].parent;
+
+			if((*parent.child_left).label == i){
+
+				int child_right = (*parent.child_right).label;
+				if(child_right < N){
+					if( child_right == (*ref_parent.child_right).label ){ 
+						equivalent_branches[i]     = i;
+						equivalent_branches_ref[i] = i;
+						equivalent_branches[child_right]     = child_right;
+						equivalent_branches_ref[child_right] = child_right;
+					}else if( child_right == (*ref_parent.child_left).label ){ 
+						equivalent_branches[i]     = i;
+						equivalent_branches_ref[i] = i;
+						equivalent_branches[child_right]     = child_right;
+						equivalent_branches_ref[child_right] = child_right;
+					} 
+				}else{
+					if(cor.Pearson(tr_leaves[parent.label], rtr_leaves[ref_parent.label]) >= threshold_brancheq){
+						equivalent_branches[i]     = i;
+						equivalent_branches_ref[i] = i;
+					}
+				}
+
+			}else{
+
+				int child_left = (*parent.child_left).label;
+				if(child_left < N){
+					if( child_left == (*ref_parent.child_left).label ){ 
+						equivalent_branches[i]     = i;
+						equivalent_branches_ref[i] = i;
+						equivalent_branches[child_left]     = child_left;
+						equivalent_branches_ref[child_left] = child_left;
+					}else if( child_left == (*ref_parent.child_right).label ){ 
+						equivalent_branches[i]     = i;
+						equivalent_branches_ref[i] = i;
+						equivalent_branches[child_left]     = child_left;
+						equivalent_branches_ref[child_left] = child_left;
+					} 
+				}else{
+					if(cor.Pearson(tr_leaves[parent.label], rtr_leaves[ref_parent.label]) >= threshold_brancheq){
+						equivalent_branches[i]     = i;
+						equivalent_branches_ref[i] = i;
+					}
+				}
+
+			}
+
+		}
+
+	}
+
+	for(int i = N; i < N_total-1; i++){ 
+
+		if(cor.Pearson(tr_leaves[i], rtr_leaves[i]) >= 0.9999 && cor.Pearson(tr_leaves[(*tree.nodes[i].parent).label], rtr_leaves[(*ref_tree.nodes[i].parent).label]) >= 0.9999){     
+			//branches i and i are equivalent
+			equivalent_branches[i] = i;
+			equivalent_branches_ref[i] = i;
+		}
+
+		if(equivalent_branches[i] == -1){
+			int num_leaves = tr_leaves[i].num_leaves;
+			for(std::vector<int>::iterator it = std::next(sorted_branches.begin(),index_sorted_branches[num_leaves-1]); it != std::next(sorted_branches.begin(), index_sorted_branches[num_leaves]); it++ ){
+				if(cor.Pearson(tr_leaves[i], rtr_leaves[*it]) >= 0.9999 && cor.Pearson(tr_leaves[(*tree.nodes[i].parent).label], rtr_leaves[(*ref_tree.nodes[*it].parent).label]) >= 0.9999){     
+					//branches i and *it are equivalent
+					equivalent_branches[i]       = *it;
+					equivalent_branches_ref[*it] = i;
+
+					break;  
+				}
+			}
+		}
+
+		if(equivalent_branches[i] == -1){
+			unpaired_branches.push_back(i);
+		}
+
+	}
+
+	//4. For the nodes that are not paired up, find all possible pairs above threshold 
+	std::vector<EquivalentNode> possible_pairs;
+
+	for(std::vector<int>::iterator it_unpaired = unpaired_branches.begin(); it_unpaired != unpaired_branches.end(); it_unpaired++){
+
+		int num_leaves = tr_leaves[*it_unpaired].num_leaves - 1;
+		for(std::vector<int>::iterator it_k = potential_branches[num_leaves].begin(); it_k != potential_branches[num_leaves].end(); it_k++){
+
+			for(std::vector<int>::iterator it = std::next(sorted_branches.begin(),index_sorted_branches[*it_k-1]); it != std::next(sorted_branches.begin(), index_sorted_branches[*it_k]); it++ ){
+				if(equivalent_branches_ref[*it] == -1){
+					float score = cor.Pearson(tr_leaves[*it_unpaired], rtr_leaves[*it]);
+					if(score >= threshold_brancheq && cor.Pearson(tr_leaves[(*tree.nodes[*it_unpaired].parent).label], rtr_leaves[(*ref_tree.nodes[*it].parent).label]) >= threshold_brancheq){     
+						//branches i and *it are equivalent
+						possible_pairs.push_back(EquivalentNode(*it_unpaired, *it, score));
+					}
+				}
+			}
+
+		}
+
+	}
+
+
+	//5. Sort possible_pairs by score
+	std::sort(std::begin(possible_pairs), std::end(possible_pairs), std::greater<EquivalentNode>());
+
+	//6. Pair up approximate matches
+	for(std::vector<EquivalentNode>::iterator it = possible_pairs.begin(); it != possible_pairs.end(); it++){
+		if(equivalent_branches[(*it).node1] == -1 && equivalent_branches_ref[(*it).node2] == -1){
+			equivalent_branches[(*it).node1]     = (*it).node2;
+			equivalent_branches_ref[(*it).node2] = (*it).node1;
+		}
+	}
+
+}
+
+//Carry over information across equivalent branches
+void
+AncesTree::AssociateEquivalentBranches(){
+
+	CorrTrees::iterator it_seq_prev;
+	CorrTrees::iterator it_seq; 
+
+	int N_total = (*seq.begin()).tree.nodes.size();
+	int N       = (N_total+1.0)/2.0;
+
+	//Associate branches
+	//Pre calculate how many descendants a branch needs to be equivalent
+	float threshold_brancheq = 0.95;
+	//float threshold_brancheq = 1.0;
+	std::vector<std::vector<int>> potential_branches;
+	//the number of leaves a branch needs to be equivalent
+	potential_branches.resize(N);
+	float threshold_inv = 1/(threshold_brancheq * threshold_brancheq);
+	float N_float = N;
+	for(int i = 1; i <= N; i++){
+		potential_branches[i-1].push_back(i);
+		//for branches with i+1 leaves, list the number of leaves a potential equivalent branch needs
+		for(int j = i+1; j <= N; j++){
+			if(threshold_inv >= j/(N_float-j) * ((N_float-i)/i) ){
+				potential_branches[i-1].push_back(j);
+				potential_branches[j-1].push_back(i);
+			}
+		}
+	}
+
+	/////
+	// Find equivalent branches
+
+	it_seq_prev = seq.begin();
+	it_seq      = std::next(it_seq_prev,1); 
+
+	std::vector<std::vector<int>> equivalent_branches;
+	std::vector<std::vector<int>>::iterator it_equivalent_branches;
+	std::vector<std::vector<int>>::reverse_iterator rit_equivalent_branches;
+
+	for(; it_seq != seq.end();){
+		equivalent_branches.emplace_back();
+		it_equivalent_branches = std::prev(equivalent_branches.end(),1);
+		BranchAssociation((*it_seq_prev).tree, (*it_seq).tree, *it_equivalent_branches, potential_branches, N, N_total, threshold_brancheq); //O(N^2) 
+		it_seq++;
+		it_seq_prev++;
+	}  
+
+	///////////////////////////////////////////
+	//Now carry over information on branches, starting from the first tree.
+
+	it_equivalent_branches = equivalent_branches.begin();
+	std::vector<Node>::iterator it_nodes;
+
+	it_seq_prev = seq.begin();
+	it_seq      = std::next(it_seq_prev,1); 
+
+	for(; it_seq != seq.end();){
+		it_nodes = (*it_seq).tree.nodes.begin();
+		for(std::vector<int>::iterator it = (*it_equivalent_branches).begin(); it != (*it_equivalent_branches).end(); it++){
+			if(*it != -1){
+				(*it_nodes).num_events += (*it_seq_prev).tree.nodes[*it].num_events;
+				(*it_nodes).SNP_begin   = (*it_seq_prev).tree.nodes[*it].SNP_begin;
+			}
+			it_nodes++;
+		}
+		it_equivalent_branches++;
+
+		it_seq++;
+		it_seq_prev++;
+	}
+	assert(it_equivalent_branches == equivalent_branches.end());
+
+	///////////////////////////////////////////
+	//Now go from the last tree to the first
+
+	rit_equivalent_branches = equivalent_branches.rbegin();
+
+	CorrTrees::reverse_iterator rit_seq_next;
+	CorrTrees::reverse_iterator rit_seq; 
+	rit_seq_next = seq.rbegin();
+	rit_seq      = std::next(rit_seq_next,1); 
+	for(; rit_seq != seq.rend();){
+		it_nodes = (*rit_seq_next).tree.nodes.begin();
+		for(std::vector<int>::iterator it = (*rit_equivalent_branches).begin(); it != (*rit_equivalent_branches).end(); it++){
+			if(*it != -1){
+				(*rit_seq).tree.nodes[*it].num_events = (*it_nodes).num_events;
+				(*rit_seq).tree.nodes[*it].SNP_end    = (*it_nodes).SNP_end;
+			}
+			it_nodes++;
+		}
+		rit_equivalent_branches++;
+
+		rit_seq++;
+		rit_seq_next++;
+	}
+
+	assert(rit_equivalent_branches == equivalent_branches.rend());
+
+}
+
+
+
 
 
