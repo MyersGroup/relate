@@ -382,7 +382,7 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
     }
 
 		if(snp < section_endpos && fb > 0){
-			if( ((int) (data.bp_pos[snp+1]/1e4)) - ((int) (data.bp_pos[snp]/1e4)) >= 1 ){
+			if( ((int) (data.bp_pos[snp+1]/fb)) - ((int) (data.bp_pos[snp]/fb)) >= 1 ){
         force_build_new_tree = true;
 			}
 		}
