@@ -294,7 +294,7 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_age
 //////////// Members
 
 void 
-AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc, const int seed, const bool ancestral_state){
+AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc, const int seed, const bool ancestral_state, const int fb){
 
   /////////////////////////////////////////////
   //Tree Building
@@ -354,6 +354,7 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   } 
 
   int num_tree = 1;
+	bool force_build_new_tree;
   //build tree topology for snp > 0
   for(int snp = section_startpos+1; snp <= section_endpos; snp++){
 
@@ -369,17 +370,24 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
         sequences_carrying_mutation.member[i] = 0;
       }
     }
-
     mutations.info[snp].tree = num_tree-1;
-    //if mutation does not fall on current tree, I need to build new tree
 
+
+		force_build_new_tree = false;
+    //if mutation does not fall on current tree, I need to build new tree
     if(ancestral_state){
       is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value, data.state[snp]);
     }else{ 
       is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, snp, min_value, data.state[snp]);
     }
 
-    if(is_mapping > 1){
+		if(snp < section_endpos && fb > 0){
+			if( ((int) (data.bp_pos[snp+1]/1e4)) - ((int) (data.bp_pos[snp]/1e4)) >= 1 ){
+        force_build_new_tree = true;
+			}
+		}
+
+		if(is_mapping > 1 || force_build_new_tree){
 
       //if SNP was flipped, it is mapped to current tree (branch prev_branch)
       int prev_branch;
@@ -411,16 +419,15 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
       }else{
         is_mapping_alt = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, snp, min_value_alt, data.state[snp]);
       } 
-      if(is_mapping_alt > 1 && min_value_alt >= min_value){ 
+      if(is_mapping_alt > 1 && min_value_alt >= min_value && !force_build_new_tree){ 
         //mutation not mapping to a unique branch and new tree is worse than old tree
         it_seq--;
         anc.seq.pop_back();
         if(is_mapping > 2) ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, snp, true); //otherwise, it was flipped and is already mapped to branch
-
       }else{
 
         //is_mapping == 1 or (is_mapping > 1 and min_value_alt < min_value)
-        //in other words: mutation is mapping, or new tree is better than old tree
+        //in other words: mutation is mapping, or new tree is better than old tree or force build new tree
         if(is_mapping == 2){
           //need to subtract from prev tree
           if(data.state[snp]) (*std::prev(it_seq)).tree.nodes[prev_branch].num_events -= 1.0;

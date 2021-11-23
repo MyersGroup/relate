@@ -166,7 +166,7 @@ class AncesTreeBuilder{
     //build tree sequences that adapt whenever a recombination
     //event is detected.
 
-    void BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc, const int seed, const bool ancestral_state);
+    void BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc, const int seed, const bool ancestral_state, const int fb = 0);
     void AssociateTrees(std::vector<AncesTree>& v_anc, const std::string& dirname = "./");
 		int OptimizeParameters(const int section, const int section_startpos, const int section_endpos, Data& data, const int seed);
 

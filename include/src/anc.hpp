@@ -208,7 +208,6 @@ class AncesTree{
 
     //Read ancs from other filetypes
     void ReadMsPrime(const std::string& filename);
-    void ReadTreesimOldStyle(const std::string& filename, const Data& data);
     void ReadArgweaverSMC(const std::string& filename);
     void ReadRent(const std::string& filename, float Ne);
     void ReadNewick(const std::string& filename, float Ne = 1.0);

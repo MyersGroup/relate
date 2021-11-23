@@ -49,7 +49,8 @@ struct Data{
 
   CollapsedMatrix<char> sequence; //sequence matrix, containing 0 and 1
   std::vector<int> state; //vector specifying state of SNP (e.g., whether to use or not for bl estimation)
-  std::vector<int> pos;    //vector specifying location of each SNP along the genome
+	std::vector<int> bp_pos;
+	std::vector<int> dist;    //vector specifying location of each SNP along the genome
   std::vector<double> r;   //vector of recombination distances from one SNP to the next
   std::vector<double> rpos; //vector of cumulative recombination distances
 
@@ -60,9 +61,9 @@ struct Data{
   Data(int N, int L, int Ne = 3e4, double mu = 1.25e-8);
 
   //Constructor, which reads files in binary format for fast io
-  Data(const char* filename_sequence, const char* filename_pos, const char* filename_rec, const char* filename_rpos, const char* filename_state, int Ne = 3e4, double mu = 1.25e-8);
+  Data(const char* filename_sequence, const char* filename_pos, const char* filename_dist, const char* filename_rec, const char* filename_rpos, const char* filename_state, int Ne = 3e4, double mu = 1.25e-8);
   //Constructor, which reads pos, and param files in bin format
-  Data(const char* filename_pos, const char* filename_param, int Ne = 3e4, double mu = 1.25e-8);
+  Data(const char* filename_dist, const char* filename_param, int Ne = 3e4, double mu = 1.25e-8);
  
   ///////////
 

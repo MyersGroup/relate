@@ -1365,18 +1365,18 @@ InferBranchLengths::InitializeMCMC(const Data& data, Tree& tree){
     int snp_begin = tree.nodes[i].SNP_begin;
     int snp_end   = tree.nodes[i].SNP_end;
 
-    assert(snp_end < data.pos.size());
+    assert(snp_end < data.dist.size());
     mut_rate[i]            = 0.0;
     for(int snp = snp_begin; snp < snp_end; snp++){
-      mut_rate[i]         += data.pos[snp];
+      mut_rate[i]         += data.dist[snp];
     }
 
     if(snp_begin > 0){
       snp_begin--;
-      mut_rate[i]         += 0.5 * data.pos[snp_begin];
+      mut_rate[i]         += 0.5 * data.dist[snp_begin];
     }
     if(snp_end < data.L-1){
-      mut_rate[i]         += 0.5 * data.pos[snp_end];
+      mut_rate[i]         += 0.5 * data.dist[snp_end];
     }
 
     mut_rate[i]           *= data.Ne * data.mu;

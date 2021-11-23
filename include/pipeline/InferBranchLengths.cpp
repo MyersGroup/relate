@@ -53,7 +53,7 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
   int Ne = 30000;
   if(options.count("effectiveN")) Ne = (int) options["effectiveN"].as<float>();
   double mutation_rate = options["mutation_rate"].as<float>();
-  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), Ne, mutation_rate); //struct data is defined in data.hpp 
+  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".dist").c_str(), (file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), Ne, mutation_rate); //struct data is defined in data.hpp 
   const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
 
   std::cerr << "---------------------------------------------------------" << std::endl;

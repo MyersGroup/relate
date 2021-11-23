@@ -83,9 +83,10 @@ Data::Data(int N, int L, int Ne, double mu): N(N), L(L), Ne(Ne), mu(mu){
   name     = "relate"; 
 }
 
-Data::Data(const char* filename_sequence, const char* filename_pos, const char* filename_rec, const char* filename_rpos, const char* filename_state, int Ne, double mu): Ne(Ne), mu(mu){
+Data::Data(const char* filename_sequence, const char* filename_pos, const char* filename_dist, const char* filename_rec, const char* filename_rpos, const char* filename_state, int Ne, double mu): Ne(Ne), mu(mu){
   ReadSequenceFromBin(filename_sequence);
-  ReadVectorFromBin(pos, filename_pos);
+	ReadVectorFromBin(bp_pos, filename_pos);
+  ReadVectorFromBin(dist, filename_dist);
   ReadVectorFromBin(r, filename_rec);
   ReadVectorFromBin(rpos, filename_rpos);
   ReadVectorFromBin(state, filename_state);
@@ -95,7 +96,7 @@ Data::Data(const char* filename_sequence, const char* filename_pos, const char* 
   ntheta   = 1.0 - theta;
 }
 
-Data::Data(const char* filename_pos, const char* filename_param, int Ne, double mu): Ne(Ne), mu(mu){ 
+Data::Data(const char* filename_dist, const char* filename_param, int Ne, double mu): Ne(Ne), mu(mu){ 
 
   FILE* fp = fopen(filename_param, "r");
   assert(fp != NULL);
@@ -103,7 +104,7 @@ Data::Data(const char* filename_pos, const char* filename_param, int Ne, double 
   fread(&L, sizeof(int), 1, fp);
   fclose(fp); 
 
-  ReadVectorFromBin(pos, filename_pos);
+  ReadVectorFromBin(dist, filename_dist);
 
   name     = "relate"; 
   theta    = 0.001;
@@ -121,7 +122,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   L = m_haps.GetL();
   std::vector<char>::size_type uN = N; 
 
-  std::vector<int> bp_pos(L+1);
+  bp_pos.resize(L+1);
   std::vector<std::string> ancestral(L), alternative(L);
   std::vector<std::string> rsid(L);
 
@@ -374,16 +375,16 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   fclose(fp);
 
   //////////////////////// calculate rpos, r, pos here
-  pos.resize(L); 
+	dist.resize(L); 
   std::vector<int>::iterator it_pos, it_bppos, it_bppos_next;
 
   if(filename_dist == "unspecified"){
 
-    it_pos = pos.begin();
+    it_pos = dist.begin();
     it_bppos = bp_pos.begin();
     it_bppos_next = std::next(bp_pos.begin(), 1);
     int count = 0;
-    for(; it_pos != std::prev(pos.end(),1);){
+    for(; it_pos != std::prev(dist.end(),1);){
       *it_pos = *it_bppos_next - *it_bppos;
       if(*it_pos <= 0){
         std::cerr << "Failed at BP " << *it_bppos << std::endl;
@@ -395,7 +396,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
       it_bppos_next++;
       count++;
     }
-    pos[pos.size()-1] = 1;
+    dist[dist.size()-1] = 1;
 
   }else{
 
@@ -404,12 +405,12 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
     gzip g;
     FILE* fp_dist = g.open(filename_dist.c_str(), "r");
     fscanf(fp_dist, "%s %s", buffer, buffer);
-    int bp_dist, dist;
+    int mbp, mdist;
     snp = 0;
-    while(fscanf(fp_dist, "%d %d", &bp_dist, &dist) !=EOF){
+    while(fscanf(fp_dist, "%d %d", &mbp, &mdist) !=EOF){
       assert(snp < L);
-      assert(bp_pos[snp] == bp_dist);
-      pos[snp] = dist;
+      assert(bp_pos[snp] == mbp);
+			dist[snp] = mdist;
       snp++;
     }
     g.close(fp_dist);
@@ -423,7 +424,7 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   for(snp = 0; snp < L; snp++){
     fwrite(&snp, sizeof(int), 1, fp_props);
     fwrite(&bp_pos[snp], sizeof(int), 1, fp_props);
-    fwrite(&pos[snp], sizeof(int), 1, fp_props);   
+    fwrite(&dist[snp], sizeof(int), 1, fp_props);   
     fwrite(&rsid[snp][0], sizeof(char), 1024, fp_props);
     fwrite(&ancestral[snp][0], sizeof(char), 1024, fp_props);
     fwrite(&alternative[snp][0], sizeof(char), 1024, fp_props);
@@ -480,6 +481,8 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
 
     FILE* fp_pos   = fopen((file_out + "/chunk_" + std::to_string(chunk) + ".bp").c_str(), "wb");
     assert(fp_pos);
+		FILE* fp_dist   = fopen((file_out + "/chunk_" + std::to_string(chunk) + ".dist").c_str(), "wb");
+		assert(fp_dist);
     FILE* fp_rpos  = fopen((file_out + "/chunk_" + std::to_string(chunk) + ".rpos").c_str(), "wb");
     assert(fp_rpos);
     FILE* fp_r     = fopen((file_out + "/chunk_" + std::to_string(chunk) + ".r").c_str(), "wb");
@@ -490,13 +493,17 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
     L_chunk_plus_one = L_chunk + 1;
 
     fwrite(&L_chunk,          sizeof(unsigned int), 1, fp_pos);
+		fwrite(&L_chunk,          sizeof(unsigned int), 1, fp_dist);
     fwrite(&L_chunk_plus_one, sizeof(unsigned int), 1, fp_rpos);
     fwrite(&L_chunk,          sizeof(unsigned int), 1, fp_r);
-    fwrite(&pos[section_boundary_start[chunk]], sizeof(int), L_chunk, fp_pos);
+		
+		fwrite(&bp_pos[section_boundary_start[chunk]], sizeof(int), L_chunk, fp_pos);
+    fwrite(&dist[section_boundary_start[chunk]], sizeof(int), L_chunk, fp_dist);
     fwrite(&rpos[section_boundary_start[chunk]],sizeof(double), L_chunk + 1, fp_rpos);
     fwrite(&r[section_boundary_start[chunk]],   sizeof(double), L_chunk, fp_r);
 
     fclose(fp_pos);
+		fclose(fp_dist);
     fclose(fp_rpos);
     fclose(fp_r);
 

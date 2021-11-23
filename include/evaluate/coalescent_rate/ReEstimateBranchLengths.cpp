@@ -99,7 +99,7 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   Mutations mut(data);
   mut.Read(options["input"].as<std::string>() + ".mut");
 
-  data.pos.resize(L);
+  data.dist.resize(L);
   if(options.count("dist")){
     igzstream is_dist(options["dist"].as<std::string>());
     if(is_dist.fail()){
@@ -109,12 +109,12 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     getline(is_dist, line); 
     int dtmp, snp = 0;
     while(std::getline(is_dist, line)){
-      sscanf(line.c_str(), "%d %d", &dtmp, &data.pos[snp]);
+      sscanf(line.c_str(), "%d %d", &dtmp, &data.dist[snp]);
       snp++;
     }
     is_dist.close();
   }else{
-    std::vector<int>::iterator it_pos = data.pos.begin();
+    std::vector<int>::iterator it_pos = data.dist.begin();
     for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
       *it_pos = (*it_mut).dist;
       it_pos++;
@@ -371,7 +371,7 @@ int SampleBranchLengths(cxxopts::Options& options){
 
   Mutations mut(data);
   mut.Read(options["input"].as<std::string>() + ".mut");
-  data.pos.resize(L);
+  data.dist.resize(L);
   std::vector<int> bp(L);
   if(options.count("dist")){
     igzstream is_dist(options["dist"].as<std::string>());
@@ -382,12 +382,12 @@ int SampleBranchLengths(cxxopts::Options& options){
     getline(is_dist, line); 
     int dtmp, snp = 0;
     while(std::getline(is_dist, line)){
-      sscanf(line.c_str(), "%d %d", &bp[snp], &data.pos[snp]);
+      sscanf(line.c_str(), "%d %d", &bp[snp], &data.dist[snp]);
       snp++;
     }
     is_dist.close();
   }else{
-    std::vector<int>::iterator it_pos = data.pos.begin();
+    std::vector<int>::iterator it_pos = data.dist.begin();
     std::vector<int>::iterator it_bp  = bp.begin();
     for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
       *it_pos = (*it_mut).dist;
@@ -969,7 +969,7 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 		exit(1);
 	}
 
-  data.pos.resize(L);
+  data.dist.resize(L);
   std::vector<int> bp(L);
   if(options.count("dist")){
     igzstream is_dist(options["dist"].as<std::string>());
@@ -980,12 +980,12 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
     getline(is_dist, line); 
     int dtmp, snp = 0;
     while(std::getline(is_dist, line)){
-      sscanf(line.c_str(), "%d %d", &bp[snp], &data.pos[snp]);
+      sscanf(line.c_str(), "%d %d", &bp[snp], &data.dist[snp]);
       snp++;
     }
     is_dist.close();
   }else{
-    std::vector<int>::iterator it_pos = data.pos.begin();
+    std::vector<int>::iterator it_pos = data.dist.begin();
     std::vector<int>::iterator it_bp  = bp.begin();
     for(std::vector<SNPInfo>::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
       *it_pos = (*it_mut).dist;

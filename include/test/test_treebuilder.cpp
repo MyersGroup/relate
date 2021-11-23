@@ -163,9 +163,9 @@ TEST_CASE( "Testing inference of branch lengths" ){
   int L = 1;
   Data data(N,L); //struct data is defined in data.hpp
   data.theta = 0.025;
-  data.pos.resize(L);
+  data.dist.resize(L);
   data.rpos.resize(L);
-  data.pos[0] = 1;
+  data.dist[0] = 1;
   data.rpos[0] = 0;
 
   Tree tree;
@@ -250,9 +250,9 @@ TEST_CASE( "Testing MCMC of branch lengths" ){
   int L = 1;
   Data data(N,L); //struct data is defined in data.hpp
   data.theta = 0.025;
-  data.pos.resize(L);
+  data.dist.resize(L);
   data.rpos.resize(L);
-  data.pos[0] = 0;
+  data.dist[0] = 0;
   data.rpos[0] = 0;
 
 
@@ -314,11 +314,11 @@ TEST_CASE( "Testing MCMC of branch lengths (2)" ){
   Data data(N,L); //struct data is defined in data.hpp
   data.theta = 0.025;
   data.mu = 1e-8;
-  data.pos.resize(L);
+  data.dist.resize(L);
   data.rpos.resize(L);
-  data.pos[0] = 0;
+  data.dist[0] = 0;
   data.rpos[0] = 0;
-  data.pos[1] = 1;
+  data.dist[1] = 1;
   data.rpos[1] = 1;
 
   Tree tree;

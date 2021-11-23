@@ -93,7 +93,8 @@ int CombineSections(cxxopts::Options& options, int chunk_index = 0){
     std::remove((output_file + "_" + std::to_string(i) + ".anc").c_str());
     std::remove((output_file + "_" + std::to_string(i) + ".mut").c_str());
   }
-  std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str());
+	std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str());  
+	std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".dist").c_str());
   std::remove((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str());
 
   /////////////////////////////////////////////

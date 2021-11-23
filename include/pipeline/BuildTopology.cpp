@@ -30,7 +30,7 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   fclose(fp);
   num_windows--;
 
-  Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".state").c_str()); //struct data is defined in data.hpp
+	Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".dist").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".state").c_str()); //struct data is defined in data.hpp
   data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
 
   if(options.count("effectiveN")){
@@ -101,6 +101,11 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   }
   //sample_ages.clear();
 
+  int fb = 0;
+	if(options.count("fb")){
+	  fb = options["fb"].as<float>();
+	}
+
   ///////////////////////////////////////////// Build AncesTree //////////////////////////
   //input:  Data and distance matrix
   //output: AncesTree (tree sequence)
@@ -122,7 +127,7 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
     int section_endpos   = window_boundaries[section+1]-1;
     if(section_endpos >= data.L) section_endpos = data.L-1;
 
-    ancbuilder.BuildTopology(section, section_startpos, section_endpos, data, anc, rand(), ancestral_state);
+    ancbuilder.BuildTopology(section, section_startpos, section_endpos, data, anc, rand(), ancestral_state, fb);
 
     /////////////////////////////////////////// Dump AncesTree to File //////////////////////
 

@@ -33,6 +33,7 @@ int main(int argc, char* argv[]){
     ("first_section", "Optional. Index of first section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("last_section", "Optional. Index of last section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("coal", "Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN.", cxxopts::value<std::string>()) 
+		("fb", "Optional. Force build a new tree every x bases.", cxxopts::value<float>()) 
     //("anc_allele_unknown", "Specify if ancestral allele is unknown.") 
 		("transversion", "Only use transversion for bl estimation.")
     ("i,input", "Filename of input.", cxxopts::value<std::string>())

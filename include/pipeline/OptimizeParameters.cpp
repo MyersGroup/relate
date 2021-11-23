@@ -139,7 +139,7 @@ int OptimizeParameters(cxxopts::Options& options){
 
     bool use_transitions = true;
 
-		Data data((file_out + "chunk_" + std::to_string(c) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(c) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(c) + ".r").c_str(), (file_out + "chunk_" + std::to_string(c) + ".rpos").c_str(), (file_out + "chunk_" + std::to_string(c) + ".state").c_str()); //struct data is defined in data.hpp
+		Data data((file_out + "chunk_" + std::to_string(c) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(c) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(c) + ".dist").c_str(), (file_out + "chunk_" + std::to_string(c) + ".r").c_str(), (file_out + "chunk_" + std::to_string(c) + ".rpos").c_str(), (file_out + "chunk_" + std::to_string(c) + ".state").c_str()); //struct data is defined in data.hpp
 		data.name = (file_out + "chunk_" + std::to_string(c) + "/paint/relate");
 		const std::string dirname = file_out + "chunk_" + std::to_string(c) + "/";
 

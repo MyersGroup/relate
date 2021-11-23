@@ -19,13 +19,13 @@ TEST_CASE( "Testing painting" ){
   data.theta = 0.025;
   data.ntheta = 1.0 - data.theta;
 
-  //populate data.sequence data.pos data.r
+  //populate data.sequence data.dist data.r
 
   data.sequence.resize(L,N);
-  data.pos.resize(L);
+  data.dist.resize(L);
   data.r.resize(L);
   for(int snp = 0; snp < L; snp++){
-    data.pos[snp] = snp;
+    data.dist[snp] = snp;
     data.r[snp]   = 0.0;
   }
 
