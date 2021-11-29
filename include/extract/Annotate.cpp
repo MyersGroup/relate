@@ -335,4 +335,102 @@ PropagateMutations(cxxopts::Options& options){
 }
 
 
+void
+PrintMutonBranches(cxxopts::Options& options){
+
+	//////////////////////////////////
+	//Program options
+
+	bool help = false;
+	if(!options.count("anc") || !options.count("mut") || !options.count("output")){
+		std::cout << "Not enough arguments supplied." << std::endl;
+		std::cout << "Needed: anc, mut, output." << std::endl;
+		help = true;
+	}
+	if(options.count("help") || help){
+		std::cout << options.help({""}) << std::endl;
+		std::cout << "Example code for converting from tree sequence file format." << std::endl;
+		exit(0);
+	}  
+
+	std::cerr << "---------------------------------------------------------" << std::endl;
+	std::cerr << "Output num mutations mapping to each branch " << options["anc"].as<std::string>() << " and " << options["mut"].as<std::string>() << "..." << std::endl;
+
+	AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+	int N = ancmut.NumTips();
+	int num_trees = ancmut.NumTrees();
+	int L = ancmut.NumSnps();
+	MarginalTree mtr;
+	Muts::iterator it_mut;
+	float num_bases_tree_persists = 0.0;
+
+	Data data(N,L);
+
+	int first_bp; 
+	int last_bp;  
+
+	bool use_subr = false;
+	if(options.count("first_bp") && options.count("last_bp")){
+		first_bp = options["first_bp"].as<int>();
+		last_bp  = options["last_bp"].as<int>();
+		use_subr = true;
+	}
+
+	std::ofstream os(options["output"].as<std::string>() + ".allmuts");
+  os << "treeID branchID num_muts\n";
+
+	int count_trees = 0;
+	int treeID, pos_start, pos_end;
+	num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+	treeID = (*it_mut).tree;
+	while(num_bases_tree_persists >= 0.0){
+
+		treeID = (*it_mut).tree;
+		if(pos_start == 0.0){
+			pos_start = 0;
+		}else{
+		  pos_start = pos_end; 
+		}
+		while((*it_mut).tree == treeID){
+			pos_end = (*it_mut).pos;
+			it_mut++;
+      if(it_mut == ancmut.mut_end()) break;
+		}
+    pos_end = ((*it_mut).pos + pos_end)/2.0;
+
+		if( !use_subr || ( pos_end > first_bp && pos_start < last_bp ) ){
+     
+			for(std::vector<Node>::iterator it_n = mtr.tree.nodes.begin(); it_n != mtr.tree.nodes.end(); it_n++){
+        os << treeID << " " << (*it_n).label << " " << (int) (*it_n).num_events << "\n"; 
+			}
+
+		}
+
+		num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+	}
+	os.close();
+
+
+
+
+
+
+
+
+	/////////////////////////////////////////////
+	//Resource Usage
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+}
+
 

@@ -96,12 +96,16 @@ int main(int argc, char* argv[]){
 
 		PropagateMutations(options);
 
+	}else if(!mode.compare("CountMutonBranches")){
+
+		PrintMutonBranches(options);
+
 	}else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "AncToNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb, MapMutations, GenerateSNPAnnotationsUsingTree, GetAllBranchesOfMut." << std::endl;
+    std::cout << "AncToNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb, MapMutations, GenerateSNPAnnotationsUsingTree, GetAllBranchesOfMut, CountMutonBranches." << std::endl;
   
   }
 
