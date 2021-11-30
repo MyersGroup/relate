@@ -389,7 +389,7 @@ PrintMutonBranches(cxxopts::Options& options){
 	}
 
 	std::ofstream os(options["output"].as<std::string>() + ".allmuts");
-  os << "treeID branchID pos_start pos_end dist num_muts\n";
+  os << "treeID branchID pos_start pos_end dist branch_length num_muts\n";
 
 	int count_trees = 0;
 	int treeID, pos_start, pos_end, snp_begin, snp_end;
@@ -433,7 +433,7 @@ PrintMutonBranches(cxxopts::Options& options){
 					pos_end     = ancmut.mut.info[snp_end].pos;
 				}
 
-				os << treeID << " " << (*it_n).label << " " << pos_start << " " << pos_end << " " << dist  << " " << (int) (*it_n).num_events << "\n"; 
+				os << treeID << " " << (*it_n).label << " " << pos_start << " " << pos_end << " " << dist << " " << (*it_n).branch_length << " " << (int) (*it_n).num_events << "\n"; 
 			}
 
 
