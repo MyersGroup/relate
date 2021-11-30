@@ -22,6 +22,7 @@ int main(int argc, char* argv[]){
     ("mut", "Filename of file containing mut.", cxxopts::value<std::string>())
 		("haps", "Filename of haps file (Output file format of Shapeit).", cxxopts::value<std::string>())
 		("sample", "Filename of sample file (Output file format of Shapeit).", cxxopts::value<std::string>())
+		("dist", "Optional but recommended. Distance in BP between SNPs. Can be generated using RelateFileFormats. If unspecified, distances in haps are used.", cxxopts::value<std::string>())
     ("pop_of_interest", "Population label. If not specified, use all haplotypes.", cxxopts::value<std::string>())
     ("bp_of_interest", "BP of position of interest.", cxxopts::value<int>())
     ("first_bp", "BP of first SNP of interest.", cxxopts::value<int>())

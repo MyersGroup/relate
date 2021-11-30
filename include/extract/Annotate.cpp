@@ -365,32 +365,41 @@ PrintMutonBranches(cxxopts::Options& options){
 	float num_bases_tree_persists = 0.0;
 
 	Data data(N,L);
-
-	int first_bp; 
-	int last_bp;  
-
-	bool use_subr = false;
-	if(options.count("first_bp") && options.count("last_bp")){
-		first_bp = options["first_bp"].as<int>();
-		last_bp  = options["last_bp"].as<int>();
-		use_subr = true;
+	data.dist.resize(L);
+	std::string line;
+	if(options.count("dist")){
+		igzstream is_dist(options["dist"].as<std::string>());
+		if(is_dist.fail()){
+			std::cerr << "Error while opening " << options["dist"].as<std::string>() << std::endl;
+			exit(1);
+		}
+		getline(is_dist, line); 
+		int dtmp, snp = 0;
+		while(std::getline(is_dist, line)){
+			sscanf(line.c_str(), "%d %d", &dtmp, &data.dist[snp]);
+			snp++;
+		}
+		is_dist.close();
+	}else{
+		std::vector<int>::iterator it_pos = data.dist.begin();
+		for(std::vector<SNPInfo>::iterator it_mut = ancmut.mut.info.begin(); it_mut != ancmut.mut.info.end(); it_mut++){
+			*it_pos = (*it_mut).dist;
+			it_pos++;
+		}
 	}
 
 	std::ofstream os(options["output"].as<std::string>() + ".allmuts");
-  os << "treeID branchID num_muts\n";
+  os << "treeID branchID pos_start pos_end dist num_muts\n";
 
 	int count_trees = 0;
-	int treeID, pos_start, pos_end;
+	int treeID, pos_start, pos_end, snp_begin, snp_end;
+	float dist;
 	num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
 	treeID = (*it_mut).tree;
 	while(num_bases_tree_persists >= 0.0){
 
 		treeID = (*it_mut).tree;
-		if(pos_start == 0.0){
-			pos_start = 0;
-		}else{
-		  pos_start = pos_end; 
-		}
+
 		while((*it_mut).tree == treeID){
 			pos_end = (*it_mut).pos;
 			it_mut++;
@@ -398,13 +407,35 @@ PrintMutonBranches(cxxopts::Options& options){
 		}
     pos_end = ((*it_mut).pos + pos_end)/2.0;
 
-		if( !use_subr || ( pos_end > first_bp && pos_start < last_bp ) ){
      
 			for(std::vector<Node>::iterator it_n = mtr.tree.nodes.begin(); it_n != mtr.tree.nodes.end(); it_n++){
-        os << treeID << " " << (*it_n).label << " " << (int) (*it_n).num_events << "\n"; 
+
+				int snp_begin = (*it_n).SNP_begin;
+				int snp_end   = (*it_n).SNP_end;
+
+				assert(snp_end < data.dist.size());
+				dist          = 0.0;
+				for(int snp = snp_begin; snp < snp_end; snp++){
+					dist       += data.dist[snp];
+				}
+
+				if(snp_begin > 0){
+					snp_begin--;
+					pos_start   = (ancmut.mut.info[snp_begin].pos + ancmut.mut.info[snp_begin+1].pos)/2.0;
+					dist       += 0.5 * data.dist[snp_begin];
+				}else{
+					pos_start   = ancmut.mut.info[snp_begin].pos;
+				}
+				if(snp_end < data.L-1){
+					pos_end     = (ancmut.mut.info[snp_end].pos + ancmut.mut.info[snp_end+1].pos)/2.0;
+					dist       += 0.5 * data.dist[snp_end];
+				}else{
+					pos_end     = ancmut.mut.info[snp_end].pos;
+				}
+
+				os << treeID << " " << (*it_n).label << " " << pos_start << " " << pos_end << " " << dist  << " " << (int) (*it_n).num_events << "\n"; 
 			}
 
-		}
 
 		num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
 	}
