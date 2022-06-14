@@ -1042,7 +1042,7 @@ gtag('config', 'UA-115753061-1');
                     <dt>--mut</dt>
                     <dd>Filename of the .mut file.</dd>
                     <dt>--threshold</dt>
-                    <dd>Integer which is the number of SNPs a tree needs to not be dropped. This option serves two purposes: First, it removes bad/uninformative trees. Second it speeds up the inference. As we increase this value, we remove more trees. Default: number of haplotypes.</dd>
+                    <dd>Float in [0,1] which is the fraction of trees to be dropped, ranked by number of mutations mapping. This option serves two purposes: First, it removes bad/uninformative trees. Second it speeds up the inference. As we increase this value, we remove more trees. Default: 0.5.</dd>
                     <dt>-o,--output</dt>
                     <dd>File of the output files without file extensions.</dd>
                   </dl>
@@ -1051,7 +1051,7 @@ gtag('config', 'UA-115753061-1');
                  --mode RemoveTreesWithFewMutations \
                  --anc example.anc \
                  --mut example.mut \
-                 --threshold 100 \
+                 --threshold 0.5 \
                  -o example_subset </code></pre>
                   Output: example_subset.anc, example_subset.mut, example.dist.
 

@@ -71,7 +71,7 @@ AddMutations <- function(filename_plot, years_per_gen, ...){
 
 	mut_on_branches     <- read.table(paste(filename_plot,".plotcoords.mut", sep = ""), header = T)
 
-	muts <- subset(plotcoords, seg_type == "v")
+	muts <- subset(plotcoords, seg_type == "v" | seg_type == "t")
 	muts <- merge(mut_on_branches, muts, by = "branchID")
 
   muts %>% group_by(branchID) %>% mutate(y_begin = (1:length(y_begin)) * (max(y_end) - min(y_begin))/(1+length(y_begin)) + min(y_begin), y_end = y_begin ) -> muts
