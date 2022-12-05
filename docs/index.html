@@ -229,7 +229,7 @@ devtools::install_github("leospeidel/relater")</code></pre>
           <!-- 3rd row -->
           <div class="row">
             <div class="col-md-12">
-							<p>This <a href="https://github.com/leospeidel/relate_lib">github repo</a> contains functions to convert between Relate and tskit format (MUT license).</p>
+							<p>This <a href="https://github.com/leospeidel/relate_lib">github repo</a> contains functions to convert between Relate and tskit format (MIT license).</p>
 							<p>It doubles as a C++ library you can link to if you want to use some of our Relate functions in C++.</p>
               <pre><code>relate_lib/bin/Convert --mode ConvertFromTreeSequence \
               --anc example.anc.gz \
@@ -239,12 +239,12 @@ devtools::install_github("leospeidel/relater")</code></pre>
               --anc example.anc.gz \
               --mut example.mut.gz \
               -o example</code></pre>
-							<p>Thanks to Nathaniel S. Pope, you can now also specify an argument that compresses these Relate-converted tree sequences by assigning the same age to nodes with identical descendant sets across adjacent trees.</p>
-							<pre><code>relate_lib/bin/Convert --mode ConvertToTreeSequence \
-							--compress \
-							--anc example.anc.gz \
-							--mut example.mut.gz \
-							-o example</code></pre>
+							<p>Thanks to <b>Nathaniel S. Pope</b>, you can now also specify an argument that <b>compresses</b> these Relate-converted tree sequences by assigning the same age to nodes with identical descendant sets across adjacent trees.</p>
+              <pre><code>relate_lib/bin/Convert --mode ConvertToTreeSequence \
+              --compress \
+              --anc example.anc.gz \
+              --mut example.mut.gz \
+              -o example</code></pre>
             </div>
           </div>
 
