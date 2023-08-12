@@ -41,6 +41,10 @@ class FastPainting{
     void PaintSteppingStones(const Data& data, std::vector<int>& window_boundaries, std::vector<FILE*> pfiles, const int k);
     void RePaintSection(const Data& data, CollapsedMatrix<float>& topology, std::vector<float>& logscales, CollapsedMatrix<float>& alpha_begin, CollapsedMatrix<float>& beta_end, int boundarySNP_begin, int boundarySNP_end, float logscale_alpha, float logscale_beta, const int k);
 
+    void PaintSteppingStonesNormal(const Data& data, std::vector<int>& window_boundaries, std::vector<FILE*> pfiles, const int k);
+    void RePaintSectionNormal(const Data& data, CollapsedMatrix<float>& topology, std::vector<float>& logscales, CollapsedMatrix<float>& alpha_begin, CollapsedMatrix<float>& beta_end, int boundarySNP_begin, int boundarySNP_end, float logscale_alpha, float logscale_beta, const int k);
+
+
 };
 
 #endif //FAST_PAINTING_HPP

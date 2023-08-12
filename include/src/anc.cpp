@@ -1577,7 +1577,6 @@ AncesTree::ReadNewick(const std::string& filename, float Ne){
 
     }
 
-    //std::cerr << line << " " << N_total << std::endl;
     //exit(1);
 
     std::stringstream tree_stream(line); 
@@ -1589,7 +1588,10 @@ AncesTree::ReadNewick(const std::string& filename, float Ne){
     i = 0;
     int node = N;
     int count_bracket = 0, count_comma = 0;
-    while(node < N_total){ 
+    while(node < N_total){
+
+			//std::cerr << newick << std::endl;
+
       int startpos, endpos;
       std::string index_child1, index_child2, index_parent;
       std::string branch_length1, branch_length2;

@@ -291,7 +291,10 @@ ConvertFromVcf(cxxopts::Options& options){
     if(options["flag"].as<int>() == 0) only_snps = false;
   }
 
-	bool is_haploid = false, is_this_haploid = false;
+  int num_s = 0;
+	//bool is_haploid = false, is_this_haploid = false;
+  std::vector<bool> is_haploid(N_prev, false);
+  bool first = true;
   std::vector<char> sequence;
 	std::vector<char> seq(2*N_prev);
   do{
@@ -311,81 +314,108 @@ ConvertFromVcf(cxxopts::Options& options){
 			//I am at start of genotypes here
 			std::fill(seq.begin(), seq.end(), '.');
       N = 0;
-			is_this_haploid = false;
+      num_s = 0;
+			//is_this_haploid = false;
       int freq = 0;
+      
       while(c < line.size()){
 
-				if(!is_haploid && c >= line.size()-2) break;
+				if(c >= line.size()-2){
+          if(!is_haploid[num_s-1]){
+            break;
+          }
+        }
         if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '0'){
-          if(N >= N_prev) break;
-          seq[2*N] = line[c];
-          seq[2*N+1] = line[c+2];
-          N++;
+          if(N >= seq.size()) break;
+          seq[N] = line[c];
+          seq[N+1] = line[c+2];
+          is_haploid[num_s] = false;
+          N += 2;
+          num_s++;
           c += 2;
         }else if(line[c] == '0' && line[c+1] == '|' && line[c+2] == '1'){
-          if(N >= N_prev) break;
-          seq[2*N] = line[c];
-          seq[2*N+1] = line[c+2];
-          N++;
+          if(N >= seq.size()) break;
+          seq[N] = line[c];
+          seq[N+1] = line[c+2];
+          is_haploid[num_s] = false;
+          N += 2;
+          num_s++;
           freq++;
           c += 2;
         }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '0'){
-          if(N >= N_prev) break;
-          seq[2*N] = line[c];
-          seq[2*N+1] = line[c+2];
-          N++;
+          if(N >= seq.size()) break;
+          seq[N] = line[c];
+          seq[N+1] = line[c+2];
+          is_haploid[num_s] = false;
+          N += 2;
+          num_s++;
           freq++;
           c += 2;
         }else if(line[c] == '1' && line[c+1] == '|' && line[c+2] == '1'){
-          if(N >= N_prev) break;
-          seq[2*N] = line[c];
-          seq[2*N+1] = line[c+2];
-          N++;
+          if(N >= seq.size()) break;
+          seq[N] = line[c];
+          seq[N+1] = line[c+2];
+          is_haploid[num_s] = false;
+          N += 2;
+          num_s++;
           freq += 2;
           c += 2;
         }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '0'){
-          if(N >= N_prev) break;
-          seq[2*N] = line[c];
-          seq[2*N+1] = line[c+2];
-          N++;
+          if(N >= seq.size()) break;
+          seq[N] = line[c];
+          seq[N+1] = line[c+2];
+          is_haploid[num_s] = false;
+          N += 2;
+          num_s++;
+          freq += 2;
           c += 2;
         }else if(line[c] == '0' && line[c+1] == '/' && line[c+2] == '1'){
-          if(N >= N_prev) break;
-          seq[2*N] = line[c];
-          seq[2*N+1] = line[c+2];
-          N++;
-          freq++;
+          if(N >= seq.size()) break;
+          seq[N] = line[c];
+          seq[N+1] = line[c+2];
+          is_haploid[num_s] = false;
+          N += 2;
+          num_s++;
+          freq += 2;
           c += 2;
         }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '0'){
-          if(N >= N_prev) break;
-          seq[2*N] = line[c];
-          seq[2*N+1] = line[c+2];
-          N++;
-          freq++;
+          if(N >= seq.size()) break;
+          seq[N] = line[c];
+          seq[N+1] = line[c+2];
+          is_haploid[num_s] = false;
+          N += 2;
+          num_s++;
+          freq += 2;
           c += 2;
         }else if(line[c] == '1' && line[c+1] == '/' && line[c+2] == '1'){
-          if(N >= N_prev) break;
-          seq[2*N] = line[c];
-          seq[2*N+1] = line[c+2];
-          N++;
+          if(N >= seq.size()) break;
+          seq[N] = line[c];
+          seq[N+1] = line[c+2];
+          is_haploid[num_s] = false;
+          N += 2;
+          num_s++;
           freq += 2;
           c += 2;
         }else if( (line[c-1] == ' ' || line[c-1] == '\t') && line[c] == '0'){
-					if(!is_haploid) is_haploid = true;
-					is_this_haploid = true;
+					//if(!is_haploid) is_haploid = true;
+					//is_this_haploid = true;
 					seq[N] = line[c];
+          is_haploid[num_s] = true;
 					N++;
+          num_s++;
 					c++;
 				}else if( (line[c-1] == ' ' || line[c-1] == '\t') && line[c] == '1'){
-					if(!is_haploid) is_haploid = true;
-					is_this_haploid = true;
+					//if(!is_haploid) is_haploid = true;
+					//is_this_haploid = true;
 					seq[N] = line[c];
+          is_haploid[num_s] = true;
 					freq++;
 					N++;
+          num_s++;
 					c++;
 				}
 
-				assert(is_haploid == is_this_haploid);
+				//assert(is_haploid == is_this_haploid);
         if(c < line.size()){
           while(line[c] != ' ' && line[c] != '\t' && line[c] != '\n' && c < line.size()-1){
             c++;
@@ -394,20 +424,39 @@ ConvertFromVcf(cxxopts::Options& options){
         }
       }
 
-			if(is_haploid){
-        seq.resize(N);
+			if(first){
+        int num_hap = 0;
+        for(int k = 0; k < N_prev; k++){
+          if(is_haploid[k]){
+            num_hap++;
+          }else{
+            num_hap += 2;
+          }
+        }
+        seq.resize(num_hap);
+        first = false;
 			}
 
-      if(N == N_prev){
+      if(num_s == N_prev){
 
-				if(!only_snps || (freq > 0 && freq < 2*N)){
+				if(!only_snps || (freq > 0 && freq < N)){
 					for(int i = 0; i < strlen(rsid); i++){
 						if(rsid[i] == ';') rsid[i] = ',';
 					}
 					fprintf(fp_haps, "%s %s %d %s %s", chr, rsid, bp, ancestral, alternative);
-					for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
-						fprintf(fp_haps, " %c", *it_seq);
+          int k = 0;
+          int n = 0;
+					//for(std::vector<char>::iterator it_seq = seq.begin(); it_seq != seq.end(); it_seq++){
+          //std::cerr << seq.size() << " " << N_prev << std::endl;
+          for(k = 0; k < N_prev; k++){
+            fprintf(fp_haps, " %c", seq[n]);
+            n++;
+            if(!is_haploid[k]){
+              fprintf(fp_haps, " %c", seq[n]);
+              n++;
+            }
 					}
+          //std::cerr << k << " " << n << std::endl;
 					fprintf(fp_haps, "\n");
 				}
       }
@@ -430,20 +479,34 @@ ConvertFromVcf(cxxopts::Options& options){
     c++;
   }
 
+  bool is_any_hap = false;
+  for(int i = 0; i < is_haploid.size(); i++){
+    if(is_haploid[i]) is_any_hap = true;
+  }
+
   os_sample << "ID_1\tID_2\tmissing\n";
   os_sample << "0\t0\t0\n";
 
+  int k = 0;
   while(c < line_id.size()){
     sscanf(&(line_id.c_str())[c], "%s", id);
-		if(is_haploid){
-      os_sample << id << "\tNA" << "\t0\n";
-		}else{
+
+    if(is_any_hap){
+      if(is_haploid[k]){
+        os_sample << id << "\tNA" << "\t0\n";
+      }else{
+        os_sample << id << "\tNA" << "\t0\n";
+        os_sample << id << "\tNA" << "\t0\n";
+      }
+    }else{
       os_sample << id << "\t" << id << "\t0\n";
-		}
+    }
+
     while(line_id[c] != '\t' && line_id[c] != ' ' && c < line_id.size()){
       c++;
     }
     c++;
+    k++;
   }
   os_sample.close();
 
@@ -898,7 +961,7 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
   bool help = false;
   if( !options.count("haps") || !options.count("sample") || !options.count("ancestor") || !options.count("output") ){
     std::cout << "Not enough arguments supplied." << std::endl;
-    std::cout << "Needed: haps, sample, ancestor, output." << std::endl;
+    std::cout << "Needed: haps, sample, ancestor, output. Optional: flag (0: all variants, 1 only SNP)" << std::endl;
     help = true;
   }
   if(options.count("help") || help){
@@ -906,6 +969,11 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
     std::cout << "Detemine ancestral allele and flip SNPs." << std::endl;
     exit(0);
   }  
+
+  bool only_snps = true;
+  if(options.count("flag")){
+    if(options["flag"].as<int>() == 0) only_snps = false;
+  }
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Detemining ancestral allele and flipping SNPs if necessary... " << std::endl;
@@ -973,7 +1041,7 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
           }
         }
 
-        if(is_snp){
+        if(is_snp || !only_snps){
           os << line << "\n";
         }else{
           removed_snps++;
@@ -1015,7 +1083,7 @@ FlipHapsUsingAncestor(cxxopts::Options& options){
           }
         }
 
-        if(is_snp){
+        if(is_snp || !only_snps){
           os << line << "\n";
         }else{
           removed_snps++;

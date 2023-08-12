@@ -28,6 +28,7 @@ Candidate& Candidate::operator =(const Candidate& a){
   dist2   = a.dist2;
   dist3   = a.dist3;
   replace = a.replace;
+  is_from_tmpl = a.is_from_tmpl;
   return *this;
 }
 
@@ -40,11 +41,13 @@ MinMatch::MinMatch(Data& data){
   L       = data.L;
   Ne      = data.Ne;
   threshold = -0.2 * log(data.theta/(1.0 - data.theta)); //this is 0.1 of a mutation
+  threshold_CF = -0.001 * log(data.theta/(1.0 - data.theta));
 
   convert_index.resize(N); //convert_index converts the indices in cluster_index to their actual indices between 0 and N_total-1.
   cluster_size.resize(N);  //stores size of clusters. Accessed using cluster_index.
   min_values.resize(N);
   min_values_sym.resize(N);
+  min_values_CF.resize(N);
 
   mcandidates.resize(N);
   mcandidates_sym.resize(N);
@@ -53,7 +56,7 @@ MinMatch::MinMatch(Data& data){
 };
 
 void
-MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif){
+MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, Tree *tmpl_tree){
 
   //I have to go thourgh every pair of clusters and check if they are matching mins.
   //I am also filling in the vector min_values.
@@ -81,7 +84,7 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
 
     jt                    = std::next(it,1);
     it_d_it_jt            = std::next(d.rowbegin(*it), *jt);
-    it_min_values_jt      = std::next(it_min_values_it,1);
+    it_min_values_jt      = std::next(it_min_values_it,1); 
 
     for(; jt != cluster_index.end(); jt++){
 
@@ -89,27 +92,44 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
       if( *it_min_values_it >= *it_d_it_jt){        
         if( *it_min_values_jt >= d[*jt][*it]){ //it, jt is a candidate
 
+          if(tmpl_tree != NULL){
+            //check if I coalesced these two
+            if((*tmpl_tree).nodes[*it].parent == (*tmpl_tree).nodes[*jt].parent){
+              mcandidates[*it].lin1 = *it;
+              mcandidates[*it].lin2 = *jt;
+              mcandidates[*it].dist = *it_d_it_jt + d[*jt][*it];
+              mcandidates[*it].dist2 = dist_unif(rng);
+              mcandidates[*it].replace = false;
+              mcandidates[*it].is_from_tmpl = true;
+              mcandidates[*jt] = mcandidates[*it];
+              mcandidates[*jt].lin1 = *jt;
+              mcandidates[*jt].lin2 = *it;
+            }
+          }
+
           //sym_dist = *it_d_it_jt + d[*jt][*it] + std::max(sample_ages[*it], sample_ages[*jt]);
           //sym_dist = *it_d_it_jt + d[*jt][*it] + (sample_ages[*it] * cluster_size[*it] + sample_ages[*jt] * cluster_size[*jt])/(cluster_size[*it] + cluster_size[*jt]);
           sym_dist = *it_d_it_jt + d[*jt][*it];
           dist_random = dist_unif(rng);
-          if(mcandidates[*it].dist > sym_dist || (mcandidates[*it].dist == sym_dist && mcandidates[*it].dist2 > dist_random)){
+          if(!mcandidates[*it].is_from_tmpl && (mcandidates[*it].dist > sym_dist || (mcandidates[*it].dist == sym_dist && mcandidates[*it].dist2 > dist_random))){
             mcandidates[*it].lin1 = *it;
             mcandidates[*it].lin2 = *jt;
             mcandidates[*it].dist = sym_dist;
             mcandidates[*it].dist2 = dist_random;
           }
-          if(mcandidates[*jt].dist > sym_dist || (mcandidates[*jt].dist == sym_dist && mcandidates[*jt].dist2 > dist_random)){
+          if(!mcandidates[*jt].is_from_tmpl && (mcandidates[*jt].dist > sym_dist || (mcandidates[*jt].dist == sym_dist && mcandidates[*jt].dist2 > dist_random))){
             mcandidates[*jt].lin1 = *it;
             mcandidates[*jt].lin2 = *jt;
             mcandidates[*jt].dist = sym_dist;
             mcandidates[*jt].dist2 = dist_random;
           }
+
           if(best_candidate.dist > mcandidates[*jt].dist || (best_candidate.dist == mcandidates[*jt].dist && best_candidate.dist2 > mcandidates[*jt].dist2)){ //only need to check for *jt because if it is the absolute minimum, it would also be *it's candidate
             best_candidate.lin1 = *it;
             best_candidate.lin2 = *jt;
             best_candidate.dist = sym_dist;
             best_candidate.dist2 = mcandidates[*jt].dist2;
+            best_candidate.is_from_tmpl = mcandidates[*jt].is_from_tmpl;
           }
 
         }
@@ -126,8 +146,9 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
 }
 
 void
-MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages){
+MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages, Tree *tmpl_tree){
 
+  //
   //I have to go thourgh every pair of clusters and check if they are matching mins.
   //I am also filling in the vector min_values.
   it_min_values_it = min_values.begin(); //iterator for min_values[i]
@@ -158,18 +179,34 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
     it_d_it_jt            = std::next(d.rowbegin(*it), *jt);
     it_min_values_jt      = std::next(it_min_values_it,1);
 
+
     for(; jt != cluster_index.end(); jt++){
 
       //check if jt is a min value entry, and for each min entry, check if 'it' is also min entry. 
       if( *it_min_values_it >= *it_d_it_jt){        
         if( *it_min_values_jt >= d[*jt][*it]){ //it, jt is a candidate
 
+          if(tmpl_tree != NULL){
+            //check if I coalesced these two
+            if((*tmpl_tree).nodes[*it].parent == (*tmpl_tree).nodes[*jt].parent){
+              mcandidates[*it].lin1    = *it;
+              mcandidates[*it].lin2    = *jt;
+              mcandidates[*it].dist    = *it_d_it_jt + d[*jt][*it];
+              mcandidates[*it].dist2   = dist_unif(rng);
+              mcandidates[*it].dist3   = std::max(sample_ages[*it], sample_ages[*jt]);
+              mcandidates[*it].replace = false;
+              mcandidates[*it].is_from_tmpl = true;
+              mcandidates[*jt]         = mcandidates[*it];
+              mcandidates[*jt].lin1    = *jt;
+              mcandidates[*jt].lin2    = *it;
+            }
+          }
 
           cand.dist = *it_d_it_jt + d[*jt][*it];
           //cand.dist3 = (sample_ages[*it] * cluster_size[*it] + sample_ages[*jt] * cluster_size[*jt])/(cluster_size[*it] + cluster_size[*jt]);
           cand.dist3 = std::max(sample_ages[*it], sample_ages[*jt]);
           cand.dist2 = dist_unif(rng);
-          if( (mcandidates[*it].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*it] > cand){
+          if( !mcandidates[*it].is_from_tmpl && ((mcandidates[*it].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*it] > cand) ){
             if(cand.dist3 > age){
               cand.replace = true;
             }else{
@@ -179,7 +216,7 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
             mcandidates[*it].lin1 = *it;
             mcandidates[*it].lin2 = *jt;
           }
-          if( (mcandidates[*jt].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*jt] > cand){
+          if( !mcandidates[*jt].is_from_tmpl && ((mcandidates[*jt].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*jt] > cand) ){
             if(cand.dist3 > age){  
               cand.replace = true;
             }else{
@@ -189,6 +226,7 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
             mcandidates[*jt].lin1 = *it;
             mcandidates[*jt].lin2 = *jt;
           }
+
           if( (best_candidate.dist == std::numeric_limits<float>::infinity() || mcandidates[*jt].dist3 <= age) && best_candidate > mcandidates[*jt]){ //only need to check for *jt because if it is the absolute minimum, it would also be *it's candidate
             best_candidate = mcandidates[*jt];
             if(best_candidate.dist3 > age){
@@ -196,6 +234,7 @@ MinMatch::Initialize(CollapsedMatrix<float>& d, std::uniform_real_distribution<d
             }else{
               best_candidate.replace = false;
             }
+            best_candidate.is_from_tmpl = mcandidates[*jt].is_from_tmpl;
           }
           //std::cerr << best_candidate.dist3 << " " << best_candidate.dist << " " << best_candidate.replace << " " << age << " " << mcandidates[*jt].dist3 << " " << best_candidate.lin1 << " " << best_candidate.lin2 << std::endl;
 
@@ -254,7 +293,7 @@ MinMatch::InitializeSym(CollapsedMatrix<float>& sym_d, CollapsedMatrix<float>& d
 }
 
 void
-MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif){
+MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, Tree *tmpl_tree){
 
   /////////////
   //now I have to update the distance matrix. I am simultaneously updating min_values[j], where j is the new cluster     
@@ -266,6 +305,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
   di_it = d.rowbegin(i);
   best_candidate.dist = std::numeric_limits<float>::infinity();
   best_candidate.dist2 = std::numeric_limits<float>::infinity();
+  best_candidate.is_from_tmpl = false;
   for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
     if(j != *k && i != *k){
       dk_it = d.rowbegin(*k);
@@ -309,7 +349,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
       }
 
-      if( dkj != dki || djk != dik ){ //If *std::next(dj_it,*k) and *std::next(dk_it,j) have not changed, the next candidate for *k will be unchanged
+      if( dkj != dki || djk != dik || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i ){ //If *std::next(dj_it,*k) and *std::next(dk_it,j) have not changed, the next candidate for *k will be unchanged
 
         if(min_value_changed || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i){
 
@@ -319,6 +359,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
           //count2++;
           mcandidates[*k].dist = std::numeric_limits<float>::infinity();
           mcandidates[*k].dist2 = std::numeric_limits<float>::infinity();
+          mcandidates[*k].is_from_tmpl = false;
 
           for(std::deque<int>::iterator l = cluster_index.begin(); l != k; l++){ //only need *l < *k to avoid going through the same pair twice
             if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
@@ -327,22 +368,43 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
                 //add potential candidates
                 if(d[*l][*k] <= min_value_l){ 
+
+                  //feasible candidate
+                  if(tmpl_tree != NULL){
+                    int n1 = conv_to_tmpl[convert_index[*l]];
+                    int n2 = conv_to_tmpl[convert_index[*k]];
+                    if(n1 >= 0 && n2 >= 0){
+                      if( (*tmpl_tree).nodes[n1].parent == (*tmpl_tree).nodes[n2].parent ){
+                        mcandidates[*k].lin1 = *k;
+                        mcandidates[*k].lin2 = *l;
+                        mcandidates[*k].dist = d[*l][*k] + d[*k][*l];
+                        mcandidates[*k].dist2 = dist_unif(rng);
+                        mcandidates[*k].is_from_tmpl = true;
+                        mcandidates[*l] = mcandidates[*k];
+                        mcandidates[*l].lin1 = *l;
+                        mcandidates[*l].lin2 = *k;
+                      } 
+                    }
+                  }
+
                   //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*k], sample_ages[*l]);
                   //sym_dist = d[*l][*k] + d[*k][*l] + (sample_ages[*k] * cluster_size[*k] + sample_ages[*l] * cluster_size[*l])/(cluster_size[*k] + cluster_size[*l]);
                   sym_dist = d[*l][*k] + d[*k][*l];
                   //sym_dist = sample_ages[*k] + sample_ages[*l];
                   dist_random = dist_unif(rng);
-                  if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
+                  if( !mcandidates[*k].is_from_tmpl && (mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random))){
                     mcandidates[*k].lin1 = *k;
                     mcandidates[*k].lin2 = *l;
                     mcandidates[*k].dist = sym_dist;
                     mcandidates[*k].dist2 = dist_random;
+                    mcandidates[*k].is_from_tmpl = false;
                   }
-                  if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
+                  if( !mcandidates[*l].is_from_tmpl && (mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random))){
                     mcandidates[*l].lin1 = *k;
                     mcandidates[*l].lin2 = *l;
                     mcandidates[*l].dist = sym_dist;
                     mcandidates[*l].dist2 = dist_random;
+                    mcandidates[*l].is_from_tmpl = false;
                   }
                 }
 
@@ -359,22 +421,43 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
               //add potential candidates
               if(d[*l][*k] <= min_value_l){ 
+
+                //feasible candidate
+                if(tmpl_tree != NULL){
+                  int n1 = conv_to_tmpl[convert_index[*l]];
+                  int n2 = conv_to_tmpl[convert_index[*k]];
+                  if(n1 >= 0 && n2 >= 0){
+                    if( (*tmpl_tree).nodes[n1].parent == (*tmpl_tree).nodes[n2].parent ){
+                      mcandidates[*k].lin1 = *k;
+                      mcandidates[*k].lin2 = *l;
+                      mcandidates[*k].dist = d[*l][*k] + d[*k][*l];
+                      mcandidates[*k].dist2 = dist_unif(rng);
+                      mcandidates[*k].is_from_tmpl = true;
+                      mcandidates[*l] = mcandidates[*k];
+                      mcandidates[*l].lin1 = *l;
+                      mcandidates[*l].lin2 = *k;
+                    } 
+                  }
+                }
+
                 //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*l], sample_ages[*k]);
                 //sym_dist = d[*l][*k] + d[*k][*l] + (sample_ages[*l] * cluster_size[*l] + sample_ages[*k] * cluster_size[*k])/(cluster_size[*l] + cluster_size[*k]);
                 sym_dist = d[*l][*k] + d[*k][*l]; 
                 //sym_dist = sample_ages[*l] + sample_ages[*k]; 
                 dist_random = dist_unif(rng);
-                if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
+                if( !mcandidates[*l].is_from_tmpl && (mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random))){
                   mcandidates[*l].lin1 = *k;
                   mcandidates[*l].lin2 = *l;
                   mcandidates[*l].dist = sym_dist;
                   mcandidates[*l].dist2 = dist_random;
+                  mcandidates[*l].is_from_tmpl = false;
                 }
-                if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
+                if( !mcandidates[*k].is_from_tmpl && (mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random))){
                   mcandidates[*k].lin1 = *k;
                   mcandidates[*k].lin2 = *l;
                   mcandidates[*k].dist = sym_dist;
                   mcandidates[*k].dist2 = dist_random;
+                  mcandidates[*k].is_from_tmpl = false;
                 }
               }
 
@@ -399,22 +482,43 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
             //add potential candidates
             if(d[*l][*k] <= min_value_l){ 
+
+              //feasible candidate
+              if(tmpl_tree != NULL){
+                int n1 = conv_to_tmpl[convert_index[*l]];
+                int n2 = conv_to_tmpl[convert_index[*k]];
+                if(n1 >= 0 && n2 >= 0){
+                  if( (*tmpl_tree).nodes[n1].parent == (*tmpl_tree).nodes[n2].parent ){
+                    mcandidates[*k].lin1 = *k;
+                    mcandidates[*k].lin2 = *l;
+                    mcandidates[*k].dist = d[*l][*k] + d[*k][*l];
+                    mcandidates[*k].dist2 = dist_unif(rng);
+                    mcandidates[*k].is_from_tmpl = true;
+                    mcandidates[*l] = mcandidates[*k];
+                    mcandidates[*l].lin1 = *l;
+                    mcandidates[*l].lin2 = *k;
+                  }
+                }
+              }
+
               //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*l], sample_ages[*k]);
               //sym_dist = d[*l][*k] + d[*k][*l] + (sample_ages[*l] * cluster_size[*l] + sample_ages[*k] * cluster_size[*k])/(cluster_size[*k] + cluster_size[*l]);
               sym_dist = d[*l][*k] + d[*k][*l];
               //sym_dist = sample_ages[*l] + sample_ages[*k]; 
               dist_random = dist_unif(rng);
-              if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
+              if( !mcandidates[*l].is_from_tmpl && (mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random))){
                 mcandidates[*l].lin1 = *k;
                 mcandidates[*l].lin2 = *l;
                 mcandidates[*l].dist = sym_dist;
                 mcandidates[*l].dist2 = dist_random;
+                mcandidates[*l].is_from_tmpl = false;
               }
-              if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
+              if( !mcandidates[*k].is_from_tmpl && (mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random))){
                 mcandidates[*k].lin1 = *k;
                 mcandidates[*k].lin2 = *l;
                 mcandidates[*k].dist = sym_dist;
                 mcandidates[*k].dist2 = dist_random;
+                mcandidates[*k].is_from_tmpl = false;
               }
             }
 
@@ -444,22 +548,42 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
       if(d[*k][j] <= min_values[*k]){
         if(*k != i && *k != j){
 
+          //feasible candidate
+          if(tmpl_tree != NULL){
+            int n1 = conv_to_tmpl[convert_index[j]];
+            int n2 = conv_to_tmpl[convert_index[*k]];
+            if(n1 >= 0 && n2 >= 0){
+              if( (*tmpl_tree).nodes[n1].parent == (*tmpl_tree).nodes[n2].parent ){
+                mcandidates[*k].lin1 = *k;
+                mcandidates[*k].lin2 = j;
+                mcandidates[*k].dist = d[j][*k] + d[*k][j];
+                mcandidates[*k].dist2 = dist_unif(rng);
+                mcandidates[*k].is_from_tmpl = true;
+                mcandidates[j] = mcandidates[*k];
+                mcandidates[j].lin1 = j;
+                mcandidates[j].lin2 = *k;
+              }
+            }
+          }
+
           //sym_dist = d[j][*k] + d[*k][j] + std::max(sample_ages[j], sample_ages[*k]);
           //sym_dist = d[j][*k] + d[*k][j] + (sample_ages[j] + cluster_size[j] + sample_ages[*k] * cluster_size[*k])/(cluster_size[j] + cluster_size[*k]);
           sym_dist = d[j][*k] + d[*k][j];
           //sym_dist = sample_ages[j] + sample_ages[*k];
           dist_random = dist_unif(rng);
-          if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
+          if( !mcandidates[*k].is_from_tmpl && (mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random))){
             mcandidates[*k].lin1 = *k;
             mcandidates[*k].lin2 = j;
             mcandidates[*k].dist = sym_dist;
             mcandidates[*k].dist2 = dist_random;
+            mcandidates[*k].is_from_tmpl = false;
           }
-          if(mcandidates[j].dist > sym_dist || (mcandidates[j].dist == sym_dist && mcandidates[j].dist2 > dist_random)){
+          if( !mcandidates[j].is_from_tmpl && (mcandidates[j].dist > sym_dist || (mcandidates[j].dist == sym_dist && mcandidates[j].dist2 > dist_random))){
             mcandidates[j].lin1 = *k;
             mcandidates[j].lin2 = j;
             mcandidates[j].dist = sym_dist;
             mcandidates[j].dist2 = dist_random;
+            mcandidates[j].is_from_tmpl = false;
           }
 
         }
@@ -474,7 +598,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 }
 
 void
-MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages){
+MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages, Tree *tmpl_tree){
 
   /////////////
   //now I have to update the distance matrix. I am simultaneously updating min_values[j], where j is the new cluster     
@@ -488,6 +612,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
   best_candidate.dist2 = std::numeric_limits<float>::infinity();
   best_candidate.dist3 = std::numeric_limits<float>::infinity();
   best_candidate.replace = false;
+  best_candidate.is_from_tmpl = false;
   for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
     if(j != *k && i != *k){
       dk_it = d.rowbegin(*k);
@@ -532,7 +657,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
       }
 
-      if( dkj != dki || djk != dik ){ //If *std::next(dj_it,*k) and *std::next(dk_it,j) have not changed, the next candidate for *k will be unchanged
+      if( dkj != dki || djk != dik || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i ){ //If *std::next(dj_it,*k) and *std::next(dk_it,j) have not changed, the next candidate for *k will be unchanged
 
         if(min_value_changed || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i){
 
@@ -550,7 +675,27 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
               if(*l != j && *l != i){
 
                 //add potential candidates
-                if(d[*l][*k] <= min_value_l){ 
+                if(d[*l][*k] <= min_value_l){
+
+                  //feasible candidate
+                  if(tmpl_tree != NULL){
+                    int n1 = conv_to_tmpl[convert_index[*l]];
+                    int n2 = conv_to_tmpl[convert_index[*k]];
+                    if(n1 >= 0 && n2 >= 0){
+                      if( (*tmpl_tree).nodes[n1].parent == (*tmpl_tree).nodes[n2].parent ){
+                        mcandidates[*k].lin1 = *k;
+                        mcandidates[*k].lin2 = *l;
+                        mcandidates[*k].dist = d[*l][*k] + d[*k][*l];
+                        mcandidates[*k].dist2 = dist_unif(rng);
+                        mcandidates[*k].dist3 = std::max(sample_ages[*k], sample_ages[*l]);
+                        mcandidates[*k].is_from_tmpl = true;
+                        mcandidates[*l] = mcandidates[*k];
+                        mcandidates[*l].lin1 = *l;
+                        mcandidates[*l].lin2 = *k;
+                      } 
+                    }
+                  }
+
                   //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*k], sample_ages[*l]);
                   cand.dist = d[*l][*k] + d[*k][*l];
                   //cand.dist3 = (sample_ages[*k] * cluster_size[*k] + sample_ages[*l] * cluster_size[*l])/(cluster_size[*k] + cluster_size[*l]);
@@ -558,7 +703,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
                   //sym_dist = d[*l][*k] + d[*k][*l];
                   //sym_dist = sample_ages[*k] + sample_ages[*l];
                   cand.dist2 = dist_unif(rng);
-                  if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand){
+                  if( !mcandidates[*k].is_from_tmpl && ((mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand)){
                     if(cand.dist3 > age){
                       cand.replace = true;
                     }else{
@@ -567,8 +712,9 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
                     mcandidates[*k] = cand;
                     mcandidates[*k].lin1 = *k;
                     mcandidates[*k].lin2 = *l;
+                    mcandidates[*k].is_from_tmpl = false;
                   }
-                  if( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand){
+                  if( !mcandidates[*l].is_from_tmpl && ((mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand)){
                     if(cand.dist3 > age){
                       cand.replace = true;  
                     }else{
@@ -577,6 +723,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
                     mcandidates[*l] = cand;
                     mcandidates[*l].lin1 = *k;
                     mcandidates[*l].lin2 = *l;
+                    mcandidates[*l].is_from_tmpl = false;
                   }
                 }
 
@@ -593,6 +740,27 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
               //add potential candidates
               if(d[*l][*k] <= min_value_l){ 
+
+                //feasible candidate
+                if(tmpl_tree != NULL){
+                  int n1 = conv_to_tmpl[convert_index[*l]];
+                  int n2 = conv_to_tmpl[convert_index[*k]];
+                  if(n1 >= 0 && n2 >= 0){
+                    if( (*tmpl_tree).nodes[n1].parent == (*tmpl_tree).nodes[n2].parent ){
+                      mcandidates[*k].lin1 = *k;
+                      mcandidates[*k].lin2 = *l;
+                      mcandidates[*k].dist = d[*l][*k] + d[*k][*l];
+                      mcandidates[*k].dist2 = dist_unif(rng);
+                      mcandidates[*k].dist3 = std::max(sample_ages[*k], sample_ages[*l]);
+                      mcandidates[*k].is_from_tmpl = true;
+                      mcandidates[*l] = mcandidates[*k];
+                      mcandidates[*l].lin1 = *l;
+                      mcandidates[*l].lin2 = *k;
+                    } 
+                  }
+                }
+
+
                 //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*l], sample_ages[*k]);
                 cand.dist = d[*l][*k] + d[*k][*l];
                 //cand.dist3 = (sample_ages[*l] * cluster_size[*l] + sample_ages[*k] * cluster_size[*k])/(cluster_size[*l] + cluster_size[*k]);
@@ -600,7 +768,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
                 //sym_dist = d[*l][*k] + d[*k][*l]; 
                 //sym_dist = sample_ages[*l] + sample_ages[*k]; 
                 cand.dist2 = dist_unif(rng);
-                if( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand){
+                if( !mcandidates[*l].is_from_tmpl && ( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand)){
                   if(cand.dist3 > age){
                     cand.replace = true;     
                   }else{
@@ -609,8 +777,9 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
                   mcandidates[*l] = cand;
                   mcandidates[*l].lin1 = *k;
                   mcandidates[*l].lin2 = *l;
+                  mcandidates[*l].is_from_tmpl = false;
                 }
-                if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() ||cand.dist3 <= age) && mcandidates[*k] > cand){
+                if( !mcandidates[*k].is_from_tmpl && ((mcandidates[*k].dist == std::numeric_limits<float>::infinity() ||cand.dist3 <= age) && mcandidates[*k] > cand)){
                   if(cand.dist3 > age){
                     cand.replace = true; 
                   }else{
@@ -619,6 +788,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
                   mcandidates[*k] = cand;
                   mcandidates[*k].lin1 = *k;
                   mcandidates[*k].lin2 = *l;
+                  mcandidates[*k].is_from_tmpl = false;
                 }
               }
 
@@ -643,6 +813,27 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
 
             //add potential candidates
             if(d[*l][*k] <= min_value_l){ 
+
+              //feasible candidate
+              if(tmpl_tree != NULL){
+                int n1 = conv_to_tmpl[convert_index[*l]];
+                int n2 = conv_to_tmpl[convert_index[*k]];
+                if(n1 >= 0 && n2 >= 0){
+                  if( (*tmpl_tree).nodes[n1].parent == (*tmpl_tree).nodes[n2].parent ){
+                    mcandidates[*k].lin1 = *k;
+                    mcandidates[*k].lin2 = *l;
+                    mcandidates[*k].dist = d[*l][*k] + d[*k][*l];
+                    mcandidates[*k].dist2 = dist_unif(rng);
+                    mcandidates[*k].dist3 = std::max(sample_ages[*k], sample_ages[*l]);
+                    mcandidates[*k].is_from_tmpl = true;
+                    mcandidates[*l] = mcandidates[*k];
+                    mcandidates[*l].lin1 = *l;
+                    mcandidates[*l].lin2 = *k;
+                  } 
+                }
+              }
+
+
               //sym_dist = d[*l][*k] + d[*k][*l] + std::max(sample_ages[*l], sample_ages[*k]);
               cand.dist = d[*l][*k] + d[*k][*l];
               //cand.dist3 = (sample_ages[*l] * cluster_size[*l] + sample_ages[*k] * cluster_size[*k])/(cluster_size[*k] + cluster_size[*l]);
@@ -650,7 +841,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
               //sym_dist = d[*l][*k] + d[*k][*l];
               //sym_dist = sample_ages[*l] + sample_ages[*k]; 
               cand.dist2 = dist_unif(rng);
-              if( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand){
+              if( !mcandidates[*l].is_from_tmpl && ((mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand)){
                 if(cand.dist3 > age){
                   cand.replace = true; 
                 }else{
@@ -659,8 +850,9 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
                 mcandidates[*l] = cand;
                 mcandidates[*l].lin1 = *k;
                 mcandidates[*l].lin2 = *l;
+                mcandidates[*l].is_from_tmpl = false;
               }
-              if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand){
+              if( !mcandidates[*k].is_from_tmpl && ((mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand)){
                 if(cand.dist3 > age){
                   cand.replace = true; 
                 }else{
@@ -669,6 +861,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
                 mcandidates[*k] = cand;
                 mcandidates[*k].lin1 = *k;
                 mcandidates[*k].lin2 = *l;
+                mcandidates[*k].is_from_tmpl = false;
               }
             }
 
@@ -678,7 +871,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
       }
 
       //I might have updated mcandidates[*l] for *l < *k, but if it was the absolute minimum, it has also updated mcandidates[*k]
-      if( (best_candidate.dist == std::numeric_limits<float>::infinity() || mcandidates[*k].dist3 <= age) && best_candidate > mcandidates[*k]){ 
+      if((best_candidate.dist == std::numeric_limits<float>::infinity() || mcandidates[*k].dist3 <= age) && best_candidate > mcandidates[*k]){ 
         best_candidate   = mcandidates[*k];
         if(best_candidate.dist3 > age){
           best_candidate.replace = true;
@@ -705,6 +898,25 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
       if(d[*k][j] <= min_values[*k]){
         if(*k != i && *k != j){
 
+          //feasible candidate
+          if(tmpl_tree != NULL){
+            int n1 = conv_to_tmpl[convert_index[j]];
+            int n2 = conv_to_tmpl[convert_index[*k]];
+            if(n1 >= 0 && n2 >= 0){
+              if( (*tmpl_tree).nodes[n1].parent == (*tmpl_tree).nodes[n2].parent ){
+                mcandidates[*k].lin1 = *k;
+                mcandidates[*k].lin2 = j;
+                mcandidates[*k].dist = d[j][*k] + d[*k][j];
+                mcandidates[*k].dist2 = dist_unif(rng);
+                mcandidates[*k].dist3 = std::max(sample_ages[*k], sample_ages[j]);
+                mcandidates[*k].is_from_tmpl = true;
+                mcandidates[j] = mcandidates[*k];
+                mcandidates[j].lin1 = j;
+                mcandidates[j].lin2 = *k;
+              } 
+            }
+          }
+
           //sym_dist = d[j][*k] + d[*k][j] + std::max(sample_ages[j], sample_ages[*k]);
           cand.dist = d[j][*k] + d[*k][j];
           //cand.dist3 = (sample_ages[j] + cluster_size[j] + sample_ages[*k] * cluster_size[*k])/(cluster_size[j] + cluster_size[*k]);
@@ -713,7 +925,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
           //sym_dist = d[j][*k] + d[*k][j];
           //sym_dist = sample_ages[j] + sample_ages[*k];
           cand.dist2 = dist_unif(rng);
-          if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand){
+          if( !mcandidates[*k].is_from_tmpl && ((mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand)){
             if(cand.dist3 > age){
               cand.replace = true;
             }else{
@@ -722,8 +934,9 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
             mcandidates[*k] = cand;
             mcandidates[*k].lin1 = *k;
             mcandidates[*k].lin2 = j;
+            mcandidates[*k].is_from_tmpl = false;
           }
-          if( (mcandidates[j].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[j] > cand){
+          if( !mcandidates[j].is_from_tmpl && ((mcandidates[j].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[j] > cand)){
             if(cand.dist3 > age){
               cand.replace = true; 
             }else{
@@ -732,6 +945,7 @@ MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, std::uni
             mcandidates[j] = cand;
             mcandidates[j].lin1 = *k;
             mcandidates[j].lin2 = j;
+            mcandidates[j].is_from_tmpl = false;
           }
 
         }
@@ -844,9 +1058,23 @@ MinMatch::CoalesceSym(const int i, const int j, CollapsedMatrix<float>& sym_d){
 }
 
 void
-MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& i_sample_ages){
+MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& i_sample_ages, Tree *tmpl_tree){
 
-  //Ne = 5e5;
+  //store pairs that I coalesced. Try these pairs. 
+  //for each tip i, store order of coalescences with others
+  //mcandidates is a vector of lengths num_remaining lineages. 
+  //I store another vector of size n that converts current lineages to tmpl lineages
+  //While building tree, if it's feasible I check if I chose the event in the prev tree, and if so assign it to mcandidates
+
+  if(tmpl_tree != NULL){
+    conv_to_tmpl.resize(N_total);
+    for(int i = 0; i < N; i++){
+      conv_to_tmpl[i] = i;
+    }
+    for(int i = N; i < N_total; i++){
+      conv_to_tmpl[i] = -1;
+    }
+  }
 
   rng.seed(1);
   std::uniform_real_distribution<double> dist_unif(0,1);
@@ -888,6 +1116,8 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
   best_candidate.dist = std::numeric_limits<float>::infinity();
   best_candidate.dist2 = std::numeric_limits<float>::infinity();
   best_candidate.dist3 = std::numeric_limits<float>::infinity(); 
+  best_candidate.replace = false;
+  best_candidate.is_from_tmpl = false;
   best_sym_candidate.dist = std::numeric_limits<float>::infinity();
 
   if(sample_ages.size() == N){
@@ -922,17 +1152,16 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
     }
     int level    = 0;
     int num_lins = sample_ages_count[level];
-		age      = unique_sample_ages[level] + 2.0/((double) num_lins * (num_lins - 1.0)) * Ne;
+    age      = unique_sample_ages[level] + 2.0/((double) num_lins * (num_lins - 1.0)) * Ne;
 
-    Initialize(d, dist_unif, sample_ages);
-
+    Initialize(d, dist_unif, sample_ages, tmpl_tree);
     //////////////////////////
 
     //Now I need to coalesce clusters until there is only one lance cluster left
     int no_candidate = 0;
     int updated_cluster_size = 0;
     bool use_sym = false;
-    for(int num_nodes = N; num_nodes < N_total; num_nodes++){
+    for(num_nodes = N; num_nodes < N_total; num_nodes++){
 
       //assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
       if(best_candidate.dist == std::numeric_limits<float>::infinity()){ //This is a backup-solution for when MinMatch fails, usually rare
@@ -965,7 +1194,13 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
       tree.nodes[num_nodes].child_right    = &tree.nodes[conv_j];
       tree.nodes[num_nodes].label          = num_nodes; 
 
-      Coalesce(i, j, d, dist_unif, sample_ages);
+      if(best_candidate.is_from_tmpl){
+        assert(conv_to_tmpl[conv_i] >= 0);
+        conv_to_tmpl[num_nodes] = (*(*tmpl_tree).nodes[conv_to_tmpl[conv_i]].parent).label;
+      }
+      convert_index[j] = num_nodes; //update index of this cluster to new merged one
+
+      Coalesce(i, j, d, dist_unif, sample_ages, tmpl_tree);
       if(use_sym) CoalesceSym(i, j, sym_d);
 
       //sample_ages[j]   = (sample_ages[i] * cluster_size[i] + sample_ages[j] * cluster_size[j])/(cluster_size[i] + cluster_size[j]);
@@ -979,14 +1214,13 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
         }
       }
 
-			age           += 2.0/((double) num_lins * (num_lins - 1.0)) * Ne;
+      age           += 2.0/((double) num_lins * (num_lins - 1.0)) * Ne;
       //if(age < sample_ages[j]){
       //  age = sample_ages[j];
       //}
       assert(num_lins >= 1); 
-      
-      cluster_size[j]  = cluster_size[i] + cluster_size[j]; //update size of new cluster
-      convert_index[j] = num_nodes; //update index of this cluster to new merged one
+
+      cluster_size[j]  = cluster_size[i] + cluster_size[j]; //update size of new cluster 
       //delete cluster i    
       for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){ //using deques instead of lists, which makes this loop slower but iteration faster
         if(*it == i){
@@ -999,7 +1233,7 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
 
   }else{
 
-    Initialize(d, dist_unif);
+    Initialize(d, dist_unif, tmpl_tree);
 
     //////////////////////////
 
@@ -1007,7 +1241,7 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
     int no_candidate = 0;
     int updated_cluster_size = 0;
     bool use_sym = false;
-    for(int num_nodes = N; num_nodes < N_total; num_nodes++){
+    for(num_nodes = N; num_nodes < N_total; num_nodes++){
 
       //assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
       if(best_candidate.dist == std::numeric_limits<float>::infinity()){ //This is a backup-solution for when MinMatch fails, usually rare
@@ -1040,11 +1274,16 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
       tree.nodes[num_nodes].child_right    = &tree.nodes[conv_j];
       tree.nodes[num_nodes].label          = num_nodes; 
 
-      Coalesce(i, j, d, dist_unif);
+      if(best_candidate.is_from_tmpl){
+        assert(conv_to_tmpl[conv_i] >= 0);
+        conv_to_tmpl[num_nodes] = (*(*tmpl_tree).nodes[conv_to_tmpl[conv_i]].parent).label;
+      }
+
+      convert_index[j] = num_nodes; //update index of this cluster to new merged one
+      Coalesce(i, j, d, dist_unif, tmpl_tree);
       if(use_sym) CoalesceSym(i, j, sym_d);
 
       cluster_size[j]  = cluster_size[i] + cluster_size[j]; //update size of new cluster
-      convert_index[j] = num_nodes; //update index of this cluster to new merged one
       //delete cluster i    
       for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){ //using deques instead of lists, which makes this loop slower but iteration faster
         if(*it == i){
@@ -1060,6 +1299,60 @@ MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>&
   //std::cerr << "Warning: no candidates " << no_candidate << std::endl;
   //if(no_candidate > N/5.0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
   //if(no_candidate > 0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
+
+}
+
+void
+MinMatch::TestBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& i_sample_ages){
+
+  int root = N_total-1;
+  tree.nodes.resize(N_total);
+  tree.nodes[root].label  = root;
+
+  std::vector<double> sample_ages = i_sample_ages;
+  if(sample_ages.size() != N){
+    sample_ages.resize(N);
+    std::fill(sample_ages.begin(), sample_ages.end(), 0.0);
+  }
+
+  assert(d.size() > 0);
+  assert(d.subVectorSize(0) == d.size());
+
+  rng.seed(1);
+  std::uniform_real_distribution<double> dist_unif(0,1);
+
+
+  cluster_index.resize(N); //the cluster index will always stay between 0 - N-1 so that I can access the distance matrix.
+  std::deque<int>::iterator it_cluster_index    = cluster_index.begin();
+  std::vector<int>::iterator it_convert_index   = convert_index.begin();
+  std::vector<float>::iterator it_cluster_size  = cluster_size.begin();
+  std::vector<Node>::iterator it_nodes          = tree.nodes.begin();
+  int count = 0;
+  for(; it_cluster_index != cluster_index.end();){
+    *it_cluster_index = count;  //every leaf is in its own cluster
+    *it_convert_index = count;
+    *it_cluster_size  = 1.0;
+    (*it_nodes).label = count;
+
+    it_cluster_index++;
+    it_convert_index++;
+    it_cluster_size++;
+    it_nodes++;
+    count++;
+  }
+
+  std::fill(min_values.begin(), min_values.end(), std::numeric_limits<float>::infinity());  //Stores the min values of each row of the distance matrix
+  std::fill(min_values_sym.begin(), min_values_sym.end(), std::numeric_limits<float>::infinity());  //Stores the min values of each row of the distance matrix
+
+  best_candidate.dist = std::numeric_limits<float>::infinity();
+  best_candidate.dist2 = std::numeric_limits<float>::infinity();
+  best_sym_candidate.dist = std::numeric_limits<float>::infinity();
+
+  Initialize(d, dist_unif, sample_ages);
+
+
+
+
 }
 
 void
@@ -1117,7 +1410,7 @@ MinMatch::SlowBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& 
   int no_candidate = 0;
   int updated_cluster_size = 0;
   bool use_sym = false;
-  for(int num_nodes = N; num_nodes < N_total; num_nodes++){
+  for(num_nodes = N; num_nodes < N_total; num_nodes++){
 
     //assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
     if(best_candidate.dist == std::numeric_limits<float>::infinity()){ //This is a backup-solution for when MinMatch fails, usually rare
@@ -1155,6 +1448,31 @@ MinMatch::SlowBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& 
     float added_cluster_size = cluster_size[i] + cluster_size[j];
     dj_it = d.rowbegin(j);
     di_it = d.rowbegin(i);
+
+    if(0){
+    float max = 0;
+    for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
+      if(i != *k){
+        d[i][*k] -= d[i][j];
+        if(d[i][*k] < 0) d[i][*k] = 0;
+        if(d[i][*k] > max) max = d[i][*k];
+      }
+    }
+    float max2 = 0;
+    for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
+      if(j != *k){
+        d[j][*k] -= d[j][i];
+        if(d[j][*k] < 0) d[j][*k] = 0;
+        if(d[j][*k] > max) max = d[j][*k];
+      }
+    }
+    if(max2 > 0){
+      for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
+        d[j][*k] *= max/max2;
+      }
+    }
+    }
+
     for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
       if(j != *k && i != *k){
         dk_it = d.rowbegin(*k);
@@ -1169,6 +1487,7 @@ MinMatch::SlowBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& 
         if(dki != dkj){ //if dki == dkj, the distance of k to j does not change
           *std::next(dk_it,j)  = (cluster_size[i] * dki + cluster_size[j] * dkj)/added_cluster_size;
         }
+
       }
     }
 
@@ -1227,6 +1546,7 @@ MinMatch::SlowBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& 
   //std::cerr << "Warning: no candidates " << no_candidate << std::endl;
   //if(no_candidate > N/5.0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
   //if(no_candidate > 0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
+
 }
 
 
@@ -1277,7 +1597,7 @@ MinMatch::UPGMA(CollapsedMatrix<float>& d, Tree& tree){
   int no_candidate = 0;
   int updated_cluster_size = 0;
   bool use_sym = true;
-  for(int num_nodes = N; num_nodes < N_total; num_nodes++){
+  for(num_nodes = N; num_nodes < N_total; num_nodes++){
 
     assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
     i = best_sym_candidate.lin1;
@@ -1319,1629 +1639,1008 @@ MinMatch::UPGMA(CollapsedMatrix<float>& d, Tree& tree){
 
 }
 
-
-
 //////////////////////////////////////////
 
+//bacRelate functions
 
-InferBranchLengths::InferBranchLengths(const Data& data){
-  N       = data.N;
-  N_total = 2*N - 1;
-  L       = data.L;
-  Ne      = data.Ne;
-
-  old_branch_length.resize(N_total);
-  coordinates.resize(N_total);
-  sorted_indices.resize(N_total); //node indices in order of coalescent events
-  order.resize(N_total); //order of coalescent events
-};
-
-
-//MCMC
 void
-InferBranchLengths::InitializeBranchLengths(Tree& tree){
+MinMatch::Initialize(CollapsedMatrix<float>& d, CollapsedMatrix<float>& d_CF, std::uniform_real_distribution<double>& dist_unif){
 
-  int node_i, num_lineages;
-  //initialize using coalescent prior
-  coordinates.resize(N_total);
-  for(int i = 0; i < N; i++){
-    coordinates[i] = 0.0;
+  //I have to go thourgh every pair of clusters and check if they are matching mins.
+  //I am also filling in the vector min_values.
+  it_min_values_it = min_values.begin(); //iterator for min_values[i]
+
+  std::deque<int>::iterator jt;  //iterator for j
+  for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+
+    mcandidates[*it].dist = std::numeric_limits<float>::infinity();
+    mcandidates[*it].dist2 = std::numeric_limits<float>::infinity();
+    d_it = d.rowbegin(*it);
+    for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+      if(*it_min_values_it > *d_it && *l != *it){
+        *it_min_values_it = *d_it;
+      }
+      d_it++;
+    }
+    *it_min_values_it += threshold;
+    it_min_values_it++;
+
   }
-  for(int i = N; i < N_total; i++){
-    num_lineages = 2*N-i;
-    node_i = sorted_indices[i];
-    coordinates[node_i] = coordinates[sorted_indices[i-1]] + 2.0/( num_lineages * (num_lineages - 1.0) ); // determined by the prior
-    (*tree.nodes[node_i].child_left).branch_length  = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_left).label];
-    (*tree.nodes[node_i].child_right).branch_length = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_right).label];
+
+  it_min_values_it = min_values_CF.begin();
+  for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+
+    d_it = d_CF.rowbegin(*it);
+    for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+      if(*it_min_values_it > *d_it && *l != *it){
+        *it_min_values_it = *d_it;
+      }
+      d_it++;
+    }
+    *it_min_values_it += threshold_CF;
+    it_min_values_it++;
+
+  }
+
+  it_min_values_it = min_values.begin();
+  for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+
+    jt                    = std::next(it,1);
+    it_d_it_jt            = std::next(d.rowbegin(*it), *jt);
+    it_min_values_jt      = std::next(it_min_values_it,1);
+
+    for(; jt != cluster_index.end(); jt++){
+
+      //check if jt is a min value entry, and for each min entry, check if 'it' is also min entry. 
+      if( *it_min_values_it >= *it_d_it_jt){        
+        if( *it_min_values_jt >= d[*jt][*it]){ //it, jt is a candidate
+
+          //sym_dist = *it_d_it_jt + d[*jt][*it];
+          sym_dist = 1 - (d_CF[*it][*jt] <= min_values_CF[*it]) * (d_CF[*jt][*it] <= min_values_CF[*jt]);
+          if(sym_dist > 0){
+            sym_dist = *it_d_it_jt + d[*jt][*it];
+          }
+
+          dist_random = dist_unif(rng);
+          if(mcandidates[*it].dist > sym_dist || (mcandidates[*it].dist == sym_dist && mcandidates[*it].dist2 > dist_random)){
+            mcandidates[*it].lin1 = *it;
+            mcandidates[*it].lin2 = *jt;
+            mcandidates[*it].dist = sym_dist;
+            mcandidates[*it].dist2 = dist_random;
+          }
+          if(mcandidates[*jt].dist > sym_dist || (mcandidates[*jt].dist == sym_dist && mcandidates[*jt].dist2 > dist_random)){
+            mcandidates[*jt].lin1 = *it;
+            mcandidates[*jt].lin2 = *jt;
+            mcandidates[*jt].dist = sym_dist;
+            mcandidates[*jt].dist2 = dist_random;
+          }
+          if(best_candidate.dist > mcandidates[*jt].dist || (best_candidate.dist == mcandidates[*jt].dist && best_candidate.dist2 > mcandidates[*jt].dist2)){ //only need to check for *jt because if it is the absolute minimum, it would also be *it's candidate
+            best_candidate.lin1 = *it;
+            best_candidate.lin2 = *jt;
+            best_candidate.dist = sym_dist;
+            best_candidate.dist2 = mcandidates[*jt].dist2;
+          }
+
+        }
+      }
+
+      it_d_it_jt++;
+      it_min_values_jt++;
+
+    }
+
+    it_min_values_it++;
   }
 
 }
 
 void
-InferBranchLengths::InitializeMCMC(const Data& data, Tree& tree){
+MinMatch::Initialize(CollapsedMatrix<float>& d, CollapsedMatrix<float>& d_CF, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages){
 
-  mut_rate.resize(N_total);
-  for(int i = 0; i < N_total; i++){
-    int snp_begin = tree.nodes[i].SNP_begin;
-    int snp_end   = tree.nodes[i].SNP_end;
+  //I have to go thourgh every pair of clusters and check if they are matching mins.
+  //I am also filling in the vector min_values.
+  it_min_values_it = min_values.begin(); //iterator for min_values[i]
 
-    assert(snp_end < data.dist.size());
-    mut_rate[i]            = 0.0;
-    for(int snp = snp_begin; snp < snp_end; snp++){
-      mut_rate[i]         += data.dist[snp];
+  std::deque<int>::iterator jt;  //iterator for j
+  for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+
+    mcandidates[*it].dist = std::numeric_limits<float>::infinity();
+    mcandidates[*it].dist2 = std::numeric_limits<float>::infinity();
+    mcandidates[*it].dist3 = std::numeric_limits<float>::infinity();
+    mcandidates[*it].replace = false;
+    d_it = d.rowbegin(*it);
+    for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+      if(*it_min_values_it > *d_it && *l != *it){
+        *it_min_values_it = *d_it;
+      }
+      d_it++;
     }
+    *it_min_values_it += threshold;
+    it_min_values_it++;
 
-    if(snp_begin > 0){
-      snp_begin--;
-      mut_rate[i]         += 0.5 * data.dist[snp_begin];
-    }
-    if(snp_end < data.L-1){
-      mut_rate[i]         += 0.5 * data.dist[snp_end];
-    }
-
-    mut_rate[i]           *= data.Ne * data.mu;
   }
 
-  //initialize
-  //1. sort coordinate vector to obtain sorted_indices
-  //2. sort sorted_indices to obtain order
+  it_min_values_it = min_values_CF.begin();
+  for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
 
-  order.resize(N_total);
-  sorted_indices.resize(N_total);
+    d_it = d_CF.rowbegin(*it);
+    for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+      if(*it_min_values_it > *d_it && *l != *it){
+        *it_min_values_it = *d_it;
+      }
+      d_it++;
+    }
+    *it_min_values_it += threshold_CF;
+    it_min_values_it++;
 
-  for(int i = 0; i < N_total; i++){
-    order[i] = i;
-    sorted_indices[i] = i;
   }
 
-  //debug
-  //for(int i = 0; i < N_total-1; i++){
-  //  assert(order[i] < order[(*tree.nodes[i].parent).label]);
-  //}
+  it_min_values_it = min_values.begin();
+  for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+
+    jt                    = std::next(it,1);
+    it_d_it_jt            = std::next(d.rowbegin(*it), *jt);
+    it_min_values_jt      = std::next(it_min_values_it,1);
+
+    for(; jt != cluster_index.end(); jt++){
+
+      //check if jt is a min value entry, and for each min entry, check if 'it' is also min entry. 
+      if( *it_min_values_it >= *it_d_it_jt){        
+        if( *it_min_values_jt >= d[*jt][*it]){ //it, jt is a candidate
+
+          //sym_dist = *it_d_it_jt + d[*jt][*it];
+          sym_dist = 1 - (d_CF[*it][*jt] <= min_values_CF[*it]) * (d_CF[*jt][*it] <= min_values_CF[*jt]);
+          if(sym_dist == 0){
+            sym_dist = *it_d_it_jt + d[*jt][*it];
+          }else{
+            sym_dist = std::numeric_limits<float>::infinity();
+          }
+          cand.dist = sym_dist;
+          cand.dist3 = std::max(sample_ages[*it], sample_ages[*jt]);
+          cand.dist2 = dist_unif(rng);
+          if( (mcandidates[*it].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*it] > cand){
+            if(cand.dist3 > age){
+              cand.replace = true;
+            }else{
+              cand.replace = false;
+            }
+            mcandidates[*it] = cand;
+            mcandidates[*it].lin1 = *it;
+            mcandidates[*it].lin2 = *jt;
+          }
+          if( (mcandidates[*jt].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*jt] > cand){
+            if(cand.dist3 > age){  
+              cand.replace = true;
+            }else{
+              cand.replace = false;
+            }
+            mcandidates[*jt] = cand;
+            mcandidates[*jt].lin1 = *it;
+            mcandidates[*jt].lin2 = *jt;
+          }
+          if( (best_candidate.dist == std::numeric_limits<float>::infinity() || mcandidates[*jt].dist3 <= age) && best_candidate > mcandidates[*jt]){ //only need to check for *jt because if it is the absolute minimum, it would also be *it's candidate
+            best_candidate = mcandidates[*jt];
+            if(best_candidate.dist3 > age){
+              best_candidate.replace = true;
+            }else{
+              best_candidate.replace = false;
+            }
+          }
+
+        }
+      }
+
+      it_d_it_jt++;
+      it_min_values_jt++;
+
+    }
+
+    it_min_values_it++;
+  }
 
 }
 
-float
-InferBranchLengths::LikelihoodGivenTimes(Tree& tree){
+void
+MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, CollapsedMatrix<float>& d_CF, std::uniform_real_distribution<double>& dist_unif){
 
-  float log_likelihood = 0.0;
+  /////////////
+  //now I have to update the distance matrix. I am simultaneously updating min_values[j], where j is the new cluster     
+  float added_cluster_size = cluster_size[i] + cluster_size[j];
+  float min_value_k, min_value_j = std::numeric_limits<float>::infinity();
+  int updated_cluster_size = 0;
 
-  std::vector<Node>::iterator it_nodes = tree.nodes.begin();
-  for(; it_nodes != std::prev(tree.nodes.end(),1); it_nodes++){
+  dj_it = d.rowbegin(j);
+  di_it = d.rowbegin(i);
+  best_candidate.dist = std::numeric_limits<float>::infinity();
+  best_candidate.dist2 = std::numeric_limits<float>::infinity();
+  for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
+    if(j != *k && i != *k){
+      dk_it = d.rowbegin(*k);
+      dkj   = *std::next(dk_it,j);
+      dki   = *std::next(dk_it,i);
+      dik   = *std::next(di_it,*k);
+      djk   = *std::next(dj_it,*k);
+      min_value_k = min_values[*k];
 
-    if((*it_nodes).num_events == 0){
-      log_likelihood -= mut_rate[(*it_nodes).label] * (*it_nodes).branch_length;
-    }else{
+      if(dik != djk){ //if dik == djk, the distance of j to k does not change
+        *std::next(dj_it,*k) = (cluster_size[i] * dik + cluster_size[j] * djk)/added_cluster_size;
+      }
+      if(dki != dkj){ //if dki == dkj, the distance of k to j does not change
+        *std::next(dk_it,j)  = (cluster_size[i] * dki + cluster_size[j] * dkj)/added_cluster_size;
+      }
 
-      if((*it_nodes).branch_length == 0.0){
-        log_likelihood = -std::numeric_limits<float>::infinity();
-        break; 
-      }else{
+      bool min_value_changed = false;
+      if(dkj != dki){ // if dkj == dki, min_values for k'th row will not change
 
-        log_likelihood -= mut_rate[(*it_nodes).label] * (*it_nodes).branch_length;
+        if(std::fabs(min_value_k - threshold - dkj) < 1e-4 || std::fabs(min_value_k - threshold - dki) < 1e-4){ //if distance to j or i was minimum distance, we need to update min_values[*k]
 
-        if((*it_nodes).num_events == 1){
-          log_likelihood += fast_log(mut_rate[(*it_nodes).label] * (*it_nodes).branch_length);
-        }else if((*it_nodes).num_events < logF.size()-1){
-          log_likelihood += (*it_nodes).num_events * fast_log(mut_rate[(*it_nodes).label] * (*it_nodes).branch_length) - logF[(*it_nodes).num_events];
-        }else{
-          log_likelihood += (*it_nodes).num_events * fast_log(mut_rate[(*it_nodes).label] * (*it_nodes).branch_length);
-          log_likelihood -= (*it_nodes).num_events * fast_log((*it_nodes).num_events) - (*it_nodes).num_events; //Stirling
+          //Note that min_values can only increase. Therefore, if it is the same as before we can break
+          min_value_old     = min_value_k - threshold;
+          min_value_k       = std::numeric_limits<float>::infinity();
+          min_value_changed = true;
+          for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+            if(*l != i && *l != *k){  
+              if(min_value_k > *std::next(dk_it,*l)){ //update min_values
+                min_value_k    = *std::next(dk_it,*l);
+                if(min_value_k == min_value_old){
+                  break; // same as before, so break 
+                }
+              }
+            }
+          }
+
+          min_value_k   += threshold; //add threshold
+          min_values[*k] = min_value_k;
+
         }
 
       }
 
-    }
+      if( dkj != dki || djk != dik || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i){ //If *std::next(dj_it,*k) and *std::next(dk_it,j) have not changed, the next candidate for *k will be unchanged
 
-  }
+        if(min_value_changed || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i){
 
-  //assert(log_likelihood <= 0.0);
-  if(log_likelihood > 0.0) log_likelihood = 0.0;
+          updated_cluster[updated_cluster_size] = *k; //This is to keep track of which candidates have been changed in current iteration. Needed when I decide that candidates for *k don't change (but candidates of *l might change and could be *k) 
+          updated_cluster_size++;
 
-  return log_likelihood;
+          //count2++;
+          mcandidates[*k].dist = std::numeric_limits<float>::infinity();
+          mcandidates[*k].dist2 = std::numeric_limits<float>::infinity();
 
-}
+          for(std::deque<int>::iterator l = cluster_index.begin(); l != k; l++){ //only need *l < *k to avoid going through the same pair twice
+            if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
+              const float min_value_l = min_values[*l];
+              if(*l != j && *l != i){
 
-void
-InferBranchLengths::UpdateAvg(Tree& tree){
+                //add potential candidates
+                if(d[*l][*k] <= min_value_l){ 
+                  //sym_dist = d[*l][*k] + d[*k][*l];
+                  //sym_dist = d_CF[*l][*k] + d_CF[*k][*l];
+                  sym_dist = 1 - (d_CF[*l][*k] <= min_values_CF[*l]) * (d_CF[*k][*l] <= min_values_CF[*k]);
+                  if(sym_dist > 0){
+                    sym_dist = d[*l][*k] + d[*k][*l];
+                  }
 
-
-  if(update_node1 != -1){
-
-    if(update_node2 != -1){
-
-      it_avg         = std::next(avg.begin(), update_node1);
-      it_coords      = std::next(coordinates.begin(), update_node1);
-      it_last_update = std::next(last_update.begin(), update_node1);
-      it_last_coords = std::next(last_coordinates.begin(), update_node1);
-      *it_avg         += ((count - *it_last_update) * (*it_last_coords - *it_avg) + *it_coords - *it_last_coords)/count;
-      *it_last_update  = count;
-      *it_last_coords  = *it_coords;
-
-      it_avg         = std::next(avg.begin(), update_node2);
-      it_coords      = std::next(coordinates.begin(), update_node2);
-      it_last_update = std::next(last_update.begin(), update_node2);
-      it_last_coords = std::next(last_coordinates.begin(), update_node2);
-      *it_avg         += ((count - *it_last_update) * (*it_last_coords - *it_avg) + *it_coords - *it_last_coords)/count;
-      *it_last_update  = count;
-      *it_last_coords  = *it_coords;
-
-      update_node1 = -1;
-      update_node2 = -1;
-
-    }else{
-
-      for(std::vector<int>::iterator it_node = std::next(sorted_indices.begin(), update_node1); it_node != sorted_indices.end(); it_node++){
-        avg[*it_node]             += ((count - last_update[*it_node]) * (last_coordinates[*it_node] - avg[*it_node]) + coordinates[*it_node] - last_coordinates[*it_node])/count;
-        last_update[*it_node]      = count;
-        last_coordinates[*it_node] = coordinates[*it_node];
-      }
-      update_node1 = -1;
-
-    }
-
-  }
-
-
-  /*  
-      it_avg = std::next(avg.begin(), N);
-      it_coords = std::next(coordinates.begin(), N);
-  //update avg
-  for(int ell = N; ell < N_total; ell++){
-   *it_avg  += (*it_coords - *it_avg)/count;
-   last_update[ell] = count;
-   it_avg++;
-   it_coords++;
-   }
-   */
-
-
-}
-
-void 
-InferBranchLengths::logFactorial(int max){
-
-  logF.resize(max+1); 
-  std::vector<float>::iterator it_logF = logF.begin();
-  *it_logF = 0;
-  it_logF++;
-  std::vector<float>::iterator it_logF_prev = logF.begin();
-  for(int k = 1; k <= max; k++){
-    *it_logF = *it_logF_prev + std::log(k);
-    it_logF++;
-    it_logF_prev++;
-  }
-
-}
-
-
-//////////////////////////////////////////
-
-void
-InferBranchLengths::RandomSwitchOrder(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif){
-
-  int node_k, node_swap_k;
-
-  //check order of parent and order of children
-  //choose a random number in this range (not including)
-  //swap order with that node
-
-  node_k = sorted_indices[k];
-
-  int parent_order    = order[(*tree.nodes[node_k].parent).label];
-  int child_order     = order[(*tree.nodes[node_k].child_left).label];
-  int child_order_alt = order[(*tree.nodes[node_k].child_right).label];
-  if(child_order < child_order_alt) child_order = child_order_alt;
-  if(child_order < N) child_order = N-1;
-  assert(child_order < parent_order);
-
-  if( parent_order - child_order > 2 ){
-
-    std::uniform_int_distribution<int> d_swap(child_order+1, parent_order-1);
-    int new_order = d_swap(rng);
-
-    //calculate odds
-    node_swap_k     = sorted_indices[new_order];
-    parent_order    = order[(*tree.nodes[node_swap_k].parent).label];
-    child_order     = order[(*tree.nodes[node_swap_k].child_left).label];
-    child_order_alt = order[(*tree.nodes[node_swap_k].child_right).label];
-    if(child_order < child_order_alt) child_order = child_order_alt;
-    if(child_order < N) child_order = N-1;
-
-    if(child_order < k && k < parent_order){
-
-      if(new_order != k){
-        sorted_indices[k]         = node_swap_k;
-        sorted_indices[new_order] = node_k;
-        order[node_k]             = new_order;
-        order[node_swap_k]        = k;
-      }
-
-    }
-
-  }
-
-}
-
-void
-InferBranchLengths::SwitchOrder(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif){
-
-  //Idea:
-  //
-  //For node_k = sorted_indices[k], look up order of parent and children
-  //Then, choose a node with order between children and parent uniformly at random.
-  //Check whether chosen node has order of children < k and order of parent > k
-  //If so, this is a valid transition - calculate likelihood ratio and accept transition with this probability
-  //Otherwise, reject transition immediately
-  //
-  //Notice that the transition probabilities are symmetric: 
-  //Distribution d_swap(child_order+1, parent_order-1); does not change after a transition.
-
-  //This update is constant time.
-  accept = true;
-  int node_k, node_swap_k;
-  log_likelihood_ratio = 0.0;
-
-  //check order of parent and order of children
-  //choose a random number in this range (not including)
-  //swap order with that node
-
-  node_k = sorted_indices[k];
-
-  int parent_order    = order[(*tree.nodes[node_k].parent).label];
-  int child_order     = order[(*tree.nodes[node_k].child_left).label];
-  int child_order_alt = order[(*tree.nodes[node_k].child_right).label];
-  if(child_order < child_order_alt) child_order = child_order_alt;
-  if(child_order < N) child_order = N-1; 
-  assert(child_order < parent_order);
-
-  if( parent_order - child_order > 2 ){
-
-    std::uniform_int_distribution<int> d_swap(child_order+1, parent_order-1);
-    int new_order = d_swap(rng);
-
-    //calculate odds
-    node_swap_k     = sorted_indices[new_order];
-    parent_order    = order[(*tree.nodes[node_swap_k].parent).label];
-    child_order     = order[(*tree.nodes[node_swap_k].child_left).label];
-    child_order_alt = order[(*tree.nodes[node_swap_k].child_right).label];
-    if(child_order < child_order_alt) child_order = child_order_alt;
-    if(child_order < N) child_order = N-1;
-
-    if(child_order < k && k < parent_order){
-
-      //branch length of node and children change
-      delta_tau = coordinates[node_swap_k] - coordinates[node_k];
-      //assert(delta_tau >= 0.0);
-
-      child_left_label  = (*tree.nodes[node_k].child_left).label;
-      child_right_label = (*tree.nodes[node_k].child_right).label;
-
-      n_num_events           = tree.nodes[node_k].num_events;
-      child_left_num_events  = tree.nodes[child_left_label].num_events;
-      child_right_num_events = tree.nodes[child_right_label].num_events;
-
-      tb                 = tree.nodes[node_k].branch_length;
-      tb_new             = tb - delta_tau;
-      tb_child_left      = tree.nodes[child_left_label].branch_length;
-      tb_child_left_new  = tb_child_left + delta_tau;
-      tb_child_right     = tree.nodes[child_right_label].branch_length;
-      tb_child_right_new = tb_child_right + delta_tau;
-
-      //mutation and recombination part
-      if(tb == 0.0){
-        log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-      }else if(tb_new <= 0.0){
-        log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-      }else{
-
-        if(tb_child_left == 0.0){
-          log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-        }else if(tb_child_left_new <= 0.0){
-          log_likelihood_ratio  = -std::numeric_limits<float>::infinity(); 
-        }else{
-
-          if(tb_child_right == 0.0){
-            log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-          }else if(tb_child_right_new <= 0.0){
-            log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-          }else{
-
-            log_likelihood_ratio += (mut_rate[node_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-            log_likelihood_ratio += n_num_events * fast_log(tb_new/tb);
-            log_likelihood_ratio += child_right_num_events * fast_log(tb_child_right_new/tb_child_right); 
-            log_likelihood_ratio += child_left_num_events * fast_log(tb_child_left_new/tb_child_left); 
-
-            delta_tau  *= -1.0;
-            child_left_label  = (*tree.nodes[node_swap_k].child_left).label;
-            child_right_label = (*tree.nodes[node_swap_k].child_right).label;
-
-            n_num_events           = tree.nodes[node_swap_k].num_events;
-            child_left_num_events  = tree.nodes[child_left_label].num_events;
-            child_right_num_events = tree.nodes[child_right_label].num_events;
-
-            tb                 = tree.nodes[node_swap_k].branch_length;
-            tb_new             = tb - delta_tau;
-            tb_child_left      = tree.nodes[child_left_label].branch_length;
-            tb_child_left_new  = tb_child_left + delta_tau;
-            tb_child_right     = tree.nodes[child_right_label].branch_length;
-            tb_child_right_new = tb_child_right + delta_tau;
-
-            if(tb == 0.0){
-              log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-            }else if(tb_new <= 0.0){
-              log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-            }else{
-
-              if(tb_child_left == 0.0){
-                log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-              }else if(tb_child_left_new <= 0.0){
-                log_likelihood_ratio  = -std::numeric_limits<float>::infinity(); 
-              }else{
-
-                if(tb_child_right == 0.0){
-                  log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-                }else if(tb_child_right_new <= 0.0){
-                  log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-                }else{ 
-                  log_likelihood_ratio += (mut_rate[node_swap_k] - mut_rate[child_left_label] - mut_rate[child_right_label]) * delta_tau;
-                  log_likelihood_ratio += n_num_events * fast_log(tb_new/tb);
-                  log_likelihood_ratio += child_right_num_events * fast_log(tb_child_right_new/tb_child_right); 
-                  log_likelihood_ratio += child_left_num_events * fast_log(tb_child_left_new/tb_child_left);
-
+                  dist_random = dist_unif(rng);
+                  if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
+                    mcandidates[*k].lin1 = *k;
+                    mcandidates[*k].lin2 = *l;
+                    mcandidates[*k].dist = sym_dist;
+                    mcandidates[*k].dist2 = dist_random;
+                  }
+                  if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
+                    mcandidates[*l].lin1 = *k;
+                    mcandidates[*l].lin2 = *l;
+                    mcandidates[*l].dist = sym_dist;
+                    mcandidates[*l].dist2 = dist_random;
+                  }
                 }
 
+              }
+            }
+          }
+
+        }else{
+
+          //need to check if *k is a candidate for some *l
+          for(std::vector<int>::iterator l = updated_cluster.begin(); l != std::next(updated_cluster.begin(),updated_cluster_size); l++){ 
+            if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
+              const float min_value_l = min_values[*l];
+
+              //add potential candidates
+              if(d[*l][*k] <= min_value_l){ 
+                //sym_dist = d[*l][*k] + d[*k][*l];
+                //sym_dist = d_CF[*l][*k] + d_CF[*k][*l];
+                sym_dist = 1 - (d_CF[*l][*k] <= min_values_CF[*l]) * (d_CF[*k][*l] <= min_values_CF[*k]);
+                if(sym_dist > 0){
+                  sym_dist = d[*l][*k] + d[*k][*l];
+                }
+                dist_random = dist_unif(rng);
+                if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
+                  mcandidates[*l].lin1 = *k;
+                  mcandidates[*l].lin2 = *l;
+                  mcandidates[*l].dist = sym_dist;
+                  mcandidates[*l].dist2 = dist_random;
+                }
+                if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
+                  mcandidates[*k].lin1 = *k;
+                  mcandidates[*k].lin2 = *l;
+                  mcandidates[*k].dist = sym_dist;
+                  mcandidates[*k].dist2 = dist_random;
+                }
+              }
+
+            }
+          }
+
+        }
+
+      }else{
+        //The candidate of *k is unchanged, but it might have been (*k,i), so have to change that to (*k,j)
+        if(mcandidates[*k].lin1 == i){
+          mcandidates[*k].lin1 = j;
+        }
+        if(mcandidates[*k].lin2 == i){
+          mcandidates[*k].lin2 = j;
+        }
+
+        //need to check if *k is a candidate for some *l
+        for(std::vector<int>::iterator l = updated_cluster.begin(); l != std::next(updated_cluster.begin(),updated_cluster_size); l++){ 
+          if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
+            const float min_value_l = min_values[*l];
+
+            //add potential candidates
+            if(d[*l][*k] <= min_value_l){ 
+              //sym_dist = d[*l][*k] + d[*k][*l];
+              //sym_dist = d_CF[*l][*k] + d_CF[*k][*l];
+              sym_dist = 1 - (d_CF[*l][*k] <= min_values_CF[*l]) * (d_CF[*k][*l] <= min_values_CF[*k]);
+              if(sym_dist > 0){
+                sym_dist = d[*l][*k] + d[*k][*l];
+              }
+              dist_random = dist_unif(rng);
+              if(mcandidates[*l].dist > sym_dist || (mcandidates[*l].dist == sym_dist && mcandidates[*l].dist2 > dist_random)){
+                mcandidates[*l].lin1 = *k;
+                mcandidates[*l].lin2 = *l;
+                mcandidates[*l].dist = sym_dist;
+                mcandidates[*l].dist2 = dist_random;
+              }
+              if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
+                mcandidates[*k].lin1 = *k;
+                mcandidates[*k].lin2 = *l;
+                mcandidates[*k].dist = sym_dist;
+                mcandidates[*k].dist2 = dist_random;
               }
             }
 
           }
         }
-      } 
-      assert(!std::isnan(log_likelihood_ratio));
 
-      accept = true;
-      if(log_likelihood_ratio < 0.0){
-        //accept with probability exp(log_likelihood_ratio)
-        if(dist_unif(rng) > exp(log_likelihood_ratio)){
-          accept = false;
-        }
       }
 
-      //update coordinates and sorted_indices
-      if(accept && new_order != k){
-        //order of nodes in k - new_order decreases by one.
+      //I might have updated mcandidates[*l] for *l < *k, but if it was the absolute minimum, it has also updated mcandidates[*k]
+      if(best_candidate.dist > mcandidates[*k].dist || (best_candidate.dist == mcandidates[*k].dist && best_candidate.dist2 > mcandidates[*k].dist2)){ 
+        best_candidate   = mcandidates[*k];
+      }
 
-        sorted_indices[k]         = node_swap_k;
-        sorted_indices[new_order] = node_k;
-        order[node_k]             = new_order;
-        order[node_swap_k]        = k;
-
-        double tmp_coords                       = coordinates[node_k];
-        coordinates[node_k]                     = coordinates[node_swap_k];
-        coordinates[node_swap_k]                = tmp_coords;
-        update_node1 = node_k;
-        update_node2 = node_swap_k;
-
-        //calculate new branch lengths
-        tree.nodes[node_k].branch_length                 = coordinates[(*tree.nodes[node_k].parent).label]  - coordinates[node_k];
-        if(tree.nodes[node_k].branch_length < 0.0) tree.nodes[node_k].branch_length = 0.0;
-        assert(tree.nodes[node_k].branch_length >= 0.0); 
-        child_left_label                                 = (*tree.nodes[node_k].child_left).label;
-        tree.nodes[child_left_label].branch_length       = coordinates[node_k] - coordinates[child_left_label];
-        if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
-        assert(tree.nodes[child_left_label].branch_length >= 0.0);
-        child_right_label                                = (*tree.nodes[node_k].child_right).label;
-        tree.nodes[child_right_label].branch_length      = coordinates[node_k] - coordinates[child_right_label];
-        if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
-        assert(tree.nodes[child_right_label].branch_length >= 0.0);
-
-        tree.nodes[node_swap_k].branch_length            = coordinates[(*tree.nodes[node_swap_k].parent).label]  - coordinates[node_swap_k];
-        if(tree.nodes[node_swap_k].branch_length < 0.0) tree.nodes[node_swap_k].branch_length = 0.0;
-        if(!(tree.nodes[node_swap_k].branch_length >= 0.0)) std::cerr << tree.nodes[node_swap_k].branch_length << std::endl;
-        assert(tree.nodes[node_swap_k].branch_length >= 0.0); 
-        child_left_label                                 = (*tree.nodes[node_swap_k].child_left).label;
-        tree.nodes[child_left_label].branch_length       = coordinates[node_swap_k] - coordinates[child_left_label];
-        if(tree.nodes[child_left_label].branch_length < 0.0) tree.nodes[child_left_label].branch_length = 0.0;
-        assert(tree.nodes[child_left_label].branch_length >= 0.0);
-        child_right_label                                = (*tree.nodes[node_swap_k].child_right).label;
-        tree.nodes[child_right_label].branch_length      = coordinates[node_swap_k] - coordinates[child_right_label];
-        if(tree.nodes[child_right_label].branch_length < 0.0) tree.nodes[child_right_label].branch_length = 0.0;
-        assert(tree.nodes[child_right_label].branch_length >= 0.0);
-
+      if(*std::next(dj_it,*k) < min_value_j){
+        min_value_j   = *std::next(dj_it,*k);
       }
     }
+  }
+  min_value_j  += threshold;
+  min_values[j] = min_value_j;
 
+  //add candidates with new cluster j 
+  mcandidates[j].dist = std::numeric_limits<float>::infinity();
+  mcandidates[j].dist2 = std::numeric_limits<float>::infinity();
+  for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){ 
+    if(*std::next(dj_it,*k) <= min_value_j){ 
+      if(d[*k][j] <= min_values[*k]){
+        if(*k != i && *k != j){
+
+          //sym_dist = d[j][*k] + d[*k][j];
+          //sym_dist = d_CF[j][*k] + d_CF[*k][j];
+          sym_dist = 1 - (d_CF[j][*k] <= min_values_CF[j]) * (d_CF[*k][j] <= min_values_CF[*k]);
+          if(sym_dist > 0){
+            sym_dist = d[j][*k] + d[*k][j];
+          }
+          dist_random = dist_unif(rng);
+          if(mcandidates[*k].dist > sym_dist || (mcandidates[*k].dist == sym_dist && mcandidates[*k].dist2 > dist_random)){
+            mcandidates[*k].lin1 = *k;
+            mcandidates[*k].lin2 = j;
+            mcandidates[*k].dist = sym_dist;
+            mcandidates[*k].dist2 = dist_random;
+          }
+          if(mcandidates[j].dist > sym_dist || (mcandidates[j].dist == sym_dist && mcandidates[j].dist2 > dist_random)){
+            mcandidates[j].lin1 = *k;
+            mcandidates[j].lin2 = j;
+            mcandidates[j].dist = sym_dist;
+            mcandidates[j].dist2 = dist_random;
+          }
+
+        }
+      }
+    }
+  }
+
+  if(best_candidate.dist > mcandidates[j].dist || (best_candidate.dist == mcandidates[j].dist && best_candidate.dist2 > mcandidates[j].dist2)){
+    best_candidate   = mcandidates[j];
   }
 
 }
 
-float
-InferBranchLengths::ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif){
+void
+MinMatch::Coalesce(const int i, const int j, CollapsedMatrix<float>& d, CollapsedMatrix<float>& d_CF, std::uniform_real_distribution<double>& dist_unif, std::vector<double>& sample_ages){
 
-  //This step is O(N)
-  num_lineages = 2*N-k;
-  assert(num_lineages <= N);
-  assert(num_lineages >= 2);
+  /////////////
+  //now I have to update the distance matrix. I am simultaneously updating min_values[j], where j is the new cluster     
+  float added_cluster_size = cluster_size[i] + cluster_size[j];
+  float min_value_k, min_value_j = std::numeric_limits<float>::infinity();
+  int updated_cluster_size = 0;
 
-  k_choose_2 = num_lineages * (num_lineages-1.0)/2.0;
-  tau_old    = coordinates[sorted_indices[k]] - coordinates[sorted_indices[k-1]];
+  dj_it = d.rowbegin(j);
+  di_it = d.rowbegin(i);
+  best_candidate.dist = std::numeric_limits<float>::infinity();
+  best_candidate.dist2 = std::numeric_limits<float>::infinity();
+  best_candidate.dist3 = std::numeric_limits<float>::infinity();
+  best_candidate.replace = false;
+  for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
+    if(j != *k && i != *k){
+      dk_it = d.rowbegin(*k);
+      dkj   = *std::next(dk_it,j);
+      dki   = *std::next(dk_it,i);
+      dik   = *std::next(di_it,*k);
+      djk   = *std::next(dj_it,*k);
+      min_value_k = min_values[*k];
+      if(mcandidates[*k].dist3 <= age) mcandidates[*k].replace = false;
 
-  log_likelihood_ratio = 0.0; 
-  if(tau_old > 0.0){
-    //choose tau_new according to Gamma(alpha, alpha/tau_old)
-    tau_new   = -log(dist_unif(rng)) * tau_old;
-    delta_tau = tau_new - tau_old;
-    //calculate ratio of proposals
-    log_likelihood_ratio = fast_log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);
-    assert(tau_new > 0.0);
-  }else{
-    //choose tau_new according to Gamma(alpha, alpha/tau_old) 
-    tau_new   = -log(dist_unif(rng))/k_choose_2;
-    tau_old   = 0.0;
-    delta_tau = tau_new;
-    //calculate ratio of proposals
-    log_likelihood_ratio = fast_log(1.0/(tau_new*k_choose_2)) + tau_new*k_choose_2;
-    assert(tau_new > 0.0);
-  }
-
-  //std::cerr << "const: " << log_likelihood_ratio << std::endl;
-
-  //coalescent prior
-  //float tmp = log_likelihood_ratio;
-  log_likelihood_ratio -= k_choose_2 * delta_tau;
-  //std::cerr << "const: " << log_likelihood_ratio << std::endl;
-
-  //assert(order[node_k] == k);
-  int count_number_of_spanning_branches = 0;
-  it_sorted_indices = std::next(sorted_indices.begin(), k);
-  for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-
-    if(order[(*tree.nodes[*it_sorted_indices].child_left).label] < k){
-      count_number_of_spanning_branches++;
-
-      n = *tree.nodes[*it_sorted_indices].child_left;
-      assert(order[n.label] < k);
-      tb     = n.branch_length;
-      tb_new = tb + delta_tau;
-
-      if(tb == 0.0){
-        log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-        break;
-      }else if(tb_new <= 0.0){
-        log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-        break;
-      }else{
-        log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-        log_likelihood_ratio += n.num_events * fast_log(tb_new/tb);
+      if(dik != djk){ //if dik == djk, the distance of j to k does not change
+        *std::next(dj_it,*k) = (cluster_size[i] * dik + cluster_size[j] * djk)/added_cluster_size;
       }
-    }
-    if(order[(*tree.nodes[*it_sorted_indices].child_right).label] < k){
-      count_number_of_spanning_branches++;
-
-      n = *tree.nodes[*it_sorted_indices].child_right;
-      assert(order[n.label] < k);
-      tb     = n.branch_length;
-      tb_new = tb + delta_tau;
-
-      if(tb == 0.0){
-        log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-        break;
-      }else if(tb_new <= 0.0){
-        log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-        break;
-      }else{
-        log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-        log_likelihood_ratio += n.num_events * fast_log(tb_new/tb);
-      }
-    }
-    if(count_number_of_spanning_branches == num_lineages) break;
-  }
-  //assert(count_number_of_spanning_branches == num_lineages);
-
-  //std::cerr << "const: " << log_likelihood_ratio - tmp << std::endl;
-
-  //decide whether to accept proposal or not.
-  accept = true;
-  if(log_likelihood_ratio < 0.0){
-    //accept with probability exp(log_p)
-    if(dist_unif(rng) > exp(log_likelihood_ratio)){
-      accept = false;
-    }
-  }
-
-  //update coordinates and sorted_indices
-  if(accept){
-    //calculate new branch lengths
-    it_sorted_indices = std::next(sorted_indices.begin(), k);
-    update_node1 = k;
-    for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-      coordinates[*it_sorted_indices]                 += delta_tau;
-      child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
-      tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
-      child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
-      tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
-    }
-  }
-
-  return log_likelihood_ratio;
-
-}
-
-float
-InferBranchLengths::ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif){
-
-  //This step is O(N)
-  num_lineages = 2*N-k;
-  assert(num_lineages <= N);
-  assert(num_lineages >= 2);
-
-  k_choose_2 = num_lineages * (num_lineages-1.0)/2.0;
-
-  //coorindates[sorted_indices[k-1]] determines the epoch at the lower end.
-  //from there, I have to propose a new time by drawing a time for the first epoch, and if it is exceeding the epoch, for the next epoch etc.
-
-  tau_old   = coordinates[sorted_indices[k]] - coordinates[sorted_indices[k-1]];
-
-  log_likelihood_ratio = 0.0;
-
-  if(tau_old > 0.0){
-    tau_new   = -log(dist_unif(rng)) * tau_old;
-    //tau_new   = 1.1 * tau_old;
-    delta_tau = tau_new - tau_old;
-    //calculate ratio of proposals
-    log_likelihood_ratio = fast_log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);   
-    assert(tau_new > 0.0);
-  }else{
-    tau_new   = -log(dist_unif(rng)) * 1.0/k_choose_2;
-    tau_old   = 0.0;
-    delta_tau = tau_new;    
-    //calculate ratio of proposals
-    log_likelihood_ratio = fast_log(1.0/(tau_new*k_choose_2)) + tau_new*k_choose_2;
-
-    assert(tau_new > 0.0);
-  }
-
-  //std::cerr << "var: " << log_likelihood_ratio << std::endl;
-
-  //coalescent prior  
-  int ep_begin = 0;
-  while(coordinates[sorted_indices[k-1]] >= epoch[ep_begin]){
-    ep_begin++;
-    if(ep_begin == (int)epoch.size()) break;
-  }
-  ep_begin--;
-  assert(ep_begin > -1);
-  assert(coordinates[sorted_indices[k-1]] >= epoch[ep_begin]);
-  if( coordinates[sorted_indices[k-1]] >= epoch[ep_begin+1]  ){
-    assert(ep_begin == (int) epoch.size() - 1);
-  }
-
-  int ep;
-  double tmp_tau, delta_tmp_tau;
-  ep            = ep_begin;
-  tmp_tau       = tau_new;
-
-  int k_tmp = k;
-  int num_lineages_tmp = num_lineages;
-  float k_choose_2_tmp = k_choose_2;
-  bool foo = false;
-  int end_ep = -1;
-  // For k_tmp == k, I am actually changing the time while num_lineages ancestors remain.
-  // For k_tmp > k, I need to check whether these were pushed to older epochs by the update, and adjust coalescent times.
-  while(k_tmp < 2*N-1){
-    if(ep < epoch.size() - 1){
-
-      if(k_tmp > k){
-        //assert(coordinates[sorted_indices[k_tmp-1]] + delta_tau >= epoch[ep]);
-        //assert(coordinates[sorted_indices[k_tmp-1]] + delta_tau < epoch[ep + 1]);
-        tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
-        delta_tmp_tau = epoch[ep+1] - (coordinates[sorted_indices[k_tmp-1]] + delta_tau);
-        //update k_choose_2
-        k_choose_2_tmp *= (num_lineages_tmp - 2.0)/num_lineages_tmp;
-        num_lineages_tmp--;
-        assert(num_lineages_tmp > 1);
-      }else{
-        assert(coordinates[sorted_indices[k_tmp-1]] >= epoch[ep]);
-        delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k_tmp-1]];
+      if(dki != dkj){ //if dki == dkj, the distance of k to j does not change
+        *std::next(dk_it,j)  = (cluster_size[i] * dki + cluster_size[j] * dkj)/added_cluster_size;
       }
 
-      //assert(tmp_tau >= 0.0);
-      assert(delta_tmp_tau >= 0.0);
-      //if epoch[ep+1] begins before the current interval (while num_lineages_tmp remain) ends, enter if statement
-      if(delta_tmp_tau <= tmp_tau){
+      bool min_value_changed = false;
+      if(dkj != dki){ // if dkj == dki, min_values for k'th row will not change
 
-        //add up rate parameters for this interval
-        if(coal_rate[ep] > 0.0){
-          log_likelihood_ratio   -= k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
-        }
-        tmp_tau                -= delta_tmp_tau;
+        if(std::fabs(min_value_k - threshold - dkj) < 1e-4 || std::fabs(min_value_k - threshold - dki) < 1e-4){ //if distance to j or i was minimum distance, we need to update min_values[*k]
 
-        ep++;
-        delta_tmp_tau           = epoch[ep+1] - epoch[ep];
-        while(tmp_tau > delta_tmp_tau && ep < epoch.size() - 1){
-          if(coal_rate[ep] > 0.0){
-            log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
-          }
-          tmp_tau              -= delta_tmp_tau;
-
-          ep++;
-          delta_tmp_tau         = epoch[ep+1] - epoch[ep];
-        }
-        assert(tmp_tau >= 0.0);
-        if(coal_rate[ep] == 0){
-          log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-        }else{
-          log_likelihood_ratio -= k_choose_2_tmp*coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
-        }
-
-      }else{
-
-        if(coal_rate[ep] == 0){
-          log_likelihood_ratio = -std::numeric_limits<float>::infinity();
-        }else{
-          log_likelihood_ratio -= k_choose_2_tmp * coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
-        }
-      }
-
-    }else{
-
-      if(coal_rate[ep] == 0){
-        log_likelihood_ratio = -std::numeric_limits<float>::infinity();
-      }else{
-        if(k_tmp > k){
-          tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
-        }
-        log_likelihood_ratio -= k_choose_2_tmp * coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
-      }
-
-    }
-    k_tmp++;
-
-  }
-
-  if(log_likelihood_ratio != -std::numeric_limits<float>::infinity()){
-
-    ep            = ep_begin;
-    tmp_tau       = tau_old;
-
-    int k_max = k_tmp;
-    k_tmp = k;
-    k_choose_2_tmp = k_choose_2;
-    num_lineages_tmp = num_lineages;
-    while(k_tmp < k_max){
-
-      if(ep < epoch.size() - 1){
-
-        if(k_tmp > k){
-          //assert(coordinates[sorted_indices[k_tmp-1]] >= epoch[ep]);
-          //assert(coordinates[sorted_indices[k_tmp-1]] < epoch[ep + 1]);
-          tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
-          delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k_tmp-1]];
-          //update k_choose_2
-          k_choose_2_tmp *= (num_lineages_tmp - 2.0)/num_lineages_tmp;
-          num_lineages_tmp--;
-        }else{
-          //assert(coordinates[sorted_indices[k_tmp-1]] >= epoch[ep]);
-          delta_tmp_tau = epoch[ep+1] - coordinates[sorted_indices[k_tmp-1]];
-        }
-
-        assert(delta_tmp_tau >= 0.0);
-        if(delta_tmp_tau <= tmp_tau){
-          if(coal_rate[ep] > 0.0){
-            log_likelihood_ratio  += k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
-          }
-          tmp_tau                -= delta_tmp_tau;
-          ep++;
-          delta_tmp_tau           = epoch[ep+1] - epoch[ep];
-          while(tmp_tau > delta_tmp_tau && ep < epoch.size() - 1){
-            if(coal_rate[ep] > 0.0){
-              log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * delta_tmp_tau; 
+          //Note that min_values can only increase. Therefore, if it is the same as before we can break
+          min_value_old     = min_value_k - threshold;
+          min_value_k       = std::numeric_limits<float>::infinity();
+          min_value_changed = true;
+          for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+            if(*l != i && *l != *k){  
+              if(min_value_k > *std::next(dk_it,*l)){ //update min_values
+                min_value_k    = *std::next(dk_it,*l);
+                if(min_value_k == min_value_old){
+                  break; // same as before, so break 
+                }
+              }
             }
-            tmp_tau              -= delta_tmp_tau;
-            ep++;
-            delta_tmp_tau         = epoch[ep+1] - epoch[ep];
           }
-          assert(tmp_tau >= 0.0);
-          if(coal_rate[ep] == 0){
-            log_likelihood_ratio = std::numeric_limits<float>::infinity();
-          }else{
-            log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
+
+          min_value_k   += threshold; //add threshold
+          min_values[*k] = min_value_k;
+
+        }
+
+      }
+
+      if( dkj != dki || djk != dik ){ //If *std::next(dj_it,*k) and *std::next(dk_it,j) have not changed, the next candidate for *k will be unchanged
+
+        if(min_value_changed || mcandidates[*k].lin1 == j || mcandidates[*k].lin2 == j || mcandidates[*k].lin1 == i || mcandidates[*k].lin2 == i){
+
+          updated_cluster[updated_cluster_size] = *k; //This is to keep track of which candidates have been changed in current iteration. Needed when I decide that candidates for *k don't change (but candidates of *l might change and could be *k) 
+          updated_cluster_size++;
+
+          //count2++;
+          mcandidates[*k].dist = std::numeric_limits<float>::infinity();
+          mcandidates[*k].dist2 = std::numeric_limits<float>::infinity();
+          mcandidates[*k].dist3 = std::numeric_limits<float>::infinity();
+          mcandidates[*k].replace = false;
+
+          for(std::deque<int>::iterator l = cluster_index.begin(); l != k; l++){ //only need *l < *k to avoid going through the same pair twice
+            if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
+              const float min_value_l = min_values[*l];
+              if(*l != j && *l != i){
+
+                //add potential candidates
+                if(d[*l][*k] <= min_value_l){ 
+                  sym_dist = 1 - (d_CF[*l][*k] <= min_values_CF[*l]) * (d_CF[*k][*l] <= min_values_CF[*k]);
+                  if(sym_dist > 0){
+                    sym_dist = d[*l][*k] + d[*k][*l];
+                  }
+
+                  cand.dist = sym_dist;
+                  cand.dist3 = std::max(sample_ages[*k], sample_ages[*l]);
+                  cand.dist2 = dist_unif(rng);
+                  if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand){
+                    if(cand.dist3 > age){
+                      cand.replace = true;
+                    }else{
+                      cand.replace = false;
+                    }
+                    mcandidates[*k] = cand;
+                    mcandidates[*k].lin1 = *k;
+                    mcandidates[*k].lin2 = *l;
+                  }
+                  if( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand){
+                    if(cand.dist3 > age){
+                      cand.replace = true;  
+                    }else{
+                      cand.replace = false;
+                    }
+                    mcandidates[*l] = cand;
+                    mcandidates[*l].lin1 = *k;
+                    mcandidates[*l].lin2 = *l;
+                  }
+                }
+
+              }
+            }
           }
 
         }else{
 
-          if(coal_rate[ep] == 0){
-            log_likelihood_ratio = std::numeric_limits<float>::infinity();
-          }else{
-            log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
+          //need to check if *k is a candidate for some *l
+          for(std::vector<int>::iterator l = updated_cluster.begin(); l != std::next(updated_cluster.begin(),updated_cluster_size); l++){ 
+            if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
+              const float min_value_l = min_values[*l];
+
+              //add potential candidates
+              if(d[*l][*k] <= min_value_l){ 
+
+                sym_dist = 1 - (d_CF[*l][*k] <= min_values_CF[*l]) * (d_CF[*k][*l] <= min_values_CF[*k]);
+                if(sym_dist > 0){
+                  sym_dist = d[*l][*k] + d[*k][*l];
+                }
+                cand.dist = sym_dist;
+                cand.dist3 = std::max(sample_ages[*k], sample_ages[*l]);
+                cand.dist2 = dist_unif(rng);
+                if( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand){
+                  if(cand.dist3 > age){
+                    cand.replace = true;     
+                  }else{
+                    cand.replace = false;
+                  }
+                  mcandidates[*l] = cand;
+                  mcandidates[*l].lin1 = *k;
+                  mcandidates[*l].lin2 = *l;
+                }
+                if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() ||cand.dist3 <= age) && mcandidates[*k] > cand){
+                  if(cand.dist3 > age){
+                    cand.replace = true; 
+                  }else{
+                    cand.replace = false;
+                  }
+                  mcandidates[*k] = cand;
+                  mcandidates[*k].lin1 = *k;
+                  mcandidates[*k].lin2 = *l;
+                }
+
+              }
+
+            }
           }
+
         }
 
       }else{
-        if(coal_rate[ep] == 0){
-          log_likelihood_ratio = std::numeric_limits<float>::infinity();
+        //The candidate of *k is unchanged, but it might have been (*k,i), so have to change that to (*k,j)
+        if(mcandidates[*k].lin1 == i){
+          mcandidates[*k].lin1 = j;
+        }
+        if(mcandidates[*k].lin2 == i){
+          mcandidates[*k].lin2 = j;
+        }
+
+        //need to check if *k is a candidate for some *l
+        for(std::vector<int>::iterator l = updated_cluster.begin(); l != std::next(updated_cluster.begin(),updated_cluster_size); l++){ 
+          if(*std::next(dk_it,*l) <= min_value_k){//this might be a new candidate
+            const float min_value_l = min_values[*l];
+
+            //add potential candidates
+            if(d[*l][*k] <= min_value_l){  
+              
+              sym_dist = 1 - (d_CF[*l][*k] <= min_values_CF[*l]) * (d_CF[*k][*l] <= min_values_CF[*k]);
+              if(sym_dist > 0){
+                sym_dist = d[*l][*k] + d[*k][*l];
+              }
+              cand.dist = sym_dist;
+              cand.dist3 = std::max(sample_ages[*l], sample_ages[*k]);
+              cand.dist2 = dist_unif(rng);
+              if( (mcandidates[*l].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*l] > cand){
+                if(cand.dist3 > age){
+                  cand.replace = true; 
+                }else{
+                  cand.replace = false;
+                }
+                mcandidates[*l] = cand;
+                mcandidates[*l].lin1 = *k;
+                mcandidates[*l].lin2 = *l;
+              }
+              if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand){
+                if(cand.dist3 > age){
+                  cand.replace = true; 
+                }else{
+                  cand.replace = false;
+                }
+                mcandidates[*k] = cand;
+                mcandidates[*k].lin1 = *k;
+                mcandidates[*k].lin2 = *l;
+              }
+            }
+
+          }
+        }
+
+      }
+
+      //I might have updated mcandidates[*l] for *l < *k, but if it was the absolute minimum, it has also updated mcandidates[*k]
+      if( (best_candidate.dist == std::numeric_limits<float>::infinity() || mcandidates[*k].dist3 <= age) && best_candidate > mcandidates[*k]){ 
+        best_candidate   = mcandidates[*k];
+        if(best_candidate.dist3 > age){
+          best_candidate.replace = true;
         }else{
-          if(k_tmp > k){
-            tmp_tau = coordinates[sorted_indices[k_tmp]] - coordinates[sorted_indices[k_tmp-1]];
+          best_candidate.replace = false;
+        }
+      }
+
+      if(*std::next(dj_it,*k) < min_value_j){
+        min_value_j   = *std::next(dj_it,*k);
+      }
+    }
+  }
+  min_value_j  += threshold;
+  min_values[j] = min_value_j;
+
+  //add candidates with new cluster j 
+  mcandidates[j].dist = std::numeric_limits<float>::infinity();
+  mcandidates[j].dist2 = std::numeric_limits<float>::infinity();
+  mcandidates[j].dist3 = std::numeric_limits<float>::infinity();
+  mcandidates[j].replace = false;
+  for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){ 
+    if(*std::next(dj_it,*k) <= min_value_j){ 
+      if(d[*k][j] <= min_values[*k]){
+        if(*k != i && *k != j){
+
+          sym_dist = 1 - (d_CF[j][*k] <= min_values_CF[j]) * (d_CF[*k][j] <= min_values_CF[*k]);
+          if(sym_dist > 0){
+            sym_dist = d[j][*k] + d[*k][j];
           }
-          log_likelihood_ratio += k_choose_2_tmp*coal_rate[ep] * tmp_tau - fast_log(coal_rate[ep]);
-        }
-      }
+          cand.dist = sym_dist;
+          //cand.dist3 = (sample_ages[j] + cluster_size[j] + sample_ages[*k] * cluster_size[*k])/(cluster_size[j] + cluster_size[*k]);
+          cand.dist3 = std::max(sample_ages[j], sample_ages[*k]);
 
-      k_tmp++;
-    }
-
-    //log_likelihood_ratio  = 0.0;
-    //log_likelihood_ratio = fast_log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new);   
-    //log_likelihood_ratio -= k_choose_2 * delta_tau;
-    //std::cerr << "var: " << log_likelihood_ratio << " " << log(tau_old/tau_new) + (tau_new/tau_old - tau_old/tau_new) - k_choose_2 * delta_tau << std::endl;
-
-    if(log_likelihood_ratio != std::numeric_limits<float>::infinity()){
-      //assert(order[node_k] == k);
-      int count_number_of_spanning_branches = 0;
-      it_sorted_indices = std::next(sorted_indices.begin(), k);
-      for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-
-        if(order[(*tree.nodes[*it_sorted_indices].child_left).label] < k){
-          count_number_of_spanning_branches++;
-
-          n = *tree.nodes[*it_sorted_indices].child_left;
-          assert(order[n.label] < k);
-          tb     = n.branch_length;
-          tb_new = tb + delta_tau;
-          //assert(tb_new >= 0.0);
-
-          if(tb == 0.0){
-            log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-            break;
-          }else if(tb_new <= 0.0){
-            log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-            break;
-          }else{
-            log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-            log_likelihood_ratio += n.num_events * fast_log(tb_new/tb);
+          //sym_dist = d[j][*k] + d[*k][j];
+          //sym_dist = sample_ages[j] + sample_ages[*k];
+          cand.dist2 = dist_unif(rng);
+          if( (mcandidates[*k].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[*k] > cand){
+            if(cand.dist3 > age){
+              cand.replace = true;
+            }else{
+              cand.replace = false;
+            }
+            mcandidates[*k] = cand;
+            mcandidates[*k].lin1 = *k;
+            mcandidates[*k].lin2 = j;
+          }
+          if( (mcandidates[j].dist == std::numeric_limits<float>::infinity() || cand.dist3 <= age) && mcandidates[j] > cand){
+            if(cand.dist3 > age){
+              cand.replace = true; 
+            }else{
+              cand.replace = false;
+            }
+            mcandidates[j] = cand;
+            mcandidates[j].lin1 = *k;
+            mcandidates[j].lin2 = j;
           }
 
         }
-        if(order[(*tree.nodes[*it_sorted_indices].child_right).label] < k){
-          count_number_of_spanning_branches++;
-
-          n = *tree.nodes[*it_sorted_indices].child_right;
-          assert(order[n.label] < k);
-          tb     = n.branch_length;
-          tb_new = tb + delta_tau;
-          //assert(tb_new >= 0.0);
-
-          if(tb == 0.0){
-            log_likelihood_ratio  = std::numeric_limits<float>::infinity();
-            break;
-          }else if(tb_new <= 0.0){
-            log_likelihood_ratio  = -std::numeric_limits<float>::infinity();
-            break;
-          }else{
-            log_likelihood_ratio -= mut_rate[n.label] * delta_tau;
-            log_likelihood_ratio += n.num_events * fast_log(tb_new/tb);
-          }
-        }
-        if(count_number_of_spanning_branches == num_lineages) break;
-      }
-      //assert(count_number_of_spanning_branches == num_lineages);
-    }
-  }
-
-  //std::cerr << "var: " << log_likelihood_ratio - tmp << std::endl;
-
-  //decide whether to accept proposal or not.
-  accept = true;
-  if(log_likelihood_ratio < 0.0){
-    //accept with probability exp(log_p)
-    if(dist_unif(rng) > exp(log_likelihood_ratio)){
-      accept = false;
-    }
-  }
-
-  //update coordinates and sorted_indices
-  if(accept){
-    //calculate new branch lengths
-
-    it_sorted_indices = std::next(sorted_indices.begin(), k);
-    update_node1 = k;
-
-    for(; it_sorted_indices != sorted_indices.end(); it_sorted_indices++){
-      coordinates[*it_sorted_indices]                 += delta_tau;
-      if(coordinates[*it_sorted_indices] < coordinates[*std::prev(it_sorted_indices,1)]){
-        coordinates[*it_sorted_indices] = coordinates[*std::prev(it_sorted_indices,1)]; 
-      }
-      assert(coordinates[*it_sorted_indices] >= coordinates[*std::prev(it_sorted_indices,1)]);
-      child_left_label                                 = (*tree.nodes[*it_sorted_indices].child_left).label;
-      tree.nodes[child_left_label].branch_length       = coordinates[*it_sorted_indices] - coordinates[child_left_label];
-      child_right_label                                = (*tree.nodes[*it_sorted_indices].child_right).label;
-      tree.nodes[child_right_label].branch_length      = coordinates[*it_sorted_indices] - coordinates[child_right_label];
-    }
-
-  }
-
-  return log_likelihood_ratio;
-
-}
-
-
-///////////////////////////////////////////
-
-
-void
-InferBranchLengths::GetCoordinates(Node& n, std::vector<double>& coords){
-
-  if(n.child_left != NULL){
-    GetCoordinates(*n.child_left, coords);
-    GetCoordinates(*n.child_right, coords);
-
-    coords[n.label] = coords[(*n.child_left).label] + (*n.child_left).branch_length;
-
-  }else{
-    coords[n.label] = 0.0;
-  }
-
-}
-
-void
-InferBranchLengths::MCMC(const Data& data, Tree& tree, const int seed){
-
-  int delta = std::max(data.N/10.0, 10.0);
-  convergence_threshold = 10.0/Ne; //approximately x generations
-
-  //Random number generators
-  float uniform_rng;
-  rng.seed(seed);
-  std::uniform_real_distribution<double> dist_unif(0,1);
-  std::uniform_int_distribution<int> dist_k(N,N_total-1);
-  std::uniform_int_distribution<int> dist_switch(N,N_total-2);
-
-  root = N_total - 1;
-  logFactorial(N); //precalculates log(k!) for k = 0,...,N
-
-  ////////// Initialize MCMC ///////////
-
-  //Initialize MCMC using coalescent prior
-  InitializeMCMC(data, tree); 
-
-  //Randomly switch around order of coalescences
-  for(int j = 0; j < (int) data.N * data.N; j++){
-    RandomSwitchOrder(tree, dist_switch(rng), dist_unif);
-  }   
-
-  //Apply EM algorithm to calculate MLE of branch lengths given order of coalescences
-  InitializeBranchLengths(tree);
-  EM(data, tree);
-
-  //EM may set some branch lengths to 0. To get a better starting point, we set the minimum branch length to min_tau
-  double min_tau = 1.0/Ne, tau_new, tau;
-  double push = 0.0, k_choose_2;
-  int node_i, num_lineages;
-  for(int i = N; i < N_total; i++){
-    num_lineages = 2*N-i;
-    k_choose_2   = num_lineages * (num_lineages-1.0)/2.0;
-
-    node_i = sorted_indices[i];
-    tau    = push + coordinates[node_i] - coordinates[sorted_indices[i-1]];
-    assert(tau >= 0.0);
-
-    if(tau < min_tau){
-
-      do{
-        tau_new   = -fast_log(dist_unif(rng))/k_choose_2;
-        assert(tau_new >= 0.0);
-      }while( coordinates[node_i] + push + tau_new - tau < coordinates[sorted_indices[i-1]] );
-      push     += tau_new - tau;
-
-    }
-    coordinates[node_i] += push;
-
-    if(coordinates[node_i] < coordinates[sorted_indices[i-1]]) std::cerr << coordinates[node_i] << " " << coordinates[sorted_indices[i-1]] << std::endl;
-    assert(coordinates[node_i] >= coordinates[sorted_indices[i-1]]);
-    (*tree.nodes[node_i].child_left).branch_length  = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_left).label];
-    (*tree.nodes[node_i].child_right).branch_length = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_right).label];
-  }
-
-  /////////////// Start MCMC ///////////////
-
-  //transient
-  count = 0;
-  for(; count < 100*delta; count++){
-
-    //Either switch order of coalescent event or extent time while k ancestors 
-    uniform_rng = dist_unif(rng);
-    if(uniform_rng < 0.5){
-      SwitchOrder(tree, dist_switch(rng), dist_unif);
-    }else{ 
-      ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
-    }
-
-  }
-
-  //Now start estimating branch lenghts. We store the average of coalescent ages in avg calculate branch lengths from here.
-  //UpdateAvg is used to update avg.
-  //Coalescent ages of the tree are stored in coordinates (this is updated in SwitchOrder and ChangeTimeWhilekAncestors)
-
-  avg              = coordinates;
-  last_coordinates = coordinates;
-  last_update.resize(N_total);
-  std::fill(last_update.begin(), last_update.end(), 1);
-  count = 1;
-
-  int num_iterations = 0;
-  bool is_count_threshold = false;
-  std::vector<int> count_proposals(N_total-N, 0);
-  is_avg_increasing = false;
-  while(!is_avg_increasing){
-
-    do{
-
-      count++;
-
-      //Either switch order of coalescent event or extent time while k ancestors 
-      uniform_rng = dist_unif(rng);
-      if(uniform_rng < 0.8){
-        SwitchOrder(tree, dist_switch(rng), dist_unif);
-        UpdateAvg(tree);
-      }else{ 
-        int k_candidate = dist_k(rng);
-        count_proposals[k_candidate-N]++;
-        ChangeTimeWhilekAncestors(tree, k_candidate, dist_unif);
-        UpdateAvg(tree);
-      }
-
-    }while(count % delta != 0 );
-
-    num_iterations++;
-
-    //MCMC is allowed to terminate if is_count_threshold == true and is_avg_increasing == true.
-    //At first, both are set to false, and is_count_threshold will be set to true first (once conditions are met)
-    //then is_avg_increasing will be set to true eventually.
-
-    is_avg_increasing = true;
-    if(!is_count_threshold){
-      //assert(is_avg_increasing);
-      for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-        if(*it_count < 20){
-          is_avg_increasing = false;
-          break;
-        }
-      }
-      if(is_avg_increasing) is_count_threshold = true;
-    }
-
-    if(is_avg_increasing){
-      //update all nodes in avg 
-      it_avg = std::next(avg.begin(), N);
-      it_coords = std::next(coordinates.begin(), N);
-      it_last_update = std::next(last_update.begin(), N);
-      it_last_coords = std::next(last_coordinates.begin(), N);
-      //update avg
-      for(int ell = N; ell < N_total; ell++){
-        *it_avg  += ((count - *it_last_update) * (*it_last_coords - *it_avg))/count;
-        *it_last_update = count;
-        *it_last_coords = *it_coords;
-        it_avg++;
-        it_coords++;
-        it_last_update++;
-        it_last_coords++;
-      }
-      //check if coalescent ages are non-decreasing in avg
-      int ell = N;
-      for(it_avg = std::next(avg.begin(),N); it_avg != avg.end(); it_avg++){
-        if(ell < root){
-          if(*it_avg > avg[(*tree.nodes[ell].parent).label]){
-            is_avg_increasing = false;
-            break;
-          }
-        }
-        ell++;
-      }
-    }
-
-  }
-
-  //////////// Caluclate branch lengths from avg ////////////
-
-  //don't need to update avg again because I am guaranteed to finish with having updated all nodes
-  for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-    (*it_n).branch_length = ((double) Ne) * (avg[(*(*it_n).parent).label] - avg[(*it_n).label]);
-  }
-
-  /*
-     for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-     (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
-     }
-     */
-
-}  
-
-void
-InferBranchLengths::MCMCVariablePopulationSize(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed){
-
-  float uniform_rng;
-  rng.seed(seed);
-  std::uniform_real_distribution<double> dist_unif(0,1);
-  std::uniform_int_distribution<int> dist_k(N,N_total-1);
-  std::uniform_int_distribution<int> dist_switch(N,N_total-2);
-
-  convergence_threshold = 100.0/Ne; //approximately x generations
-
-  int delta = std::max(data.N/10.0, 10.0);
-  root = N_total - 1;
-  logFactorial(N); //precalculates log(k!) for k = 0,...,N
-
-  InitializeMCMC(data, tree); //Initialize using coalescent prior 
-
-  for(std::vector<Node>::iterator it_node = tree.nodes.begin(); it_node != tree.nodes.end(); it_node++){
-    (*it_node).branch_length /= data.Ne;
-  }
-
-  coordinates.resize(N_total);
-  GetCoordinates(tree.nodes[root], coordinates);
-  //avg   = coordinates;
-
-  std::size_t m1(0);
-  std::generate(std::begin(sorted_indices) + N, std::end(sorted_indices), [&]{ return m1++; });
-  std::sort(std::begin(sorted_indices) + N, std::end(sorted_indices), [&](int i1, int i2) { return coordinates[i1 + N] < coordinates[i2 + N]; } );
-  for(int i = 0; i < N; i++){
-    sorted_indices[i]  = i;
-  }
-  for(int i = N; i < N_total; i++){
-    sorted_indices[i] += N;
-  }
-
-  //obtain order of coalescent events
-  std::fill(order.begin(), order.end(), 0);
-  std::size_t m2(0);
-  std::generate(std::begin(order) + N, std::end(order), [&]{ return m2++; });
-  std::sort(std::begin(order) + N, std::end(order), [&](int i1, int i2) { return sorted_indices[i1 + N] < sorted_indices[i2 + N]; } );
-
-  for(int i = 0; i < N; i++){
-    order[i]  = i;
-  }
-  for(int i = N; i < N_total; i++){
-    order[i] += N;
-  }
-
-  //This is for when branch lengths are zero, because then the above does not guarantee parents to be above children
-  bool is_topology_violated = true;
-  while(is_topology_violated){
-    is_topology_violated = false;
-    for(int i = N; i < N_total; i++){
-      int node_k = sorted_indices[i];
-      if( order[(*tree.nodes[node_k].child_left).label] > order[node_k] ){
-        int tmp_order = order[node_k];
-        order[node_k] = order[(*tree.nodes[node_k].child_left).label];
-        order[(*tree.nodes[node_k].child_left).label] = tmp_order;
-        sorted_indices[order[node_k]] = node_k;
-        sorted_indices[tmp_order] = (*tree.nodes[node_k].child_left).label;
-        is_topology_violated = true;
-      }
-      if( order[(*tree.nodes[node_k].child_right).label] > order[node_k] ){
-        int tmp_order = order[node_k];
-        order[node_k] = order[(*tree.nodes[node_k].child_right).label];
-        order[(*tree.nodes[node_k].child_right).label] = tmp_order;
-        sorted_indices[order[node_k]] = node_k;
-        sorted_indices[tmp_order] = (*tree.nodes[node_k].child_right).label;
-        is_topology_violated = true;
       }
     }
   }
 
-  ////////////////// Transient /////////////////
-
-  count = 0;
-  for(; count < 100*delta; count++){
-
-    //Either switch order of coalescent event or extent time while k ancestors 
-    uniform_rng = dist_unif(rng);
-    if(uniform_rng < 0.5){
-      SwitchOrder(tree, dist_switch(rng), dist_unif);
-    }else{ 
-      ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
-      //ChangeTimeWhilekAncestorsLocal(tree, dist_k(rng), dist_unif);
-    }
-
-  }
-
-  avg              = coordinates;
-  last_coordinates = coordinates;
-  last_update.resize(N_total);
-  std::fill(last_update.begin(), last_update.end(), 1);
-  count = 1;
-
-  int num_iterations = 0;
-  bool is_count_threshold = false;
-  std::vector<int> count_proposals(N_total-N, 0);
-  is_avg_increasing = false;
-  while(!is_avg_increasing){
-
-    do{
-
-      count++;
-
-      //Either switch order of coalescent event or extent time while k ancestors 
-      uniform_rng = dist_unif(rng);
-      if(uniform_rng < 0.6){
-        SwitchOrder(tree, dist_switch(rng), dist_unif);
-        UpdateAvg(tree);
-      }else{ 
-        int k_candidate = dist_k(rng);
-        count_proposals[k_candidate-N]++;
-        ChangeTimeWhilekAncestorsVP(tree, k_candidate, epoch, coal_rate, dist_unif);
-        //count++;
-        UpdateAvg(tree);
-      }
-
-    }while(count % delta != 0 );
-
-    num_iterations++;
-
-    is_avg_increasing = true;
-    if(!is_count_threshold){
-      //assert(is_avg_increasing);
-      for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-        if(*it_count < 20){
-          is_avg_increasing = false;
-          break;
-        }
-      }
-      if(is_avg_increasing) is_count_threshold = true;
-    }
-
-    if(is_avg_increasing){
-      //update all nodes in avg 
-      it_avg = std::next(avg.begin(), N);
-      it_coords = std::next(coordinates.begin(), N);
-      it_last_update = std::next(last_update.begin(), N);
-      it_last_coords = std::next(last_coordinates.begin(), N);
-      //update avg
-      for(int ell = N; ell < N_total; ell++){
-        *it_avg  += ((count - *it_last_update) * (*it_last_coords - *it_avg))/count;
-        *it_last_update = count;
-        *it_last_coords = *it_coords;
-        it_avg++;
-        it_coords++;
-        it_last_update++;
-        it_last_coords++;
-      }
-      //check if coalescent ages are non-decreasing in avg
-      int ell = N;
-      for(it_avg = std::next(avg.begin(),N); it_avg != avg.end(); it_avg++){
-        if(ell < root){
-          if(*it_avg > avg[(*tree.nodes[ell].parent).label]){
-            is_avg_increasing = false;
-            break;
-          }
-        }
-        ell++;
-      }
-    }
-
-
-  }
-
-  if(1){
-    for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-      (*it_n).branch_length = ((double) Ne) * (avg[(*(*it_n).parent).label] - avg[(*it_n).label]);
-    }
-  }else{
-    for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-      (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
-    }
-  }
-
-}  
-
-void
-InferBranchLengths::MCMCVariablePopulationSizeForRelate(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed){
-
-  int delta = std::max(data.N/10.0, 10.0);
-  convergence_threshold = 10.0/Ne; //approximately x generations
-
-  //Random number generators
-  float uniform_rng;
-  rng.seed(seed);
-  std::uniform_real_distribution<double> dist_unif(0,1);
-  std::uniform_int_distribution<int> dist_k(N,N_total-1);
-  std::uniform_int_distribution<int> dist_switch(N,N_total-2);
-
-  root = N_total - 1;
-  logFactorial(N); //precalculates log(k!) for k = 0,...,N
-
-  ////////// Initialize MCMC ///////////
-
-  //Initialize MCMC using coalescent prior
-  InitializeMCMC(data, tree); 
-
-  //Randomly switch around order of coalescences
-  for(int j = 0; j < (int) data.N * data.N; j++){
-    RandomSwitchOrder(tree, dist_switch(rng), dist_unif);
-  }   
-
-  //Apply EM algorithm to calculate MLE of branch lengths given order of coalescences
-  InitializeBranchLengths(tree);
-  EM(data, tree);
-
-  //EM may set some branch lengths to 0. To get a better starting point, we set the minimum branch length to min_tau
-  double min_tau = 1.0/Ne, tau_new, tau;
-  double push = 0.0, k_choose_2;
-  int node_i, num_lineages;
-  for(int i = N; i < N_total; i++){
-    num_lineages = 2*N-i;
-    k_choose_2   = num_lineages * (num_lineages-1.0)/2.0;
-
-    node_i = sorted_indices[i];
-    tau    = push + coordinates[node_i] - coordinates[sorted_indices[i-1]];
-    assert(tau >= 0.0);
-
-    if(tau < min_tau){
-
-      do{
-        tau_new   = -fast_log(dist_unif(rng))/k_choose_2;
-        assert(tau_new >= 0.0);
-      }while( coordinates[node_i] + push + tau_new - tau < coordinates[sorted_indices[i-1]] );
-      push     += tau_new - tau;
-
-    }
-    coordinates[node_i] += push;
-
-    if(coordinates[node_i] < coordinates[sorted_indices[i-1]]) std::cerr << coordinates[node_i] << " " << coordinates[sorted_indices[i-1]] << std::endl;
-    assert(coordinates[node_i] >= coordinates[sorted_indices[i-1]]);
-    (*tree.nodes[node_i].child_left).branch_length  = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_left).label];
-    (*tree.nodes[node_i].child_right).branch_length = coordinates[node_i] - coordinates[(*tree.nodes[node_i].child_right).label];
-  }
-
-  /////////////// Start MCMC ///////////////
-
-  //transient
-  count = 0;
-  for(; count < 200*delta; count++){
-
-    //Either switch order of coalescent event or extent time while k ancestors 
-    uniform_rng = dist_unif(rng);
-    if(uniform_rng < 0.6){
-      SwitchOrder(tree, dist_switch(rng), dist_unif);
+  if( (best_candidate.dist == std::numeric_limits<float>::infinity() || mcandidates[j].dist3 <= age) && best_candidate > mcandidates[j]){
+    best_candidate   = mcandidates[j];
+    if(best_candidate.dist3 > age){
+      best_candidate.replace = true;
     }else{
-      //ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
-      ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif); 
+      best_candidate.replace = false;
     }
-
   }
 
-  //Now start estimating branch lenghts. We store the average of coalescent ages in avg calculate branch lengths from here.
-  //UpdateAvg is used to update avg.
-  //Coalescent ages of the tree are stored in coordinates (this is updated in SwitchOrder and ChangeTimeWhilekAncestors)
+}
 
-  avg              = coordinates;
-  last_coordinates = coordinates;
-  last_update.resize(N_total);
-  std::fill(last_update.begin(), last_update.end(), 1);
-  count = 1;
+void
+MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& i_sample_ages, const CollapsedMatrix<float>& d_prior){
 
-  int num_iterations = 0;
-  bool is_count_threshold = false;
-  std::vector<int> count_proposals(N_total-N, 0);
-  is_avg_increasing = false;
-  while(!is_avg_increasing){
+  //threshold = 0.0;
 
-    do{
+  rng.seed(1);
+  std::uniform_real_distribution<double> dist_unif(0,1);
 
-      count++;
+  std::vector<double> sample_ages = i_sample_ages;
 
-      //Either switch order of coalescent event or extent time while k ancestors 
-      uniform_rng = dist_unif(rng);
-      if(uniform_rng < 0.5){
-        SwitchOrder(tree, dist_switch(rng), dist_unif);
-        UpdateAvg(tree);
-      }else{ 
-        int k_candidate = dist_k(rng);
-        count_proposals[k_candidate-N]++;
-        //ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
-        ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
-        UpdateAvg(tree);
+  CollapsedMatrix<float> d_CF = d_prior;
+  if(d_CF.size() != d.size()){
+    d_CF = d;
+  }
+
+  int root = N_total-1;
+  tree.nodes.resize(N_total);
+  tree.nodes[root].label  = root;
+
+  assert(d.size() > 0);
+  assert(d.subVectorSize(0) == d.size());
+
+  //Initialize tree builder
+  cluster_index.resize(N); //the cluster index will always stay between 0 - N-1 so that I can access the distance matrix.
+  std::deque<int>::iterator it_cluster_index    = cluster_index.begin();
+  std::vector<int>::iterator it_convert_index   = convert_index.begin();
+  std::vector<float>::iterator it_cluster_size  = cluster_size.begin();
+  std::vector<Node>::iterator it_nodes          = tree.nodes.begin();
+  int count = 0;
+  for(; it_cluster_index != cluster_index.end();){
+    *it_cluster_index = count;  //every leaf is in its own cluster
+    *it_convert_index = count;
+    *it_cluster_size  = 1.0;
+    (*it_nodes).label = count;
+
+    it_cluster_index++;
+    it_convert_index++;
+    it_cluster_size++;
+    it_nodes++;
+    count++;
+  }
+
+  std::fill(min_values.begin(), min_values.end(), std::numeric_limits<float>::infinity());  //Stores the min values of each row of the distance matrix
+  std::fill(min_values_sym.begin(), min_values_sym.end(), std::numeric_limits<float>::infinity());  //Stores the min values of each row of the distance matrix
+
+  best_candidate.dist = std::numeric_limits<float>::infinity();
+  best_candidate.dist2 = std::numeric_limits<float>::infinity();
+  best_candidate.dist3 = std::numeric_limits<float>::infinity(); 
+  best_sym_candidate.dist = std::numeric_limits<float>::infinity();
+
+  if(sample_ages.size() == N){
+
+    if(unique_sample_ages.size() == 0){
+      std::vector<double> foo = sample_ages;
+      std::sort(foo.begin(), foo.end());
+      //get vector with unique sample ages and counts
+      age = foo[0];
+      int i = 0;
+
+      unique_sample_ages.resize(foo.size());
+      sample_ages_count.resize(foo.size());
+      unique_sample_ages[0] = age;
+      sample_ages_count[0]  = 0;
+      for(std::vector<double>::iterator it_sam = foo.begin(); it_sam != foo.end(); it_sam++){
+        if(*it_sam == age){
+          sample_ages_count[i]++;
+        }else{
+          age = *it_sam;
+          i++;
+          unique_sample_ages[i] = age;
+          sample_ages_count[i]++;
+        }
       }
+      i++;
+      unique_sample_ages.resize(i);
+      sample_ages_count.resize(i);
+      //for(int k = 0; k < unique_sample_ages.size(); k++){
+      //  std::cerr << unique_sample_ages[k] << " " << sample_ages_count[k] << std::endl;
+      //}
+    }
+    int level    = 0;
+    int num_lins = sample_ages_count[level];
+    age      = unique_sample_ages[level];
 
-    }while(count % delta != 0 );
+    Initialize(d, d_CF, dist_unif, sample_ages);
 
-    num_iterations++;
+    //////////////////////////
 
-    //MCMC is allowed to terminate if is_count_threshold == true and is_avg_increasing == true.
-    //At first, both are set to false, and is_count_threshold will be set to true first (once conditions are met)
-    //then is_avg_increasing will be set to true eventually.
+    //Now I need to coalesce clusters until there is only one lance cluster left
+    int no_candidate = 0;
+    int updated_cluster_size = 0;
+    bool use_sym = false;
+    for(int num_nodes = N; num_nodes < N_total; num_nodes++){
 
-    is_avg_increasing = true;
-    if(!is_count_threshold){
-      //assert(is_avg_increasing);
-      for(std::vector<int>::iterator it_count = count_proposals.begin(); it_count != count_proposals.end(); it_count++){
-        if(*it_count < 20){
-          is_avg_increasing = false;
+      //assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
+      if(best_candidate.dist == std::numeric_limits<float>::infinity()){ //This is a backup-solution for when MinMatch fails, usually rare
+
+        no_candidate++;
+        if(!use_sym){
+          sym_d.resize(N,N); //inefficient 
+          InitializeSym(sym_d, d);
+          use_sym = true;
+        }
+        assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
+        i = best_sym_candidate.lin1;
+        j = best_sym_candidate.lin2;
+
+      }else{
+        i = best_candidate.lin1;
+        j = best_candidate.lin2;
+      }
+      conv_i = convert_index[i];
+      conv_j = convert_index[j];
+      assert(i != j);
+      //i and j are now the cluster indices that are closest to each other.
+
+      //merge these two into one new cluster
+      tree.nodes[conv_i].parent            = &tree.nodes[num_nodes];
+      tree.nodes[conv_j].parent            = &tree.nodes[num_nodes];  
+      tree.nodes[conv_j].num_events        = 0.0;
+      tree.nodes[conv_i].num_events        = 0.0;
+      tree.nodes[num_nodes].child_left     = &tree.nodes[conv_i];
+      tree.nodes[num_nodes].child_right    = &tree.nodes[conv_j];
+      tree.nodes[num_nodes].label          = num_nodes; 
+
+      //coalesce in CF distance matrix
+      //min_values changes for cluster j and also for any cluster that had chosen cluster i or j
+      //however, if I assume that d_CF is consistent with a tree, then cluster i or j is only chosen if j is still the best lineage and min_values is unchanged
+      min_values_CF[j] = std::numeric_limits<float>::infinity();
+
+      float added_cluster_size = cluster_size[i] + cluster_size[j];
+      dj_it = d_CF.rowbegin(j);
+      di_it = d_CF.rowbegin(i);
+      for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
+        if(j != *k && i != *k){
+          dk_it = d_CF.rowbegin(*k);
+          dkj   = *std::next(dk_it,j);
+          dki   = *std::next(dk_it,i);
+          dik   = *std::next(di_it,*k);
+          djk   = *std::next(dj_it,*k);
+
+          if(dik != djk){ //if dik == djk, the distance of j to k does not change
+            *std::next(dj_it,*k) = (cluster_size[i] * dik + cluster_size[j] * djk)/added_cluster_size;
+          }
+          if(dki != dkj){ //if dki == dkj, the distance of k to j does not change
+            *std::next(dk_it,j)  = (cluster_size[i] * dki + cluster_size[j] * dkj)/added_cluster_size;
+          }
+
+          if(min_values_CF[j] > d_CF[j][*k]){
+            min_values_CF[j] = d_CF[j][*k];
+          }
+        }
+      }
+      min_values_CF[j] += threshold_CF;
+   
+      Coalesce(i, j, d, d_CF, dist_unif, sample_ages);
+      if(use_sym) CoalesceSym(i, j, sym_d);
+
+      sample_ages[j] = std::max(sample_ages[i], sample_ages[j]);
+      age           += 2.0/((double) num_lins * (num_lins - 1.0)) * Ne;
+      //std::cerr << num_nodes << " " << age << " " << Ne << " " << sample_ages[j] << " " << num_lins << " " << level << std::endl;
+      num_lins--;
+      if(unique_sample_ages[level] < sample_ages[j]){
+        while(unique_sample_ages[level] < sample_ages[j]){
+          level++;
+          num_lins += sample_ages_count[level];
+        }
+      }
+      assert(num_lins >= 1); 
+
+      cluster_size[j]  = cluster_size[i] + cluster_size[j]; //update size of new cluster
+      convert_index[j] = num_nodes; //update index of this cluster to new merged one
+      //delete cluster i    
+      for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){ //using deques instead of lists, which makes this loop slower but iteration faster
+        if(*it == i){
+          cluster_index.erase(it); //invalidates iterators
           break;
         }
       }
-      if(is_avg_increasing) is_count_threshold = true;
     }
 
-    if(is_avg_increasing){
-      //update all nodes in avg 
-      it_avg = std::next(avg.begin(), N);
-      it_coords = std::next(coordinates.begin(), N);
-      it_last_update = std::next(last_update.begin(), N);
-      it_last_coords = std::next(last_coordinates.begin(), N);
-      //update avg
-      for(int ell = N; ell < N_total; ell++){
-        *it_avg  += ((count - *it_last_update) * (*it_last_coords - *it_avg))/count;
-        *it_last_update = count;
-        *it_last_coords = *it_coords;
-        it_avg++;
-        it_coords++;
-        it_last_update++;
-        it_last_coords++;
-      }
-      //check if coalescent ages are non-decreasing in avg
-      int ell = N;
-      for(it_avg = std::next(avg.begin(),N); it_avg != avg.end(); it_avg++){
-        if(ell < root){
-          if(*it_avg > avg[(*tree.nodes[ell].parent).label]){
-            is_avg_increasing = false;
-            break;
-          }
-        }
-        ell++;
-      }
-    }
-
-
-  }
-
-  //////////// Caluclate branch lengths from avg ////////////
-
-  //don't need to update avg again because I am guaranteed to finish with having updated all nodes
-  for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-    (*it_n).branch_length = ((double) Ne) * (avg[(*(*it_n).parent).label] - avg[(*it_n).label]);
-  }
-
-  /*
-     for(std::vector<Node>::iterator it_n = tree.nodes.begin(); it_n != std::prev(tree.nodes.end(),1); it_n++){
-     (*it_n).branch_length = ((double) Ne) * (*it_n).branch_length;
-     }
-     */
-
-}  
-
-void
-InferBranchLengths::MCMCVariablePopulationSizeSample(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, int num_proposals, const bool init, const int seed){
-
-  float uniform_rng;
-  std::uniform_real_distribution<double> dist_unif(0,1);
-  std::uniform_int_distribution<int> dist_k(N,N_total-1);
-  //std::uniform_int_distribution<int> dist_k2(0,N);
-  std::uniform_int_distribution<int> dist_switch(N,N_total-2);
-
-  if(init == 1){
-
-    rng.seed(seed);
-    root = N_total - 1;
-    logFactorial(N); //precalculates log(k!) for k = 0,...,N
-
-    InitializeMCMC(data, tree); //Initialize using coalescent prior 
-
-    /*
-       for(std::vector<Node>::iterator it_node = tree.nodes.begin(); it_node != tree.nodes.end(); it_node++){
-       (*it_node).branch_length /= (double) data.Ne;
-       }
-       */
-
-    coordinates.resize(N_total);
-    GetCoordinates(tree.nodes[root], coordinates);
-
-    std::size_t m1(0);
-    std::generate(std::begin(sorted_indices) + N, std::end(sorted_indices), [&]{ return m1++; });
-    std::sort(std::begin(sorted_indices) + N, std::end(sorted_indices), [&](int i1, int i2) { return coordinates[i1 + N] < coordinates[i2 + N]; } );
-    for(int i = 0; i < N; i++){
-      sorted_indices[i]  = i;
-    }
-    for(int i = N; i < N_total; i++){
-      sorted_indices[i] += N;
-    }
-
-    //obtain order of coalescent events
-    std::fill(order.begin(), order.end(), 0);
-    std::size_t m2(0);
-    std::generate(std::begin(order) + N, std::end(order), [&]{ return m2++; });
-    std::sort(std::begin(order) + N, std::end(order), [&](int i1, int i2) { return sorted_indices[i1 + N] < sorted_indices[i2 + N]; } );
-
-    for(int i = 0; i < N; i++){
-      order[i]  = i;
-    }
-    for(int i = N; i < N_total; i++){
-      order[i] += N;
-    }
-
-    //This is for when branch lengths are zero, because then the above does not guarantee parents to be above children
-    bool is_topology_violated = true;
-    while(is_topology_violated){
-      is_topology_violated = false;
-      for(int i = N; i < N_total; i++){
-        int node_k = sorted_indices[i];
-        if( order[(*tree.nodes[node_k].child_left).label] > order[node_k] ){
-          int tmp_order = order[node_k];
-          order[node_k] = order[(*tree.nodes[node_k].child_left).label];
-          order[(*tree.nodes[node_k].child_left).label] = tmp_order;
-          sorted_indices[order[node_k]] = node_k;
-          sorted_indices[tmp_order] = (*tree.nodes[node_k].child_left).label;
-          is_topology_violated = true;
-        }
-        if( order[(*tree.nodes[node_k].child_right).label] > order[node_k] ){
-          int tmp_order = order[node_k];
-          order[node_k] = order[(*tree.nodes[node_k].child_right).label];
-          order[(*tree.nodes[node_k].child_right).label] = tmp_order;
-          sorted_indices[order[node_k]] = node_k;
-          sorted_indices[tmp_order] = (*tree.nodes[node_k].child_right).label;
-          is_topology_violated = true;
-        }
-      }
-    }
-
-  }
-
-  ////////////////// Sample branch lengths /////////////////
-
-  count = 0;
-  for(; count < num_proposals; count++){
-
-    //Either switch order of coalescent event or extent time while k ancestors 
-    uniform_rng = dist_unif(rng);
-    if(uniform_rng < 0.5){
-      SwitchOrder(tree, dist_switch(rng), dist_unif);
-      //}else if(uniform_rng < 0.0){
-      //  int k = (*tree.nodes[dist_k2(rng)].parent).label;
-      //  float tmp1 = ChangeTimeWhilekAncestorsVP(tree, k, epoch, coal_rate, dist_unif);
   }else{
 
-    /*
-       std::fill(coal_rate.begin(), coal_rate.end(), 1.0);
-       Tree tree2 = tree;
-       std::vector<int> sorted_indices2 = sorted_indices;
-       std::vector<int> order2 = order;
-       std::vector<double> coordinates2 = coordinates;
+    Initialize(d, d_CF, dist_unif);
+    //////////////////////////
 
-       std::mt19937 rng2 = rng;
-       */
+    //Now I need to coalesce clusters until there is only one lance cluster left
+    int no_candidate = 0;
+    int updated_cluster_size = 0;
+    bool use_sym = false;
+    for(int num_nodes = N; num_nodes < N_total; num_nodes++){
 
-    float tmp1 = ChangeTimeWhilekAncestorsVP(tree, dist_k(rng), epoch, coal_rate, dist_unif);
-    //float tmp2 = ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
-    /*
-       rng = rng2;
-       order = order2;
-       coordinates = coordinates2;
-       sorted_indices = sorted_indices2;
-       float tmp2 = ChangeTimeWhilekAncestors(tree2, k, dist_unif);
-       std::cerr << tmp1 << " " << tmp2 << std::endl;
-       exit(1);
-       */
-    //ChangeTimeWhilekAncestors(tree, dist_k(rng), dist_unif);
-  }
+      //assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
+      if(best_candidate.dist == std::numeric_limits<float>::infinity()){ //This is a backup-solution for when MinMatch fails, usually rare
 
-  }
+        no_candidate++;
+        if(!use_sym){
+          sym_d.resize(N,N); //inefficient 
+          InitializeSym(sym_d, d);
+          use_sym = true;
+        }
+        assert(best_sym_candidate.dist != std::numeric_limits<float>::infinity());
+        i = best_sym_candidate.lin1;
+        j = best_sym_candidate.lin2;
 
-}  
+      }else{
+        i = best_candidate.lin1;
+        j = best_candidate.lin2;
+      }
+      conv_i = convert_index[i];
+      conv_j = convert_index[j];
+      assert(i != j);
+      //i and j are now the cluster indices that are closest to each other.
 
+      //merge these two into one new cluster
+      tree.nodes[conv_i].parent            = &tree.nodes[num_nodes];
+      tree.nodes[conv_j].parent            = &tree.nodes[num_nodes];  
+      tree.nodes[conv_j].num_events        = 0.0;
+      tree.nodes[conv_i].num_events        = 0.0;
+      tree.nodes[num_nodes].child_left     = &tree.nodes[conv_i];
+      tree.nodes[num_nodes].child_right    = &tree.nodes[conv_j];
+      tree.nodes[num_nodes].label          = num_nodes; 
 
+      //coalesce in CF distance matrix
+      //min_values changes for cluster j and also for any cluster that had chosen cluster i or j
+      //however, if I assume that d_CF is consistent with a tree, then cluster i or j is only chosen if j is still the best lineage and min_values is unchanged
+      min_values_CF[j] = std::numeric_limits<float>::infinity();
+      float added_cluster_size = cluster_size[i] + cluster_size[j];
+      dj_it = d_CF.rowbegin(j);
+      di_it = d_CF.rowbegin(i);
+      for(std::deque<int>::iterator k = cluster_index.begin(); k != cluster_index.end(); k++){
+        if(j != *k && i != *k){
+          dk_it = d_CF.rowbegin(*k);
+          dkj   = *std::next(dk_it,j);
+          dki   = *std::next(dk_it,i);
+          dik   = *std::next(di_it,*k);
+          djk   = *std::next(dj_it,*k);
 
-void
-InferBranchLengths::EM(const Data& data, Tree& tree, bool called_as_main){
-
-  //MLEReorderNodes(tree);
-  if(called_as_main){
-    convergence_threshold = 10.0/Ne; //approximately 10 generations
-    InitializeMCMC(data, tree);
-    InitializeBranchLengths(tree);
-  }
-
-  //////////////
-  //initializing
-
-  std::vector<int>::iterator it_n        = sorted_indices.begin();
-  std::vector<int>::iterator it_n_plus_N = sorted_indices.begin() + N;
-
-  ///////////////////////////////////////
-  //iterate until branch lengths converge
-
-  double total_branch_length_diff, total_branch_length = std::numeric_limits<float>::infinity(), prev_total_branch_length;
-  double prev_old_coordinate;
-  double deltat, num_events_on_subbranch, event_prob;
-  std::vector<int>::iterator n;
-  std::vector<double>::iterator it_coords;
-  double prev_coordinate;
-  Node *tree_it, *tree_n;
-  std::vector<double>::iterator it_old_branch_length;
-
-  //initialize old_branch_length
-  old_branch_length.resize(tree.nodes.size());
-  std::vector<Node>::iterator it_node = tree.nodes.begin();
-  for(it_old_branch_length = old_branch_length.begin(); it_old_branch_length != old_branch_length.end(); it_old_branch_length++){
-    *it_old_branch_length = (*it_node).branch_length;
-    it_node++;
-  }
-
-  do{
-
-    spanning_branches.resize(N); //consider different data structure
-    for(int n = 0; n < N; n++){
-      spanning_branches[n] = n;
-    }
-
-    prev_total_branch_length = total_branch_length;
-    total_branch_length = 0.0;
-    prev_old_coordinate = 0.0; 
-
-    n = sorted_indices.begin() + N;
-    prev_coordinate = 0.0;
-    for(; n != sorted_indices.end(); n++){
-
-      tree_n = &tree.nodes[*n];
-
-      it_coords = std::next(coordinates.begin(),*n);
-      deltat = *it_coords - prev_old_coordinate; 
-      assert(deltat >= 0.0); 
-
-      //for all branches that span the current region, calculate the number of events in that region
-      num_events_on_subbranch = 0.0;
-      event_prob              = 0.0;
-      for(std::deque<int>::iterator it = spanning_branches.begin(); it != spanning_branches.end();){
-        tree_it = &tree.nodes[*it];
-        it_old_branch_length = std::next(old_branch_length.begin(), *it);
-        if(order[(*(*tree_it).parent).label] >= order[*n]){   
-          if(*it_old_branch_length < deltat) std::cerr << *it_old_branch_length << " " << deltat << std::endl;
-          assert(*it_old_branch_length >= deltat); 
-          if(*it_old_branch_length == 0.0){
-            num_events_on_subbranch += (*tree_it).num_events;
-          }else{
-            num_events_on_subbranch += deltat/(*it_old_branch_length) * (*tree_it).num_events;
+          if(dik != djk){ //if dik == djk, the distance of j to k does not change
+            *std::next(dj_it,*k) = (cluster_size[i] * dik + cluster_size[j] * djk)/added_cluster_size;
           }
-          event_prob += mut_rate[(*tree_it).label]; //precalculate this line
-          it++;
-        }else{ 
-          *it_old_branch_length = (*tree_it).branch_length;
-          it                    = spanning_branches.erase(it); //two branches will be erased per iteration 
+          if(dki != dkj){ //if dki == dkj, the distance of k to j does not change
+            *std::next(dk_it,j)  = (cluster_size[i] * dki + cluster_size[j] * dkj)/added_cluster_size;
+          }
+
+          if(min_values_CF[j] > d_CF[j][*k]){
+            min_values_CF[j] = d_CF[j][*k];
+          }
         }
       }
-      assert(num_events_on_subbranch >= 0.0);
-      assert(event_prob >= 0.0);
+      min_values_CF[j] += threshold_CF;
+        
+      if(0){  
+      //inefficient exhaustive min_values update
+      std::fill(min_values_CF.begin(), min_values_CF.end(), std::numeric_limits<float>::infinity());
+      for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){
+        for(std::deque<int>::iterator l = cluster_index.begin(); l != cluster_index.end(); l++){
+          if(min_values_CF[*it] > d_CF[*it][*l] && *l != *it && *l != i){
+            min_values_CF[*it] = d_CF[*it][*l];
+          }
+          d_it++;
+        }
+      }
+      }
 
-      //infer new coordinate of n 
-      prev_old_coordinate = *it_coords;
-      *it_coords          = prev_coordinate + num_events_on_subbranch/(event_prob + ((double) spanning_branches.size() * (spanning_branches.size() - 1.0)/2.0)); 
-      prev_coordinate     = *it_coords;
-      //update branch lengths
-      (*(*tree_n).child_left).branch_length  = *it_coords - coordinates[(*(*tree_n).child_left).label];
-      (*(*tree_n).child_right).branch_length = *it_coords - coordinates[(*(*tree_n).child_right).label];
-      //if((*(*tree_n).child_left).branch_length < 1e-10)  (*(*tree_n).child_left).branch_length  = 0.0;
-      //if((*(*tree_n).child_right).branch_length < 1e-10) (*(*tree_n).child_right).branch_length = 0.0;
-      total_branch_length                   += (*(*tree_n).child_left).branch_length + (*(*tree_n).child_right).branch_length;
-      spanning_branches.push_back(*n);
+      Coalesce(i, j, d, d_CF, dist_unif);
+      if(use_sym) CoalesceSym(i, j, sym_d);
 
+      //if(best_candidate.dist == std::numeric_limits<float>::infinity() && no_candidate == 0) no_candidate = num_nodes;
+      //if(best_candidate.dist == std::numeric_limits<float>::infinity() && cluster_index.size() > 2) no_candidate++;
+
+      cluster_size[j]  = cluster_size[i] + cluster_size[j]; //update size of new cluster
+      convert_index[j] = num_nodes; //update index of this cluster to new merged one
+      //delete cluster i    
+      for(std::deque<int>::iterator it = cluster_index.begin(); it != cluster_index.end(); it++){ //using deques instead of lists, which makes this loop slower but iteration faster
+        if(*it == i){
+          cluster_index.erase(it); //invalidates iterators
+          break;
+        }
+      }
     }
 
-    total_branch_length_diff = std::fabs(total_branch_length - prev_total_branch_length)/((double) N_total); //difference per branch   
-
-    //at this point, spanning_branches should only have 3 entries left. (the two branches to the root + the root)
-    for(std::deque<int>::iterator it = spanning_branches.begin(); it != spanning_branches.end(); it++){
-      old_branch_length[*it] = tree.nodes[*it].branch_length;
-    }    
-
-  }while(total_branch_length_diff > convergence_threshold); 
-
-
-  if(called_as_main){
-    for(auto it = tree.nodes.begin(); it != tree.nodes.end(); it++){
-      (*it).branch_length *= ((double) Ne);
-    }
   }
 
-
+  //std::cerr << "Warning: no candidates " << no_candidate << std::endl;
+  //if(no_candidate > N/5.0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
+  //if(no_candidate > 0) std::cerr << "Warning: no candidates " << no_candidate << std::endl;
 }
+
 

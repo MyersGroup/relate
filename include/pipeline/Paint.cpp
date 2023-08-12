@@ -82,6 +82,8 @@ int Paint(cxxopts::Options& options, int chunk_index){
     //std::cerr << hap << std::endl;
     FastPainting painter(data);
     painter.PaintSteppingStones(data, window_boundaries, pfiles, hap);
+    //painter.PaintSteppingStonesNormal(data, window_boundaries, pfiles, hap);
+
   }
 
   for(int w = 0; w < num_windows; w++){  

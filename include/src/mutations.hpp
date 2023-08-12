@@ -54,6 +54,7 @@ class Mutations{
     void Dump(const std::string& filename);
 
 
+		void ReadShortFormat(const std::string& filename, const int section_startpos, const int section_endpos);
     void ReadShortFormat(const std::vector<std::string>& filenames);
     void DumpShortFormat(const std::string& filename);
     void DumpShortFormat(const std::string& filename, const int section_startpos, const int section_endpos);

@@ -180,7 +180,7 @@ TimeWhileKAncestorsDistance(Tree& tr1, Tree& tr2){
   std::vector<double> coordinates_tr2(tr2.nodes.size());
 
   Data data(N,1);
-  InferBranchLengths bl(data);
+  EstimateBranchLengthsWithSampleAge bl(data);
 
   int root = (int) tr1.nodes.size() - 1;
   if(tr1.nodes[root].parent != NULL){

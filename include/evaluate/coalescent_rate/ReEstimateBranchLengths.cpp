@@ -39,17 +39,17 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     seed = std::time(0) + getpid();
   }else{
     seed = options["seed"].as<int>();
-		srand(seed);
-		std::string name = options["input"].as<std::string>();
-		int tmp = 0;
-		for(int i = 0; i < name.size(); i++){
-			if(std::isdigit(name[i])) tmp += name[i]-48; 
-		}
-		for(int i = 0; i < tmp; i++){
-			seed = rand();
-		}
+    srand(seed);
+    std::string name = options["input"].as<std::string>();
+    int tmp = 0;
+    for(int i = 0; i < name.size(); i++){
+      if(std::isdigit(name[i])) tmp += name[i]-48; 
+    }
+    for(int i = 0; i < tmp; i++){
+      seed = rand();
+    }
   }
-	srand(seed);
+  srand(seed);
 
   int Ne = 3e4;
   double mutation_rate = options["mutation_rate"].as<float>();
@@ -76,11 +76,11 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
       std::cerr << "Error while opening .dist file." << std::endl;
       exit(1);
     } 
-		while(std::getline(is_L, line)){
-			++L;
-		}
-		L--;
-		is_L.close();
+    while(std::getline(is_L, line)){
+      ++L;
+    }
+    L--;
+    is_L.close();
   }else{
     igzstream is_L(options["input"].as<std::string>() + ".mut");
     if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
@@ -88,11 +88,11 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
       std::cerr << "Error while opening .mut file." << std::endl;
       exit(1);
     } 
-		while(std::getline(is_L, line)){
-			++L;
-		}
-		L--;
-		is_L.close();
+    while(std::getline(is_L, line)){
+      ++L;
+    }
+    L--;
+    is_L.close();
   }
 
   Data data(N, L, Ne, mutation_rate);
@@ -125,6 +125,11 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Reinferring branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
 
+  Sample sample;
+  if(options.count("poplabels")){
+    sample.Read(options["poplabels"].as<std::string>());
+  }
+  std::vector<std::vector<std::vector<double>>> coal_rate_pair;
 
   // read epochs and population size 
   igzstream is(options["coal"].as<std::string>()); 
@@ -138,41 +143,138 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
 
   std::vector<double> epoch, coalescent_rate;
   getline(is, line);
+  std::vector<std::string> groups;
+  std::istringstream is_group(line);
+  std::string name;
+  while(is_group >> name){
+    //is_group >> name;
+    groups.push_back(name);
+  }
   getline(is, line);
   std::istringstream is_epoch(line);
-  while(is_epoch){
-    is_epoch >> tmp;
+  while(is_epoch >> tmp){
+    //is_epoch >> tmp;
     epoch.push_back(tmp/data.Ne);
   }
-  getline(is, line);
+
+  if(options.count("poplabels")){
+
+    if(groups.size() != sample.groups.size()){
+      std::cerr << "Coal file doesn't contain all groups vs all groups rates" << std::endl;
+      exit(1);
+    }
+
+    //convert from coal file to poplabels file
+    std::vector<int> convert(groups.size(), -1);
+    for(int g = 0; g < groups.size(); g++){
+      for(int g2 = 0; g2 < sample.groups.size(); g2++){
+        if(groups[g] == sample.groups[g2]){
+          convert[g] = g2;
+          break;
+        }
+      }
+      if(convert[g] == -1){
+        std::cerr << "Groups in coal file don't match poplabels file" << std::endl;
+        exit(1);
+      }
+    }
+
+    coal_rate_pair.resize(epoch.size());
+    for(int e = 0; e < epoch.size(); e++){
+      coal_rate_pair[e].resize(sample.groups.size());
+      for(int g = 0; g < sample.groups.size(); g++){
+        coal_rate_pair[e][g].resize(sample.groups.size());
+      }
+    }
+
+    for(int g1 = 0; g1 < sample.groups.size(); g1++){
+      for(int g2 = 0; g2 < sample.groups.size(); g2++){
+        if(!getline(is,line)){
+          std::cerr << "Coal file doesn't contain all groups vs all groups rates" << std::endl;
+          exit(1);
+        }
+
+        std::istringstream is_pop_size(line);
+        is_pop_size >> tmp;
+        assert(tmp == g1);
+        is_pop_size >> tmp;
+        assert(tmp == g2);
+        int ep = 0;
+        while(is_pop_size){
+          is_pop_size >> tmp;
+          //if(ep == 0) std::cerr << convert[g1] << " " << convert[g2] << " " << tmp << " " << data.Ne << " " << tmp * data.Ne << std::endl;
+          if(tmp == 0.0){
+            coal_rate_pair[ep][convert[g1]][convert[g2]] = 5e-10 * data.Ne;
+          }else{
+            coal_rate_pair[ep][convert[g1]][convert[g2]] = tmp * data.Ne;
+          }
+          ep++;
+          if(ep == epoch.size()) break;
+        }
+
+        if(0){
+        for(int g1 = 0; g1 < sample.groups.size(); g1++){
+          for(int g2 = 0; g2 < sample.groups.size(); g2++){
+            for(int i = epoch.size()-1; i > 0; i--){
+              if(coal_rate_pair[i-1][g1][g2] == 0){
+                if(coal_rate_pair[i][g1][g2] > 0.0){
+                  coal_rate_pair[i-1][g1][g2] = coal_rate_pair[i][g1][g2];
+                }else{
+                  coal_rate_pair[i-1][g1][g2] = 1.0;
+                }
+              } 
+            }
+          }
+        }
+        }
+
+      }
+    }
+
+    /*
+    for(int g1 = 0; g1 < sample.groups.size(); g1++){
+      for(int g2 = 0; g2 < sample.groups.size(); g2++){
+        std::cerr << coal_rate_pair[0][g1][g2] << " ";
+      }
+      std::cerr << std::endl;
+    }
+    */
+
+  }else{
+
+    getline(is, line);
+    std::istringstream is_pop_size(line);
+    is_pop_size >> tmp >> tmp;
+    while(is_pop_size){
+      is_pop_size >> tmp;
+      //tmp = 1.0/data.Ne; 
+      if(tmp == 0.0 && coalescent_rate.size() > 0){
+        if(*std::prev(coalescent_rate.end(),1) > 0.0){
+          coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
+        }
+        //coalescent_rate.push_back(1);
+      }else{
+        coalescent_rate.push_back(tmp * data.Ne);
+      }
+    }
+
+    for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
+      if(coalescent_rate[i-1] == 0){
+        if(coalescent_rate[i] > 0.0){
+          coalescent_rate[i-1] = coalescent_rate[i];
+        }else{
+          coalescent_rate[i-1] = 1.0;
+        }
+      } 
+    }
+
+    //std::cerr << coalescent_rate[0] << std::endl;
+
+  }
   is.close();
 
-  std::istringstream is_pop_size(line);
-  is_pop_size >> tmp >> tmp;
-  while(is_pop_size){
-    is_pop_size >> tmp;
-    //tmp = 1.0/data.Ne; 
-    if(tmp == 0.0 && coalescent_rate.size() > 0){
-      if(*std::prev(coalescent_rate.end(),1) > 0.0){
-        coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
-      }
-      //coalescent_rate.push_back(1);
-    }else{
-      coalescent_rate.push_back(tmp * data.Ne);
-    }
-  }
 
-  for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
-    if(coalescent_rate[i-1] == 0){
-      if(coalescent_rate[i] > 0.0){
-        coalescent_rate[i-1] = coalescent_rate[i];
-      }else{
-        coalescent_rate[i-1] = 1.0;
-      }
-    } 
-  } 
-
-  if(0){
+  if(1){
     if(options.count("mrate")){
       //multiply by mutation rate
       is.open(options["mrate"].as<std::string>());
@@ -181,25 +283,18 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
       while(getline(is, line)){
         sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
         assert(mepoch/data.Ne == epoch[e]);
-        if(mrate > 0){
-          double diff = (data.mu - mrate)/data.mu;
-          if(diff > 1) diff = 1;
-          if(diff < -1) diff = 1;
-          coalescent_rate[e] *= exp(log(10)*diff);
-          //coalescent_rate[e] *= data.mu/mrate;
+        if(mrate > 0){     
+          //double diff = (data.mu - mrate)/data.mu;
+          //if(diff > 1) diff = 1;
+          //if(diff < -1) diff = 1;
+          //coalescent_rate[e] *= exp(log(10)*diff);
+          coalescent_rate[e] *= data.mu/mrate;
         }
         e++;
       }
     }
   }
 
-
-  /* 
-     for(int i = 0; i < (int)coalescent_rate.size(); i++){
-     std::cerr << coalescent_rate[i] << " ";
-     }
-     std::cerr << std::endl;
-     */
 
   ///////////////////////////////////////// TMRCA Inference /////////////////////////
   //Infer Branchlengths
@@ -214,20 +309,23 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     progress_step = 100/num_trees;
   }
 
-
   //////////////////////////////////////////// Read Tree ///////////////////////////////////
 
   CorrTrees::iterator it_seq   = anc.seq.begin();
   //Infer branch lengths
   if(anc.sample_ages.size() == 0){
-    InferBranchLengths bl(data);
+    EstimateBranchLengthsWithSampleAge bl(data);
     for(; it_seq != anc.seq.end(); it_seq++){
       if(count_trees % progress_interval == 0){
         progress += progress_step;
         ShowProgress(progress); 
       }
       count_trees++; 
-      bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
+      if(options.count("poplabels")){
+        bl.MCMCCoalRatesForRelate(data, (*it_seq).tree, sample.group_of_haplotype, epoch, coal_rate_pair, rand()); //this is estimating times     
+      }else{
+        bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
+      }
     }
   }else{
     EstimateBranchLengthsWithSampleAge bl(data, anc.sample_ages);
@@ -237,7 +335,11 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
         ShowProgress(progress); 
       }
       count_trees++; 
-      bl.MCMCVariablePopulationSize(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
+      if(options.count("poplabels")){
+        bl.MCMCCoalRatesForRelate(data, (*it_seq).tree, sample.group_of_haplotype, epoch, coal_rate_pair, rand()); //this is estimating times     
+      }else{
+        bl.MCMCVariablePopulationSizeForRelate(data, (*it_seq).tree, epoch, coalescent_rate, rand()); //this is estimating times
+      }
     }
   }
 
@@ -273,13 +375,13 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
     if((*it_mut).tree != num_tree) std::cerr << (*it_mut).tree << " " << num_tree << std::endl;
     if((*it_mut).branch.size() == 1){
       int branch = *(*it_mut).branch.begin();
-			if(branch != root){
+      if(branch != root){
         (*it_mut).age_begin = coordinates[branch];
         (*it_mut).age_end   = coordinates[(*(*it_anc).tree.nodes[branch].parent).label]; 
-			}else{
-				(*it_mut).age_begin = coordinates[branch];
-				(*it_mut).age_end   = coordinates[branch];
-			}
+      }else{
+        (*it_mut).age_begin = coordinates[branch];
+        (*it_mut).age_end   = coordinates[branch];
+      }
     }
   }
   mut.Dump(options["output"].as<std::string>() + ".mut"); 
@@ -299,28 +401,29 @@ int ReEstimateBranchLengths(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
   return 0;
+
 }
 
 ////////////////////////////
 
 int SampleBranchLengths(cxxopts::Options& options){
 
-	int seed;
-	if(!options.count("seed")){
-		seed = std::time(0) + getpid();
-	}else{
-		seed = options["seed"].as<int>();
-		srand(seed);
-		std::string name = options["input"].as<std::string>();
-		int tmp = 0;
-		for(int i = 0; i < name.size(); i++){
-			if(std::isdigit(name[i])) tmp += name[i]-48; 
-		}
-		for(int i = 0; i < tmp; i++){
-			seed = rand();
-		}
-	}
-	srand(seed);
+  int seed;
+  if(!options.count("seed")){
+    seed = std::time(0) + getpid();
+  }else{
+    seed = options["seed"].as<int>();
+    srand(seed);
+    std::string name = options["input"].as<std::string>();
+    int tmp = 0;
+    for(int i = 0; i < name.size(); i++){
+      if(std::isdigit(name[i])) tmp += name[i]-48; 
+    }
+    for(int i = 0; i < tmp; i++){
+      seed = rand();
+    }
+  }
+  srand(seed);
 
   int Ne = 2e4;
   double mutation_rate = options["mutation_rate"].as<float>();
@@ -347,11 +450,11 @@ int SampleBranchLengths(cxxopts::Options& options){
       std::cerr << "Error while opening .dist file." << std::endl;
       exit(1);
     } 
-		while(std::getline(is_L, line)){
-			++L;
-		}
-		L--;
-		is_L.close();
+    while(std::getline(is_L, line)){
+      ++L;
+    }
+    L--;
+    is_L.close();
   }else{
     igzstream is_L(options["input"].as<std::string>() + ".mut");
     if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
@@ -359,11 +462,11 @@ int SampleBranchLengths(cxxopts::Options& options){
       std::cerr << "Error while opening .mut file." << std::endl;
       exit(1);
     } 
-		while(std::getline(is_L, line)){
-			++L;
-		}
-		L--;
-		is_L.close();
+    while(std::getline(is_L, line)){
+      ++L;
+    }
+    L--;
+    is_L.close();
   }
 
   Data data(N, L, Ne, mutation_rate);
@@ -401,6 +504,12 @@ int SampleBranchLengths(cxxopts::Options& options){
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Sampling branch lengths for " << options["input"].as<std::string>() << " ..." << std::endl;
 
+  Sample sample;
+  if(options.count("poplabels")){
+    sample.Read(options["poplabels"].as<std::string>());
+  }
+  std::vector<std::vector<std::vector<double>>> coal_rate_pair;
+
   // read epochs and population size 
   igzstream is(options["coal"].as<std::string>()); 
   if(is.fail()){
@@ -413,59 +522,146 @@ int SampleBranchLengths(cxxopts::Options& options){
 
   std::vector<double> epoch, coalescent_rate;
   getline(is, line);
+  std::vector<std::string> groups;
+  std::istringstream is_group(line);
+  std::string name;
+  while(is_group >> name){
+    //is_group >> name;
+    groups.push_back(name);
+  }
   getline(is, line);
   std::istringstream is_epoch(line);
-  while(is_epoch){
-    is_epoch >> tmp;
+  while(is_epoch >> tmp){
+    //is_epoch >> tmp;
     epoch.push_back(tmp/data.Ne);
   }
-  getline(is, line);
+
+  if(options.count("poplabels")){
+
+    if(groups.size() != sample.groups.size()){
+      std::cerr << "Coal file doesn't contain all groups vs all groups rates" << std::endl;
+      exit(1);
+    }
+
+    //convert from coal file to poplabels file
+    std::vector<int> convert(groups.size(), -1);
+    for(int g = 0; g < groups.size(); g++){
+      for(int g2 = 0; g2 < sample.groups.size(); g2++){
+        if(groups[g] == sample.groups[g2]){
+          convert[g] = g2;
+          break;
+        }
+      }
+      if(convert[g] == -1){
+        std::cerr << "Groups in coal file don't match poplabels file" << std::endl;
+        exit(1);
+      }
+    }
+
+    coal_rate_pair.resize(epoch.size());
+    for(int e = 0; e < epoch.size(); e++){
+      coal_rate_pair[e].resize(sample.groups.size());
+      for(int g = 0; g < sample.groups.size(); g++){
+        coal_rate_pair[e][g].resize(sample.groups.size());
+      }
+    }
+
+    for(int g1 = 0; g1 < sample.groups.size(); g1++){
+      for(int g2 = 0; g2 < sample.groups.size(); g2++){
+        if(!getline(is,line)){
+          std::cerr << "Coal file doesn't contain all groups vs all groups rates" << std::endl;
+          exit(1);
+        }
+
+        std::istringstream is_pop_size(line);
+        is_pop_size >> tmp;
+        assert(tmp == g1);
+        is_pop_size >> tmp;
+        assert(tmp == g2);
+        int ep = 0;
+        while(is_pop_size){
+          is_pop_size >> tmp;
+          //if(ep == 0) std::cerr << convert[g1] << " " << convert[g2] << " " << tmp << " " << data.Ne << " " << tmp * data.Ne << std::endl;
+          if(tmp == 0.0){
+            coal_rate_pair[ep][convert[g1]][convert[g2]] = 5e-10 * data.Ne;
+          }else{
+            coal_rate_pair[ep][convert[g1]][convert[g2]] = tmp * data.Ne;
+          }
+          ep++;
+          if(ep == epoch.size()) break;
+        }
+
+        if(0){
+          for(int g1 = 0; g1 < sample.groups.size(); g1++){
+            for(int g2 = 0; g2 < sample.groups.size(); g2++){
+              for(int i = epoch.size()-1; i > 0; i--){
+                if(coal_rate_pair[i-1][g1][g2] == 0){
+                  if(coal_rate_pair[i][g1][g2] > 0.0){
+                    coal_rate_pair[i-1][g1][g2] = coal_rate_pair[i][g1][g2];
+                  }else{
+                    coal_rate_pair[i-1][g1][g2] = 1.0;
+                  }
+                } 
+              }
+            }
+          }
+        }
+
+      }
+    }
+
+  }else{
+
+    getline(is, line);
+    std::istringstream is_pop_size(line);
+    is_pop_size >> tmp >> tmp;
+    while(is_pop_size){
+      is_pop_size >> tmp;
+      //tmp = 1.0/data.Ne; 
+      if(tmp == 0.0 && coalescent_rate.size() > 0){
+        if(*std::prev(coalescent_rate.end(),1) > 0.0){
+          coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
+        }
+        //coalescent_rate.push_back(1);
+      }else{
+        coalescent_rate.push_back(tmp * data.Ne);
+      }
+    }
+
+    for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
+      if(coalescent_rate[i-1] == 0){
+        if(coalescent_rate[i] > 0.0){
+          coalescent_rate[i-1] = coalescent_rate[i];
+        }else{
+          coalescent_rate[i-1] = 1.0;
+        }
+      } 
+    }
+
+    //std::cerr << coalescent_rate[0] << std::endl;
+
+  }
   is.close();
 
-  std::istringstream is_pop_size(line);
-  is_pop_size >> tmp >> tmp;
-  while(is_pop_size){
-    is_pop_size >> tmp;
-    //tmp = 1.0/data.Ne; 
-    if(tmp == 0.0 && coalescent_rate.size() > 0){
-      if(*std::prev(coalescent_rate.end(),1) > 0.0){
-        coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
+  if(1){
+    if(options.count("mrate")){
+      //multiply by mutation rate
+      is.open(options["mrate"].as<std::string>());
+      double mepoch, mrate;
+      int e = 0;
+      while(getline(is, line)){
+        sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
+        assert(mepoch/data.Ne == epoch[e]);
+        if(mrate > 0){     
+          //double diff = (data.mu - mrate)/data.mu;
+          //if(diff > 1) diff = 1;
+          //if(diff < -1) diff = 1;
+          //coalescent_rate[e] *= exp(log(10)*diff);
+          coalescent_rate[e] *= data.mu/mrate;
+        }
+        e++;
       }
-      //coalescent_rate.push_back(1);
-    }else{
-      coalescent_rate.push_back(tmp * data.Ne);
     }
-  }
-
-  for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
-    if(coalescent_rate[i-1] == 0){
-      if(coalescent_rate[i] > 0.0){
-        coalescent_rate[i-1] = coalescent_rate[i];
-      }else{
-        coalescent_rate[i-1] = 1.0;
-      }
-    } 
-  } 
-
-  if(0){
-  if(options.count("mrate")){
-    //multiply by mutation rate
-    is.open(options["mrate"].as<std::string>());
-    double mepoch, mrate;
-    int e = 0;
-    while(getline(is, line)){
-      sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
-      assert(mepoch/data.Ne == epoch[e]);
-      if(mrate > 0){
-        double diff = (data.mu - mrate)/data.mu;
-        if(diff > 1) diff = 1;
-        if(diff < -1) diff = 1;
-        coalescent_rate[e] *= exp(log(10)*diff);
-        //coalescent_rate[e] *= data.mu/mrate;
-      }
-      e++;
-    }
-  }
   }
 
   ///////////////////////////////////////// TMRCA Inference /////////////////////////
@@ -553,7 +749,7 @@ int SampleBranchLengths(cxxopts::Options& options){
   //Infer branch lengths
 
   if(anc.sample_ages.size() == 0){
-    InferBranchLengths bl(data);
+    EstimateBranchLengthsWithSampleAge bl(data);
     for(; it_seq != anc.seq.end(); it_seq++){
 
       if(count_trees % progress_interval == 0){
@@ -567,7 +763,12 @@ int SampleBranchLengths(cxxopts::Options& options){
 
       int count = 0;
       if(count < num_samples){
-        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
+
+        if(options.count("poplabels")){
+          bl.MCMCCoalRatesSample(data, (*it_seq).tree, sample.group_of_haplotype, epoch, coal_rate_pair, num_proposals, 1, rand()); //this is estimating times     
+        }else{
+          bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
+        }
 
         if(format == "n"){
           if(it_seq != std::prev(anc.seq.end(),1)){
@@ -584,7 +785,11 @@ int SampleBranchLengths(cxxopts::Options& options){
       }
       count++;
       for(;count < num_samples; count++){
-        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
+        if(options.count("poplabels")){
+          bl.MCMCCoalRatesSample(data, (*it_seq).tree, sample.group_of_haplotype, epoch, coal_rate_pair, num_proposals, 0, rand()); //this is estimating times     
+        }else{
+          bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
+        }
 
         if(format == "n"){
           if(it_seq != std::prev(anc.seq.end(),1)){
@@ -678,7 +883,11 @@ int SampleBranchLengths(cxxopts::Options& options){
 
       int count = 0;
       if(count < num_samples){
-        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
+        if(options.count("poplabels")){
+          bl.MCMCCoalRatesSample(data, (*it_seq).tree, sample.group_of_haplotype, epoch, coal_rate_pair, num_proposals, 1, rand()); //this is estimating times     
+        }else{
+          bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
+        }
 
         if(format == "n"){
           if(it_seq != std::prev(anc.seq.end(),1)){
@@ -695,7 +904,11 @@ int SampleBranchLengths(cxxopts::Options& options){
       }
       count++;
       for(;count < num_samples; count++){
-        bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
+        if(options.count("poplabels")){
+          bl.MCMCCoalRatesSample(data, (*it_seq).tree, sample.group_of_haplotype, epoch, coal_rate_pair, num_proposals, 0, rand()); //this is estimating times     
+        }else{
+          bl.MCMCVariablePopulationSizeSample(data, (*it_seq).tree, epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
+        }
 
         if(format == "n"){
           if(it_seq != std::prev(anc.seq.end(),1)){
@@ -774,7 +987,7 @@ int SampleBranchLengths(cxxopts::Options& options){
 
     }
   }
-	os.close();
+  os.close();
 
   ShowProgress(100);
   std::cerr << std::endl;
@@ -783,9 +996,9 @@ int SampleBranchLengths(cxxopts::Options& options){
 
   if(format == "a"){
 
-		for(std::vector<double>::iterator it_sample_ages = anc.sample_ages.begin(); it_sample_ages != anc.sample_ages.end(); it_sample_ages++){
-			*it_sample_ages /= data.Ne;
-		}
+    for(std::vector<double>::iterator it_sample_ages = anc.sample_ages.begin(); it_sample_ages != anc.sample_ages.end(); it_sample_ages++){
+      *it_sample_ages /= data.Ne;
+    }
     Mutations mut(data);
     mut.Read(options["input"].as<std::string>() + ".mut");
 
@@ -819,10 +1032,10 @@ int SampleBranchLengths(cxxopts::Options& options){
         if(branch != root){
           (*it_mut).age_begin = data.Ne*coordinates[branch];
           (*it_mut).age_end   = data.Ne*coordinates[(*(*it_anc).tree.nodes[branch].parent).label]; 
-				}else{
-					(*it_mut).age_begin = data.Ne*coordinates[branch];
-					(*it_mut).age_end   = data.Ne*coordinates[branch]; 
-				}
+        }else{
+          (*it_mut).age_begin = data.Ne*coordinates[branch];
+          (*it_mut).age_end   = data.Ne*coordinates[branch]; 
+        }
       }
     }
     mut.Dump(options["output"].as<std::string>() + ".mut"); 
@@ -881,12 +1094,12 @@ GetCoords(int node, Tree& tree, int branch, float Ne, char m, std::vector<float>
     }
 
   }else{
-  
+
     if(tree.sample_ages != NULL){
       assert((*tree.sample_ages).size() > 0);
       coordinate = (*tree.sample_ages)[node];
     }
-  
+
   }
 
   return coordinate;
@@ -895,22 +1108,22 @@ GetCoords(int node, Tree& tree, int branch, float Ne, char m, std::vector<float>
 
 int SampleBranchLengthsBinary(cxxopts::Options& options){
 
-	int seed;
-	if(!options.count("seed")){
-		seed = std::time(0) + getpid();
-	}else{
-		seed = options["seed"].as<int>();
-		srand(seed);
-		std::string name = options["input"].as<std::string>();
-		int tmp = 0;
-		for(int i = 0; i < name.size(); i++){
-			if(std::isdigit(name[i])) tmp += name[i] - 48; 
-		}
-		for(int i = 0; i < tmp; i++){
-			seed = rand();
-		}
-	}
-	srand(seed);
+  int seed;
+  if(!options.count("seed")){
+    seed = std::time(0) + getpid();
+  }else{
+    seed = options["seed"].as<int>();
+    srand(seed);
+    std::string name = options["input"].as<std::string>();
+    int tmp = 0;
+    for(int i = 0; i < name.size(); i++){
+      if(std::isdigit(name[i])) tmp += name[i] - 48; 
+    }
+    for(int i = 0; i < tmp; i++){
+      seed = rand();
+    }
+  }
+  srand(seed);
 
   int Ne = 3e4;
   double mutation_rate = options["mutation_rate"].as<float>();
@@ -937,11 +1150,11 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
       std::cerr << "Error while opening .dist file." << std::endl;
       exit(1);
     } 
-		while(std::getline(is_L, line)){
-			++L;
-		}
-		L--;
-		is_L.close();
+    while(std::getline(is_L, line)){
+      ++L;
+    }
+    L--;
+    is_L.close();
   }else{
     igzstream is_L(options["input"].as<std::string>() + ".mut");
     if(is_L.fail()) is_L.open(options["input"].as<std::string>() + ".mut.gz");
@@ -949,11 +1162,11 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
       std::cerr << "Error while opening .mut file." << std::endl;
       exit(1);
     } 
-		while(std::getline(is_L, line)){
-			++L;
-		}
-		L--;
-		is_L.close();
+    while(std::getline(is_L, line)){
+      ++L;
+    }
+    L--;
+    is_L.close();
   }
 
   Data data(N, L, Ne, mutation_rate);
@@ -964,10 +1177,10 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   for(Muts::iterator it_mut = mut.info.begin(); it_mut != mut.info.end(); it_mut++){
     if((*it_mut).branch.size() <= 1) num_mapping_SNPs++;
   }
-	if(num_mapping_SNPs == 0){
+  if(num_mapping_SNPs == 0){
     std::cerr << "Error: No SNPs are mapping to tree" << std::endl;
-		exit(1);
-	}
+    exit(1);
+  }
 
   data.dist.resize(L);
   std::vector<int> bp(L);
@@ -1054,11 +1267,11 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
         sscanf(line.c_str(), "%lf %lf", &mepoch, &mrate);
         assert(mepoch/data.Ne == epoch[e]);
         if(mrate > 0){     
-          double diff = (data.mu - mrate)/data.mu;
-          if(diff > 1) diff = 1;
-          if(diff < -1) diff = 1;
-          coalescent_rate[e] *= exp(log(10)*diff);
-          //coalescent_rate[e] *= data.mu/mrate;
+          //double diff = (data.mu - mrate)/data.mu;
+          //if(diff > 1) diff = 1;
+          //if(diff < -1) diff = 1;
+          //coalescent_rate[e] *= exp(log(10)*diff);
+          coalescent_rate[e] *= data.mu/mrate;
         }
         e++;
       }
@@ -1101,19 +1314,19 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   fwrite(&num_mapping_SNPs, sizeof(int), 1, fp);
   fwrite(&num_samples, sizeof(int), 1, fp);
 
-	char anc_allele, der_allele;
+  char anc_allele, der_allele;
   if(ancmut.sample_ages.size() == 0){
 
     //Infer branch lengths
-    InferBranchLengths bl(data);
+    EstimateBranchLengthsWithSampleAge bl(data);
     std::vector<Leaves> leaves;
-		bool first_snp = false;
-		std::vector<Tree> sampled_trees(num_samples);
-		//iterate through whole file
+    bool first_snp = false;
+    std::vector<Tree> sampled_trees(num_samples);
+    //iterate through whole file
     while(num_bases_tree_persists >= 0.0){
 
       num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
-			first_snp = true;
+      first_snp = true;
 
       if(it_mut != ancmut.mut_end()){
         while((*it_mut).tree == count_trees){
@@ -1125,114 +1338,114 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
               ShowProgress(progress); 
             }
 
-						if(first_snp){
-							for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
-								(*it_node).branch_length /= (double) data.Ne;
-							}
-							mtr.tree.FindAllLeaves(leaves);
+            if(first_snp){
+              for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
+                (*it_node).branch_length /= (double) data.Ne;
+              }
+              mtr.tree.FindAllLeaves(leaves);
 
-							int i = 0;
-							if(i < num_samples){
-								sampled_trees[i] = mtr.tree;
-								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
-							}
-							i++;
-							for(; i < num_samples; i++){
-								sampled_trees[i] = mtr.tree;
-								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
-							}
-							first_snp = false;
-						}
+              int i = 0;
+              if(i < num_samples){
+                sampled_trees[i] = mtr.tree;
+                bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
+              }
+              i++;
+              for(; i < num_samples; i++){
+                sampled_trees[i] = sampled_trees[i-1];
+                bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
+              }
+              first_snp = false;
+            }
 
             //store matrix with
             //num_snps x anc_times x num_samples
             //num_snps x der_times x num_samples
 
-						int branch, DAF;
-						std::vector<float> anctimes, dertimes;
-						if((*it_mut).branch.size() == 1){
-							branch = *(*it_mut).branch.begin();
-							DAF    = leaves[branch].num_leaves;
-							anctimes.resize(num_samples*std::max(0,(data.N-DAF-1)));
-							dertimes.resize(num_samples*std::max(0,(DAF-1)));
-							std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
+            int branch, DAF;
+            std::vector<float> anctimes, dertimes;
+            if((*it_mut).branch.size() == 1){
+              branch = *(*it_mut).branch.begin();
+              DAF    = leaves[branch].num_leaves;
+              anctimes.resize(num_samples*std::max(0,(data.N-DAF-1)));
+              dertimes.resize(num_samples*std::max(0,(DAF-1)));
+              std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
 
-							int count = 0;
-							if(count < num_samples){
-								//store anc and dertimes
-								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-								if(branch != root){
-									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
-								}else{
-									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
-								}
-								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-								std::sort(it_anctimes_s, it_anctimes);
-								std::sort(it_dertimes_s, it_dertimes);
-							}
-							count++;
-							for(;count < num_samples; count++){
-								//store anc and dertimes
-								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-								if(branch != root){
-									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
-								}else{
-									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
-								}
-								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-								std::sort(it_anctimes_s, it_anctimes);
-								std::sort(it_dertimes_s, it_dertimes);
-							}
-						}else{
-							DAF    = 0;
-							anctimes.resize(num_samples*std::max(0,(data.N-1)));
-							dertimes.resize(0);
-							std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
-							int count = 0;
-							if(count < num_samples){
-								//store anc and dertimes
-								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-								GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
-								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-								std::sort(it_anctimes_s, it_anctimes);
-								std::sort(it_dertimes_s, it_dertimes);
-							}
-							count++;
-							for(;count < num_samples; count++){
-								//store anc and dertimes
-								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-								GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
-								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-								std::sort(it_anctimes_s, it_anctimes);
-								std::sort(it_dertimes_s, it_dertimes);
-							}
+              int count = 0;
+              if(count < num_samples){
+                //store anc and dertimes
+                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+                if(branch != root){
+                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+                }else{
+                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
+                }
+                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+                std::sort(it_anctimes_s, it_anctimes);
+                std::sort(it_dertimes_s, it_dertimes);
+              }
+              count++;
+              for(;count < num_samples; count++){
+                //store anc and dertimes
+                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+                if(branch != root){
+                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+                }else{
+                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
+                }
+                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+                std::sort(it_anctimes_s, it_anctimes);
+                std::sort(it_dertimes_s, it_dertimes);
+              }
+            }else{
+              DAF    = 0;
+              anctimes.resize(num_samples*std::max(0,(data.N-1)));
+              dertimes.resize(0);
+              std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
+              int count = 0;
+              if(count < num_samples){
+                //store anc and dertimes
+                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+                GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
+                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+                std::sort(it_anctimes_s, it_anctimes);
+                std::sort(it_dertimes_s, it_dertimes);
+              }
+              count++;
+              for(;count < num_samples; count++){
+                //store anc and dertimes
+                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+                GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
+                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+                std::sort(it_anctimes_s, it_anctimes);
+                std::sort(it_dertimes_s, it_dertimes);
+              }
 
-						}
+            }
 
             //WriteBinary(anctimes, dertimes, fp);
             //BP, DAF, N, 
             //dump
-						int msize = (*it_mut).mutation_type.size();
-						if(msize >= 1){
-						  anc_allele = (*it_mut).mutation_type[0];
-							der_allele = 'N';
-							int i = 1;
-							while((*it_mut).mutation_type[i] != '/' && i < msize){
-								i++;
-								if(i == msize) break;
-							}
-							i++;
-							if(i < msize) der_allele = (*it_mut).mutation_type[i];
-						}
+            int msize = (*it_mut).mutation_type.size();
+            if(msize >= 1){
+              anc_allele = (*it_mut).mutation_type[0];
+              der_allele = 'N';
+              int i = 1;
+              while((*it_mut).mutation_type[i] != '/' && i < msize){
+                i++;
+                if(i == msize) break;
+              }
+              i++;
+              if(i < msize) der_allele = (*it_mut).mutation_type[i];
+            }
 
             int BP = (*it_mut).pos;
             fwrite(&BP, sizeof(int), 1, fp);
-						fwrite(&anc_allele, sizeof(char), 1, fp);
-						fwrite(&der_allele, sizeof(char), 1, fp);
+            fwrite(&anc_allele, sizeof(char), 1, fp);
+            fwrite(&der_allele, sizeof(char), 1, fp);
             fwrite(&DAF, sizeof(int), 1, fp);
             fwrite(&data.N, sizeof(int), 1, fp);
             fwrite(&anctimes[0], sizeof(float), num_samples*std::max(0,(data.N-DAF-1)), fp);
@@ -1255,8 +1468,8 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
     //Infer branch lengths
     EstimateBranchLengthsWithSampleAge bl(data, ancmut.sample_ages);
     std::vector<Leaves> leaves;
-		bool first_snp = false;
-		std::vector<Tree> sampled_trees(num_samples);
+    bool first_snp = false;
+    std::vector<Tree> sampled_trees(num_samples);
     //iterate through whole file
     while(num_bases_tree_persists >= 0.0){
 
@@ -1273,113 +1486,113 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
               ShowProgress(progress); 
             }
 
-						if(first_snp){
-							for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
-								(*it_node).branch_length /= (double) data.Ne;
-							}
-							mtr.tree.FindAllLeaves(leaves);
+            if(first_snp){
+              for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != mtr.tree.nodes.end(); it_node++){
+                (*it_node).branch_length /= (double) data.Ne;
+              }
+              mtr.tree.FindAllLeaves(leaves);
 
-							int i = 0;
-							if(i < num_samples){
-								sampled_trees[i] = mtr.tree;
-								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
-							}
-							i++;
-							for(; i < num_samples; i++){
+              int i = 0;
+              if(i < num_samples){
                 sampled_trees[i] = mtr.tree;
-								bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
-							}
-							first_snp = false;
-						}
+                bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
+              }
+              i++;
+              for(; i < num_samples; i++){
+                sampled_trees[i] = mtr.tree;
+                bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
+              }
+              first_snp = false;
+            }
 
             //store matrix with
             //num_snps x anc_times x num_samples
             //num_snps x der_times x num_samples
-						int branch, DAF;
-						std::vector<float> anctimes, dertimes;
-						if((*it_mut).branch.size() == 1){
-							branch = *(*it_mut).branch.begin();
-							DAF    = leaves[branch].num_leaves;
-							anctimes.resize(num_samples*std::max(0,(data.N-DAF-1)));
-							dertimes.resize(num_samples*std::max(0,(DAF-1)));
-							std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
+            int branch, DAF;
+            std::vector<float> anctimes, dertimes;
+            if((*it_mut).branch.size() == 1){
+              branch = *(*it_mut).branch.begin();
+              DAF    = leaves[branch].num_leaves;
+              anctimes.resize(num_samples*std::max(0,(data.N-DAF-1)));
+              dertimes.resize(num_samples*std::max(0,(DAF-1)));
+              std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
 
-							int count = 0;
-							if(count < num_samples){
-								//store anc and dertimes
-								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-								if(branch != root){
-									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
-								}else{
-									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
-								}
-								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-								std::sort(it_anctimes_s, it_anctimes);
-								std::sort(it_dertimes_s, it_dertimes);
-							}
-							count++;
-							for(;count < num_samples; count++){
-								//store anc and dertimes
-								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-								if(branch != root){
-									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
-								}else{
-									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
-								}
-								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-								std::sort(it_anctimes_s, it_anctimes);
-								std::sort(it_dertimes_s, it_dertimes);
-							}
-						}else{
-							DAF    = 0;
-							anctimes.resize(num_samples*std::max(0,(data.N-1)));
-							dertimes.resize(0);
-							std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
-							int count = 0;
-							if(count < num_samples){
-								//store anc and dertimes
-								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-								GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
-								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-								std::sort(it_anctimes_s, it_anctimes);
-								std::sort(it_dertimes_s, it_dertimes);
-							}
-							count++;
-							for(;count < num_samples; count++){
-								//store anc and dertimes
-								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-								GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
-								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-								std::sort(it_anctimes_s, it_anctimes);
-								std::sort(it_dertimes_s, it_dertimes);
-							}
+              int count = 0;
+              if(count < num_samples){
+                //store anc and dertimes
+                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+                if(branch != root){
+                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+                }else{
+                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
+                }
+                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+                std::sort(it_anctimes_s, it_anctimes);
+                std::sort(it_dertimes_s, it_dertimes);
+              }
+              count++;
+              for(;count < num_samples; count++){
+                //store anc and dertimes
+                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+                if(branch != root){
+                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+                }else{
+                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
+                }
+                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+                std::sort(it_anctimes_s, it_anctimes);
+                std::sort(it_dertimes_s, it_dertimes);
+              }
+            }else{
+              DAF    = 0;
+              anctimes.resize(num_samples*std::max(0,(data.N-1)));
+              dertimes.resize(0);
+              std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
+              int count = 0;
+              if(count < num_samples){
+                //store anc and dertimes
+                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+                GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
+                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+                std::sort(it_anctimes_s, it_anctimes);
+                std::sort(it_dertimes_s, it_dertimes);
+              }
+              count++;
+              for(;count < num_samples; count++){
+                //store anc and dertimes
+                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+                GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
+                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+                std::sort(it_anctimes_s, it_anctimes);
+                std::sort(it_dertimes_s, it_dertimes);
+              }
 
-						}
+            }
 
             //WriteBinary(anctimes, dertimes, fp);
             //BP, DAF, N, 
             //dump
-						int msize = (*it_mut).mutation_type.size();
-						if(msize >= 1){
-							anc_allele = (*it_mut).mutation_type[0];
-							der_allele = 'N';
-							int i = 1;
-							while((*it_mut).mutation_type[i] != '/' && i < msize){
-								i++;
-								if(i == msize) break;
-							}
-							i++;
-							if(i < msize) der_allele = (*it_mut).mutation_type[i];
-						}
+            int msize = (*it_mut).mutation_type.size();
+            if(msize >= 1){
+              anc_allele = (*it_mut).mutation_type[0];
+              der_allele = 'N';
+              int i = 1;
+              while((*it_mut).mutation_type[i] != '/' && i < msize){
+                i++;
+                if(i == msize) break;
+              }
+              i++;
+              if(i < msize) der_allele = (*it_mut).mutation_type[i];
+            }
 
             int BP = (*it_mut).pos;
             fwrite(&BP, sizeof(int), 1, fp);
-						fwrite(&anc_allele, sizeof(char), 1, fp);
-						fwrite(&der_allele, sizeof(char), 1, fp);
+            fwrite(&anc_allele, sizeof(char), 1, fp);
+            fwrite(&der_allele, sizeof(char), 1, fp);
             fwrite(&DAF, sizeof(int), 1, fp);
             fwrite(&data.N, sizeof(int), 1, fp);
             fwrite(&anctimes[0], sizeof(float), num_samples*std::max(0,(data.N-DAF-1)), fp);

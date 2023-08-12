@@ -110,7 +110,7 @@ ga('send', 'pageview');
 
                 <p><b>Relate</b> is available for academic use. To see rules for non-academic use, please read the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf" download>LICENCE</a> file, which is included with each software download.</p>
 
-                <h5 id="Binaries">Pre-compiled binaries (last updated: 14/06/2022)</h5> 
+                <h5 id="Binaries">Pre-compiled binaries (last updated: 12/08/2023)</h5> 
                 <form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
                   <div class="form-group">
                     <div class="checkbox">
@@ -124,28 +124,28 @@ ga('send', 'pageview');
                   <div class="form-group">
                     <button type="submit" 
                             class="btn btn-link" 
-                            formaction="download/relate_v1.1.9_x86_64_dynamic.tgz"   
+                            formaction="download/relate_v1.2.0_x86_64_dynamic.tgz"   
                             data-on="click"
                             data-event-category="Relate download (x86_64, dynamic)"
-                            data-event-action="click">Linux (x86_64, dynamic) - v1.1.9</button><br/>
+                            data-event-action="click">Linux (x86_64, dynamic) - v1.2.0</button><br/>
                           <button type="submit" 
                                   class="btn btn-link" 
-                                  formaction="download/relate_v1.1.9_x86_64_static.tgz"
+                                  formaction="download/relate_v1.2.0_x86_64_static.tgz"
                                   data-on="click"
                                   data-event-category="Relate download (x86_64, static)"
-                                  data-event-action="click">Linux (x86_64, static) - v1.1.9</button><br/>
+                                  data-event-action="click">Linux (x86_64, static) - v1.2.0</button><br/>
                                 <button type="submit" 
                                         class="btn btn-link" 
-                                        formaction="download/relate_v1.1.9_MacOSX_Intel.tgz"
+                                        formaction="download/relate_v1.2.0_MacOSX_Intel.tgz"
                                         data-on="click"
                                         data-event-category="Relate download (Mac_OSX)"
-																				data-event-action="click">Mac OSX (Intel) - v1.1.9</button><br/>     
+																				data-event-action="click">Mac OSX (Intel) - v1.2.0</button><br/>     
 																<button type="submit" 
 																				class="btn btn-link" 
-																				formaction="download/relate_v1.1.9_MacOSX_M1.tgz"
+																				formaction="download/relate_v1.2.0_MacOSX_M.tgz"
 																				data-on="click"
 																				data-event-category="Relate download (Mac_OSX)"
-																				data-event-action="click">Mac OSX (M1) - v1.1.9</button>     
+																				data-event-action="click">Mac OSX (M1) - v1.2.0</button>     
                   </div>
                 </form>
 
@@ -364,203 +364,287 @@ devtools::install_github("leospeidel/relater")</code></pre>
             <h3 id="ChangeLog">Change-log</h3>
             <hr/>
 
+
+
             <div class="panel-group" id="accordion2">
-
-							<div class="panel panel-default">
-								<div class="panel-heading">
-									<h4 class="panel-title">
-										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse29">
-											v1.1.9
-										</a>
-									</h4>
-								</div>
-								<div id="collapse29" class="panel-collapse collapse">
-									<div class="panel-body">
-										Date: 14 June 2022 <br/>     
-										<ul>
-											<li>Fixed bug in TreeView where singletons were not plotted.</li>
-										</ul>
-									</div>
-								</div>
-							</div>
-
-
-							<div class="panel panel-default">
-								<div class="panel-heading">
-									<h4 class="panel-title">
-										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse28">
-											v1.1.8
-										</a>
-									</h4>
-								</div>
-								<div id="collapse28" class="panel-collapse collapse">
-									<div class="panel-body">
-										Date: 7 November 2021 <br/>     
-										<ul>
-											<li>Made ConvertToTreeSequence consistent with relate_lib version.</li>
-											<li>Bug fix in SummarizeMutationRates (assumed float instead of double, leading to Segfault).</li>
-										</ul>
-									</div>
-								</div>
-							</div>
-
-          		<div class="panel panel-default">
-								<div class="panel-heading">
-									<h4 class="panel-title">
-										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse27">
-											v1.1.7
-										</a>
-									</h4>
-								</div>
-								<div id="collapse27" class="panel-collapse collapse">
-									<div class="panel-body">
-										Date: 16 June 2021 <br/>     
-										<ul>
-										  <li>Updated initialisation of bl with ancients.</li>
-                      <li>Small bug fixes.</li>
-										</ul>
-									</div>
-								</div>
-							</div>
-
-			     		<div class="panel panel-default">
-								<div class="panel-heading">
-									<h4 class="panel-title">
-										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse26">
-											v1.1.6
-										</a>
-									</h4>
-								</div>
-								<div id="collapse26" class="panel-collapse collapse">
-									<div class="panel-body">
-										Date: 17 Feb 2021 <br/>     
-										<ul>
-											<li>Added option to exclude transitions in branch length estimation (useful for ancient genomes).</li>
-										</ul>
-									</div>
-								</div>
-							</div>
-
-			     		<div class="panel panel-default">
-								<div class="panel-heading">
-									<h4 class="panel-title">
-										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse25">
-											v1.1.5
-										</a>
-									</h4>
-								</div>
-								<div id="collapse25" class="panel-collapse collapse">
-									<div class="panel-body">
-										Date: 14 Dec 2020 <br/>     
-										<ul>
-											<li>Modified tree builder when ancients samples are specified (see Colate paper for details).</li>
-										</ul>
-									</div>
-								</div>
-							</div>
-
-							<div class="panel panel-default">
-								<div class="panel-heading">
-									<h4 class="panel-title">
-										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse24">
-											v1.1.4
-										</a>
-									</h4>
-								</div>
-								<div id="collapse24" class="panel-collapse collapse">
-									<div class="panel-body">
-										Date: 30 Oct 2020 <br/>     
-										<ul>
-											<li>Fixed a in ConvertFromVcf that caused empty haps/sample files to be outputted</li>
-											<li>Added a function in RelateExtract to get branch frequencies for every SNP.</li>
-										</ul>
-									</div>
-								</div>
-							</div>
-
-							<div class="panel panel-default">
-								<div class="panel-heading">
-									<h4 class="panel-title">
-										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse23">
-											v1.1.3
-										</a>
-									</h4>
-								</div>
-								<div id="collapse23" class="panel-collapse collapse">
-									<div class="panel-body">
-										Date: 7 Oct 2020 <br/>     
-										<ul>
-											<li>Fixed a major bug (v1.1.* onwards) in EstimatePopulationSize.sh when setting seed (not affected when seed is not set).</li>
-											<li>Added RelateSlurm.sh and RelateLSF.sh</li>
-											<li>Added a function to retrospectively map a mutation to trees in RelateExtract</li>
-										</ul>
-									</div>
-								</div>
-							</div>
-
-							<div class="panel panel-default">
-								<div class="panel-heading">
-									<h4 class="panel-title">
-										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse22">
-											v1.1.2
-										</a>
-									</h4>
-								</div>
-								<div id="collapse22" class="panel-collapse collapse">
-									<div class="panel-body">
-										Date: 12 June 2020 <br/>     
-										<ul>
-											<li>Fixed bug in PrepareInputFiles, when downsampling individuals (introduced in v1.1.0).</li>
-											<li>Changed parameters for branch lengths estimation for aDNA, to improve mixing properties of MCMC.</li>
-											<li>Changed function for anc to newick conversion, to allow multiple trees to be extracted.</li>
-										</ul>
-									</div>
-								</div>
-							</div>
-
-							<div class="panel panel-default">
-								<div class="panel-heading">
-									<h4 class="panel-title">
-										<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse21">
-											v1.1.1
-										</a>
-									</h4>
-								</div>
-								<div id="collapse21" class="panel-collapse collapse">
-									<div class="panel-body">
-										Date: 25 May 2020 <br/>     
-										<ul>
-											<li>Changed filename used for CLUES and PALM from *.palm to *.timeb.</li>
-											<li>Fixed bug in EstimatePopulationSize.sh</li>
-										</ul>
-									</div>
-								</div>
-							</div>
-
 
               <div class="panel panel-default">
                 <div class="panel-heading">
                   <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse20">
-                      v1.1.0
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse30">
+                      v1.2.0
                     </a>
                   </h4>
                 </div>
-                <div id="collapse20" class="panel-collapse collapse">
+                <div id="collapse30" class="panel-collapse collapse">
                   <div class="panel-body">
-                    Date: 20 May 2020 <br/>     
-										<ul>
-											<li>Allowing for non-contemporary samples, e.g., ancient DNA: Simply add the --sample_ages option.</li>
-											<li>Allowing for haploid organisms: set the ID_2 column in the sample file to NA and Relate will work for haploid organisms.</li>
-											<li>Improved coalescence rate estimation: The algorithm has been improved and behaviour has changed slightly. The output now always contains all trees, and the threshold parameter only affects iterations leading up to the last one. The threshold parameter now is a float in [0,1], specifying the proportion of trees to throw away (Default = 0.5).</li>
-											<li>Arbitrary strings as chromosome IDs: in scripts such as EstimatePopulationSize.sh, use the --chr option to specify a file containing chromosome name.</li>
-											<li>More flexible epochs for coalescence rate estimation: use the option --bins to specify epoch boundaries in the format 10^seq(x,y,stepsize).</li>
-										</ul>
+                    Date: 12 August 2023 <br/>     
+                    <ul>
+                      <li>Increased consistency between adjacent trees.</li>
+                      <li>Added option to force build trees every x bases.</li>
+                      <li>RelateSelection --mode Frequency works now with ancient genomes.</li>
+                    </ul>
                   </div>
                 </div>
               </div>
 
             </div>
+
+
+            <div class="panel-group" id="accordion_version">
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion_version" href="#collapse29">
+                      v1.1.*
+                    </a>
+
+                    <h5 id="Binaries">Pre-compiled binaries (last updated: 14/06/2022)</h5> 
+
+
+                    <form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
+                      <div class="form-group">
+                        <div class="checkbox">
+                          <label>
+                            <input type="checkbox" id="terms" oninvalid="this.setCustomValidity('Required')" onchange="this.setCustomValidity('')" required>
+                            I agree with the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf">terms and conditions</a>
+                          </label>
+                          <div class="help-block with-errors"></div>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <button type="submit" 
+                          class="btn btn-link" 
+                          formaction="download/relate_v1.1.9_x86_64_dynamic.tgz"   
+                          data-on="click"
+                          data-event-category="Relate download (x86_64, dynamic)"
+                          data-event-action="click">Linux (x86_64, dynamic) - v1.1.9</button><br/>
+                        <button type="submit" 
+                          class="btn btn-link" 
+                          formaction="download/relate_v1.1.9_x86_64_static.tgz"
+                          data-on="click"
+                          data-event-category="Relate download (x86_64, static)"
+                          data-event-action="click">Linux (x86_64, static) - v1.1.9</button><br/>
+                        <button type="submit" 
+                          class="btn btn-link" 
+                          formaction="download/relate_v1.1.9_MacOSX_Intel.tgz"
+                          data-on="click"
+                          data-event-category="Relate download (Mac_OSX)"
+                          data-event-action="click">Mac OSX (Intel) - v1.1.9</button><br/>     
+                        <button type="submit" 
+                          class="btn btn-link" 
+                          formaction="download/relate_v1.1.9_MacOSX_M1.tgz"
+                          data-on="click"
+                          data-event-category="Relate download (Mac_OSX)"
+                          data-event-action="click">Mac OSX (M1) - v1.1.9</button>     
+                      </div>
+                   </form>
+
+                    <div class="panel-group" id="accordion2">
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse29">
+                              v1.1.9
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse29" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 14 June 2022 <br/>     
+                            <ul>
+                              <li>Fixed bug in TreeView where singletons were not plotted.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse28">
+                              v1.1.8
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse28" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 7 November 2021 <br/>     
+                            <ul>
+                              <li>Made ConvertToTreeSequence consistent with relate_lib version.</li>
+                              <li>Bug fix in SummarizeMutationRates (assumed float instead of double, leading to Segfault).</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse27">
+                              v1.1.7
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse27" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 16 June 2021 <br/>     
+                            <ul>
+                              <li>Updated initialisation of bl with ancients.</li>
+                              <li>Small bug fixes.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse26">
+                              v1.1.6
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse26" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 17 Feb 2021 <br/>     
+                            <ul>
+                              <li>Added option to exclude transitions in branch length estimation (useful for ancient genomes).</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse25">
+                              v1.1.5
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse25" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 14 Dec 2020 <br/>     
+                            <ul>
+                              <li>Modified tree builder when ancients samples are specified (see Colate paper for details).</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse24">
+                              v1.1.4
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse24" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 30 Oct 2020 <br/>     
+                            <ul>
+                              <li>Fixed a in ConvertFromVcf that caused empty haps/sample files to be outputted</li>
+                              <li>Added a function in RelateExtract to get branch frequencies for every SNP.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse23">
+                              v1.1.3
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse23" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 7 Oct 2020 <br/>     
+                            <ul>
+                              <li>Fixed a major bug (v1.1.* onwards) in EstimatePopulationSize.sh when setting seed (not affected when seed is not set).</li>
+                              <li>Added RelateSlurm.sh and RelateLSF.sh</li>
+                              <li>Added a function to retrospectively map a mutation to trees in RelateExtract</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse22">
+                              v1.1.2
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse22" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 12 June 2020 <br/>     
+                            <ul>
+                              <li>Fixed bug in PrepareInputFiles, when downsampling individuals (introduced in v1.1.0).</li>
+                              <li>Changed parameters for branch lengths estimation for aDNA, to improve mixing properties of MCMC.</li>
+                              <li>Changed function for anc to newick conversion, to allow multiple trees to be extracted.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse21">
+                              v1.1.1
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse21" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 25 May 2020 <br/>     
+                            <ul>
+                              <li>Changed filename used for CLUES and PALM from *.palm to *.timeb.</li>
+                              <li>Fixed bug in EstimatePopulationSize.sh</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+
+                      <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <h4 class="panel-title">
+                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapse20">
+                              v1.1.0
+                            </a>
+                          </h4>
+                        </div>
+                        <div id="collapse20" class="panel-collapse collapse">
+                          <div class="panel-body">
+                            Date: 20 May 2020 <br/>     
+                            <ul>
+                              <li>Allowing for non-contemporary samples, e.g., ancient DNA: Simply add the --sample_ages option.</li>
+                              <li>Allowing for haploid organisms: set the ID_2 column in the sample file to NA and Relate will work for haploid organisms.</li>
+                              <li>Improved coalescence rate estimation: The algorithm has been improved and behaviour has changed slightly. The output now always contains all trees, and the threshold parameter only affects iterations leading up to the last one. The threshold parameter now is a float in [0,1], specifying the proportion of trees to throw away (Default = 0.5).</li>
+                              <li>Arbitrary strings as chromosome IDs: in scripts such as EstimatePopulationSize.sh, use the --chr option to specify a file containing chromosome name.</li>
+                              <li>More flexible epochs for coalescence rate estimation: use the option --bins to specify epoch boundaries in the format 10^seq(x,y,stepsize).</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
 
             <div class="panel-group" id="accordion_version">
 

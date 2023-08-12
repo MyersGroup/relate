@@ -54,12 +54,36 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
   if(options.count("effectiveN")) Ne = (int) options["effectiveN"].as<float>();
   double mutation_rate = options["mutation_rate"].as<float>();
   Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".dist").c_str(), (file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str(), Ne, mutation_rate); //struct data is defined in data.hpp 
+  data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
   const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
+
+  //delete
+  if(1){
+    struct stat info;
+    //check if directory exists
+    if( stat( (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/").c_str(), &info ) == 0 ){
+      //paint/ exists so delete it.  
+      char painting_filename[1024];
+      for(int w = 0; w < num_windows; w++){
+        snprintf(painting_filename, sizeof(char) * 1024, "%s_%i.bin", data.name.c_str(), w);
+        std::remove(painting_filename);
+      }
+    }
+    std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str());
+    std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str());
+    std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str());
+    std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".state").c_str());
+  }
+
+
+  //TODO: I want to calculate the average coal_rate and use the inverse as my const Ne.
+
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Inferring branch lengths of AncesTrees in sections " << first_section << "-" << last_section << "..." << std::endl;
  
   bool is_coal = false;
+  double avg_Ne = 0.0;
   std::vector<double> epoch, coalescent_rate;
   if(options.count("coal")){
 
@@ -73,7 +97,7 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
     std::istringstream is_epoch(line);
     while(is_epoch){
       is_epoch >> tmp;
-      epoch.push_back(tmp/data.Ne);
+      epoch.push_back(tmp);
     }
     getline(is, line);
     is.close();
@@ -82,14 +106,13 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
     is_pop_size >> tmp >> tmp;
     while(is_pop_size){
       is_pop_size >> tmp;
-      //tmp = 1.0/data.Ne; 
       if(tmp == 0.0 && coalescent_rate.size() > 0){
         if(*std::prev(coalescent_rate.end(),1) > 0.0){
           coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
         }
         //coalescent_rate.push_back(1);
       }else{
-        coalescent_rate.push_back(tmp * data.Ne);
+        coalescent_rate.push_back(tmp);
       }
     }
 
@@ -101,10 +124,30 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
           coalescent_rate[i-1] = 1.0;
         }
       } 
-    } 
+    }
+
+    avg_Ne = 0.0;
+    double denom = 0.0;
+    for(int i = 0; i < coalescent_rate.size()-2; i++){
+      //avg_Ne += coalescent_rate[i] * (epoch[i+1] - epoch[i]);
+      //denom  += (epoch[i+1] - epoch[i]);
+      avg_Ne += coalescent_rate[i]; //not weighting by epoch on purpose to downweight ancient epochs
+      denom  += 1.0;
+    }
+    //avg_Ne /= (epoch[coalescent_rate.size()-2] - epoch[0]);
+    avg_Ne /= denom;
+    data.Ne = 1.0/avg_Ne;
+
+    for(int i = 0; i < coalescent_rate.size(); i++){
+      coalescent_rate[i] *= data.Ne;
+      epoch[i] /= data.Ne; 
+    }
 
   }
 
+  assert(data.Ne > 0);
+
+  //std::cerr << avg_Ne << " " << data.Ne << std::endl;
 
   //////////////////////////////////
   //Parse Data
@@ -143,8 +186,8 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
       anc.ReadBin(filename);
 
       //Infer branch lengths
-      InferBranchLengths bl(data);
-      //EstimateBranchLengths bl2(data);
+      //InferBranchLengths bl(data);
+      EstimateBranchLengthsWithSampleAge bl(data);
       //EstimateBranchLengthsWithSampleAge bl2(data, sample_ages);
 
       int num_sec = (int) anc.seq.size()/100.0 + 1;

@@ -6,7 +6,6 @@ ${PATH_TO_RELATE}/bin/Relate --mode All \
 	--haps ./data/example.haps.gz \
 	--sample ./data/example.sample.gz \
 	--map ./data/genetic_map_GRCh37_chr1.txt \
-	--sample_ages ./data/sample_ages.txt \
 	-N 30000 \
 	-m 1.25e-8 \
 	-o example \
@@ -15,11 +14,24 @@ ${PATH_TO_RELATE}/bin/Relate --mode All \
 ${PATH_TO_RELATE}/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
 	-i example \
 	-o example_bypop \
-	--noanc 1 \
 	-m 1.25e-8 \
 	--poplabels ./data/example.poplabels \
 	--years_per_gen 28 \
+  --bins 3,7,0.2 \
+  --threads 2 \
 	--seed 1
+
+
+${PATH_TO_RELATE}/scripts/EstimatePopulationSize/EstimatePopulationSize.sh \
+  -i example \
+  -o example_bypop_mrate \
+  -m 1.25e-8 \
+  --poplabels ./data/example.poplabels \
+  --norm_mutrate 1 \
+  --years_per_gen 28 \
+  --bins 3,7,0.2 \
+  --threads 2 \
+  --seed 1
 
 ${PATH_TO_RELATE}/scripts/SampleBranchLengths/ReEstimateBranchLengths.sh \
 	-i example \

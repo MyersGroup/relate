@@ -3,6 +3,7 @@
 
 #include "anc.hpp"
 #include "tree_builder.hpp"
+#include "branch_length_estimator.hpp"
 #include "anc_builder.hpp"
 
 float DistanceUsingPearsonCorrelation(Tree& tr1, Tree& tr2);

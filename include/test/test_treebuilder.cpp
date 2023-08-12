@@ -4,7 +4,7 @@
 #include "data.hpp"
 #include "anc.hpp"
 #include "tree_builder.hpp"
-
+#include "branch_length_estimator.hpp"
 
 TEST_CASE( "Testing tree builder" ){
 
@@ -204,7 +204,7 @@ TEST_CASE( "Testing inference of branch lengths" ){
   std::vector<double> sample_ages(N,0);
   tb.QuickBuild(d,tree, sample_ages);
 
-  InferBranchLengths bl(data);
+  EstimateBranchLengthsWithSampleAge bl(data);
   bl.MCMC(data,tree); //tree is an empty tree, so branch lengths should be given by prior
 
   //Sort branches
@@ -212,31 +212,6 @@ TEST_CASE( "Testing inference of branch lengths" ){
   GetCoordinates(tree.nodes[2*N-2], coordinates); 
   std::sort(coordinates.begin(), coordinates.end());
 
-  for(int n = N; n < 2*N-1; n++){
-    int num_lineages = 2*N - n;
-    //std::cerr << std::fabs(coordinates[n] - coordinates[n-1]) << " " <<  2.0/(num_lineages * (num_lineages - 1.0)) * data.Ne  << std::endl;
-    //REQUIRE( std::fabs(coordinates[n] - coordinates[n-1] - 2.0/(num_lineages * (num_lineages - 1.0)) * data.Ne) < 1e-3 );
-  }
-  //std::cerr << coordinates[2*N-2] << std::endl;
-
-  //next test the order of branch lengths when there is information
-
-  tree.nodes[3].num_events = 1;
-  tree.nodes[4].num_events = 2;
-  tree.nodes[6].num_events = 3;
-
-  bl.EM(data, tree,true);
-
-  std::vector<int> true_order = {0,1,2,3,4,6,5,7,8}, inferred_order(2*N-1);
-  GetCoordinates(tree.nodes[2*N-2], coordinates); 
-
-  std::size_t n(0);
-  std::generate(std::begin(inferred_order) + N, std::end(inferred_order), [&]{ return n++; });
-  std::sort(std::begin(inferred_order) + N, std::end(inferred_order), [&](int i1, int i2) { return coordinates[i1 + N] < coordinates[i2 + N]; } );
-
-  for(int n = N; n < N; n++){
-    REQUIRE( true_order[n] == inferred_order[n] );
-  }
 
 }
 
@@ -258,7 +233,7 @@ TEST_CASE( "Testing MCMC of branch lengths" ){
 
   Tree tree;
   MinMatch tb(data);
-  InferBranchLengths bl(data);
+  EstimateBranchLengthsWithSampleAge bl(data);
 
   CollapsedMatrix<float> d;
   d.resize(N,N);
@@ -296,7 +271,6 @@ TEST_CASE( "Testing MCMC of branch lengths" ){
   // build tree
   std::vector<double> sample_ages(N,0);
   tb.QuickBuild(d,tree,sample_ages);
-  bl.EM(data,tree,true); //tree is an empty tree, so branch lengths should be given by prior
   bl.MCMC(data,tree);
 
 
@@ -323,7 +297,7 @@ TEST_CASE( "Testing MCMC of branch lengths (2)" ){
 
   Tree tree;
   MinMatch tb(data);
-  InferBranchLengths bl(data);
+  EstimateBranchLengthsWithSampleAge bl(data);
 
   CollapsedMatrix<float> d;
   d.resize(N,N);

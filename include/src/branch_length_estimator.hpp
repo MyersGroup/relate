@@ -1,3 +1,6 @@
+#ifndef BRANCH_LENGTH_ESTIMATOR_HPP
+#define BRANCH_LENGTH_ESTIMATOR_HPP
+
 #include "fast_log.hpp"
 #include "collapsed_matrix.hpp"
 #include "data.hpp"
@@ -50,6 +53,7 @@ class EstimateBranchLengthsWithSampleAge{
     std::vector<int> num_lineages, num_lineages_new;
     std::vector<int> sorted_indices, sorted_indices_new; //node indices in order of coalescent events
     std::vector<int> order, order_new; //order of coalescent events
+    std::vector<std::vector<int>> remaining, remaining_new;
     std::vector<int>::iterator it_sorted_indices, it_order;
 
     //update avg
@@ -67,29 +71,31 @@ class EstimateBranchLengthsWithSampleAge{
 
     void UpdateAvg(Tree& tree);
 
-    //can delete
-    void ChangeTimeWhilekAncestors(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
-    void ChangeTimeWhilekAncestorsVP(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif);
-
     //calculate coalescent prior TODO: optimize these functions
     double CalculatePrior(std::vector<double>& p_coordinates, std::vector<int>& p_sorted_indices, std::vector<int>& p_num_lineages);
     double CalculatePrior(int k_start, int k_end, std::vector<double>& p_coordinates, std::vector<int>& p_sorted_indices, std::vector<int>& p_num_lineages);
     double CalculatePrior(const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::vector<double>& p_coordinates, std::vector<int>& p_sorted_indices, std::vector<int>& p_num_lineages);
     double CalculatePrior(int k_start, int k_end, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::vector<double>& p_coordinates, std::vector<int>& p_sorted_indices, std::vector<int>& p_num_lineages);
+    double CalculatePrior(const Tree& tree, const std::vector<double>& epoch, const std::vector<std::vector<std::vector<float>>>& coal_rate_pair, std::vector<std::vector<int>>& remaining, std::vector<double>& p_coordinates, std::vector<int>& p_sorted_indices, std::vector<int>& p_num_lineages);
+    double CalculatePrior(int k_start, int k_end, const Tree& tree, const std::vector<double>& epoch, const std::vector<std::vector<std::vector<float>>>& coal_rate_pair, std::vector<std::vector<int>>& remaining, std::vector<double>& p_coordinates, std::vector<int>& p_sorted_indices, std::vector<int>& p_num_lineages);
+
 
     //constant Ne
-    void ChangeTimeWhilekAncestors_new(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
     void UpdateOneEvent(Tree& tree, int node_k, std::gamma_distribution<double>& dist_gamma, std::uniform_real_distribution<double>& dist_unif);
 
     //variable Ne
-    void ChangeTimeWhilekAncestorsVP_new(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif);
     void UpdateOneEventVP(Tree& tree, int node_k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::gamma_distribution<double>& dist_gamma, std::uniform_real_distribution<double>& dist_unif);
+    void UpdateOneEventVP(Tree& tree, int node_k, const std::vector<double>& epoch, const std::vector<std::vector<std::vector<float>>>& coal_rate_pair, std::vector<std::vector<int>>& remaining, std::gamma_distribution<double>& dist_gamma, std::uniform_real_distribution<double>& dist_unif);
+
 
     void SwitchOrder(Tree& tree, int node_k, std::uniform_real_distribution<double>& dist_unif);
+    void SwitchTopo(Tree& tree, std::vector<Leaves>& desc, const std::vector<double>& epoch, std::vector<std::vector<std::vector<float>>>& coal_rate_pair, std::vector<std::vector<int>>& remaining, int node_k, std::uniform_real_distribution<double>& dist_unif);
+
     void RandomSwitchOrder(Tree& tree, int node_k, std::uniform_real_distribution<double>& dist_unif);
 
   public:
 
+    EstimateBranchLengthsWithSampleAge(const Data& data);
     EstimateBranchLengthsWithSampleAge(const Data& data, const std::vector<double>& sample_age_input);
 
     //this is a post-processing step
@@ -99,7 +105,11 @@ class EstimateBranchLengthsWithSampleAge{
     //variable Ne MCMC
     void MCMCVariablePopulationSize(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
     void MCMCVariablePopulationSizeForRelate(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
-		void MCMCVariablePopulationSizeSample(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, int num_proposals, const bool init, const int seed = std::time(0) + getpid());
+    void MCMCCoalRatesForRelate(const Data& data, Tree& tree, const std::vector<int>& membership, const std::vector<double>& epoch, std::vector<std::vector<std::vector<double>>>& coal_rate, const int seed = std::time(0) + getpid());
+
+    void MCMCCoalRatesSample(const Data& data, Tree& tree, const std::vector<int>& membership, const std::vector<double>& epoch, std::vector<std::vector<std::vector<double>>>& coal_rate, int num_proposals, const bool init, const int seed = std::time(0) + getpid());
+    void MCMCVariablePopulationSizeSample(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, int num_proposals, const bool init, const int seed = std::time(0) + getpid());
 
 };
 
+#endif //BRANCH_LENGTH_ESTIMATOR_HPP

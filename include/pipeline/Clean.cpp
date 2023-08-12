@@ -97,6 +97,7 @@ int Clean(cxxopts::Options& options){
     std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str());
     std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str());
     std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".state").c_str());
+		std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".dist").c_str());
     std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str());
     std::remove((file_out + "parameters_c" + std::to_string(chunk_index) + ".bin").c_str());
 

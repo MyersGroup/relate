@@ -3,6 +3,52 @@
 #include <string>
 
 void
+GetMut(cxxopts::Options& options){
+
+	//////////////////////////////////
+	//Program options
+
+	bool help = false;
+	if( !options.count("anc") || !options.count("mut") || !options.count("output") ){
+		std::cout << "Not enough arguments supplied." << std::endl;
+		std::cout << "Needed: anc, mut, output." << std::endl;
+		help = true;
+	}
+	if(options.count("help") || help){
+		std::cout << options.help({""}) << std::endl;
+		std::cout << "Generate additional annotation for SNPs." << std::endl;
+		exit(0);
+	}  
+
+	AncesTree anc; //anc.seq is a list of MarginalTrees (type CorrTrees)
+	Mutations mut; //mut.info is a vector of SNPInfo (type Muts)
+
+	anc.Read(options["anc"].as<std::string>());
+	mut.Read(options["mut"].as<std::string>());
+
+	mut.GetAge(anc);
+
+	//anc for dumping these files:
+	mut.Dump(options["output"].as<std::string>() + ".mut");
+
+
+	/////////////////////////////////////////////
+	//Resource Usage
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+}
+
+void
 GenerateSNPAnnotationsUsingTree(cxxopts::Options& options){
 
 	//////////////////////////////////
@@ -143,7 +189,6 @@ GenerateSNPAnnotationsUsingTree(cxxopts::Options& options){
 	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
 }
-
 
 void
 PropagateMutations(cxxopts::Options& options){
@@ -334,7 +379,6 @@ PropagateMutations(cxxopts::Options& options){
 
 }
 
-
 void
 PrintMutonBranches(cxxopts::Options& options){
 
@@ -389,7 +433,7 @@ PrintMutonBranches(cxxopts::Options& options){
 	}
 
 	std::ofstream os(options["output"].as<std::string>() + ".allmuts");
-  os << "treeID branchID pos_start pos_end dist branch_length num_muts\n";
+	os << "treeID branchID pos_start pos_end dist branch_length num_muts\n";
 
 	int count_trees = 0;
 	int treeID, pos_start, pos_end, snp_begin, snp_end;
@@ -403,38 +447,38 @@ PrintMutonBranches(cxxopts::Options& options){
 		while((*it_mut).tree == treeID){
 			pos_end = (*it_mut).pos;
 			it_mut++;
-      if(it_mut == ancmut.mut_end()) break;
+			if(it_mut == ancmut.mut_end()) break;
 		}
-    pos_end = ((*it_mut).pos + pos_end)/2.0;
+		pos_end = ((*it_mut).pos + pos_end)/2.0;
 
-     
-			for(std::vector<Node>::iterator it_n = mtr.tree.nodes.begin(); it_n != mtr.tree.nodes.end(); it_n++){
 
-				int snp_begin = (*it_n).SNP_begin;
-				int snp_end   = (*it_n).SNP_end;
+		for(std::vector<Node>::iterator it_n = mtr.tree.nodes.begin(); it_n != mtr.tree.nodes.end(); it_n++){
 
-				assert(snp_end < data.dist.size());
-				dist          = 0.0;
-				for(int snp = snp_begin; snp < snp_end; snp++){
-					dist       += data.dist[snp];
-				}
+			int snp_begin = (*it_n).SNP_begin;
+			int snp_end   = (*it_n).SNP_end;
 
-				if(snp_begin > 0){
-					snp_begin--;
-					pos_start   = (ancmut.mut.info[snp_begin].pos + ancmut.mut.info[snp_begin+1].pos)/2.0;
-					dist       += 0.5 * data.dist[snp_begin];
-				}else{
-					pos_start   = ancmut.mut.info[snp_begin].pos;
-				}
-				if(snp_end < data.L-1){
-					pos_end     = (ancmut.mut.info[snp_end].pos + ancmut.mut.info[snp_end+1].pos)/2.0;
-					dist       += 0.5 * data.dist[snp_end];
-				}else{
-					pos_end     = ancmut.mut.info[snp_end].pos;
-				}
-
-				os << treeID << " " << (*it_n).label << " " << pos_start << " " << pos_end << " " << dist << " " << (*it_n).branch_length << " " << (int) (*it_n).num_events << "\n"; 
+			assert(snp_end < data.dist.size());
+			dist          = 0.0;
+			for(int snp = snp_begin; snp < snp_end; snp++){
+				dist       += data.dist[snp];
 			}
+
+			if(snp_begin > 0){
+				snp_begin--;
+				pos_start   = (ancmut.mut.info[snp_begin].pos + ancmut.mut.info[snp_begin+1].pos)/2.0;
+				dist       += 0.5 * data.dist[snp_begin];
+			}else{
+				pos_start   = ancmut.mut.info[snp_begin].pos;
+			}
+			if(snp_end < data.L-1){
+				pos_end     = (ancmut.mut.info[snp_end].pos + ancmut.mut.info[snp_end+1].pos)/2.0;
+				dist       += 0.5 * data.dist[snp_end];
+			}else{
+				pos_end     = ancmut.mut.info[snp_end].pos;
+			}
+
+			os << treeID << " " << (*it_n).label << " " << pos_start << " " << pos_end << " " << dist << " " << (*it_n).branch_length << " " << (int) (*it_n).num_events << "\n"; 
+		}
 
 
 		num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
@@ -464,4 +508,160 @@ PrintMutonBranches(cxxopts::Options& options){
 
 }
 
+void
+CheckBranchPersistence(cxxopts::Options& options){
+
+	//////////////////////////////////
+	//Program options
+
+	bool help = false;
+	if(!options.count("anc") || !options.count("mut") || !options.count("output")){
+		std::cout << "Not enough arguments supplied." << std::endl;
+		std::cout << "Needed: anc, mut, output." << std::endl;
+		help = true;
+	}
+	if(options.count("help") || help){
+		std::cout << options.help({""}) << std::endl;
+		std::cout << "Example code for converting from tree sequence file format." << std::endl;
+		exit(0);
+	}  
+
+	std::cerr << "---------------------------------------------------------" << std::endl;
+	std::cerr << "Output num mutations mapping to each branch " << options["anc"].as<std::string>() << " and " << options["mut"].as<std::string>() << "..." << std::endl;
+
+	AncMutIterators ancmut(options["anc"].as<std::string>(), options["mut"].as<std::string>());
+	int N = ancmut.NumTips();
+	int num_trees = ancmut.NumTrees();
+	int L = ancmut.NumSnps();
+	MarginalTree mtr, mtr_next;
+	Muts::iterator it_mut;
+	float num_bases_tree_persists = 0.0;
+
+	Data data(N,L);
+	data.dist.resize(L);
+	std::string line;
+	if(options.count("dist")){
+		igzstream is_dist(options["dist"].as<std::string>());
+		if(is_dist.fail()){
+			std::cerr << "Error while opening " << options["dist"].as<std::string>() << std::endl;
+			exit(1);
+		}
+		getline(is_dist, line); 
+		int dtmp, snp = 0;
+		while(std::getline(is_dist, line)){
+			sscanf(line.c_str(), "%d %d", &dtmp, &data.dist[snp]);
+			snp++;
+		}
+		is_dist.close();
+	}else{
+		std::vector<int>::iterator it_pos = data.dist.begin();
+		for(std::vector<SNPInfo>::iterator it_mut = ancmut.mut.info.begin(); it_mut != ancmut.mut.info.end(); it_mut++){
+			*it_pos = (*it_mut).dist;
+			it_pos++;
+		}
+	}
+
+	std::ofstream os(options["output"].as<std::string>() + ".txt");
+	os << "treeID branchID snp_start snp_end num_muts persists\n";
+
+	int count_trees = 0;
+	int treeID, snp_begin, snp_end;
+	float dist;
+	num_bases_tree_persists = ancmut.NextTree(mtr, it_mut);
+	treeID = (*it_mut).tree;
+	while(num_bases_tree_persists >= 0.0){
+
+		treeID = (*it_mut).tree;
+		snp_begin = mtr.pos;
+		num_bases_tree_persists = ancmut.NextTree(mtr_next, it_mut);
+		if(num_bases_tree_persists < 0) break;
+		snp_end = mtr_next.pos;
+
+		for(std::vector<Node>::iterator it_n = mtr.tree.nodes.begin(); it_n != mtr.tree.nodes.end(); it_n++){
+			os << treeID << " " << (*it_n).label << " " << (*it_n).SNP_begin << " " << (*it_n).SNP_end << " " << (int) (*it_n).num_events << " ";
+			if((*it_n).SNP_begin < snp_begin || (*it_n).SNP_end > snp_end){
+				os << "1\n";
+			}else{
+				os << "0\n";
+			}
+		}
+
+		mtr = mtr_next;
+	}
+	os.close();
+
+
+	/////////////////////////////////////////////
+	//Resource Usage
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+}
+
+void
+AncientToModern(cxxopts::Options& options){
+
+	//////////////////////////////////
+	//Program options
+
+	bool help = false;
+	if(!options.count("anc") || !options.count("mut") || !options.count("output")){
+		std::cout << "Not enough arguments supplied." << std::endl;
+		std::cout << "Needed: anc, mut, output." << std::endl;
+		help = true;
+	}
+	if(options.count("help") || help){
+		std::cout << options.help({""}) << std::endl;
+		std::cout << "Example code for converting from tree sequence file format." << std::endl;
+		exit(0);
+	}  
+
+
+
+	AncesTree anc; //anc.seq is a list of MarginalTrees (type CorrTrees)
+	Mutations mut; //mut.info is a vector of SNPInfo (type Muts)
+
+	anc.Read(options["anc"].as<std::string>());
+	mut.Read(options["mut"].as<std::string>());
+
+
+	CorrTrees::iterator it_seq;
+	Muts::iterator it_mut; //iterator for mut file
+	for(it_seq = anc.seq.begin(); it_seq != anc.seq.end(); it_seq++){
+		for(int i = 0; i < anc.N; i++){
+			(*it_seq).tree.nodes[i].branch_length += anc.sample_ages[i];
+		}
+	}
+
+	anc.sample_ages.clear();
+
+	//anc for dumping these files:
+	anc.Dump(options["output"].as<std::string>() + ".anc");
+	mut.Dump(options["output"].as<std::string>() + ".mut");
+
+
+	/////////////////////////////////////////////
+	//Resource Usage
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+#ifdef __APPLE__
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+#else
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+#endif
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+
+}
 

@@ -32,6 +32,7 @@ int main(int argc, char* argv[]){
 		("anc_genome", "Fasta file containing ancestral genome.", cxxopts::value<std::string>())
     ("threads", "Optional: Number of threads used (only used to decide chunk size in DivideAncMut)", cxxopts::value<int>())
 		("transversion", "Only use transversion for bl estimation.")
+		("seed", "Seed for rng.", cxxopts::value<int>())
 		("i,input", "Filename of input (excl file extension).", cxxopts::value<std::string>())
     ("o,output", "Filename of output (excl file extension).", cxxopts::value<std::string>());
 
@@ -101,12 +102,24 @@ int main(int argc, char* argv[]){
 
 		PrintMutonBranches(options);
 
-	}else{
+  }else if(!mode.compare("GetMut")){
+
+    GetMut(options);
+
+  }else if(!mode.compare("CheckBranchPersistence")){
+
+    CheckBranchPersistence(options);
+
+  }else if(!mode.compare("AncientToModern")){
+
+    AncientToModern(options);
+
+  }else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "AncToNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb, MapMutations, GenerateSNPAnnotationsUsingTree, GetAllBranchesOfMut, CountMutonBranches." << std::endl;
+    std::cout << "AncToNewick, SubTreesForSubpopulation, RemoveTreesWithFewMutations, ExtractDistFromMut, DivideAncMut, CombineAncMut, AncMutForSubregion, ConvertNewickToTimeb, MapMutations, GenerateSNPAnnotationsUsingTree, GetAllBranchesOfMut, CountMutonBranches, AncientToModern, PostProcess." << std::endl;
   
   }
 

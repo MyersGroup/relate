@@ -177,7 +177,7 @@ MapMutation(cxxopts::Options& options){
 	num_bases_tree_persists = ancmut.FirstSNP(mtr, it_mut);
 	mtr_prev = mtr;
 	mtr_prev.tree.GetCoordinates(coordinates);	
-	int snp = 0, num_not_mapping = 0, num_flipped = 0, snp_mut = 0, count_tree = 1;
+	int snp = 0, num_not_mapping = 0, num_flipped = 0, snp_mut = 0, count_tree = 0;
 	while(snp < data.L){
 
 		mhaps.ReadSNP(sequence, bp);
@@ -214,7 +214,7 @@ MapMutation(cxxopts::Options& options){
 
 			if(sequences_carrying_mutation.num_leaves == data.N){
 
-				mut.info[snp_mut].tree      = count_tree-1;
+				mut.info[snp_mut].tree      = count_tree;
 				mut.info[snp_mut].branch.resize(1);
 				mut.info[snp_mut].branch[0] = root;
 				mut.info[snp_mut].age_begin = coordinates[root];
@@ -224,7 +224,7 @@ MapMutation(cxxopts::Options& options){
 				if(ab.IsSNPMapping(mtr_prev.tree, sequences_carrying_mutation, snp) == 2){
 					num_not_mapping++;
 				}
-				mut.info[snp_mut].tree      = count_tree-1;
+				mut.info[snp_mut].tree      = count_tree;
 				mut.info[snp_mut].branch    = ab.mutations.info[snp].branch;
 				if(mut.info[snp_mut].branch.size() == 1){	
 					int branch = mut.info[snp_mut].branch[0];

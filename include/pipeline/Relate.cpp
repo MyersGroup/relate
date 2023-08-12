@@ -5,6 +5,7 @@
 #include "InferBranchLengths.cpp"
 #include "CombineSections.cpp"
 #include "Finalize.cpp"
+#include "PostProcess.cpp"
 #include "Clean.cpp"
 #include "OptimizeParameters.cpp"
 
@@ -34,8 +35,11 @@ int main(int argc, char* argv[]){
     ("last_section", "Optional. Index of last section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("coal", "Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN.", cxxopts::value<std::string>()) 
 		("fb", "Optional. Force build a new tree every x bases.", cxxopts::value<float>()) 
+    ("no_consistency", "Optional. Disable consistency option.") 
     //("anc_allele_unknown", "Specify if ancestral allele is unknown.") 
 		("transversion", "Only use transversion for bl estimation.")
+    ("postprocess", "(beta option) Postprocess topology.")
+    ("randomise", "(beta option) Randomise topology in post processing step.")
     ("i,input", "Filename of input.", cxxopts::value<std::string>())
 		("painting", "Optional. Copying and transition parameters in chromosome painting algorithm. Format: theta,rho. Default: 0.025,1.", cxxopts::value<std::string>())
     ("seed", "Optional. Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
@@ -269,6 +273,10 @@ int main(int argc, char* argv[]){
       Paint(options,c);
       BuildTopology(options, c, 0, num_sections-1);
       FindEquivalentBranches(options, c);
+      if(options.count("postprocess")){
+        PostProcess(options,c);
+        FindEquivalentBranches(options, c);
+      }
       GetBranchLengths(options, c, 0, num_sections-1);
       CombineSections(options, c);
 
@@ -287,12 +295,21 @@ int main(int argc, char* argv[]){
 
     OptimizeParameters(options);
 
+	}else if(!mode.compare("PostProcess")){
+
+    if(options.count("chunk_index")){
+      PostProcess(options, options["chunk_index"].as<int>());
+      FindEquivalentBranches(options, options["chunk_index"].as<int>());
+    }else{
+      PostProcess(options);   
+    }
+
 	}else{
 
     std::cout << "####### error #######" << std::endl;
     std::cout << "Invalid or missing mode." << std::endl;
     std::cout << "Options for --mode are:" << std::endl;
-    std::cout << "All, Clean, MakeChunks, Paint, BuildTopology, FindEquivalentBranches, InferBranchLengths, CombineSections, Finalize, OptimizeParameters." << std::endl;
+    std::cout << "All, Clean, MakeChunks, Paint, BuildTopology, FindEquivalentBranches, InferBranchLengths, CombineSections, Finalize, OptimizeParameters, PostProcess." << std::endl;
   
   }
 

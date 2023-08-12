@@ -421,17 +421,19 @@ Data::MakeChunks(const std::string& filename_haps, const std::string& filename_s
   FILE* fp_props = fopen((file_out + "/props.bin").c_str(), "wb"); //storing rsid and other info in this file
   assert(fp_props);
 
+  char dummy[1024];
   for(snp = 0; snp < L; snp++){
     fwrite(&snp, sizeof(int), 1, fp_props);
     fwrite(&bp_pos[snp], sizeof(int), 1, fp_props);
     fwrite(&dist[snp], sizeof(int), 1, fp_props);   
     fwrite(&rsid[snp][0], sizeof(char), 1024, fp_props);
-    fwrite(&ancestral[snp][0], sizeof(char), 1024, fp_props);
-    fwrite(&alternative[snp][0], sizeof(char), 1024, fp_props);
+    strcpy(dummy, ancestral[snp].c_str());
+    fwrite(&dummy[0], sizeof(char), 1024, fp_props);
+    strcpy(dummy, alternative[snp].c_str());
+    fwrite(&dummy[0], sizeof(char), 1024, fp_props);
   }
 
   fclose(fp_props);
-
 
   //parse map
   map m_map(filename_map.c_str());

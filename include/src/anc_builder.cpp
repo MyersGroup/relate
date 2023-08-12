@@ -206,12 +206,153 @@ DistanceMeasure::GetMatrix(const int snp){
 
 }
 
+//Code-up normal chomopainter
+void 
+DistanceMeasure::GetTopologyWithRepaintNormal(const int snp){
+
+  CollapsedMatrix<float> alpha_begin, beta_end;
+  float logscale_alpha, logscale_beta;
+  int boundarySNP_begin, boundarySNP_end;
+
+  FastPainting painter(*data);
+
+  char filename[1024];
+  snprintf(filename, sizeof(char) * 1024, "%s_%i.bin", (*data).name.c_str(), section);
+  FILE* pFile = fopen(filename, "rb");
+  assert(pFile != NULL);
+  for(int n = 0; n < N; n++){
+    fread(&section_startpos, sizeof(int), 1, pFile);
+    fread(&section_endpos, sizeof(int), 1, pFile);
+    alpha_begin.ReadFromFile(pFile, boundarySNP_begin, logscale_alpha);
+    beta_end.ReadFromFile(pFile, boundarySNP_end, logscale_beta);
+
+    assert(boundarySNP_begin <= section_startpos);
+    assert(boundarySNP_end >= section_endpos);
+    //Repaint into top and log
+    //painter.RePaintSectionNormal(*data, unique[n], times[n], log[n], alpha_begin, beta_end, boundarySNP_begin, boundarySNP_end, logscale_alpha, logscale_beta, n);
+    painter.RePaintSectionNormal(*data, top[n], log[n], alpha_begin, beta_end, boundarySNP_begin, boundarySNP_end, logscale_alpha, logscale_beta, n);
+  }
+
+  topology  = &top; 
+  logscales = &log;
+  
+  if(0){
+  for(int n = 0; n < N; n++){
+    it_unique[n] = unique[n].begin();
+    it_times[n]  = times[n].begin();
+  }
+  std::fill(snp_u.begin(), snp_u.end(), section_startpos);
+  }
+
+  //Reset v_snp_prev. I need to know which derivedSNP 'snp' is.
+  //Iterate backwards until I get to section_startpos. 
+  //I am always including one SNP prior to section_startpos, so the number of derived SNPs to section startpos gives me the previous derived SNP.
+  //This is because when accessing matrices, it is 0 based.
+  std::fill(v_snp_prev.begin(), v_snp_prev.end(), section_startpos);
+
+  assert(section_startpos <= snp);
+  assert(section_endpos >= snp);
+  section++;
+
+}
+
+void
+DistanceMeasure::GetMatrixNormal(const int snp){
+
+  if(snp > section_endpos){
+    GetTopologyWithRepaintNormal(snp); //load topology matrix 
+    //GetTopology(snp);
+  }
+
+  //create distance matrix
+  for(int n = 0; n < N; n++){
+    float min = std::numeric_limits<float>::infinity();
+
+    //std::cerr << snp << " " << v_snp_prev[n] << " " << (*topology)[n].size() << std::endl;
+
+    //no need to average
+    std::vector<float>::iterator it_matrix = matrix.rowbegin(n);
+  
+    if(0){
+    //find correct location in unique and times
+    while(snp_u[n] != snp - v_snp_prev[n]){
+      int count_sam = 0;
+      while(count_sam < N){
+        count_sam += *(it_times[n]);
+        it_times[n]++;
+        it_unique[n]++;
+      }
+      assert(count_sam == N);
+      snp_u[n]++;
+    }
+    }
+
+    float logscale_prev                    = (*logscales)[n][snp - v_snp_prev[n]];
+
+    if(1){
+      std::vector<float>::iterator it_top    = (*topology)[n].rowbegin(snp - v_snp_prev[n]);
+      //loop vectorizes
+      for(; it_matrix != matrix.rowend(n);){
+        *it_matrix = (fast_log(*it_top) + logscale_prev) * scale;
+        if(*it_matrix < min) min = *it_matrix;
+        it_matrix++;
+        it_top++;
+      }
+    }
+
+    if(0){
+    int tmp = 0;
+    it_matrix = matrix.rowbegin(n);
+    //it_top    = (*topology)[n].rowbegin(snp - v_snp_prev[n]);
+    for(; it_matrix != matrix.rowend(n);){
+      float matrix_v = (fast_log(*(it_unique[n])) + logscale_prev) * scale;
+      if(matrix_v < min) min = matrix_v;
+      std::cerr << *(it_times[n]) << std::endl;
+      for(int k = 0; k < *(it_times[n]); k++){
+        *it_matrix = matrix_v;
+        assert(!std::isnan(*it_matrix));
+        it_matrix++;
+        //it_top++;
+        tmp++;
+      }
+      it_times[n]++;
+      it_unique[n]++;
+      assert(tmp <= N);
+    }
+    snp_u[n]++;
+    }
+
+    //min -= 10;
+    it_matrix = matrix.rowbegin(n);
+    for(; it_matrix != matrix.rowend(n);){
+      *it_matrix -= min;
+      it_matrix++;
+    }
+
+    matrix[n][n] = 0.0;
+  }
+
+
+
+  /* 
+     std::cout << snp << std::endl; 
+     for(int i = 0; i < (*data).N; i++){
+     for(int j = 0; j < (*data).N; j++){
+     std::cout << matrix[i][j] << " " ;
+     }
+     std::cout << std::endl;
+     }
+     */
+
+}
+
+
 
 //////////////////////// AncesTreeBuilder //////////////////////
 
 //////////// Constructor
 
-AncesTreeBuilder::AncesTreeBuilder(Data& data){
+AncesTreeBuilder::AncesTreeBuilder(Data& data, int mode):mode(mode){
 
   N       = data.N;
   N_total = 2*N-1;
@@ -221,7 +362,7 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data){
   mutations.Init(data); 
 
   threshold_brancheq = 0.95;
-  thr = (int) (0.03 * N) + 1;
+  thr = (int) (0.03 * N);
 
   //sample_ages.resize(N);
   //std::fill(sample_ages.begin(), sample_ages.end(), 0.0);
@@ -229,7 +370,7 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data){
 }
 
 
-AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_ages){
+AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_ages, int mode):mode(mode){
 
   N       = data.N;
   N_total = 2*N-1;
@@ -239,7 +380,7 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_age
   mutations.Init(data); 
 
   threshold_brancheq = 0.95;
-  thr = (int) (0.03 * N) + 1;
+  thr = (int) (0.03 * N);
 
   sample_ages = i_sample_ages;
   if(sample_ages.size() != N){
@@ -256,10 +397,21 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_age
 void 
 AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, const int section_endpos, Data& data, AncesTree& anc, const int seed, const bool ancestral_state, const int fb){
 
+  bool normal = false;
+
   /////////////////////////////////////////////
   //Tree Building
   //input:  Data and distance matrix
   //output: AncesTree (tree sequence) 
+
+  std::vector<std::vector<int>> carriers(data.sequence.size());
+  for(int snp = section_startpos; snp < section_endpos; snp++){
+    for(int i = 0; i < data.N; i++){
+      if(data.sequence[snp][i] == '1'){
+        carriers[snp].push_back(i);
+      }
+    }
+  }
 
   rng.seed(seed);  
   std::uniform_real_distribution<double> dist_unif(0,1);
@@ -276,7 +428,11 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   //build tree topology for snp = section_startpos
   anc.seq.emplace_back();
   CorrTrees::iterator it_seq = anc.seq.begin();
-  d.GetMatrix(section_startpos); //calculate d
+  if(normal){
+    d.GetMatrixNormal(section_startpos);
+  }else{
+    d.GetMatrix(section_startpos); //calculate d
+  }
 
   if(!ancestral_state){ 
     //naive implementation for symmetrising matrix
@@ -292,13 +448,21 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   (*it_seq).pos = section_startpos; //record position for this tree along the genome
   UpdateBranchSNPbegin((*it_seq).tree, section_startpos);
 
-  sequences_carrying_mutation.num_leaves = 0; //this stores the number of nodes with a mutation at this snp.
-  for(int i = 0; i < N; i++){
-    if(data.sequence[section_startpos][i] == '1'){
-      sequences_carrying_mutation.member[i] = 1; //member stores a sequence of 0 and 1, where 1 at position i means that i carries a mutation.
-      sequences_carrying_mutation.num_leaves++;
-    }else{
-      sequences_carrying_mutation.member[i] = 0;
+  sequences_carrying_mutation.num_leaves = carriers[section_startpos].size();
+  std::fill(sequences_carrying_mutation.member.begin(), sequences_carrying_mutation.member.end(), 0);
+  for(std::vector<int>::iterator it_car = carriers[section_startpos].begin(); it_car != carriers[section_startpos].end(); it_car++){
+    sequences_carrying_mutation.member[*it_car] = 1;
+  }
+
+  if(0){
+    sequences_carrying_mutation.num_leaves = 0; //this stores the number of nodes with a mutation at this snp.
+    for(int i = 0; i < N; i++){
+      if(data.sequence[section_startpos][i] == '1'){
+        sequences_carrying_mutation.member[i] = 1; //member stores a sequence of 0 and 1, where 1 at position i means that i carries a mutation.
+        sequences_carrying_mutation.num_leaves++;
+      }else{
+        sequences_carrying_mutation.member[i] = 0;
+      }
     }
   }
 
@@ -314,26 +478,40 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   } 
 
   int num_tree = 1;
-	bool force_build_new_tree;
+  bool force_build_new_tree;
   //build tree topology for snp > 0
   for(int snp = section_startpos+1; snp <= section_endpos; snp++){
 
     //Check if mutations on snp falls on current tree
-    sequences_carrying_mutation.num_leaves = 0; //this stores the number of nodes with a mutation at this snp.
-    for(int i = 0; i < N; i++){
-      if(data.sequence[snp][i] == '1'){
-        d.v_snp_prev[i]++; //This is a help vector to keep track of the previous site with a mutation for individual i. (Needed for calculating d, has nothing to do with checking if mutation falls on tree)
-        d.v_rpos_prev[i] = data.rpos[snp]; //similar to v_snp_prev
-        sequences_carrying_mutation.member[i] = 1; //member stores a sequence of 0 and 1, where 1 at position i means that i carries a mutation.
-        sequences_carrying_mutation.num_leaves++; //not needed anymore
-      }else{
-        sequences_carrying_mutation.member[i] = 0;
+
+    sequences_carrying_mutation.num_leaves = carriers[snp].size();
+    std::fill(sequences_carrying_mutation.member.begin(), sequences_carrying_mutation.member.end(), 0);
+    for(std::vector<int>::iterator it_car = carriers[snp].begin(); it_car != carriers[snp].end(); it_car++){
+      sequences_carrying_mutation.member[*it_car] = 1;
+      if(!normal){
+        d.v_snp_prev[*it_car]++; //This is a help vector to keep track of the previous site with a mutation for individual i. (Needed for calculating d, has nothing to do with checking if mutation falls on tree)
+        d.v_rpos_prev[*it_car] = data.rpos[snp]; //similar to v_snp_prev
       }
     }
+
+    if(0){ 
+      sequences_carrying_mutation.num_leaves = 0; //this stores the number of nodes with a mutation at this snp.
+      for(int i = 0; i < N; i++){
+        if(data.sequence[snp][i] == '1'){
+          d.v_snp_prev[i]++; //This is a help vector to keep track of the previous site with a mutation for individual i. (Needed for calculating d, has nothing to do with checking if mutation falls on tree)
+          d.v_rpos_prev[i] = data.rpos[snp]; //similar to v_snp_prev
+          sequences_carrying_mutation.member[i] = 1; //member stores a sequence of 0 and 1, where 1 at position i means that i carries a mutation.
+          sequences_carrying_mutation.num_leaves++; //not needed anymore
+        }else{
+          sequences_carrying_mutation.member[i] = 0;
+        }
+      }
+    }
+
     mutations.info[snp].tree = num_tree-1;
 
 
-		force_build_new_tree = false;
+    force_build_new_tree = false;
     //if mutation does not fall on current tree, I need to build new tree
     if(ancestral_state){
       is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, snp, min_value, data.state[snp]);
@@ -341,17 +519,17 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
       is_mapping = MapMutation((*it_seq).tree, sequences_carrying_mutation, dist_unif, snp, min_value, data.state[snp]);
     }
 
-		if(snp < section_endpos && fb > 0){
-			if( ((int) (data.bp_pos[snp+1]/fb)) - ((int) (data.bp_pos[snp]/fb)) >= 1 ){
+    if(snp < section_endpos && fb > 0){
+      if( ((int) (data.bp_pos[snp+1]/fb)) - ((int) (data.bp_pos[snp]/fb)) >= 1 ){
         force_build_new_tree = true;
-			}
-		}
+      }
+    }
 
-		if(is_mapping > 1 || force_build_new_tree){
+    if(is_mapping > 1 || force_build_new_tree){
 
       //if SNP was flipped, it is mapped to current tree (branch prev_branch)
       int prev_branch;
-      if(is_mapping == 2){
+      if(is_mapping == 2 || (is_mapping == 1 && force_build_new_tree)){
         assert(mutations.info[snp].branch.size() == 1.0);
         //assert((*it_seq).tree.nodes[*mutations.info[snp].branch.begin()].num_events >= 1.0);
         prev_branch = *mutations.info[snp].branch.begin();
@@ -359,8 +537,11 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
 
       anc.seq.emplace_back();
       it_seq++;
-      d.GetMatrix(snp); //calculates distance matrix d at snp 
-
+      if(normal){
+        d.GetMatrixNormal(snp);
+      }else{
+        d.GetMatrix(snp); //calculates distance matrix d at snp 
+      }
       if(!ancestral_state){ 
         //naive implementation for symmetrising matrix
         for(int i_row = 0; i_row < data.N; i_row++){
@@ -371,7 +552,65 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
         }  
       }
 
-      tb.QuickBuild(d.matrix, (*it_seq).tree, sample_ages); //uses distance matrix d to build tree
+      float val = -log(data.theta/(1.0 - data.theta));
+      if(mode == 1){
+        //tb.QuickBuild(d.matrix, (*it_seq).tree, sample_ages, &(*std::prev(it_seq,1)).tree); //uses distance matrix d to build tree
+
+        if(1){
+          assert(val > 0);
+
+          int num_snps = 1;
+          std::vector<std::vector<int>>::iterator it_car = std::next(carriers.begin(), std::max(0, snp - 0));
+          for(int snp_tmp = std::max(0, snp - 0); snp_tmp < std::min((int)data.sequence.size(),snp + num_snps); snp_tmp++){
+            if(data.rpos[snp] - data.rpos[snp_tmp] < 1e-5 && data.rpos[snp_tmp] - data.rpos[snp] < 1e-5){
+
+              for(std::vector<int>::iterator it = (*it_car).begin(); it != (*it_car).end(); it++){
+                for(int i_col = 0; i_col < data.N; i_col++){
+                  d.matrix[*it][i_col] += val;
+                }
+                for(std::vector<int>::iterator it2 = (*it_car).begin(); it2 != (*it_car).end(); it2++){
+                  d.matrix[*it][*it2] -= val;
+                }
+              }
+
+            }else{
+              if(snp_tmp > snp) break;
+            }
+            it_car++;
+          }
+        }
+
+        std::vector<Leaves> local_clades;
+        CollapsedMatrix<float> dist;
+        dist.resize(data.N, data.N);
+
+        //previous tree
+        (*std::prev(it_seq,1)).tree.FindAllLeaves(local_clades); 
+        for(std::vector<Leaves>::iterator it_local_clades = std::next(local_clades.begin(), data.N); it_local_clades != local_clades.end(); it_local_clades++){
+          std::sort((*it_local_clades).member.begin(), (*it_local_clades).member.end());
+          for(std::vector<int>::iterator it1 = (*it_local_clades).member.begin(); it1 != (*it_local_clades).member.end(); it1++){
+            std::vector<int>::iterator it2 = (*it_local_clades).member.begin();
+            int j = 0;
+            for(; j < data.N; j++){
+              if(it2 == (*it_local_clades).member.end()) break;
+              if(*it2 != j){
+                dist[*it1][j] += val;
+              }else{
+                it2++;
+              }
+            }
+            for(; j < data.N; j++){
+              dist[*it1][j] += val;
+            }
+          }
+        }
+
+        tb.QuickBuild(d.matrix, (*it_seq).tree, sample_ages, dist);
+        //tb.SlowBuild(d.matrix, (*it_seq).tree, sample_ages);
+
+      }else{
+        tb.QuickBuild(d.matrix, (*it_seq).tree, sample_ages); //uses distance matrix d to build tree     
+      }
       (*it_seq).pos = snp; //store position
 
       if(ancestral_state){
@@ -381,6 +620,10 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
       } 
       if(is_mapping_alt > 1 && min_value_alt >= min_value && !force_build_new_tree){ 
         //mutation not mapping to a unique branch and new tree is worse than old tree
+        if(is_mapping == 2){
+          mutations.info[snp].branch[0] = prev_branch;
+          mutations.info[snp].flipped == 1;
+        }
         it_seq--;
         anc.seq.pop_back();
         if(is_mapping > 2) ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, snp, true); //otherwise, it was flipped and is already mapped to branch
@@ -388,9 +631,9 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
 
         //is_mapping == 1 or (is_mapping > 1 and min_value_alt < min_value)
         //in other words: mutation is mapping, or new tree is better than old tree or force build new tree
-        if(is_mapping == 2){
+        if(is_mapping == 2 || (is_mapping == 1 && force_build_new_tree)){
           //need to subtract from prev tree
-          if(data.state[snp]) (*std::prev(it_seq)).tree.nodes[prev_branch].num_events -= 1.0;
+          if(data.state[snp]) (*std::prev(it_seq,1)).tree.nodes[prev_branch].num_events -= 1.0;
         }
         if(is_mapping_alt > 2){
           ForceMapMutation((*it_seq).tree, sequences_carrying_mutation, snp, true);

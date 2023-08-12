@@ -58,6 +58,13 @@ class DistanceMeasure{
 
     std::vector<CollapsedMatrix<float>> top;
     std::vector<CollapsedMatrix<float>>* topology; //This is inefficient, but not by much I think
+
+    std::vector<int> snp_u;
+    std::vector<std::vector<float>> unique;
+    std::vector<std::vector<int>> times;
+    std::vector<std::vector<float>::iterator> it_unique;
+    std::vector<std::vector<int>::iterator> it_times;
+
     std::vector<std::vector<float>> log;
     std::vector<std::vector<float>>* logscales;
     Data* data;
@@ -79,6 +86,14 @@ class DistanceMeasure{
       matrix.resize(N, N);
       top.resize(N);
       log.resize(N);
+     
+      if(0){
+      unique.resize(N);
+      times.resize(N);
+      it_unique.resize(N);
+      it_times.resize(N);
+      snp_u.resize(N);
+      }
 
       section_startpos = -1;
       section_endpos   = -1;
@@ -87,6 +102,9 @@ class DistanceMeasure{
 		void Assign(std::vector<CollapsedMatrix<float>>& itop, std::vector<std::vector<float>>& ilog, const int isection_startpos, const int isection_endpos, const int snp);
     void GetTopologyWithRepaint(const int snp); //call this function whenever data.pos[snp] does not lie within [section_startpos, section_endpos]
     void GetMatrix(const int snp);
+
+    void GetTopologyWithRepaintNormal(const int snp); //call this function whenever data.pos[snp] does not lie within [section_startpos, section_endpos]
+    void GetMatrixNormal(const int snp);
 
 };
 
@@ -97,6 +115,7 @@ class AncesTreeBuilder{
     int N, N_total, root;
     int L;
     int section;
+    int mode;
 
     //for mapping mutations
     int thr; //threshold for mismatches when placing mutations on tree.
@@ -126,8 +145,8 @@ class AncesTreeBuilder{
   public:
 
     Mutations mutations;
-    AncesTreeBuilder(Data& data);
-    AncesTreeBuilder(Data& data, std::vector<double>& sample_ages);
+    AncesTreeBuilder(Data& data, int mode = 0);
+    AncesTreeBuilder(Data& data, std::vector<double>& sample_ages, int mode = 0);
 
     /////////////////////////////////////////////////////
     //This is using the painting to calculate a distance measure
@@ -142,9 +161,9 @@ class AncesTreeBuilder{
     void PreCalcPotentialBranches();
     void BranchAssociation(Tree& ref_tree, Tree& tree, std::vector<int>& equivalent_branches);
 
-    int IsSNPMapping(Tree& tree, Leaves& sequences_carrying_mutations, int snp){
+    int IsSNPMapping(Tree& tree, Leaves& sequences_carrying_mutations, int snp, bool use = true){
       float min_value;
-      if(MapMutation(tree, sequences_carrying_mutations, snp, min_value) > 2){
+      if(MapMutation(tree, sequences_carrying_mutations, snp, min_value, use) > 2){
         ForceMapMutation(tree, sequences_carrying_mutations, snp, true);
         return 2;
       }else{

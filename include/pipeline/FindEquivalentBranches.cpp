@@ -47,6 +47,7 @@ int FindEquivalentBranches(cxxopts::Options& options, int chunk_index){
  
   /////////////////////////////
   //delete painting and data binaries
+  if(0){
   struct stat info;
   //check if directory exists
   if( stat( (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/").c_str(), &info ) == 0 ){
@@ -61,6 +62,7 @@ int FindEquivalentBranches(cxxopts::Options& options, int chunk_index){
   std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str());
   std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str());
   std::remove((file_out + "chunk_" + std::to_string(chunk_index) + ".state").c_str());
+  }
   //////////////////
 
 

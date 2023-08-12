@@ -33,10 +33,12 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
 	Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".dist").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".state").c_str()); //struct data is defined in data.hpp
   data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
 
-  if(options.count("effectiveN")){
-    data.Ne = options["effectiveN"].as<float>();
-  }
-  data.Ne *= 50;
+  data.Ne = std::max(35.0f*data.N,30000.0f); //heuristic value to get approx age
+  //if(options.count("effectiveN")){
+  //  data.Ne = options["effectiveN"].as<float>();
+  //}
+  //data.Ne *= 50;
+  //std::cerr << data.Ne << std::endl;
 
   const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
   if(first_section >= num_windows) return 1;
@@ -78,13 +80,18 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   }
 	srand(seed);
 
+  int mode = 1;
+  if(options.count("no_consistency")){
+    mode = 0;
+  }
+
   bool ancestral_state = true;
   if(options.count("anc_allele_unknown")){
      ancestral_state = false;
   }
 
   std::vector<double> sample_ages(N);
-  if(options.count("sample_ages")){
+  if(data.Ne > 0 && options.count("sample_ages")){
     igzstream is_ages(options["sample_ages"].as<std::string>());
 		if(is_ages.fail()){
 			std::cerr << "Warning: unable to open sample ages file" << std::endl;
@@ -121,10 +128,16 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
     std::cerr.flush(); 
 
     AncesTree anc;
-    AncesTreeBuilder ancbuilder(data, sample_ages);
+    AncesTreeBuilder ancbuilder(data, sample_ages, mode);
 
     int section_startpos = window_boundaries[section];
-    int section_endpos   = window_boundaries[section+1]-1;
+    int section_endpos;
+
+		if(section < num_windows-1){
+		  section_endpos = window_boundaries[section+1]-1;
+		}else{
+			section_endpos = data.L-1;
+		}
     if(section_endpos >= data.L) section_endpos = data.L-1;
 
     ancbuilder.BuildTopology(section, section_startpos, section_endpos, data, anc, rand(), ancestral_state, fb);

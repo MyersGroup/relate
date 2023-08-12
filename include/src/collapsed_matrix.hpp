@@ -26,6 +26,8 @@ class CollapsedMatrix
     std::vector<T> _v;
     std::vector<size_type> _index;
 
+    std::vector<T> sorted_v, unique_v;
+
   public:
 
     CollapsedMatrix() : _index(1){
@@ -208,51 +210,6 @@ class CollapsedMatrix
       fwrite(&_v[0], sizeof(T), _v.size(), pFile);
     
     }
-    
-    void DumpToFile(std::vector<FILE*>& pFiles, const CollapsedMatrix<int>& boundarySNP, const std::vector<T>& logscales){ 
-
-      //in the first file goes _v from boundarySNP[0][0] to boundarySNP[0][1]
-      size_type isubVectorSize = this -> subVectorSize(0);
-      for(int i = 0; i < (int) pFiles.size(); i++){
-        size_type isize = boundarySNP[i][1] - boundarySNP[i][0] + 1; 
-        fwrite(&isize, sizeof(size_type), 1, pFiles[i]);
-        fwrite(&isubVectorSize, sizeof(size_type), 1, pFiles[i]);
-        fwrite(&logscales[boundarySNP[i][0]], sizeof(T), isize, pFiles[i]); 
-        fwrite(&_v[_index[boundarySNP[i][0]]], sizeof(T), isize*isubVectorSize, pFiles[i]); 
-      }
-
-    }
-    
-    //For stepping stones
-    void DumpToFile(std::vector<FILE*>& pFiles, const std::vector<int>& boundarySNP, const std::vector<T>& logscales){ 
-
-      size_type isubVectorSize = this -> subVectorSize(0);
-      for(int i = 0; i < (int) pFiles.size(); i++){
-        size_type isize = 1; 
-        fwrite(&isize, sizeof(size_type), 1, pFiles[i]);
-        fwrite(&isubVectorSize, sizeof(size_type), 1, pFiles[i]);
-        fwrite(&boundarySNP[i], sizeof(int), 1, pFiles[i]); 
-        fwrite(&logscales[i], sizeof(T), 1, pFiles[i]); 
-        fwrite(&_v[_index[i]], sizeof(T), isubVectorSize, pFiles[i]); 
-      }
-
-    }
-
-    //For stepping stones
-    void DumpToFile(FILE* fp, int i, const std::vector<int>& boundarySNP, const std::vector<T>& logscales){ 
-
-      size_type isubVectorSize = this -> subVectorSize(0);
-      size_type isize = 1; 
-      
-      fwrite(&isize, sizeof(size_type), 1, fp);
-      fwrite(&isubVectorSize, sizeof(size_type), 1, fp);
-      
-      fwrite(&boundarySNP[i], sizeof(int), 1, fp); 
-      fwrite(&logscales[i], sizeof(T), 1, fp); 
-      fwrite(&_v[_index[i]], sizeof(T), isubVectorSize, fp);
-
-    }
-    
 
     void ReadFromFile(FILE* pFile){ 
 
@@ -266,18 +223,44 @@ class CollapsedMatrix
      
     }
 
-    void ReadFromFile(FILE* pFile, std::vector<T>& logscales){ 
+    //For stepping stones
+    void DumpToFile(FILE* fp, int i, const std::vector<int>& boundarySNP, const std::vector<T>& logscales){ 
 
-      assert(pFile != NULL);
-      size_type isize, isubVectorSize;
-      //read into _v
-      fread(&isize, sizeof(size_type), 1, pFile);
-      fread(&isubVectorSize, sizeof(size_type), 1, pFile);
-      logscales.resize(isize);
-      fread(&logscales[0], sizeof(T), isize, pFile);
-      resize(isize, isubVectorSize);
-      fread(&_v[0], sizeof(T), isize * isubVectorSize, pFile);
+      //question is whether I can compress _v[_index[i]]
+      
+      size_type isubVectorSize = this -> subVectorSize(0);
+      size_type isize = 1; 
+
+      
+      std::vector<int> times(isubVectorSize, 1);
+
+      unique_v.resize(isubVectorSize);
+      T current_val = _v[_index[i]];
+      int k = 0;
+      unique_v[k] = current_val;
+      for(int j = 1; j < isubVectorSize; j++){
+        if( abs( current_val - _v[_index[i]+j] ) < 0.01 * std::min(current_val,_v[_index[i]+j]) ){
+          times[k]++;
+        }else{
+          current_val = _v[_index[i]+j];
+          k++;
+          unique_v[k] = current_val;
+        }
+      }
+      k++;
+
+      fwrite(&isize, sizeof(size_type), 1, fp);
+      fwrite(&isubVectorSize, sizeof(size_type), 1, fp);
+
+      fwrite(&boundarySNP[i], sizeof(int), 1, fp); 
+      fwrite(&logscales[i], sizeof(T), 1, fp); 
+
+      fwrite(&k, sizeof(int), 1, fp);
+      fwrite(&unique_v[0], sizeof(T), k, fp);
+      fwrite(&times[0], sizeof(int), k, fp);
      
+      //fwrite(&_v[_index[i]], sizeof(T), isubVectorSize, fp);
+
     }
 
     //for stepping stone
@@ -291,9 +274,26 @@ class CollapsedMatrix
       fread(&boundarySNP, sizeof(int), isize, pFile);
       fread(&logscale, sizeof(T), isize, pFile);
       resize(isize, isubVectorSize);
-      fread(&_v[0], sizeof(T), isize * isubVectorSize, pFile);
-     
+
+      int k;
+      fread(&k, sizeof(int), 1, pFile);
+      std::vector<int> index(k, 0), times(k, 1);
+      unique_v.resize(k);
+
+      fread(&unique_v[0], sizeof(T), k, pFile);
+      fread(&times[0], sizeof(int), k, pFile);
+
+      int i = 0;
+      for(int j = 0; j < k; j++){
+        for(int tmp = 0; tmp < times[j]; tmp++){
+          _v[i] = unique_v[j];
+          i++;
+        }
+      }
+      //fread(&_v[0], sizeof(T), isize * isubVectorSize, pFile);
+
     }
+
 
 
 
