@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version="1.2.0"
+version="1.2.1"
 
 tar -czvf ./relate_v${version}_MacOSX_Intel.tgz relate_v${version}_MacOSX_Intel
 tar -czvf ./relate_v${version}_MacOSX_M.tgz relate_v${version}_MacOSX_M

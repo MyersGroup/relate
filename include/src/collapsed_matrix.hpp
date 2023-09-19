@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <math.h>     
 
 //modified from http://upcoder.com/2/efficient-vectors-of-vectors
 
@@ -239,7 +240,7 @@ class CollapsedMatrix
       int k = 0;
       unique_v[k] = current_val;
       for(int j = 1; j < isubVectorSize; j++){
-        if( abs( current_val - _v[_index[i]+j] ) < 0.01 * std::min(current_val,_v[_index[i]+j]) ){
+        if( std::fabs( current_val - _v[_index[i]+j] ) < 1e-3 * std::min(current_val,_v[_index[i]+j]) ){
           times[k]++;
         }else{
           current_val = _v[_index[i]+j];
