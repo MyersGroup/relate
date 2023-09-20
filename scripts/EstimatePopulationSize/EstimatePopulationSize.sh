@@ -1111,7 +1111,7 @@ else
             [[ ! -z "${seed-}" ]] && args+=( "--seed $(($seed + $i))" )
             [[ ! -z "${norm_mutrate-}" ]] && args+=( "--mrate ${output}_avg.rate" )
 
-            ${PATH_TO_RELATE}/bin/RelateCoalescentRate ${args[@]} 2> ${output}_chr${chr}_tmp_chr${chunk}.log 
+            ${PATH_TO_RELATE}/bin/RelateCoalescentRate ${args[@]} 2> ${output}_chr${chr}_chr${chunk}.log 
 
 						rm ${output}_chr${chr}_tmp_chr${chunk}.anc.gz
 						rm ${output}_chr${chr}_tmp_chr${chunk}.mut.gz
@@ -1278,7 +1278,7 @@ else
           [[ ! -z "${seed-}" ]] && args+=( "--seed $(($seed + $i))" )
           [[ ! -z "${norm_mutrate-}" ]] && args+=( "--mrate ${output}_avg.rate" )
 
-          ${PATH_TO_RELATE}/bin/RelateCoalescentRate ${args[@]} 2> ${output}_chr${chr}_tmp_chr${chunk}.log 
+          ${PATH_TO_RELATE}/bin/RelateCoalescentRate ${args[@]} 2> ${output}_chr${chr}_chr${chunk}.log 
 
 					rm ${output}_chr${chr}_tmp_chr${chunk}.anc.gz
 					rm ${output}_chr${chr}_tmp_chr${chunk}.mut.gz
