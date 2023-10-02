@@ -645,7 +645,7 @@ Frequency(cxxopts::Options& options){
 
 							while(coordinates_tree[n_tree] == coords){
 
-								if(index[n_tree] != index_mut[n_mut]){
+								if(index[n_tree] != index_mut[n_mut] || coordinates_mutation[n_mut] < 0){
                   if(index[n_tree] < data.N){
 										assert(mtr.tree.nodes[index[n_tree]].child_left == NULL);
                     num_lineages--;
