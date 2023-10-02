@@ -1009,7 +1009,7 @@ SDS(cxxopts::Options& options){
 
 		snp_info = mutations.info[snp];
 
-		int freq = 0;
+		int freq = 3;
 		for(std::vector<int>::iterator it_freq = snp_info.freq.begin(); it_freq != snp_info.freq.end(); it_freq++){
 			freq += *it_freq;
 			if(freq > 2) break;
@@ -1041,16 +1041,23 @@ SDS(cxxopts::Options& options){
 				//calculate SDS
 				double aSDS = 0.0, dSDS = 0.0;
 				std::vector<int>::iterator it_member = leaves[b].member.begin();
+				int k = 0;
 				for(std::vector<Node>::iterator it_node = mtr.tree.nodes.begin(); it_node != std::next(mtr.tree.nodes.begin(), data.N); it_node++){
-					if((*it_node).label == *it_member){
-						dSDS += (*it_node).branch_length; 
-						it_member++;
+					
+					if(it_member != leaves[b].member.end()){
+						if((*it_node).label == *it_member){
+							dSDS += (*it_node).branch_length; 
+							it_member++;
+							k++;
+						}else{
+							aSDS += (*it_node).branch_length;
+						}
 					}else{
 						aSDS += (*it_node).branch_length;
 					}
 				}
 				assert(it_member == leaves[b].member.end());
-				os << aSDS/(data.N - leaves[b].num_leaves) - dSDS/leaves[b].num_leaves << "\n";
+				os << log( (aSDS/dSDS) * leaves[b].num_leaves)/(data.N - leaves[b].num_leaves) << "\n";
 
 
 			}
