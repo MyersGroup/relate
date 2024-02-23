@@ -21,60 +21,21 @@ fi
 
 painting=$(echo ${painting} | awk '{ gsub(";", ",") ; print $0 }'CC)
 
-if [ -z ${sample_ages-} ]
-then
+args=()
 
-  if [ -z ${seed-} ]			 
-  then
-    ${PATH_TO_RELATE}/bin/Relate \
-        --mode "BuildTopology" \
-        --first_section $start_ind \
-        --last_section $end_ind \
-        --chunk_index ${chunk_index} \
-        --painting ${painting} \
-        --consistency \
-        -o ${output} 2>> ${SLURM_ARRAY_TASK_ID}_build_c${chunk_index}.log 
-  else
-    ${PATH_TO_RELATE}/bin/Relate \
-      --mode "BuildTopology" \
-      --first_section $start_ind \
-      --last_section $end_ind \
-      --chunk_index ${chunk_index} \
-      --seed ${seed} \
-      --painting ${painting} \
-      --consistency \
-      -o ${output} 2>> ${SLURM_ARRAY_TASK_ID}_build_c${chunk_index}.log 
-  fi
+args+=( "--mode BuildTopology" )
+args+=( "--chunk_index ${chunk_index}" )
+args+=( "--first_section $start_ind" )
+args+=( "--last_section $end_ind" )
+args+=( "--painting ${painting}" )
+args+=( "-o ${output}" )
+[[ ! -z "${sample_ages-}" ]] && args+=( "--sample_ages ${sample_ages}" )
+[[ ! -z "${seed-}" ]] && args+=( "--seed ${seed}" )
+[[ ${fb-} -ne -1 ]] && args+=( "--fb ${fb}" )
+[[ ! -z "${consistency-}" ]] && args+=( "--no_consistency" )
 
-else
+${PATH_TO_RELATE}/bin/Relate ${args[@]} 2>> ${SLURM_ARRAY_TASK_ID}_build_c${chunk_index}.log 
 
-  if [ -z ${seed-} ]			 
-  then
-    ${PATH_TO_RELATE}/bin/Relate \
-        --mode "BuildTopology" \
-        --first_section $start_ind \
-        --last_section $end_ind \
-        --chunk_index ${chunk_index} \
-        --painting ${painting} \
-        --sample_ages ${sample_ages} \
-        --consistency \
-        -N ${Ne} \
-        -o ${output} 2>> ${SLURM_ARRAY_TASK_ID}_build_c${chunk_index}.log 
-  else
-    ${PATH_TO_RELATE}/bin/Relate \
-      --mode "BuildTopology" \
-      --first_section $start_ind \
-      --last_section $end_ind \
-      --chunk_index ${chunk_index} \
-      --seed ${seed} \
-      --painting ${painting} \
-      --sample_ages ${sample_ages} \
-      --consistency \
-      -N ${Ne} \
-      -o ${output} 2>> ${SLURM_ARRAY_TASK_ID}_build_c${chunk_index}.log 
-  fi
-
-fi
 
 echo "***********************************************"
 echo "Finished at: "`date`

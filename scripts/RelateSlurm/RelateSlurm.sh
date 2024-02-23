@@ -23,6 +23,7 @@ then
   echo "--memory: Optional. Approximate memory allowance in GB passed to Relate for storing distance matrices. Default is 5GB."
 	echo "--sample_ages: Optional. Filename of file containing sample ages (one per line)." 
 	echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN."
+	echo "--fb:     Optional. Force build a new tree every x bases."
   echo "--painting: Optional. Copying and transition parameters in
                     chromosome painting algorithm. Format: theta,rho. Default: 0.025,1." 
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
@@ -155,6 +156,12 @@ fi
 if [ ! -z "${sample_ages-}" ];
 then
 	echo "sample_ages = $sample_ages"
+fi
+if [ ! -z "${fb-}" ];
+then
+	echo "Force build every $fb bases."
+else
+	fb=-1
 fi
 if [ ! -z "${seed-}" ];
 then
@@ -324,7 +331,7 @@ do
            --parsable \
            -J build_topology_${output}_${chunk} \
            --array 1-$num_batched_windows \
-           --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting} \
+           --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting},fb=${fb} \
            -e build_${output}.log \
            -o build_${output}.log \
            ${slurm_options} \
@@ -335,7 +342,7 @@ do
         --parsable \
         -J build_topology_${output}_${chunk} \
         --array 1-$num_batched_windows \
-        --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting} \
+				--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting},fb=${fb} \
         -e build_${output}.log \
         -o build_${output}.log \
         ${slurm_options} \
@@ -351,7 +358,7 @@ do
            --parsable \
            -J build_topology_${output}_${chunk} \
            --array 1-$num_batched_windows \
-           --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting},sample_ages=${sample_ages},Ne=${Ne} \
+					 --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,painting=${painting},sample_ages=${sample_ages},Ne=${Ne},fb=${fb} \
            -e build_${output}.log \
            -o build_${output}.log \
            ${slurm_options} \
@@ -362,7 +369,7 @@ do
         --parsable \
         -J build_topology_${output}_${chunk} \
         --array 1-$num_batched_windows \
-        --export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting},sample_ages=${sample_ages},Ne=${Ne} \
+				--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=$chunk,output=${output},batch_windows=$batch_windows,seed=${seed},painting=${painting},sample_ages=${sample_ages},Ne=${Ne},fb=${fb} \
         -e build_${output}.log \
         -o build_${output}.log \
         ${slurm_options} \

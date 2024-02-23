@@ -106,7 +106,7 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
     is_pop_size >> tmp >> tmp;
     while(is_pop_size){
       is_pop_size >> tmp;
-      if(tmp == 0.0 && coalescent_rate.size() > 0){
+      if( (std::isnan(tmp) || tmp == 0.0) && coalescent_rate.size() > 0){
         if(*std::prev(coalescent_rate.end(),1) > 0.0){
           coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
         }
@@ -129,10 +129,12 @@ int GetBranchLengths(cxxopts::Options& options, int chunk_index, int first_secti
     avg_Ne = 0.0;
     double denom = 0.0;
     for(int i = 0; i < coalescent_rate.size()-2; i++){
-      //avg_Ne += coalescent_rate[i] * (epoch[i+1] - epoch[i]);
+      if(!std::isnan(coalescent_rate[i])){
+			//avg_Ne += coalescent_rate[i] * (epoch[i+1] - epoch[i]);
       //denom  += (epoch[i+1] - epoch[i]);
       avg_Ne += coalescent_rate[i]; //not weighting by epoch on purpose to downweight ancient epochs
       denom  += 1.0;
+			}
     }
     //avg_Ne /= (epoch[coalescent_rate.size()-2] - epoch[0]);
     avg_Ne /= denom;
