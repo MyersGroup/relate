@@ -563,6 +563,7 @@ Frequency(cxxopts::Options& options){
 					CopyCoordinates(b, coordinates_mutation, coordinates_tree_unsrt, mtr.tree, DAF); //get coordinates of branches below mutation
 					DAF_half = (DAF+1)/2.0;
 					coordinates_mutation[(*mtr.tree.nodes[b].parent).label] = coordinates_tree_unsrt[(*mtr.tree.nodes[b].parent).label]; //add to that list the coordinate of the parent of branch b
+
 					//std::sort(coordinates_mutation.begin(), coordinates_mutation.end()); //sort coordinates_mutation
 					sortAndGetIndices(coordinates_mutation, index_mut);
 
@@ -581,6 +582,8 @@ Frequency(cxxopts::Options& options){
 						os_lin  << 0 << " ";
 						ep--;
 					}
+
+          //std::cerr << "start" << std::endl;
 
 					do{
 
@@ -622,7 +625,7 @@ Frequency(cxxopts::Options& options){
 						count = 0;
 
 						float coords = coordinates_tree[n_tree];
-						if( coords != coordinates_mutation[n_mut] || (has_disappeared == 1) ){ //if n_tree is not next node of a branch onto which mutation falls, increase num_lineages
+            if( coords != coordinates_mutation[n_mut] || (has_disappeared == 1) ){ //if n_tree is not next node of a branch onto which mutation falls, increase num_lineages
 						
 							//next coalescence does not involve carrier branches
 							while(coords == coordinates_tree[n_tree]){
@@ -645,7 +648,8 @@ Frequency(cxxopts::Options& options){
 
 							while(coordinates_tree[n_tree] == coords){
 
-								if(index[n_tree] != index_mut[n_mut]){
+                //if index don't match or coordinates_mutation == -1, then next event actually isn't a carrier (can happen if dates are identical among carriers and non-carriers)
+								if(index[n_tree] != index_mut[n_mut] || coordinates_mutation[n_mut] == -1){
                   if(index[n_tree] < data.N){
 										assert(mtr.tree.nodes[index[n_tree]].child_left == NULL);
                     num_lineages--;
@@ -656,6 +660,7 @@ Frequency(cxxopts::Options& options){
 									}
 									n_tree--;
 								}else{
+                  //std::cerr << snp_info.pos << " " << coordinates_mutation[n_mut] << " " << coords << std::endl;
 									assert(coordinates_mutation[n_mut] == coords);
 
 									bool check_if_branch_is_found = false;
@@ -696,6 +701,7 @@ Frequency(cxxopts::Options& options){
 									n_tree--;
 									n_mut--;	
 								}
+                
 								if(n_tree < 0) break;
 								if(n_mut < 0) break;
 							}
