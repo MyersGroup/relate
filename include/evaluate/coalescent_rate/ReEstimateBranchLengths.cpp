@@ -1232,30 +1232,32 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
   getline(is, line);
   is.close();
 
-  std::istringstream is_pop_size(line);
-  is_pop_size >> tmp >> tmp;
-  while(is_pop_size){
-    is_pop_size >> tmp;
-    //tmp = 1.0/data.Ne; 
-    if(tmp == 0.0 && coalescent_rate.size() > 0){
-      if(*std::prev(coalescent_rate.end(),1) > 0.0){
-        coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
-      }
-      //coalescent_rate.push_back(1);
-    }else{
-      coalescent_rate.push_back(tmp * data.Ne);
-    }
-  }
 
-  for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
-    if(coalescent_rate[i-1] == 0){
-      if(coalescent_rate[i] > 0.0){
-        coalescent_rate[i-1] = coalescent_rate[i];
-      }else{
-        coalescent_rate[i-1] = 1.0;
-      }
-    } 
-  } 
+	getline(is, line);
+	std::istringstream is_pop_size(line);
+	is_pop_size >> tmp >> tmp;
+	while(is_pop_size){
+		is_pop_size >> tmp;
+		//tmp = 1.0/data.Ne; 
+		if(tmp == 0.0 && coalescent_rate.size() > 0){
+			if(*std::prev(coalescent_rate.end(),1) > 0.0){
+				coalescent_rate.push_back(*std::prev(coalescent_rate.end(),1));
+			}
+			//coalescent_rate.push_back(1);
+		}else{
+			coalescent_rate.push_back(tmp * data.Ne);
+		}
+	}
+
+	for(int i = (int)coalescent_rate.size()-1; i > 0; i--){
+		if(coalescent_rate[i-1] == 0){
+			if(coalescent_rate[i] > 0.0){
+				coalescent_rate[i-1] = coalescent_rate[i];
+			}else{
+				coalescent_rate[i-1] = 1.0;
+			}
+		} 
+	}
 
   if(0){
     if(options.count("mrate")){
@@ -1494,146 +1496,148 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 
               int i = 0;
               if(i < num_samples){
-                sampled_trees[i] = mtr.tree;
-                bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
+								//bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
+								bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 1, rand()); //this is estimating times
+								sampled_trees[i] = mtr.tree;
               }
               i++;
               for(; i < num_samples; i++){
-                sampled_trees[i] = mtr.tree;
-                bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
+								//bl.MCMCVariablePopulationSizeSample(data, sampled_trees[i], epoch, coalescent_rate, num_proposals, 0, rand()); //this is estimating times
+								bl.MCMCVariablePopulationSizeSample(data, mtr.tree, epoch, coalescent_rate, num_proposals, 0, rand());
+								sampled_trees[i] = mtr.tree;
               }
               first_snp = false;
             }
 
-            //store matrix with
-            //num_snps x anc_times x num_samples
-            //num_snps x der_times x num_samples
-            int branch, DAF;
-            std::vector<float> anctimes, dertimes;
-            if((*it_mut).branch.size() == 1){
-              branch = *(*it_mut).branch.begin();
-              DAF    = leaves[branch].num_leaves;
-              anctimes.resize(num_samples*std::max(0,(data.N-DAF-1)));
-              dertimes.resize(num_samples*std::max(0,(DAF-1)));
-              std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
+						//store matrix with
+						//num_snps x anc_times x num_samples
+						//num_snps x der_times x num_samples
+						int branch, DAF;
+						std::vector<float> anctimes, dertimes;
+						if((*it_mut).branch.size() == 1){
+							branch = *(*it_mut).branch.begin();
+							DAF    = leaves[branch].num_leaves;
+							anctimes.resize(num_samples*std::max(0,(data.N-DAF-1)));
+							dertimes.resize(num_samples*std::max(0,(DAF-1)));
+							std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
 
-              int count = 0;
-              if(count < num_samples){
-                //store anc and dertimes
-                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-                if(branch != root){
-                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
-                }else{
-                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
-                }
-                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-                std::sort(it_anctimes_s, it_anctimes);
-                std::sort(it_dertimes_s, it_dertimes);
-              }
-              count++;
-              for(;count < num_samples; count++){
-                //store anc and dertimes
-                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-                if(branch != root){
-                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
-                }else{
-                  GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
-                }
-                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-                std::sort(it_anctimes_s, it_anctimes);
-                std::sort(it_dertimes_s, it_dertimes);
-              }
-            }else{
-              DAF    = 0;
-              anctimes.resize(num_samples*std::max(0,(data.N-1)));
-              dertimes.resize(0);
-              std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
-              int count = 0;
-              if(count < num_samples){
-                //store anc and dertimes
-                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-                GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
-                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-                std::sort(it_anctimes_s, it_anctimes);
-                std::sort(it_dertimes_s, it_dertimes);
-              }
-              count++;
-              for(;count < num_samples; count++){
-                //store anc and dertimes
-                std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
-                GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
-                assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
-                assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
-                std::sort(it_anctimes_s, it_anctimes);
-                std::sort(it_dertimes_s, it_dertimes);
-              }
+							int count = 0;
+							if(count < num_samples){
+								//store anc and dertimes
+								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+								if(branch != root){
+									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+								}else{
+									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
+								}
+								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+								std::sort(it_anctimes_s, it_anctimes);
+								std::sort(it_dertimes_s, it_dertimes);
+							}
+							count++;
+							for(;count < num_samples; count++){
+								//store anc and dertimes
+								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+								if(branch != root){
+									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'a', it_dertimes, it_anctimes);
+								}else{
+									GetCoords(2*data.N-2, sampled_trees[count], branch, data.Ne, 'd', it_dertimes, it_anctimes);
+								}
+								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+								std::sort(it_anctimes_s, it_anctimes);
+								std::sort(it_dertimes_s, it_dertimes);
+							}
+						}else{
+							DAF    = 0;
+							anctimes.resize(num_samples*std::max(0,(data.N-1)));
+							dertimes.resize(0);
+							std::vector<float>::iterator it_anctimes = anctimes.begin(), it_dertimes = dertimes.begin();
+							int count = 0;
+							if(count < num_samples){
+								//store anc and dertimes
+								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+								GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
+								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+								std::sort(it_anctimes_s, it_anctimes);
+								std::sort(it_dertimes_s, it_dertimes);
+							}
+							count++;
+							for(;count < num_samples; count++){
+								//store anc and dertimes
+								std::vector<float>::iterator it_anctimes_s = it_anctimes, it_dertimes_s = it_dertimes;
+								GetCoords(2*data.N-2, sampled_trees[count], root, data.Ne, 'a', it_dertimes, it_anctimes);
+								assert(std::next(it_anctimes_s, std::max(0,data.N-DAF-1)) == it_anctimes);
+								assert(std::next(it_dertimes_s, std::max(0,DAF-1)) == it_dertimes);
+								std::sort(it_anctimes_s, it_anctimes);
+								std::sort(it_dertimes_s, it_dertimes);
+							}
 
-            }
+						}
 
-            //WriteBinary(anctimes, dertimes, fp);
-            //BP, DAF, N, 
-            //dump
-            int msize = (*it_mut).mutation_type.size();
-            if(msize >= 1){
-              anc_allele = (*it_mut).mutation_type[0];
-              der_allele = 'N';
-              int i = 1;
-              while((*it_mut).mutation_type[i] != '/' && i < msize){
-                i++;
-                if(i == msize) break;
-              }
-              i++;
-              if(i < msize) der_allele = (*it_mut).mutation_type[i];
-            }
+						//WriteBinary(anctimes, dertimes, fp);
+						//BP, DAF, N, 
+						//dump
+						int msize = (*it_mut).mutation_type.size();
+						if(msize >= 1){
+							anc_allele = (*it_mut).mutation_type[0];
+							der_allele = 'N';
+							int i = 1;
+							while((*it_mut).mutation_type[i] != '/' && i < msize){
+								i++;
+								if(i == msize) break;
+							}
+							i++;
+							if(i < msize) der_allele = (*it_mut).mutation_type[i];
+						}
 
-            int BP = (*it_mut).pos;
-            fwrite(&BP, sizeof(int), 1, fp);
-            fwrite(&anc_allele, sizeof(char), 1, fp);
-            fwrite(&der_allele, sizeof(char), 1, fp);
-            fwrite(&DAF, sizeof(int), 1, fp);
-            fwrite(&data.N, sizeof(int), 1, fp);
-            fwrite(&anctimes[0], sizeof(float), num_samples*std::max(0,(data.N-DAF-1)), fp);
-            fwrite(&dertimes[0], sizeof(float), num_samples*std::max(0,(DAF-1)), fp);
+						int BP = (*it_mut).pos;
+						fwrite(&BP, sizeof(int), 1, fp);
+						fwrite(&anc_allele, sizeof(char), 1, fp);
+						fwrite(&der_allele, sizeof(char), 1, fp);
+						fwrite(&DAF, sizeof(int), 1, fp);
+						fwrite(&data.N, sizeof(int), 1, fp);
+						fwrite(&anctimes[0], sizeof(float), num_samples*std::max(0,(data.N-DAF-1)), fp);
+						fwrite(&dertimes[0], sizeof(float), num_samples*std::max(0,(DAF-1)), fp);
 
-            count_snps++;
-          }
+						count_snps++;
+					}
 
-          it_mut++;
-          if(it_mut == ancmut.mut_end()) break;
-        }
-      }
+					it_mut++;
+					if(it_mut == ancmut.mut_end()) break;
+				}
+			}
 
-      if(it_mut == ancmut.mut_end()) break;
-      count_trees++; 
+			if(it_mut == ancmut.mut_end()) break;
+			count_trees++; 
 
-    }
-
-
-  }
+		}
 
 
-  ShowProgress(100);
-  std::cerr << std::endl;
+	}
 
-  fclose(fp);
 
-  //Resource Usage
-  /////////////////////////////////////////////
+	ShowProgress(100);
+	std::cerr << std::endl;
 
-  rusage usage;
-  getrusage(RUSAGE_SELF, &usage);
+	fclose(fp);
 
-  std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
+	//Resource Usage
+	/////////////////////////////////////////////
+
+	rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+
+	std::cerr << "CPU Time spent: " << usage.ru_utime.tv_sec << "." << std::setfill('0') << std::setw(6);
 #ifdef __APPLE__
-  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000000.0 << "Mb." << std::endl;
 #else
-  std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
+	std::cerr << usage.ru_utime.tv_usec << "s; Max Memory usage: " << usage.ru_maxrss/1000.0 << "Mb." << std::endl;
 #endif
-  std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
+	std::cerr << "---------------------------------------------------------" << std::endl << std::endl;
 
-  return 0;
+	return 0;
 
 }

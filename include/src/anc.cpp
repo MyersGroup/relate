@@ -685,8 +685,11 @@ Tree::GetSubTree(std::vector<int>& subpop, Tree& subtree, std::vector<int>& conv
       int child_left  = (*nodes[i].child_left).label;
       int child_right = (*nodes[i].child_right).label;
 
+			//std::cerr << i << " " << child_left << " " << child_right << " " << number_in_subpop[child_left] << " " << number_in_subpop[child_right] << std::endl;
+
       if(number_in_subpop[child_left] > 0 && number_in_subpop[child_right] > 0){
 
+				//both children exist in subtree
         assert(convert_index[child_left] != -1);
         assert(convert_index[child_right] != -1);
         subtree.nodes[node] = nodes[i];
@@ -703,6 +706,7 @@ Tree::GetSubTree(std::vector<int>& subpop, Tree& subtree, std::vector<int>& conv
 
       }else if(number_in_subpop[child_left] > 0){
 
+				//only child left exists in subtree, so i inherits child_left's label
         assert(convert_index[child_left] != -1);
         convert_index[i]                               = convert_index[child_left];
         subtree.nodes[convert_index[i]].branch_length += nodes[i].branch_length;
@@ -711,6 +715,7 @@ Tree::GetSubTree(std::vector<int>& subpop, Tree& subtree, std::vector<int>& conv
 
       }else if(number_in_subpop[child_right] > 0){
 
+				//only child right exists in subtree, so i inherits child_left's label
         assert(convert_index[child_right] != -1);
         convert_index[i]                               = convert_index[child_right];
         subtree.nodes[convert_index[i]].branch_length += nodes[i].branch_length;

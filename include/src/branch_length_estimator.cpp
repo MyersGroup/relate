@@ -1077,6 +1077,7 @@ EstimateBranchLengthsWithSampleAge::CalculatePrior(int k_start, int k_end, const
 
     if(ep < epoch.size() - 1){
 
+			//std::cerr << ep << " " << epoch[ep] << " " << p_coordinates[p_sorted_indices[k_tmp-1]] << std::endl;
       assert(p_coordinates[p_sorted_indices[k_tmp-1]] >= epoch[ep]);
       if(is_sample == true){
         tmp_tau = p_coordinates[p_sorted_indices[k_tmp]] - lower_coord;
