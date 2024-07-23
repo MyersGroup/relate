@@ -22,6 +22,6 @@ ln -s example_bypop.anc example_mapped.anc
 	--seed 1 \
 	--coal example_bypop.coal
 
-python3 ../scripts/SampleBranchLengths/parse_timeb.py example_sampled.timeb
+#python3 ../scripts/SampleBranchLengths/parse_timeb.py example_sampled.timeb
 
 

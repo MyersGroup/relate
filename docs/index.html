@@ -121,7 +121,7 @@
 
 								<p><b>Relate</b> is available for academic use. To see rules for non-academic use, please read the <a href="download/20180411_15670_RELATE_Academic_Usage_Licence.pdf" download>LICENCE</a> file, which is included with each software download.</p>
 
-								<h5 id="Binaries">Pre-compiled binaries (last updated: 18/09/2023)</h5> 
+								<h5 id="Binaries">Pre-compiled binaries (last updated: 23/07/2024)</h5> 
 								<form role="form" data-toggle="validator" action="download/relate_v1_linux.tar">
 									<div class="form-group">
 										<div class="checkbox">
@@ -135,28 +135,28 @@
 									<div class="form-group">
 										<button type="submit" 
 														class="btn btn-link" 
-														formaction="download/relate_v1.2.1_x86_64_dynamic.tgz"   
+														formaction="download/relate_v1.2.2_x86_64_dynamic.tgz"   
 														data-on="click"
 														data-event-category="Relate download (x86_64, dynamic)"
-														data-event-action="click">Linux (x86_64, dynamic) - v1.2.1</button><br/>
+														data-event-action="click">Linux (x86_64, dynamic) - v1.2.2</button><br/>
 													<button type="submit" 
 																	class="btn btn-link" 
-																	formaction="download/relate_v1.2.1_x86_64_static.tgz"
+																	formaction="download/relate_v1.2.2_x86_64_static.tgz"
 																	data-on="click"
 																	data-event-category="Relate download (x86_64, static)"
-																	data-event-action="click">Linux (x86_64, static) - v1.2.1</button><br/>
+																	data-event-action="click">Linux (x86_64, static) - v1.2.2</button><br/>
 																<button type="submit" 
 																				class="btn btn-link" 
-																				formaction="download/relate_v1.2.1_MacOSX_Intel.tgz"
+																				formaction="download/relate_v1.2.2_MacOSX_Intel.tgz"
 																				data-on="click"
 																				data-event-category="Relate download (Mac_OSX)"
-																				data-event-action="click">Mac OSX (Intel) - v1.2.1</button><br/>     
+																				data-event-action="click">Mac OSX (Intel) - v1.2.2</button><br/>     
 																			<button type="submit" 
 																							class="btn btn-link" 
-																							formaction="download/relate_v1.2.1_MacOSX_M.tgz"
+																							formaction="download/relate_v1.2.2_MacOSX_M.tgz"
 																							data-on="click"
 																							data-event-category="Relate download (Mac_OSX)"
-																							data-event-action="click">Mac OSX (M1) - v1.2.1</button>     
+																							data-event-action="click">Mac OSX (M1) - v1.2.2</button>     
 									</div>
 								</form>
 								</ul>
@@ -221,6 +221,28 @@
 								Variants segregating in more than one population therefore have correlated but different allele ages in each population.</p>
 							</div>
 						</div>
+
+						<!-- 2nd row -->
+						<div class="row">
+							<h3 id="trees">Inferred trees</h3>
+							<hr/>
+						</div>
+
+						<!-- 3rd row -->
+						<div class="row">
+							<div class="col-md-12">
+								<p>You can download inferred trees from the links below:<br/>
+                <ul>
+									<li><a href="https://www.dropbox.com/scl/fo/4tp6uu0u419e34k15p4j5/h?rlkey=1nu5wd3f9v8n72sbaybx97aeg&dl=0"> 1000G (hg37)</a></li>
+									<li><a href="https://www.dropbox.com/scl/fo/2dpzzsywzryx0zz92myc4/h?rlkey=3825fbmopjzoihf5cgz6brv0k&dl=0"> SGDP (hg37)</a></li>
+									<li><a href="https://www.dropbox.com/scl/fo/h22zo0am95u47ojbd7eje/AD0WcQwKBdcXI8w8Z7Q31-k?rlkey=hz7ckjl8fe95sulx6nebss4t0&dl=0"> 1000G CHB, GBR, YRI (hg38)</a></li>
+									<li><a href="https://www.dropbox.com/scl/fo/7wl6ubqkp4u317u1wz4cc/h?rlkey=zxrmqtdrgc5tucdkbqcszdsnw&dl=0"> 1000G CHB, GBR, YRI, Neanderthals (hg37)</a></li>
+								</ul>
+								</p>
+							</div>
+						</div>
+
+
 
 						<!-- 2nd row -->
 						<div class="row">
@@ -386,6 +408,23 @@ devtools::install_github("leospeidel/relater")</code></pre>
 
 							<div class="panel-group" id="accordion3">
 
+								<div class="panel panel-default">
+									<div class="panel-heading">
+										<h4 class="panel-title">
+											<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion3" href="#collapse33">
+												v1.2.2
+											</a>
+										</h4>
+									</div>
+									<div id="collapse33" class="panel-collapse collapse">
+										<div class="panel-body">
+											Date: 23 July 2024 <br/>     
+											<ul>
+												<li>Bug fix introduced in v1.2.1 which led to execution errors when running RelateSelection </li>
+											</ul>
+										</div>
+									</div>
+								</div>
 
 								<div class="panel panel-default">
 									<div class="panel-heading">
