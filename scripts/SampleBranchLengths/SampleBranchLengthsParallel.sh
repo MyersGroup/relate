@@ -472,7 +472,7 @@ else
           --num_samples 1 \
 					-i ${output}_tmp_chr${chunk} \
 					-o ${output}_tmp_chr${chunk} \
-					--dist ${output}.dist \ 
+					--dist ${output}.dist \
 					--seed ${seed} 2> ${output}_tmp_chr${chunk}.log
 
 			else

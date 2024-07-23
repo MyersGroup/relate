@@ -20,7 +20,7 @@ then
   echo "--threshold:       Optional: Used to delete trees with less than specified number of mutations. Use 0 to use all trees. Default: Number of haplotypes."
   echo "--years_per_gen :  Optional: Years per generation. Default is 28."
   echo "--bins:            Optional: Specify epoch bins. Format: lower, upper, stepsize for function c(0,10^seq(lower, upper, stepsize))."
-  echo "--num_iter:        Optional: Number of iterations of the algorithm. Default: 5."
+  echo "--num_iter:        Optional: Number of iterations of the algorithm. Default: 10."
   echo "--chr:             Optional: File listing chromosome IDs (one per line). Overrides --first_chr, --last_chr. Assumes input files are indexed by chr, e.g., example_chr1.anc, example_chr1.mut, etc. Specify -i example in this case."
   echo "--first_chr:       Optional: Index of first chr. Assumes that input files are indexed by chr, e.g. example_chr1.anc, example_chr1.mut, etc. Specify -i example in this case. "
   echo "--last_chr:        Optional: Index of last chr."

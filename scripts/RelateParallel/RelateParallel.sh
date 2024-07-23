@@ -30,7 +30,7 @@ then
   echo "--sample_ages: Optional. Filename of file containing sample ages (one per line)." 
   echo "--coal:   Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN." 
   echo "--painting: Optional. Copying and transition parameters in
-                    chromosome painting algorithm. Format: theta,rho. Default: 0.025,1." 
+                    chromosome painting algorithm. Format: theta,rho. Default: 0.001,1." 
   echo "--transversion: Only use transversion for bl estimation."
   echo "--fb:     Optional. Force build a new tree every x bases."
   echo "--no_consistency: Optional. Disable consistency option."
