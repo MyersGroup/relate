@@ -14,10 +14,12 @@
 #include <map>
 #include <limits>
 #include <tgmath.h>
+#include <cstring>
 #include <string>
 #include <stdlib.h>
 #include <string.h>
 #include <cassert>
+
 
 class gzip{
 
