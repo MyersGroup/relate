@@ -27,6 +27,7 @@ then
   echo "--norm_mutrate     Optional: Normalise coal rates by mutation rate. Recommended if SNPs are MAF ascertained."
   echo "--threads:         Optional. Maximum number of threads."
   echo "--seed:            Optional: Random seed for branch lengths estimation"
+  echo "--noplot:          Optional: Do not run R script to plot results"
   echo ""
   exit 1;
 fi
@@ -131,6 +132,10 @@ do
       seed="$2"
       shift # past argument
       shift # past value
+      ;;
+    --noplot)
+      noplot=1
+      shift # past argument
       ;;
 
     *)    # unknown option
@@ -1340,7 +1345,8 @@ then
   rm ${output}_${labels}*
 fi
 
-#plot results
-Rscript ${DIR}/plot_population_size.R ${output} ${years_per_gen}
-
-
+if [ -z ${noplot-} ];
+then
+  #plot results
+  Rscript ${DIR}/plot_population_size.R ${output} ${years_per_gen}
+fi

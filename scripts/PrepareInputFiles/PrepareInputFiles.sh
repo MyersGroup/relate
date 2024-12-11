@@ -210,5 +210,7 @@ fi
 
 gzip ${filename_output}.haps
 gzip ${filename_output}.sample
-gzip ${filename_output}.dist
+if [ -f ${filename_output}.dist ]; then
+    gzip ${filename_output}.dist
+fi
 
