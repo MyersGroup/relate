@@ -1223,7 +1223,6 @@ int SampleBranchLengthsBinary(cxxopts::Options& options){
 
   std::vector<double> epoch, coalescent_rate;
   getline(is, line);
-  getline(is, line);
   std::istringstream is_epoch(line);
   while(is_epoch){
     is_epoch >> tmp;
