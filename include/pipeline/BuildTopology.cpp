@@ -80,6 +80,11 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   }
 	srand(seed);
 
+	bool debug = false;
+	if(options.count("debug")){
+		debug = true;
+		std::cerr << "Debug mode activated." << std::endl;
+	}
   int mode = 1;
   if(options.count("no_consistency")){
     mode = 0;
@@ -128,7 +133,7 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
     std::cerr.flush(); 
 
     AncesTree anc;
-    AncesTreeBuilder ancbuilder(data, sample_ages, mode);
+    AncesTreeBuilder ancbuilder(data, sample_ages, mode, debug);
 
     int section_startpos = window_boundaries[section];
     int section_endpos;

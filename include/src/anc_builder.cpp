@@ -352,7 +352,7 @@ DistanceMeasure::GetMatrixNormal(const int snp){
 
 //////////// Constructor
 
-AncesTreeBuilder::AncesTreeBuilder(Data& data, int mode):mode(mode){
+AncesTreeBuilder::AncesTreeBuilder(Data& data, int mode, bool debug):mode(mode), debug(debug){
 
   N       = data.N;
   N_total = 2*N-1;
@@ -370,7 +370,7 @@ AncesTreeBuilder::AncesTreeBuilder(Data& data, int mode):mode(mode){
 }
 
 
-AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_ages, int mode):mode(mode){
+AncesTreeBuilder::AncesTreeBuilder(Data& data, std::vector<double>& i_sample_ages, int mode, bool debug):mode(mode), debug(debug){
 
   N       = data.N;
   N_total = 2*N-1;
@@ -419,7 +419,7 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   Leaves sequences_carrying_mutation;
   sequences_carrying_mutation.member.resize(N);
 
-  MinMatch tb(data);
+  MinMatch tb(data, debug);
   DistanceMeasure d(data, section); //this will calculate the distance measure. Needed because we only painted derived sites, so need to recover d by averaging entries of topology
 
   float min_value, min_value_alt;
@@ -444,6 +444,11 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
     }  
   }
 
+	if(debug){
+    std::ofstream os("debug_BP.txt", std::ios::app);
+		os << "0\n";
+		os.close();
+	}
   tb.QuickBuild(d.matrix, (*it_seq).tree, sample_ages); //build tree topology and store in (*it_seq).tree
   (*it_seq).pos = section_startpos; //record position for this tree along the genome
   UpdateBranchSNPbegin((*it_seq).tree, section_startpos);
@@ -553,6 +558,11 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
       }
 
       float val = -log(data.theta/(1.0 - data.theta));
+			if(debug){
+				std::ofstream os("debug_BP.txt", std::ios::app);
+				os << num_tree << "\n";
+				os.close();
+			}
       if(mode == 1){
         //tb.QuickBuild(d.matrix, (*it_seq).tree, sample_ages, &(*std::prev(it_seq,1)).tree); //uses distance matrix d to build tree
 

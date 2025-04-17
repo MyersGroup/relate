@@ -35,7 +35,7 @@ Candidate& Candidate::operator =(const Candidate& a){
 
 //////////////////////////////////////////
 
-MinMatch::MinMatch(Data& data){
+MinMatch::MinMatch(Data& data, bool debug):debug(debug){
   N       = data.N;
   N_total = 2*N-1;
   L       = data.L;
@@ -1059,6 +1059,16 @@ MinMatch::CoalesceSym(const int i, const int j, CollapsedMatrix<float>& sym_d){
 
 void
 MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& i_sample_ages, Tree *tmpl_tree){
+
+	if(debug){
+    std::ofstream os("debug_mat.txt", std::ios::app);
+		for(int i = 0; i < d.size(); i++){
+			for(int j = 0; j < d.size(); j++){
+				os << d[i][j] << " ";
+			}
+			os << "\n";
+		}
+	}
 
   //store pairs that I coalesced. Try these pairs. 
   //for each tip i, store order of coalescences with others
@@ -2358,6 +2368,16 @@ void
 MinMatch::QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& i_sample_ages, const CollapsedMatrix<float>& d_prior){
 
   //threshold = 0.0;
+
+	if(debug){
+		std::ofstream os("debug_mat.txt", std::ios::app);
+		for(int i = 0; i < d.size(); i++){
+			for(int j = 0; j < d.size(); j++){
+				os << d[i][j] << " ";
+			}
+			os << "\n";
+		}
+	}
 
   rng.seed(1);
   std::uniform_real_distribution<double> dist_unif(0,1);

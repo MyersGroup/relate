@@ -24,6 +24,13 @@ int MakeChunks(cxxopts::Options& options, int chunk_size = 0){
     exit(0);
   }
 
+	if(options.count("debug")){
+	  std::ofstream os("debug_mat.txt");
+		os.close();
+		std::ofstream os2("debug_BP.txt");
+		os2.close();
+	}
+
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Parsing data.." << std::endl;
 

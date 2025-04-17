@@ -116,6 +116,7 @@ class AncesTreeBuilder{
     int L;
     int section;
     int mode;
+		bool debug;
 
     //for mapping mutations
     int thr; //threshold for mismatches when placing mutations on tree.
@@ -145,8 +146,8 @@ class AncesTreeBuilder{
   public:
 
     Mutations mutations;
-    AncesTreeBuilder(Data& data, int mode = 0);
-    AncesTreeBuilder(Data& data, std::vector<double>& sample_ages, int mode = 0);
+    AncesTreeBuilder(Data& data, int mode = 0, bool debug = false);
+    AncesTreeBuilder(Data& data, std::vector<double>& sample_ages, int mode = 0, bool debug = false);
 
     /////////////////////////////////////////////////////
     //This is using the painting to calculate a distance measure

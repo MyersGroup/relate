@@ -40,6 +40,7 @@ int main(int argc, char* argv[]){
 		("transversion", "Only use transversion for bl estimation.")
     ("postprocess", "(beta option) Postprocess topology.")
     ("randomise", "(beta option) Randomise topology in post processing step.")
+		("debug", "Debug mode. Outputs chromopainter matrix at every SNP where tree is built.")
     ("i,input", "Filename of input.", cxxopts::value<std::string>())
 		("painting", "Optional. Copying and transition parameters in chromosome painting algorithm. Format: theta,rho. Default: 0.001,1.", cxxopts::value<std::string>())
     ("seed", "Optional. Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());

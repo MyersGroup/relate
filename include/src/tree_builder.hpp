@@ -45,6 +45,7 @@ class MinMatch{
     std::mt19937 rng;
     int N, L, N_total, Ne;
     float threshold, threshold_CF;
+    bool debug;
 
     std::vector<int> convert_index; //this will convert the value in cluster_index to the actual index which is between 0 - (2N-1)
     std::vector<float> cluster_size; //size of cluster, accessed using cluster_index
@@ -96,7 +97,7 @@ class MinMatch{
 
   public:
 
-    MinMatch(Data& data);
+    MinMatch(Data& data, bool debug = false);
  
     void QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& sample_ages, Tree *tmpl_tree = NULL);   
     void QuickBuild(CollapsedMatrix<float>& d, Tree& tree, std::vector<double>& sample_ages, const CollapsedMatrix<float>& d_prior);
