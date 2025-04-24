@@ -538,7 +538,7 @@ do
 			bsub -w infer_branch_lengths_${output}_${chunk} \
 				-J combine_args_${output} \
 				-cwd ${PWD}/${output} \
-				-env all,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
+				-env all,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},sample_ages=${sample_ages},output=${output} \
 				-e log/combine_args_c${chunk}.log \
 				-o log/combine_args_c${chunk}.log \
 				-P $p \
@@ -582,7 +582,7 @@ do
 			bsub -w infer_branch_lengths_${output}_${chunk} \
 				-J combine_args_${output} \
 				-cwd ${PWD}/${output} \
-				-env all,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
+				-env all,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},sample_ages=${sample_ages},output=${output} \
 				-e log/combine_args_c${chunk}.log \
 				-o log/combine_args_c${chunk}.log \
 				-P $p \

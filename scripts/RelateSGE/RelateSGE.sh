@@ -531,7 +531,7 @@ do
 			qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
 				-N combine_args_${output} \
 				-wd ${PWD}/${output} \
-				-v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
+				-v PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},sample_ages=${sample_ages},output=${output} \
 				-e log/combine_args_c${chunk}.log \
 				-o log/combine_args_c${chunk}.log \
 				-P $p \
@@ -572,7 +572,7 @@ do
 			qsub -hold_jid infer_branch_lengths_${output}_${chunk} \
 				-N combine_args_${output} \
 				-wd ${PWD}/${output} \
-				-v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},output=${output} \
+				-v PATH_TO_RELATE=${PATH_TO_RELATE},chunk_index=${chunk},sample_ages=${sample_ages},output=${output} \
 				-e log/combine_args_c${chunk}.log \
 				-o log/combine_args_c${chunk}.log \
 				-P $p \

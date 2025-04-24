@@ -505,7 +505,7 @@ do
         --parsable \
 				-J combine_args_${output} \
 				--array ${PWD}/${output} \
-				--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},output=${output} \
+				--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},Ne=$Ne,chunk_index=${chunk},sample_ages=${sample_ages},output=${output} \
 				-e log/combine_args_c${chunk}.log \
 				-o log/combine_args_c${chunk}.log \
         ${slurm_options} \
@@ -546,7 +546,7 @@ do
 			jid=$(sbatch --depend afterok:${jid} \
         --parsable \
 				-J combine_args_${output} \
-				--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},output=${output} \
+				--export ALL,PATH_TO_RELATE=${PATH_TO_RELATE},coal=${coal},chunk_index=${chunk},sample_ages=${sample_ages},output=${output} \
 				-e log/combine_args_c${chunk}.log \
 				-o log/combine_args_c${chunk}.log \
         ${slurm_options} \

@@ -402,12 +402,23 @@ RelateForChunk (){
   done
 
 
-  ## combine args into one file
-  ${PATH_TO_RELATE}/bin/Relate \
-    --mode CombineSections \
-    -N $Ne \
-    --chunk_index ${chunk_index} \
-    -o ${output} 
+	if [ ! -z "${sample_ages-}" ]; then
+		## combine args into one file
+		${PATH_TO_RELATE}/bin/Relate \
+			--mode CombineSections \
+			-N $Ne \
+			--chunk_index ${chunk_index} \
+			--sample_ages ${sample_ages} \
+			-o ${output} 
+	else
+		## combine args into one file
+		${PATH_TO_RELATE}/bin/Relate \
+			--mode CombineSections \
+			-N $Ne \
+			--chunk_index ${chunk_index} \
+			-o ${output} 
+	fi
+
 } 
 
 
