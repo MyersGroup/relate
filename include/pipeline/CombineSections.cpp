@@ -70,6 +70,20 @@ int CombineSections(cxxopts::Options& options, int chunk_index = 0){
   anc.N = data.N;
   anc.L = num_tree; 
 
+	std::vector<double> sample_ages(N);
+	if(options.count("sample_ages")){
+		igzstream is_ages(options["sample_ages"].as<std::string>());
+		int i = 0; 
+		while(is_ages >> sample_ages[i]){
+			i++;
+			if(i == N) break;
+		}
+		if(i < N) sample_ages.clear();
+	}else{
+		sample_ages.clear(); 
+	}
+  anc.sample_ages = sample_ages;
+
   ///////////////////////////////////////// Create Mutations File /////////////////////////
 
   std::vector<std::string> mut_filenames(num_windows);
