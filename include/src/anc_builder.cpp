@@ -405,7 +405,7 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
   //output: AncesTree (tree sequence) 
 
   std::vector<std::vector<int>> carriers(data.sequence.size());
-  for(int snp = section_startpos; snp < section_endpos; snp++){
+  for(int snp = section_startpos; snp <= section_endpos; snp++){
     for(int i = 0; i < data.N; i++){
       if(data.sequence[snp][i] == '1'){
         carriers[snp].push_back(i);
@@ -632,7 +632,7 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
         //mutation not mapping to a unique branch and new tree is worse than old tree
         if(is_mapping == 2){
           mutations.info[snp].branch[0] = prev_branch;
-          mutations.info[snp].flipped == 1;
+          mutations.info[snp].flipped = 1;
         }
         it_seq--;
         anc.seq.pop_back();
