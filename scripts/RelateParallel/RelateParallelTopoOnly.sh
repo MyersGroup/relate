@@ -33,7 +33,7 @@ then
                     chromosome painting algorithm. Format: theta,rho. Default: 0.001,1." 
   echo "--transversion: Only use transversion for bl estimation."
   echo "--fb:     Optional. Force build a new tree every x bases."
-  echo "--no_consistency: Optional. Disable consistency option."
+  echo "--consistency: Optional. Disable consistency option 0. Keep consistency 1. Add focal SNP weighting 2. Default 1."
   echo "--seed:   Optional. Seed for MCMC in branch lengths estimation."
   echo "--threads:Optional. Maximum number of threads."
   exit 1;
@@ -120,7 +120,7 @@ do
       shift # past argument
       shift # past value
       ;;
-    --no_consistency)
+    --consistency)
       consistency="$2"
       shift # past argument
       shift # past value
@@ -190,7 +190,7 @@ then
 fi
 if [ ! -z "${consistency-}" ];
 then
-  echo "Disable consistency"
+  echo "consistency = $consistency"
 fi
 if [ ! -z "${fb-}" ];
 then
@@ -235,7 +235,7 @@ RelateForChunk (){
         [[ ! -z "${sample_ages-}" ]] && args+=( "--sample_ages ${sample_ages}" )
         [[ ! -z "${seed-}" ]] && args+=( "--seed ${seed}" )
         [[ ! -z "${fb-}" ]] && args+=( "--fb ${fb}" )
-        [[ ! -z "${consistency-}" ]] && args+=( "--no_consistency" )
+        [[ ! -z "${consistency-}" ]] && args+=( "--consistency ${consistency}" )
 
         ${PATH_TO_RELATE}/bin/Relate ${args[@]} 2> ${output}/chunk_${chunk_index}/sec${1}.log &
 
