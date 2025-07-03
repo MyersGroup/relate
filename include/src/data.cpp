@@ -594,14 +594,34 @@ map::map(const char* filename){
 
 	fp = g.open(filename, "r");
 	assert(fp);
-	int lines = 0;
-	while(!feof(fp)){
-		if(fgetc(fp) == '\n'){
-			lines++;
-		}
+
+	char header[1024];
+	if (!fgets(header, sizeof(header), fp)) {
+			fprintf(stderr, "Error: Failed to read header\n");
+			exit(1);
 	}
-	lines--;//don't count the header
+
+	int columns = 0;
+	char* token = strtok(header, " \t\n");
+	while (token) {
+		columns++;
+		token = strtok(nullptr, " \t\n");
+	}
+
+	if (columns != 3) {
+		fprintf(stderr, "Error: Expected 3 columns in header, but got %d.\n", columns);
+		exit(1);
+	}
+
+	int lines = 0;
+	int c;
+	while ((c = fgetc(fp)) != EOF) {
+			if (c == '\n') {
+					lines++;
+			}
+	}
 	g.close(fp);
+
 
 	fp = g.open(filename, "r");
 	assert(fp);
@@ -616,7 +636,11 @@ map::map(const char* filename){
 	float dummy;
 	double fbp;
 	for(int snp = 0; snp < lines; snp++){
-		fscanf(fp, "%lf %f %lf", &fbp, &dummy, &gen_pos[snp]);
+		int ret = fscanf(fp, "%lf %f %lf", &fbp, &dummy, &gen_pos[snp]);
+		if (ret != 3) {
+        fprintf(stderr, "Error: Failed to read line %d.\n", snp + 2, ret);
+        exit(1);
+    }
 		bp[snp] = fbp;
 	}
 

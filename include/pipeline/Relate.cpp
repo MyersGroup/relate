@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
     ("last_section", "Optional. Index of last section to infer. (Use when running parts of algorithm on an individual chunk.)", cxxopts::value<int>())
     ("coal", "Optional. Filename of file containing coalescent rates. If specified, it will overwrite --effectiveN.", cxxopts::value<std::string>()) 
 		("fb", "Optional. Force build a new tree every x bases.", cxxopts::value<float>()) 
-    ("no_consistency", "Optional. Disable consistency option.") 
+		("consistency", "Optional. Disable consistency option 0. Keep consistency 1. Add focal SNP weighting 2. Default 1.", cxxopts::value<int>()) 
     //("anc_allele_unknown", "Specify if ancestral allele is unknown.") 
 		("transversion", "Only use transversion for bl estimation.")
     ("postprocess", "(beta option) Postprocess topology.")

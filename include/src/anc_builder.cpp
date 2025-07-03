@@ -563,10 +563,10 @@ AncesTreeBuilder::BuildTopology(const int section, const int section_startpos, c
 				os << num_tree << "\n";
 				os.close();
 			}
-      if(mode == 1){
+      if(mode >= 1){
         //tb.QuickBuild(d.matrix, (*it_seq).tree, sample_ages, &(*std::prev(it_seq,1)).tree); //uses distance matrix d to build tree
 
-        if(1){
+        if(mode == 2){
           assert(val > 0);
 
           int num_snps = 1;

@@ -22,6 +22,17 @@ ln -s example_bypop.anc example_mapped.anc
 	--seed 1 \
 	--coal example_bypop.coal
 
-#python3 ../scripts/SampleBranchLengths/parse_timeb.py example_sampled.timeb
+python3 ../scripts/SampleBranchLengths/parse_timeb.py example_sampled.timeb
 
+
+../scripts/SampleBranchLengths/SampleBranchLengths.sh \
+	-i example \
+	-o example_sampled \
+	-m 1.25e-8 \
+	--num_samples 5 \
+	--first_bp 70017 \
+	--last_bp 70017 \
+	--format b \
+	--seed 1 \
+	--coal example_bypop.coal
 

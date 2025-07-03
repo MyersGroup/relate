@@ -87,7 +87,7 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
 	}
   int mode = 1;
   if(options.count("no_consistency")){
-    mode = 0;
+    mode = options["no_consistency"].as<int>();
   }
 
   bool ancestral_state = true;
