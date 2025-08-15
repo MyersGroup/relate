@@ -2868,13 +2868,15 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
           coordinates[i] = sample_age[i];
         }else{
           coordinates[i] = sample_age[i];
-          float prev_coords = coordinates[i];
-          coordinates[n] += sample_age[i];
+          double prev_coords = coordinates[i];
+          //coordinates[n] += sample_age[i]; //TODO: Maybe I can add less, e.g. std::max(prev_coords + sample_age[i]/100, std::nextafter(prev_coords, std::numeric_limits<float>::infinity()));
+          coordinates[n] = std::max(prev_coords + sample_age[i]/100, std::nextafter(prev_coords, std::numeric_limits<float>::infinity()));
           prev_coords = coordinates[n];
           while(tree.nodes[n].parent != NULL){
             n = (*tree.nodes[n].parent).label;
             if(coordinates[n] <= prev_coords){
-              coordinates[n] += sample_age[i];
+              //coordinates[n] += sample_age[i];
+              coordinates[n] = std::max(prev_coords + sample_age[i]/100, std::nextafter(prev_coords, std::numeric_limits<float>::infinity()));
               prev_coords = coordinates[n];
             }else{
               break;
@@ -2934,6 +2936,7 @@ EstimateBranchLengthsWithSampleAge::MCMC(const Data& data, Tree& tree, const int
   num_lineages_new   = num_lineages;
 
   for(int i = 0; i < N_total-1; i++){
+    if(tree.nodes[i].branch_length < 0) std::cerr << i << " " << (*tree.nodes[i].parent).label << " " << tree.nodes[i].branch_length << std::endl;
     assert(tree.nodes[i].branch_length >= 0.0);
     assert(order[sorted_indices[i]] == i);
     assert(order[i] < order[(*tree.nodes[i].parent).label]);
@@ -3216,7 +3219,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSize(const Data& data,
             coordinates[i] = sample_age[i];
           }else{
             coordinates[i] = sample_age[i];
-            float prev_coords = coordinates[i];
+            double prev_coords = coordinates[i];
             coordinates[n] += sample_age[i];
             prev_coords = coordinates[n];
             while(tree.nodes[n].parent != NULL){
@@ -3595,13 +3598,15 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
             coordinates[i] = sample_age[i];
           }else{
             coordinates[i] = sample_age[i];
-            float prev_coords = coordinates[i];
-            coordinates[n] += sample_age[i];
+            double prev_coords = coordinates[i];
+            //coordinates[n] += sample_age[i]; //TODO: Maybe I can add less, e.g. std::max(prev_coords + sample_age[i]/100, std::nextafter(prev_coords, std::numeric_limits<float>::infinity()));
+            coordinates[n] = std::max(prev_coords + sample_age[i]/100, std::nextafter(prev_coords, std::numeric_limits<float>::infinity()));
             prev_coords = coordinates[n];
             while(tree.nodes[n].parent != NULL){
               n = (*tree.nodes[n].parent).label;
               if(coordinates[n] <= prev_coords){
-                coordinates[n] += sample_age[i];
+                //coordinates[n] += sample_age[i];
+                coordinates[n] = std::max(prev_coords + sample_age[i]/100, std::nextafter(prev_coords, std::numeric_limits<float>::infinity()));
                 prev_coords = coordinates[n];
               }else{
                 break;
@@ -3611,6 +3616,8 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
 
         }
       }
+
+
     }
 
     for(int i = 0; i < N_total-1; i++){
@@ -3819,6 +3826,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeForRelate(const Da
 
 }  
 
+//detele
 void
 EstimateBranchLengthsWithSampleAge::MCMCCoalRatesForRelate(const Data& data, Tree& tree, const std::vector<int>& membership, const std::vector<double>& epoch, std::vector<std::vector<std::vector<double>>>& coal_rate, const int seed){
 
@@ -3916,7 +3924,7 @@ EstimateBranchLengthsWithSampleAge::MCMCCoalRatesForRelate(const Data& data, Tre
           coordinates[i] = sample_age[i];
         }else{
           coordinates[i] = sample_age[i];
-          float prev_coords = coordinates[i];
+          double prev_coords = coordinates[i];
           coordinates[n] += sample_age[i];
           prev_coords = coordinates[n];
           while(tree.nodes[n].parent != NULL){
@@ -4398,7 +4406,7 @@ EstimateBranchLengthsWithSampleAge::MCMCVariablePopulationSizeSample(const Data&
             coordinates[i] = sample_age[i];
           }else{
             coordinates[i] = sample_age[i];
-            float prev_coords = coordinates[i];
+            double prev_coords = coordinates[i];
             coordinates[n] += sample_age[i];
             prev_coords = coordinates[n];
             while(tree.nodes[n].parent != NULL){
@@ -4707,7 +4715,7 @@ EstimateBranchLengthsWithSampleAge::MCMCCoalRatesSample(const Data& data, Tree& 
             coordinates[i] = sample_age[i];
           }else{
             coordinates[i] = sample_age[i];
-            float prev_coords = coordinates[i];
+            double prev_coords = coordinates[i];
             coordinates[n] += sample_age[i];
             prev_coords = coordinates[n];
             while(tree.nodes[n].parent != NULL){

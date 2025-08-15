@@ -34,6 +34,8 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
 
   data.Ne = std::max(17.5f*data.N,30000.0f); //heuristic value to get approx age
+  
+  
   //if(options.count("effectiveN")){
   //  data.Ne = options["effectiveN"].as<float>();
   //}
