@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package( ZLIB REQUIRED )
 if ( ZLIB_FOUND )
-    include_directories( ${ZLIB_INCLUDE_DIRS} ) 
+  include_directories( ${ZLIB_INCLUDE_DIRS} ) 
 endif( ZLIB_FOUND )
 
 # Set dir

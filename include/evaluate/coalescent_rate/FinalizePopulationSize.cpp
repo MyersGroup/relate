@@ -18,7 +18,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
 	bool help = false;
 	if(!options.count("output")){
 		std::cout << "Not enough arguments supplied." << std::endl;
-		std::cout << "Needed: output. (Optional: input - for sample ages)" << std::endl;
+		std::cout << "Needed: output. (Optional: input,bins - recommended with aDNA)" << std::endl;
 		help = true;
 	}
 	if(options.count("help") || help){
@@ -55,7 +55,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
 
 	std::vector<int> proper_epochs(num_epochs, 1);
 	AncMutIterators ancmut;
-	if(options.count("input")){
+	if(options.count("input") && options.count("bins")){
 		if(options.count("chr")){
 			igzstream is_chr(options["chr"].as<std::string>());
 			if(is_chr.fail()){
@@ -70,12 +70,95 @@ int FinalizePopulationSize(cxxopts::Options& options){
 		}
 
 		if(ancmut.sample_ages.size() > 0){
+      float years_per_gen = 28.0;
+      if(options.count("years_per_gen")){
+        years_per_gen = options["years_per_gen"].as<float>();
+      }
+
+      int num_epochs_tmp;
+      std::vector<float> epochs_tmp;
+      float log_10 = std::log(10);
+      if(options.count("bins")){
+
+        double log_age = std::log(0);
+        double age = 0;
+
+        double epoch_lower, epoch_upper, epoch_step;
+        std::string str_epochs = options["bins"].as<std::string>();
+        std::string tmp;
+        int i = 0;
+        tmp = "";
+        while(str_epochs[i] != ','){
+          tmp += str_epochs[i];
+          i++;
+          if(i == str_epochs.size()) break;
+        }
+        epoch_lower = std::stof(tmp);
+        i++;
+        if(i >= str_epochs.size()){
+          std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+          exit(1);
+        }
+        tmp = "";
+        while(str_epochs[i] != ','){
+          tmp += str_epochs[i];
+          i++;
+          if(i == str_epochs.size()) break;
+        }
+        epoch_upper = std::stof(tmp);
+        i++;
+        if(i >= str_epochs.size()){
+          std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+          exit(1);
+        }
+        tmp = "";
+        while(str_epochs[i] != ','){
+          tmp += str_epochs[i];
+          i++;
+          if(i == str_epochs.size()) break;
+        }
+        epoch_step = std::stof(tmp);
+
+        int ep = 0;
+        epochs_tmp.resize(1);
+        epochs_tmp[ep] = 0.0;
+        ep++; 
+        double epoch_boundary = 0.0;
+        if(log_age < epoch_lower && age != 0.0){
+          epochs_tmp.push_back(age);
+          ep++;
+        }
+        epoch_boundary = epoch_lower;
+        while(epoch_boundary < epoch_upper){
+          if(log_age < epoch_boundary){
+            if(ep == 1 && age != 0.0) epochs_tmp.push_back(age);
+            epochs_tmp.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+            ep++;
+          }
+          epoch_boundary += epoch_step;
+        }
+        epochs_tmp.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+        epochs_tmp.push_back( std::max(1e8, 10.0*epochs_tmp[epochs_tmp.size()-1])/years_per_gen );
+        num_epochs_tmp = epochs_tmp.size();
+
+      }else{
+        num_epochs_tmp = 31;
+        epochs_tmp.resize(num_epochs_tmp);
+        epochs_tmp[0] = 0.0;
+        epochs_tmp[1] = 1e3/years_per_gen;
+        for(int e = 2; e < num_epochs_tmp-1; e++){
+          epochs_tmp[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs_tmp-3.0) ))/years_per_gen;
+        }
+        epochs_tmp[num_epochs_tmp-1] = 1e8/years_per_gen;
+      }
+
+      std::sort(ancmut.sample_ages.begin(), ancmut.sample_ages.end());
 			int a = 0;
 			int e = 1;
 			std::fill(proper_epochs.begin(), proper_epochs.end(), 0);
 			proper_epochs[0] = 1;
 			for(int a = 0; a < ancmut.sample_ages.size(); a++){	
-				if(ancmut.sample_ages[a] == epoch[e]){
+        if(ancmut.sample_ages[a] == epoch[e]){
 					proper_epochs[e] = 0;
 					e++;
 				}else	if(ancmut.sample_ages[a] > epoch[e]){
@@ -87,9 +170,22 @@ int FinalizePopulationSize(cxxopts::Options& options){
 				}
 				if(e >= num_epochs) break;
 			}
-			for(; e < num_epochs; e++){
+      for(; e < num_epochs; e++){
 				proper_epochs[e] = 1;
 			}
+
+      int e_tmp = 0;
+      for(int e = 0; e < num_epochs; e++){
+        while(epochs_tmp[e_tmp] < epoch[e]){
+          e_tmp++;
+          if(e_tmp == epochs_tmp.size()) break;
+        }
+        if(e_tmp == epochs_tmp.size()) break;
+        if(epoch[e] == epochs_tmp[e_tmp]){
+          proper_epochs[e] = 1;
+        }
+      }
+
 		}
 	}
 
@@ -158,7 +254,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
 	for(int e = 0; e < num_epochs; e++){
 		if(coalescent_rate_denom[e][0][0] == 0){
 			coalescent_rate_num[e][0][0] = 0.0;
-			coalescent_rate_denom[e][0][0] = 1.0;
+			coalescent_rate_denom[e][0][0] = 0.0;
 		}
 	}
 
@@ -218,7 +314,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 	bool help = false;
 	if(!options.count("poplabels") || !options.count("output")){
 		std::cout << "Not enough arguments supplied." << std::endl;
-		std::cout << "Needed: poplabels, output. (Optional: input - for sample ages)" << std::endl;
+		std::cout << "Needed: poplabels, output. (Optional: input,bins - recommended with aDNA)" << std::endl;
 		help = true;
 	}
 	if(options.count("help") || help){
@@ -252,7 +348,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 	std::vector<int> proper_epochs(num_epochs, 1);
 	std::vector<float> group_min_age(sample.groups.size(), 0);
 	AncMutIterators ancmut;
-	if(options.count("input")){
+	if(options.count("input") && options.count("bins")){
 		if(options.count("chr")){
 			igzstream is_chr(options["chr"].as<std::string>());
 			if(is_chr.fail()){
@@ -267,7 +363,90 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 		}
 
 		if(ancmut.sample_ages.size() > 0){
-			int a = 0;
+      float years_per_gen = 28.0;
+      if(options.count("years_per_gen")){
+        years_per_gen = options["years_per_gen"].as<float>();
+      }
+
+      int num_epochs_tmp;
+      std::vector<float> epochs_tmp;
+      float log_10 = std::log(10);
+      if(options.count("bins")){
+
+        double log_age = std::log(0);
+        double age = 0;
+
+        double epoch_lower, epoch_upper, epoch_step;
+        std::string str_epochs = options["bins"].as<std::string>();
+        std::string tmp;
+        int i = 0;
+        tmp = "";
+        while(str_epochs[i] != ','){
+          tmp += str_epochs[i];
+          i++;
+          if(i == str_epochs.size()) break;
+        }
+        epoch_lower = std::stof(tmp);
+        i++;
+        if(i >= str_epochs.size()){
+          std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+          exit(1);
+        }
+        tmp = "";
+        while(str_epochs[i] != ','){
+          tmp += str_epochs[i];
+          i++;
+          if(i == str_epochs.size()) break;
+        }
+        epoch_upper = std::stof(tmp);
+        i++;
+        if(i >= str_epochs.size()){
+          std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
+          exit(1);
+        }
+        tmp = "";
+        while(str_epochs[i] != ','){
+          tmp += str_epochs[i];
+          i++;
+          if(i == str_epochs.size()) break;
+        }
+        epoch_step = std::stof(tmp);
+
+        int ep = 0;
+        epochs_tmp.resize(1);
+        epochs_tmp[ep] = 0.0;
+        ep++; 
+        double epoch_boundary = 0.0;
+        if(log_age < epoch_lower && age != 0.0){
+          epochs_tmp.push_back(age);
+          ep++;
+        }
+        epoch_boundary = epoch_lower;
+        while(epoch_boundary < epoch_upper){
+          if(log_age < epoch_boundary){
+            if(ep == 1 && age != 0.0) epochs_tmp.push_back(age);
+            epochs_tmp.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
+            ep++;
+          }
+          epoch_boundary += epoch_step;
+        }
+        epochs_tmp.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
+        epochs_tmp.push_back( std::max(1e8, 10.0*epochs_tmp[epochs_tmp.size()-1])/years_per_gen );
+        num_epochs_tmp = epochs_tmp.size();
+
+      }else{
+        num_epochs_tmp = 31;
+        epochs_tmp.resize(num_epochs_tmp);
+        epochs_tmp[0] = 0.0;
+        epochs_tmp[1] = 1e3/years_per_gen;
+        for(int e = 2; e < num_epochs_tmp-1; e++){
+          epochs_tmp[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs_tmp-3.0) ))/years_per_gen;
+        }
+        epochs_tmp[num_epochs_tmp-1] = 1e8/years_per_gen;
+      }
+
+      std::sort(ancmut.sample_ages.begin(), ancmut.sample_ages.end());
+      int a = 0;
 			int e = 1;
 			std::fill(proper_epochs.begin(), proper_epochs.end(), 0);
 			proper_epochs[0] = 1;
@@ -287,6 +466,18 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 			for(; e < num_epochs; e++){
 				proper_epochs[e] = 1;
 			}
+
+      int e_tmp = 0;
+      for(int e = 0; e < num_epochs; e++){
+        while(epochs_tmp[e_tmp] < epoch[e]){
+          e_tmp++;
+          if(e_tmp == epochs_tmp.size()) break;
+        }
+        if(e_tmp == epochs_tmp.size()) break;
+        if(epoch[e] == epochs_tmp[e_tmp]){
+          proper_epochs[e] = 1;
+        }
+      }
 
 			std::fill(group_min_age.begin(), group_min_age.end(), std::numeric_limits<int>::max());
 			for(int i = 0 ; i < N; i++){
@@ -419,7 +610,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 			for(int j = 0; j < sample.groups.size(); j++){
 				if(coalescent_rate_denom[e][i][j] == 0){
 					coalescent_rate_num[e][i][j] = 0.0;
-					coalescent_rate_denom[e][i][j] = 1.0;
+					coalescent_rate_denom[e][i][j] = 0.0;
 				}
 			}
 		}
