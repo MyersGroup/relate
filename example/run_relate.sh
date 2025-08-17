@@ -2,8 +2,8 @@
 
 PATH_TO_RELATE="../"
 
-#../scripts/RelateParallel/RelateParallel.sh \
-${PATH_TO_RELATE}/bin/Relate --mode All \
+#${PATH_TO_RELATE}/bin/Relate --mode All \
+../scripts/RelateParallel/RelateParallel.sh \
 	--haps ./data/example.haps.gz \
 	--sample ./data/example.sample.gz \
 	--map ./data/genetic_map_GRCh37_chr1.txt \
@@ -12,6 +12,8 @@ ${PATH_TO_RELATE}/bin/Relate --mode All \
 	-m 1.25e-8 \
 	-o example \
 	--seed 1
+
+RelateCoalescentRate --mode EstimatePopulationSize -i example -o example --poplabels ./data/example.poplabels
 
 if false
 then
