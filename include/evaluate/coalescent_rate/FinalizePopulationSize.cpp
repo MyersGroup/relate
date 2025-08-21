@@ -55,7 +55,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
 
 	std::vector<int> proper_epochs(num_epochs, 1);
 	AncMutIterators ancmut;
-	if(options.count("input") && options.count("bins")){
+	if(options.count("input")){
 		if(options.count("chr")){
 			igzstream is_chr(options["chr"].as<std::string>());
 			if(is_chr.fail()){
@@ -348,7 +348,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 	std::vector<int> proper_epochs(num_epochs, 1);
 	std::vector<float> group_min_age(sample.groups.size(), 0);
 	AncMutIterators ancmut;
-	if(options.count("input") && options.count("bins")){
+	if(options.count("input")){
 		if(options.count("chr")){
 			igzstream is_chr(options["chr"].as<std::string>());
 			if(is_chr.fail()){
