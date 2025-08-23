@@ -253,7 +253,10 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
   //read in anc file
 
   fasta mask;
-  double cutoff = 0.9;
+  double cutoff = 0.5;
+  if(options.count("threshold")){
+		cutoff = options["threshold"].as<double>();
+	}
   if(options.count("mask")){
     if(chr == "NA"){
       mask.Read(options["mask"].as<std::string>());

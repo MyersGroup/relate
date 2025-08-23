@@ -30,7 +30,8 @@ int main(int argc, char* argv[]){
     ("num_samples", "Optional: Number of samples in SampleBranchLengths", cxxopts::value<int>())
 		("format", "Optional: Output file format when sampling branch. a: anc/mut, n: newick, b:binary. Default: a.", cxxopts::value<std::string>())
     ("mask", "Filename of file containing mask", cxxopts::value<std::string>())
-    ("groups", "Names of groups of interest for conditional coalescence rates", cxxopts::value<std::string>())
+		("threshold", "Threshold for mask", cxxopts::value<float>())
+		("groups", "Names of groups of interest for conditional coalescence rates", cxxopts::value<std::string>())
     ("seed", "Seed for MCMC in branch lengths estimation.", cxxopts::value<int>());
   
   options.parse(argc, argv);
