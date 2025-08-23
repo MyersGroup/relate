@@ -255,7 +255,7 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
   fasta mask;
   double cutoff = 0.5;
   if(options.count("threshold")){
-		cutoff = options["threshold"].as<double>();
+		cutoff = options["threshold"].as<float>();
 	}
   if(options.count("mask")){
     if(chr == "NA"){
