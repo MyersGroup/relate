@@ -394,6 +394,8 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
   //Pairwise coalescence rate
   //In each tree, find the coalescent time. Then update count_per_epoch and coalescent_time_in_epoch. 
 
+	int count = 0;
+
   if(ancmut.sample_ages.size() > 0){
     float factor = 0.0;
     num_bases_tree_persists = 0.0;
@@ -421,10 +423,10 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
           }
         }
 
-        if(pos_end - pos_start + 1 <= 0){ 
+        if(pos_end - pos_start <= 0){ 
           num_passing = 0.0;
         }else{
-          num_passing /= (pos_end - pos_start + 1);
+          num_passing /= (pos_end - pos_start);
         }
 
       }
@@ -434,6 +436,7 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
 			//if(coords[coords.size() - 1] < 5e5/28) num_passing = 0;
 
       if(num_passing >= cutoff){
+				count++;
         std::vector<int> leaves;
         factor = num_bases_tree_persists;
         GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epochs, ancmut.sample_ages, coalescence_rate_data, leaves);
@@ -467,21 +470,24 @@ CoalescentRateForSection(cxxopts::Options& options, std::string chr = "NA"){
           }
         }
 
-        if(pos_end - pos_start + 1 <= 0){ 
+        if(pos_end - pos_start <= 0){ 
           num_passing = 0.0;
         }else{
-          num_passing /= (pos_end - pos_start + 1);
+          num_passing /= (pos_end - pos_start);
         }
 
       }
 
       if(num_passing >= cutoff){
+				count++;
         std::vector<int> leaves;
         factor = num_bases_tree_persists;
         GetCoalescentRate(*std::prev(mtr.tree.nodes.end(),1), factor, epochs, coalescence_rate_data, leaves);
       }
     }  
   }
+
+	if(options.count("mask")) std::cerr << std::round(((100.0*count)/ancmut.NumTrees())) << "% trees passing threshold." << std::endl;
 
   if(ancmut.sample_ages.size() > 0){
     std::vector<float> epochs_new;
