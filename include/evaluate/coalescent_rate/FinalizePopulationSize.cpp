@@ -157,22 +157,6 @@ int FinalizePopulationSize(cxxopts::Options& options){
 			int e = 1;
 			std::fill(proper_epochs.begin(), proper_epochs.end(), 0);
 			proper_epochs[0] = 1;
-			for(int a = 0; a < ancmut.sample_ages.size(); a++){	
-        if(ancmut.sample_ages[a] == epoch[e]){
-					proper_epochs[e] = 0;
-					e++;
-				}else	if(ancmut.sample_ages[a] > epoch[e]){
-					while(ancmut.sample_ages[a] > epoch[e]){
-						proper_epochs[e] = 1;
-						e++;
-						if(e >= num_epochs) break;
-					}
-				}
-				if(e >= num_epochs) break;
-			}
-      for(; e < num_epochs; e++){
-				proper_epochs[e] = 1;
-			}
 
       int e_tmp = 0;
       for(int e = 0; e < num_epochs; e++){
@@ -449,24 +433,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
       int a = 0;
 			int e = 1;
 			std::fill(proper_epochs.begin(), proper_epochs.end(), 0);
-			proper_epochs[0] = 1;
-			for(int a = 0; a < ancmut.sample_ages.size(); a++){	
-				if(ancmut.sample_ages[a] == epoch[e]){
-					proper_epochs[e] = 0;
-					e++;
-				}else	if(ancmut.sample_ages[a] > epoch[e]){
-					while(ancmut.sample_ages[a] > epoch[e]){
-						proper_epochs[e] = 1;
-						e++;
-						if(e >= num_epochs) break;
-					}
-				}
-				if(e >= num_epochs) break;
-			}
-			for(; e < num_epochs; e++){
-				proper_epochs[e] = 1;
-			}
-
+ 
       int e_tmp = 0;
       for(int e = 0; e < num_epochs; e++){
         while(epochs_tmp[e_tmp] < epoch[e]){
@@ -486,14 +453,28 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 				}
 			}
 
-			for(int g = 0; g < sample.groups.size(); g++){
-				for(int e = 0; e < num_epochs; e++){
-					if(epoch[e] == group_min_age[g]){
-						group_min_age[g] = e;
-						break;
-					}
-				}
-			}
+      for (int g = 0; g < static_cast<int>(sample.groups.size()); ++g) {
+        float t = group_min_age[g];
+
+        auto it = std::lower_bound(epoch.begin(), epoch.end(), t);
+        int idx;
+
+        if (it == epoch.begin()) {
+            idx = 0;
+        } else if (it == epoch.end()) {
+            idx = static_cast<int>(epoch.size() - 1);
+        } else {
+            int hi = static_cast<int>(it - epoch.begin());
+            int lo = hi - 1;
+            // Tie-break toward the lower epoch with <=
+            idx = (t - epoch[lo] <= epoch[hi] - t) ? lo : hi;
+        }
+
+        // Store the closest epoch index (consider using a separate int vector)
+        group_min_age[g] = static_cast<float>(idx);
+      }
+
+
 		}
 
 	}
