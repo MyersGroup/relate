@@ -18,7 +18,7 @@ int FinalizePopulationSize(cxxopts::Options& options){
 	bool help = false;
 	if(!options.count("output")){
 		std::cout << "Not enough arguments supplied." << std::endl;
-		std::cout << "Needed: output. (Optional: input,bins - recommended with aDNA)" << std::endl;
+		std::cout << "Needed: output." << std::endl;
 		help = true;
 	}
 	if(options.count("help") || help){
@@ -52,126 +52,6 @@ int FinalizePopulationSize(cxxopts::Options& options){
 	}
 	fclose(fp);
 	int N = coalescent_rate_data[0].size();
-
-	std::vector<int> proper_epochs(num_epochs, 1);
-	AncMutIterators ancmut;
-	if(options.count("input")){
-		if(options.count("chr")){
-			igzstream is_chr(options["chr"].as<std::string>());
-			if(is_chr.fail()){
-				std::cerr << "Error while opening file " << options["chr"].as<std::string>() << std::endl;
-			}
-			std::string chr;
-			getline(is_chr, chr);
-			is_chr.close();
-			ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + chr + ".anc", options["input"].as<std::string>() + "_chr" + chr + ".mut");
-		}else{
-			ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
-		}
-
-		if(ancmut.sample_ages.size() > 0){
-      float years_per_gen = 28.0;
-      if(options.count("years_per_gen")){
-        years_per_gen = options["years_per_gen"].as<float>();
-      }
-
-      int num_epochs_tmp;
-      std::vector<float> epochs_tmp;
-      float log_10 = std::log(10);
-      if(options.count("bins")){
-
-        double log_age = std::log(0);
-        double age = 0;
-
-        double epoch_lower, epoch_upper, epoch_step;
-        std::string str_epochs = options["bins"].as<std::string>();
-        std::string tmp;
-        int i = 0;
-        tmp = "";
-        while(str_epochs[i] != ','){
-          tmp += str_epochs[i];
-          i++;
-          if(i == str_epochs.size()) break;
-        }
-        epoch_lower = std::stof(tmp);
-        i++;
-        if(i >= str_epochs.size()){
-          std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
-          exit(1);
-        }
-        tmp = "";
-        while(str_epochs[i] != ','){
-          tmp += str_epochs[i];
-          i++;
-          if(i == str_epochs.size()) break;
-        }
-        epoch_upper = std::stof(tmp);
-        i++;
-        if(i >= str_epochs.size()){
-          std::cerr << "Error: epochs format is wrong. Specify x,y,stepsize." << std::endl;
-          exit(1);
-        }
-        tmp = "";
-        while(str_epochs[i] != ','){
-          tmp += str_epochs[i];
-          i++;
-          if(i == str_epochs.size()) break;
-        }
-        epoch_step = std::stof(tmp);
-
-        int ep = 0;
-        epochs_tmp.resize(1);
-        epochs_tmp[ep] = 0.0;
-        ep++; 
-        double epoch_boundary = 0.0;
-        if(log_age < epoch_lower && age != 0.0){
-          epochs_tmp.push_back(age);
-          ep++;
-        }
-        epoch_boundary = epoch_lower;
-        while(epoch_boundary < epoch_upper){
-          if(log_age < epoch_boundary){
-            if(ep == 1 && age != 0.0) epochs_tmp.push_back(age);
-            epochs_tmp.push_back( std::exp(log_10 * epoch_boundary)/years_per_gen );
-            ep++;
-          }
-          epoch_boundary += epoch_step;
-        }
-        epochs_tmp.push_back( std::exp(log_10 * epoch_upper)/years_per_gen );
-        epochs_tmp.push_back( std::max(1e8, 10.0*epochs_tmp[epochs_tmp.size()-1])/years_per_gen );
-        num_epochs_tmp = epochs_tmp.size();
-
-      }else{
-        num_epochs_tmp = 31;
-        epochs_tmp.resize(num_epochs_tmp);
-        epochs_tmp[0] = 0.0;
-        epochs_tmp[1] = 1e3/years_per_gen;
-        for(int e = 2; e < num_epochs_tmp-1; e++){
-          epochs_tmp[e] = std::exp( log_10 * ( 3.0 + 4.0 * (e-1.0)/(num_epochs_tmp-3.0) ))/years_per_gen;
-        }
-        epochs_tmp[num_epochs_tmp-1] = 1e8/years_per_gen;
-      }
-
-      std::sort(ancmut.sample_ages.begin(), ancmut.sample_ages.end());
-			int a = 0;
-			int e = 1;
-			std::fill(proper_epochs.begin(), proper_epochs.end(), 0);
-			proper_epochs[0] = 1;
-
-      int e_tmp = 0;
-      for(int e = 0; e < num_epochs; e++){
-        while(epochs_tmp[e_tmp] < epoch[e]){
-          e_tmp++;
-          if(e_tmp == epochs_tmp.size()) break;
-        }
-        if(e_tmp == epochs_tmp.size()) break;
-        if(epoch[e] == epochs_tmp[e_tmp]){
-          proper_epochs[e] = 1;
-        }
-      }
-
-		}
-	}
 
 	std::vector<CollapsedMatrix<float>> coalescent_rate_num(num_epochs);
 	for(std::vector<CollapsedMatrix<float>>::iterator it_c = coalescent_rate_num.begin(); it_c != coalescent_rate_num.end(); it_c++){
@@ -209,41 +89,12 @@ int FinalizePopulationSize(cxxopts::Options& options){
 		}
 	}
 
-	if(ancmut.sample_ages.size() > 0){
-
-		int proper_e = 0;
-		//add the non-proper epochs to the earlier proper epoch.
-		//however, if min sample age is > proper_epoch, add it to the min epoch
-		for(int e = 1; e < num_epochs; e++){
-			if(proper_epochs[e] == 1){
-				proper_e = e;
-			}else{
-				coalescent_rate_num[proper_e][0][0]   += coalescent_rate_num[e][0][0];
-				coalescent_rate_denom[proper_e][0][0] += coalescent_rate_denom[e][0][0];
-			}
-		}
-
-		proper_e = 0;
-		for(int e = 1; e < num_epochs; e++){
-			if(proper_epochs[e] == 1){
-				proper_e = e;
-			}else{
-				coalescent_rate_num[e][0][0]   = coalescent_rate_num[proper_e][0][0];
-				coalescent_rate_denom[e][0][0] = coalescent_rate_denom[proper_e][0][0];
-			}
-		}
-
-	}
-
 	for(int e = 0; e < num_epochs; e++){
 		if(coalescent_rate_denom[e][0][0] == 0){
 			coalescent_rate_num[e][0][0] = 0.0;
 			coalescent_rate_denom[e][0][0] = 0.0;
 		}
 	}
-
-
-
 
 	std::ofstream os(options["output"].as<std::string>() + ".coal");
 	if(os.fail()){
@@ -298,7 +149,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 	bool help = false;
 	if(!options.count("poplabels") || !options.count("output")){
 		std::cout << "Not enough arguments supplied." << std::endl;
-		std::cout << "Needed: poplabels, output. (Optional: input,bins - recommended with aDNA)" << std::endl;
+		std::cout << "Needed: poplabels, output. (Optional: bins - recommended with aDNA)" << std::endl;
 		help = true;
 	}
 	if(options.count("help") || help){
@@ -327,26 +178,28 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 	fread(&num_epochs, sizeof(int), 1, fp);
 	epoch.resize(num_epochs);
 	fread(&epoch[0], sizeof(float), num_epochs, fp);
-	//I would need to check which epochs are proper, what is the minimum age per group, and then aggregate over improper epochs.
+	
+	std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epochs);
 
+	for(int e = 0; e < num_epochs; e++){
+		coalescent_rate_data[e].ReadFromFile(fp);
+		if(coalescent_rate_data[e].size() != N || coalescent_rate_data[e].subVectorSize(0) != N){
+			std::cerr << N << " " << coalescent_rate_data[e].size() << std::endl;
+			std::cerr << "Error: number of haplotypes in anc/mut does not match number of samples in .poplabels file" << std::endl;
+			std::cerr << "You can just rerun this step using:" << std::endl;
+			std::cerr << "PATH_TO_RELATE/bin/RelateCoalescentRate --mode FinalizePopulationSize -o example --poplabels example.poplabels" << std::endl;
+			exit(1);
+		}
+	}
+	fclose(fp);
+
+
+	//I would need to check which epochs are proper, what is the minimum age per group, and then aggregate over improper epochs.
 	std::vector<int> proper_epochs(num_epochs, 1);
 	std::vector<float> group_min_age(sample.groups.size(), 0);
-	AncMutIterators ancmut;
-	if(options.count("input")){
-		if(options.count("chr")){
-			igzstream is_chr(options["chr"].as<std::string>());
-			if(is_chr.fail()){
-				std::cerr << "Error while opening file " << options["chr"].as<std::string>() << std::endl;
-			}
-			std::string chr;
-			getline(is_chr, chr);
-			is_chr.close();
-			ancmut.OpenFiles(options["input"].as<std::string>() + "_chr" + chr + ".anc", options["input"].as<std::string>() + "_chr" + chr + ".mut");
-		}else{
-			ancmut.OpenFiles(options["input"].as<std::string>() + ".anc", options["input"].as<std::string>() + ".mut");
-		}
+	std::vector<float> sample_ages(N, 0);
+	if(options.count("bins")){
 
-		if(ancmut.sample_ages.size() > 0){
       float years_per_gen = 28.0;
       if(options.count("years_per_gen")){
         years_per_gen = options["years_per_gen"].as<float>();
@@ -429,69 +282,77 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
         epochs_tmp[num_epochs_tmp-1] = 1e8/years_per_gen;
       }
 
-      std::sort(ancmut.sample_ages.begin(), ancmut.sample_ages.end());
-      int a = 0;
-			int e = 1;
-			std::fill(proper_epochs.begin(), proper_epochs.end(), 0);
- 
-      int e_tmp = 0;
-      for(int e = 0; e < num_epochs; e++){
-        while(epochs_tmp[e_tmp] < epoch[e]){
-          e_tmp++;
-          if(e_tmp == epochs_tmp.size()) break;
-        }
-        if(e_tmp == epochs_tmp.size()) break;
-        if(epoch[e] == epochs_tmp[e_tmp]){
-          proper_epochs[e] = 1;
-        }
-      }
-
-			std::fill(group_min_age.begin(), group_min_age.end(), std::numeric_limits<int>::max());
-			for(int i = 0 ; i < N; i++){
-				if(ancmut.sample_ages[i] < group_min_age[sample.group_of_haplotype[i]]){
-					group_min_age[sample.group_of_haplotype[i]] = ancmut.sample_ages[i];
+			int e = 0, f = 0;
+			for(; f < num_epochs_tmp; f++){
+        while(epoch[e] < epochs_tmp[f]){
+          e++;
+					if(e == epoch.size()) break;
+				}
+	      if(e < epoch.size()){
+				  if(epoch[e] != epochs_tmp[f]) break;
 				}
 			}
+			if(f < num_epochs_tmp){
+				std::cerr << "Warning: not all bin edges are present in the original epochs (different --bin?)" << std::endl;
+			}else{
+				std::fill(proper_epochs.begin(), proper_epochs.end(), 0);
+				int e_tmp = 0;
+				for(int e = 0; e < num_epochs; e++){
+					while(epochs_tmp[e_tmp] < epoch[e]){
+						e_tmp++;
+						if(e_tmp == epochs_tmp.size()) break;
+					}
+					if(e_tmp == epochs_tmp.size()) break;
+					if(epoch[e] == epochs_tmp[e_tmp]){
+						proper_epochs[e] = 1;
+					}
+				}
 
-      for (int g = 0; g < static_cast<int>(sample.groups.size()); ++g) {
-        float t = group_min_age[g];
+				for(int i = 0; i < N; i++){
+					float age = epoch[0];
+					bool found = false;
+					for(int e = 0; e < num_epochs; e++){
+						for(int j = 0; j < N; j++){
+							if(coalescent_rate_data[e][i][j] > 0){
+								age = epoch[e];
+								found = true;
+								sample_ages[i] = age;
+								break;
+							} 
+						}
+						if(found) break;
+					}
+				}
 
-        auto it = std::lower_bound(epoch.begin(), epoch.end(), t);
-        int idx;
+				std::fill(group_min_age.begin(), group_min_age.end(), std::numeric_limits<int>::max());
+				for(int i = 0 ; i < N; i++){
+					if(sample_ages[i] < group_min_age[sample.group_of_haplotype[i]]){
+						group_min_age[sample.group_of_haplotype[i]] = sample_ages[i];
+					}
+				}
 
-        if (it == epoch.begin()) {
-            idx = 0;
-        } else if (it == epoch.end()) {
-            idx = static_cast<int>(epoch.size() - 1);
-        } else {
-            int hi = static_cast<int>(it - epoch.begin());
-            int lo = hi - 1;
-            // Tie-break toward the lower epoch with <=
-            idx = (t - epoch[lo] <= epoch[hi] - t) ? lo : hi;
-        }
+				for (int g = 0; g < static_cast<int>(sample.groups.size()); ++g) {
+					float t = group_min_age[g];
 
-        // Store the closest epoch index (consider using a separate int vector)
-        group_min_age[g] = static_cast<float>(idx);
-      }
+					auto it = std::lower_bound(epoch.begin(), epoch.end(), t);
+					int idx;
 
+					if (it == epoch.begin()) {
+							idx = 0;
+					} else if (it == epoch.end()) {
+							idx = static_cast<int>(epoch.size() - 1);
+					} else {
+							int hi = static_cast<int>(it - epoch.begin());
+							int lo = hi - 1;
+							// Tie-break toward the lower epoch with <=
+							idx = (t - epoch[lo] <= epoch[hi] - t) ? lo : hi;
+					}
 
-		}
-
+					// Store the closest epoch index (consider using a separate int vector)
+					group_min_age[g] = static_cast<float>(idx);
+				}
+			}
 	}
-
-	std::vector<CollapsedMatrix<float>> coalescent_rate_data(num_epochs);
-
-	for(int e = 0; e < num_epochs; e++){
-		coalescent_rate_data[e].ReadFromFile(fp);
-		if(coalescent_rate_data[e].size() != N || coalescent_rate_data[e].subVectorSize(0) != N){
-			std::cerr << N << " " << coalescent_rate_data[e].size() << std::endl;
-			std::cerr << "Error: number of haplotypes in anc/mut does not match number of samples in .poplabels file" << std::endl;
-			std::cerr << "You can just rerun this step using:" << std::endl;
-			std::cerr << "PATH_TO_RELATE/bin/RelateCoalescentRate --mode FinalizePopulationSize -o example --poplabels example.poplabels" << std::endl;
-			exit(1);
-		}
-	}
-	fclose(fp);
 
 	/////////////////// SUMMARIZE //////////////////////
 
@@ -541,7 +402,7 @@ int FinalizePopulationSizeByGroup(cxxopts::Options& options){
 		}
 	}
 
-	if(ancmut.sample_ages.size() > 0){
+	if(sample_ages.size() > 0){
 
 		int proper_e = 0;
 		//add the non-proper epochs to the earlier proper epoch.
