@@ -35,6 +35,7 @@ int Paint(cxxopts::Options& options, int chunk_index){
 	Data data((file_out + "chunk_" + std::to_string(chunk_index) + ".hap").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".bp").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".dist").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".r").c_str(), (file_out + "chunk_" + std::to_string(chunk_index) + ".rpos").c_str(),  (file_out + "chunk_" + std::to_string(chunk_index) + ".state").c_str()); //struct data is defined in data.hpp 
   data.name = (file_out + "chunk_" + std::to_string(chunk_index) + "/paint/relate");
 
+  double rho = 1.0;
   if(options.count("painting")){
 
 	  std::string val;
@@ -53,12 +54,13 @@ int Paint(cxxopts::Options& options, int chunk_index){
 			if(painting[i] == ',') break;
 			val += painting[i];
 		}
-    double rho = std::stof(val);
-		for(int l = 0; l < (int)data.r.size(); l++){
-			data.r[l] *= rho;
-		}
+    rho = std::stof(val);
 
 	}
+  rho *= std::min(20.0/data.N, 1.0);
+  for(int l = 0; l < (int)data.r.size(); l++){
+    data.r[l] *= rho;
+  }
 
   std::cerr << "---------------------------------------------------------" << std::endl;
   std::cerr << "Painting sequences..." << std::endl;

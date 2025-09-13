@@ -832,6 +832,9 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
 
   int num_nonmapping_snps = 0;
   int num_nonmapping_rare_snps = 0;
+  double p = 0.1;
+
+  int count = 0;
 
   /////////////////////////////////////////////
   //Tree Building
@@ -841,6 +844,9 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
   rng.seed(seed);  
   std::uniform_real_distribution<double> dist_unif(0,1);
 
+  std::mt19937 gen(0);
+
+  //std::cerr << dist_unif(gen) << " " << p << std::endl;
   DistanceMeasure d(data, section); //this will calculate the distance measure. Needed because we only painted derived sites, so need to recover d by averaging entries of topology
 
   //build tree topology for snp = section_startpos
@@ -873,7 +879,8 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
     }
   }
 
-  if(sequences_carrying_mutation.num_leaves >= 0){
+  if(sequences_carrying_mutation.num_leaves >= 0 && dist_unif(gen) < p){
+    count++;
     d.GetMatrix(snp); //calculate d
     //modify distance matrix so that current SNP is cancelled
     for(int i = 0; i < data.N; i++){
@@ -881,7 +888,6 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
         min = std::numeric_limits<float>::infinity();
         for(int j = 0; j < data.N; j++){
           if(data.sequence[snp][j] == '0') d.matrix[i][j] += log_ratio; //adding because d.matrix is multiplied by -1
-          //if(data.sequence[snp][j] == '1') d.matrix[i][j] += log_ntheta;
           if(min > d.matrix[i][j]) min = d.matrix[i][j];
           assert(d.matrix[i][j] < std::numeric_limits<float>::infinity());
         }
@@ -916,21 +922,9 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
       }
     }
 
-    if(sequences_carrying_mutation.num_leaves >= 0){
-      d.GetMatrix(snp); //calculate d
-
-      /*
-         if(snp == 402){
-         std::cerr << log_ratio << std::endl << std::endl;
-         for(int i = 0; i < 10; i++){
-         for(int j = 0; j < 10; j++){
-         std::cerr << -d.matrix[i][j]/log_ratio << "\t";
-         }
-         std::cerr << std::endl;
-         }
-         std::cerr << std::endl << std::endl;
-         }
-         */
+    if(sequences_carrying_mutation.num_leaves >= 0 && dist_unif(gen) < p){
+      count++;
+      d.GetMatrix(snp); //calculate d 
 
       //modify distance matrix so that current SNP is cancelled
       for(int i = 0; i < data.N; i++){
@@ -938,7 +932,6 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
           min = std::numeric_limits<float>::infinity();
           for(int j = 0; j < data.N; j++){
             if(data.sequence[snp][j] == '0') d.matrix[i][j] += log_ratio;
-            //if(data.sequence[snp][j] == '1') d.matrix[i][j] += log_ntheta;
             if(min > d.matrix[i][j]) min = d.matrix[i][j];
             assert(d.matrix[i][j] < std::numeric_limits<float>::infinity());
           }
@@ -947,25 +940,6 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
           }
         }
       }
-
-      /*
-         for(int i = 0; i < data.N; i++){
-         for(int j = 0; j < data.N; j++){
-         d.matrix[i][j] = std::round(d.matrix[i][j]*10)/10;
-         }
-         }
-         */
-
-      /*
-         if(snp == 402){
-         for(int i = 0; i < 10; i++){
-         for(int j = 0; j < 10; j++){
-         std::cerr << -d.matrix[i][j]/log_ratio << "\t";
-         }
-         std::cerr << std::endl;
-         }
-         }
-         */
 
       tb.QuickBuild(d.matrix, tree, sample_ages); //build tree topology and store in (*it_seq).tree
 
@@ -977,6 +951,7 @@ AncesTreeBuilder::OptimizeParameters(const int section, const int section_startp
 
   }
 
+  std::cerr << count << std::endl;
   //return std::make_pair(num_nonmapping_snps, num_nonmapping_rare_snps);
   return num_nonmapping_snps;
 

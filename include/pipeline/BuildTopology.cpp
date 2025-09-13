@@ -45,6 +45,7 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
   const std::string dirname = file_out + "chunk_" + std::to_string(chunk_index) + "/";
   if(first_section >= num_windows) return 1;
 
+  double rho = 1.0;
 	if(options.count("painting")){
 
 		std::string val;
@@ -63,12 +64,13 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
 			if(painting[i] == ',') break;
 			val += painting[i];
 		}
-		double rho = std::stof(val);
-		for(int l = 0; l < (int)data.r.size(); l++){
-			data.r[l] *= rho;
-		}
+		rho = std::stof(val);
 
 	}
+  rho *= std::min(20.0/data.N, 1.0);
+  for(int l = 0; l < (int)data.r.size(); l++){
+    data.r[l] *= rho;
+  }
 
   int seed;
   if(!options.count("seed")){
@@ -88,8 +90,8 @@ int BuildTopology(cxxopts::Options& options,int chunk_index, int first_section, 
 		std::cerr << "Debug mode activated." << std::endl;
 	}
   int mode = 1;
-  if(options.count("no_consistency")){
-    mode = options["no_consistency"].as<int>();
+  if(options.count("consistency")){
+    mode = options["consistency"].as<int>();
   }
 
   bool ancestral_state = true;
