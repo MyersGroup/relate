@@ -3441,7 +3441,7 @@ int main(int argc, char* argv[]){
     ("mask", "Filename of file containing mask", cxxopts::value<std::string>())
     ("ancestor", "Filename of file containing human ancestor genome.", cxxopts::value<std::string>())
     ("mutcat", "Filename of file containing mutation categories.", cxxopts::value<std::string>())
-    ("poplabels", "Optional: Filename of file containing population labels. If ='hap', each haplotype is in its own group.", cxxopts::value<std::string>()) 
+    ("poplabels", "Optional: Filename of file containing population labels. If ='hap', each haplotype is in its own group. Samples must be listed in the same order as the .sample file.", cxxopts::value<std::string>()) 
     ("pop_of_interest", "Optional: Name of pop of interest.", cxxopts::value<std::string>()) 
     ("i,input", "Filename of .anc and .mut file without file extension", cxxopts::value<std::string>())
     ("o,output", "Output file", cxxopts::value<std::string>())

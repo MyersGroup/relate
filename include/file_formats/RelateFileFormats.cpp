@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
     ("map", "Filename of genetic map.", cxxopts::value<std::string>())
     ("mask", "Filename of file containing mask", cxxopts::value<std::string>())
     ("ancestor", "Filename of file containing human ancestor genome.", cxxopts::value<std::string>())
-    ("poplabels", "Filename of file containing population labels.", cxxopts::value<std::string>()) 
+    ("poplabels", "Filename of file containing population labels. Samples must be listed in the same order as the .sample file.", cxxopts::value<std::string>()) 
     ("chr", "Chromosome index", cxxopts::value<int>())
     ("mut", "Filename of .mut file", cxxopts::value<std::string>())
 		("flag", "Flag for different options in each mode", cxxopts::value<int>())

@@ -67,6 +67,8 @@ class EstimateBranchLengthsWithSampleAge{
 
     void InitializeBranchLengths(Tree& tree);
     void InitializeOrder(Tree& tree);
+    void InitializeOrder2(Tree & tree, bool is_ancient = false);
+    void InitializeOrder3(Tree & tree, bool is_ancient = false);
     void InitializeMCMC(const Data& data, Tree& tree);
 
     void UpdateAvg(Tree& tree);
@@ -81,12 +83,14 @@ class EstimateBranchLengthsWithSampleAge{
 
 
     //constant Ne
-    void UpdateOneEvent(Tree& tree, int node_k, std::gamma_distribution<double>& dist_gamma, std::uniform_real_distribution<double>& dist_unif);
+    double UpdateOneEvent(Tree& tree, int node_k, std::gamma_distribution<double>& dist_gamma, std::uniform_real_distribution<double>& dist_unif);
 
     //variable Ne
-    void UpdateOneEventVP(Tree& tree, int node_k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::gamma_distribution<double>& dist_gamma, std::uniform_real_distribution<double>& dist_unif);
+    double UpdateOneEventVP(Tree& tree, int node_k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::gamma_distribution<double>& dist_gamma, std::uniform_real_distribution<double>& dist_unif);
     void UpdateOneEventVP(Tree& tree, int node_k, const std::vector<double>& epoch, const std::vector<std::vector<std::vector<float>>>& coal_rate_pair, std::vector<std::vector<int>>& remaining, std::gamma_distribution<double>& dist_gamma, std::uniform_real_distribution<double>& dist_unif);
 
+    void ChangeTimeWhilekAncestors_new(Tree& tree, int k, std::uniform_real_distribution<double>& dist_unif);
+		void ChangeTimeWhilekAncestorsVP_new(Tree& tree, int k, const std::vector<double>& epoch, const std::vector<double>& coal_rate, std::uniform_real_distribution<double>& dist_unif);
 
     void SwitchOrder(Tree& tree, int node_k, std::uniform_real_distribution<double>& dist_unif);
     void SwitchTopo(Tree& tree, std::vector<Leaves>& desc, const std::vector<double>& epoch, std::vector<std::vector<std::vector<float>>>& coal_rate_pair, std::vector<std::vector<int>>& remaining, int node_k, std::uniform_real_distribution<double>& dist_unif);
@@ -104,10 +108,9 @@ class EstimateBranchLengthsWithSampleAge{
     void MCMC(const Data& data, Tree& tree, const int seed = std::time(0) + getpid());
     //variable Ne MCMC
     void MCMCVariablePopulationSize(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
-    void MCMCVariablePopulationSizeForRelate(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
-    void MCMCCoalRatesForRelate(const Data& data, Tree& tree, const std::vector<int>& membership, const std::vector<double>& epoch, std::vector<std::vector<std::vector<double>>>& coal_rate, const int seed = std::time(0) + getpid());
+    void MCMCVariablePopulationSizeForRelateOld(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
+		void MCMCVariablePopulationSizeForRelateNew(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, const int seed = std::time(0) + getpid());
 
-    void MCMCCoalRatesSample(const Data& data, Tree& tree, const std::vector<int>& membership, const std::vector<double>& epoch, std::vector<std::vector<std::vector<double>>>& coal_rate, int num_proposals, const bool init, const int seed = std::time(0) + getpid());
     void MCMCVariablePopulationSizeSample(const Data& data, Tree& tree, const std::vector<double>& epoch, std::vector<double>& coal_rate, int num_proposals, const bool init, const int seed = std::time(0) + getpid());
 
 };

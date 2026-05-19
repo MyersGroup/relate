@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
     ("dist", "Filename of file containing dist.", cxxopts::value<std::string>())
     ("i,input", "Filename of anc and mut files without file extension.", cxxopts::value<std::string>())
     ("o,output", "Filename for updated anc and mut files without file extension.", cxxopts::value<std::string>())
-    ("poplabels", "Optional: Filename of file containing population labels. If ='hap', each haplotype is in its own group.", cxxopts::value<std::string>()) 
+    ("poplabels", "Optional: Filename of file containing population labels. If ='hap', each haplotype is in its own group. Samples must be listed in the same order as the .sample file.", cxxopts::value<std::string>()) 
     ("years_per_gen", "Optional: Years per generation (float). Default: 28.", cxxopts::value<float>())
     ("bins", "Optional: Specify epoch bins. Format: lower, upper, stepsize for function c(0,10^seq(lower, upper, stepsize))", cxxopts::value<std::string>())
     ("first_chr", "Optional: Index of fist chr", cxxopts::value<int>())

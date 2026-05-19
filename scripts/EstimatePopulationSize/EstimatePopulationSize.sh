@@ -14,7 +14,7 @@ then
   echo "-i,--input:   Filename of .anc and .mut files without file extension." 
   echo "-o, --output: Filename of output files without file extension."
   echo "-m,--mu:      Mutation rate, e.g., 1.25e-8."
-  echo "--poplabels:  Filename of .poplabels file."
+  echo "--poplabels:  Filename of .poplabels file. Samples must be listed in the same order as the .sample file."
 	echo "--noanc:           Optional: set --noanc 1 specify to not reinfer anc/mut at the end."
   echo "--pop_of_interest: Optional: Specify the populations for which you want to estimate the population size as a comma separated string. Default is all populations."
   echo "--threshold:       Optional: Used to delete trees with less than specified number of mutations. Use 0 to use all trees. Default: Number of haplotypes."

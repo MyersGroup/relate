@@ -17,7 +17,7 @@ int main(int argc, char* argv[]){
   options.add_options()
     ("help", "Print help.")
     ("mode", "Choose which part of the algorithm to run.", cxxopts::value<std::string>())
-    ("poplabels", "Filename of file containing population labels.", cxxopts::value<std::string>()) 
+    ("poplabels", "Filename of file containing population labels. Samples must be listed in the same order as the .sample file.", cxxopts::value<std::string>()) 
     ("anc", "Filename of file containing trees.", cxxopts::value<std::string>())
     ("mut", "Filename of file containing mut.", cxxopts::value<std::string>())
 		("haps", "Filename of haps file (Output file format of Shapeit).", cxxopts::value<std::string>())
